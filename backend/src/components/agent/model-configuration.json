@@ -1,0 +1,52 @@
+{
+  "collectionName": "components_agent_model_configurations",
+  "info": {
+    "displayName": "Model Configuration",
+    "icon": "brain",
+    "description": "AI model settings and configuration"
+  },
+  "options": {},
+  "attributes": {
+    "model": {
+      "type": "enumeration",
+      "enum": ["haiku", "sonnet", "sonnet-4", "opus", "opus-4"],
+      "default": "sonnet",
+      "required": true
+    },
+    "temperature": {
+      "type": "decimal",
+      "required": false,
+      "default": 1.0,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "maxTokens": {
+      "type": "integer",
+      "required": false,
+      "min": 1,
+      "max": 200000
+    },
+    "timeout": {
+      "type": "integer",
+      "required": false,
+      "default": 300000,
+      "min": 1000
+    },
+    "stopSequences": {
+      "type": "json",
+      "required": false,
+      "default": []
+    },
+    "topP": {
+      "type": "decimal",
+      "required": false,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "topK": {
+      "type": "integer",
+      "required": false,
+      "min": 0
+    }
+  }
+}

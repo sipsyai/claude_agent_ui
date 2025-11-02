@@ -1,0 +1,56 @@
+{
+  "collectionName": "components_agent_analytics",
+  "info": {
+    "displayName": "Analytics",
+    "icon": "chartLine",
+    "description": "Execution metrics and analytics for agents"
+  },
+  "options": {},
+  "attributes": {
+    "executionCount": {
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "min": 0
+    },
+    "lastExecutedAt": {
+      "type": "datetime",
+      "required": false
+    },
+    "averageExecutionTime": {
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "min": 0
+    },
+    "totalExecutionTime": {
+      "type": "biginteger",
+      "required": false,
+      "default": "0",
+      "min": "0"
+    },
+    "successCount": {
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "min": 0
+    },
+    "failureCount": {
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "min": 0
+    },
+    "successRate": {
+      "type": "decimal",
+      "required": false,
+      "default": 0,
+      "min": 0,
+      "max": 100
+    },
+    "lastCalculatedAt": {
+      "type": "datetime",
+      "required": false
+    }
+  }
+}

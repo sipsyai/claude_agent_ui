@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_skill_skill_selections",
+  "info": {
+    "displayName": "Skill Selection",
+    "description": "Skill selection component with enabled flag and metadata"
+  },
+  "options": {},
+  "attributes": {
+    "skill": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::skill.skill",
+      "required": true
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

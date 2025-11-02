@@ -1,0 +1,45 @@
+{
+  "collectionName": "components_skill_skill_files",
+  "info": {
+    "displayName": "Skill File",
+    "description": "Additional documentation files for skills (REFERENCE.md, EXAMPLES.md, TROUBLESHOOTING.md, etc.)",
+    "icon": "fileText"
+  },
+  "options": {},
+  "attributes": {
+    "file": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["files"],
+      "description": "Markdown or text documentation file"
+    },
+    "fileType": {
+      "type": "enumeration",
+      "enum": [
+        "REFERENCE",
+        "EXAMPLES",
+        "TROUBLESHOOTING",
+        "CHANGELOG",
+        "FAQ",
+        "API_DOCS",
+        "TUTORIAL",
+        "CUSTOM"
+      ],
+      "default": "REFERENCE",
+      "required": true,
+      "description": "Type/purpose of the documentation file"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 255,
+      "description": "Brief description of what this file contains"
+    },
+    "displayOrder": {
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "description": "Order for displaying files in UI (0 = first)"
+    }
+  }
+}

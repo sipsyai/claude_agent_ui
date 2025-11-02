@@ -1,0 +1,87 @@
+{
+  "kind": "collectionType",
+  "collectionName": "mcp_servers",
+  "info": {
+    "singularName": "mcp-server",
+    "pluralName": "mcp-servers",
+    "displayName": "MCP Server",
+    "description": "Model Context Protocol servers"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "required": true,
+      "unique": true
+    },
+    "description": {
+      "type": "text",
+      "maxLength": 500
+    },
+    "command": {
+      "type": "string",
+      "minLength": 1,
+      "required": true
+    },
+    "args": {
+      "type": "json"
+    },
+    "env": {
+      "type": "json"
+    },
+    "disabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "transport": {
+      "type": "enumeration",
+      "required": true,
+      "default": "stdio",
+      "enum": [
+        "stdio",
+        "sse",
+        "http"
+      ]
+    },
+    "healthCheckUrl": {
+      "type": "string",
+      "regex": "^https?://"
+    },
+    "isHealthy": {
+      "type": "boolean",
+      "default": true
+    },
+    "lastHealthCheck": {
+      "type": "datetime"
+    },
+    "startupTimeout": {
+      "type": "integer",
+      "default": 30000,
+      "min": 1000,
+      "max": 300000
+    },
+    "restartPolicy": {
+      "type": "enumeration",
+      "default": "on-failure",
+      "enum": [
+        "always",
+        "on-failure",
+        "never"
+      ]
+    },
+    "toolsFetchedAt": {
+      "type": "datetime"
+    },
+    "mcpTools": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::mcp-tool.mcp-tool",
+      "mappedBy": "mcpServer"
+    }
+  }
+}

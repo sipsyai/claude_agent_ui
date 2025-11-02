@@ -1,0 +1,233 @@
+{
+  "description": "Complete blog system with Articles, Categories, Tags, and Comments",
+  "contentTypes": {
+    "article": {
+      "kind": "collectionType",
+      "collectionName": "articles",
+      "info": {
+        "singularName": "article",
+        "pluralName": "articles",
+        "displayName": "Article",
+        "description": "Blog articles with rich content"
+      },
+      "options": {
+        "draftAndPublish": true,
+        "timestamps": true
+      },
+      "attributes": {
+        "title": {
+          "type": "string",
+          "required": true,
+          "minLength": 3,
+          "maxLength": 100
+        },
+        "slug": {
+          "type": "uid",
+          "targetField": "title",
+          "required": true
+        },
+        "excerpt": {
+          "type": "text",
+          "maxLength": 255
+        },
+        "content": {
+          "type": "richtext",
+          "required": true
+        },
+        "featuredImage": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        },
+        "author": {
+          "type": "relation",
+          "relation": "manyToOne",
+          "target": "plugin::users-permissions.user",
+          "inversedBy": "articles"
+        },
+        "categories": {
+          "type": "relation",
+          "relation": "manyToMany",
+          "target": "api::category.category",
+          "inversedBy": "articles"
+        },
+        "tags": {
+          "type": "relation",
+          "relation": "manyToMany",
+          "target": "api::tag.tag",
+          "inversedBy": "articles"
+        },
+        "comments": {
+          "type": "relation",
+          "relation": "oneToMany",
+          "target": "api::comment.comment",
+          "mappedBy": "article"
+        },
+        "viewCount": {
+          "type": "integer",
+          "default": 0,
+          "min": 0
+        },
+        "isPublished": {
+          "type": "boolean",
+          "default": false
+        },
+        "publishedAt": {
+          "type": "datetime"
+        },
+        "readTime": {
+          "type": "integer",
+          "min": 1
+        },
+        "seo": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.seo"
+        }
+      }
+    },
+    "category": {
+      "kind": "collectionType",
+      "collectionName": "categories",
+      "info": {
+        "singularName": "category",
+        "pluralName": "categories",
+        "displayName": "Category"
+      },
+      "options": {
+        "draftAndPublish": false
+      },
+      "attributes": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "unique": true
+        },
+        "slug": {
+          "type": "uid",
+          "targetField": "name",
+          "required": true
+        },
+        "description": {
+          "type": "text"
+        },
+        "color": {
+          "type": "string",
+          "default": "#000000"
+        },
+        "articles": {
+          "type": "relation",
+          "relation": "manyToMany",
+          "target": "api::article.article",
+          "mappedBy": "categories"
+        }
+      }
+    },
+    "tag": {
+      "kind": "collectionType",
+      "collectionName": "tags",
+      "info": {
+        "singularName": "tag",
+        "pluralName": "tags",
+        "displayName": "Tag"
+      },
+      "options": {
+        "draftAndPublish": false
+      },
+      "attributes": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "unique": true
+        },
+        "slug": {
+          "type": "uid",
+          "targetField": "name",
+          "required": true
+        },
+        "articles": {
+          "type": "relation",
+          "relation": "manyToMany",
+          "target": "api::article.article",
+          "mappedBy": "tags"
+        }
+      }
+    },
+    "comment": {
+      "kind": "collectionType",
+      "collectionName": "comments",
+      "info": {
+        "singularName": "comment",
+        "pluralName": "comments",
+        "displayName": "Comment"
+      },
+      "options": {
+        "draftAndPublish": false,
+        "timestamps": true
+      },
+      "attributes": {
+        "content": {
+          "type": "text",
+          "required": true
+        },
+        "author": {
+          "type": "relation",
+          "relation": "manyToOne",
+          "target": "plugin::users-permissions.user"
+        },
+        "article": {
+          "type": "relation",
+          "relation": "manyToOne",
+          "target": "api::article.article",
+          "inversedBy": "comments"
+        },
+        "isApproved": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  },
+  "components": {
+    "shared.seo": {
+      "collectionName": "components_shared_seos",
+      "info": {
+        "displayName": "SEO"
+      },
+      "attributes": {
+        "metaTitle": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "metaDescription": {
+          "type": "text",
+          "maxLength": 160
+        },
+        "keywords": {
+          "type": "string"
+        },
+        "ogImage": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        }
+      }
+    }
+  },
+  "usage": {
+    "description": "How to use this blog system",
+    "steps": [
+      "1. Create categories first (e.g., Technology, Lifestyle, Travel)",
+      "2. Create tags (e.g., JavaScript, React, Tutorial)",
+      "3. Create articles and assign categories, tags, and author",
+      "4. Users can add comments on articles (requires moderation)"
+    ],
+    "apiExamples": {
+      "getArticles": "GET /api/articles?populate=*",
+      "getArticleBySlug": "GET /api/articles?filters[slug][$eq]=my-article&populate=*",
+      "getArticlesByCategory": "GET /api/articles?filters[categories][slug][$eq]=technology&populate=*",
+      "getArticlesByTag": "GET /api/articles?filters[tags][slug][$eq]=react&populate=*",
+      "createComment": "POST /api/comments { data: { content: '...', article: 1, author: 1 } }"
+    }
+  }
+}

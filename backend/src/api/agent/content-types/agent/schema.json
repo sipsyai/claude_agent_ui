@@ -1,0 +1,80 @@
+{
+  "kind": "collectionType",
+  "collectionName": "agents",
+  "info": {
+    "singularName": "agent",
+    "pluralName": "agents",
+    "displayName": "Agent",
+    "description": "Claude AI agents with tools, skills, and MCP servers"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "required": true,
+      "unique": true,
+      "regex": "^[a-zA-Z0-9-_\\s]+$"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "maxLength": 500
+    },
+    "systemPrompt": {
+      "type": "text",
+      "minLength": 10,
+      "maxLength": 10000,
+      "required": true
+    },
+    "enabled": {
+      "type": "boolean",
+      "required": true,
+      "default": true
+    },
+    "toolConfig": {
+      "type": "component",
+      "component": "agent.tool-configuration",
+      "repeatable": false
+    },
+    "modelConfig": {
+      "type": "component",
+      "component": "agent.model-configuration",
+      "repeatable": false,
+      "required": true
+    },
+    "analytics": {
+      "type": "component",
+      "component": "agent.analytics",
+      "repeatable": false
+    },
+    "metadata": {
+      "type": "component",
+      "component": "shared.metadata",
+      "repeatable": true
+    },
+    "mcpConfig": {
+      "type": "component",
+      "component": "mcp.server-selection",
+      "repeatable": true
+    },
+    "skillSelection": {
+      "type": "component",
+      "component": "skill.skill-selection",
+      "repeatable": true
+    },
+    "tasks": {
+      "type": "component",
+      "component": "task.task-selection",
+      "repeatable": true
+    }
+  }
+}

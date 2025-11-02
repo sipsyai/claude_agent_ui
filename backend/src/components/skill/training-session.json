@@ -1,0 +1,51 @@
+{
+  "collectionName": "components_skill_training_sessions",
+  "info": {
+    "displayName": "Training Session",
+    "description": "Training session record with scores, issues, and improvements",
+    "icon": "graduationCap"
+  },
+  "options": {},
+  "attributes": {
+    "timestamp": {
+      "type": "datetime",
+      "required": true,
+      "description": "When the training session occurred"
+    },
+    "score": {
+      "type": "decimal",
+      "min": 0,
+      "max": 100,
+      "description": "Training performance score (0-100)"
+    },
+    "trainingType": {
+      "type": "enumeration",
+      "enum": ["automatic", "manual", "feedback", "evaluation"],
+      "default": "automatic",
+      "description": "Type of training session"
+    },
+    "issues": {
+      "type": "json",
+      "default": [],
+      "description": "Array of issues identified during training"
+    },
+    "improvements": {
+      "type": "json",
+      "default": [],
+      "description": "Array of improvements made"
+    },
+    "notes": {
+      "type": "text",
+      "description": "Additional notes about the training session"
+    },
+    "trainedBy": {
+      "type": "string",
+      "description": "Who or what performed the training (agent ID, user ID, etc.)"
+    },
+    "success": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the training session was successful"
+    }
+  }
+}

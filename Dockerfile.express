@@ -1,0 +1,134 @@
+# ============================================================
+# Express Dockerfile - Multi-Stage Build
+# Claude Agent UI - Express Backend (SSE & Business Logic)
+# ============================================================
+
+# ============================================================
+# Base Stage
+# ============================================================
+FROM node:20-alpine AS base
+
+# Install build dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    && ln -sf python3 /usr/bin/python
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# ============================================================
+# Dependencies Stage
+# ============================================================
+FROM base AS dependencies
+
+# Install all dependencies
+RUN npm ci
+
+# ============================================================
+# Development Stage
+# ============================================================
+FROM base AS development
+
+# Copy node_modules
+COPY --from=dependencies /app/node_modules ./node_modules
+
+# Copy source code
+COPY src ./src
+COPY scripts ./scripts
+
+# Create non-root user
+RUN addgroup -g 1001 -S express && \
+    adduser -S express -u 1001 && \
+    chown -R express:express /app
+
+USER express
+
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+
+CMD ["npm", "run", "dev"]
+
+# ============================================================
+# Builder Stage
+# ============================================================
+FROM base AS builder
+
+# Copy node_modules
+COPY --from=dependencies /app/node_modules ./node_modules
+
+# Copy source code
+COPY src ./src
+COPY scripts ./scripts
+COPY tsconfig.json ./
+
+# Build TypeScript (server only)
+RUN npm run build:server
+
+# ============================================================
+# Production Dependencies Stage
+# ============================================================
+FROM base AS production-dependencies
+
+# Install only production dependencies
+RUN npm ci --omit=dev && \
+    npm cache clean --force
+
+# ============================================================
+# Production Stage
+# ============================================================
+FROM node:20-alpine AS production
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    dumb-init \
+    wget \
+    && rm -rf /var/cache/apk/*
+
+WORKDIR /app
+
+# Copy production dependencies
+COPY --from=production-dependencies /app/node_modules ./node_modules
+
+# Copy built application
+COPY --from=builder /app/dist ./dist
+COPY package*.json ./
+
+# Create directories
+RUN mkdir -p /app/logs /app/.cache
+
+# Create non-root user
+RUN addgroup -g 1001 -S express && \
+    adduser -S express -u 1001 && \
+    chown -R express:express /app
+
+USER express
+
+# Set environment
+ENV NODE_ENV=production \
+    HOST=0.0.0.0 \
+    PORT=3001
+
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+
+# Labels
+LABEL maintainer="claude-agent-ui@anthropic.com" \
+      version="1.0.0" \
+      description="Express Backend for Claude Agent UI"
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start Express
+CMD ["node", "dist/index.js"]

@@ -1,0 +1,64 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tasks",
+  "info": {
+    "singularName": "task",
+    "pluralName": "tasks",
+    "displayName": "Task",
+    "description": "Agent execution tasks and history"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "message": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "required": true,
+      "default": "pending",
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "result": {
+      "type": "json"
+    },
+    "error": {
+      "type": "text"
+    },
+    "startedAt": {
+      "type": "datetime"
+    },
+    "completedAt": {
+      "type": "datetime"
+    },
+    "executionTime": {
+      "type": "integer",
+      "min": 0
+    },
+    "tokensUsed": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "cost": {
+      "type": "decimal",
+      "default": 0,
+      "min": 0
+    },
+    "metadata": {
+      "type": "json"
+    },
+    "executionLog": {
+      "type": "json"
+    }
+  }
+}

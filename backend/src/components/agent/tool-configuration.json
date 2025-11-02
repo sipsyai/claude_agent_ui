@@ -1,0 +1,30 @@
+{
+  "collectionName": "components_agent_tool_configurations",
+  "info": {
+    "displayName": "Tool Configuration",
+    "icon": "cog",
+    "description": "Tool permissions and configuration for agents"
+  },
+  "options": {},
+  "attributes": {
+    "allowedTools": {
+      "type": "json",
+      "required": false,
+      "default": []
+    },
+    "disallowedTools": {
+      "type": "json",
+      "required": false,
+      "default": []
+    },
+    "toolPermissions": {
+      "type": "json",
+      "required": false,
+      "default": {}
+    },
+    "inheritFromParent": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

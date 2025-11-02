@@ -1,0 +1,548 @@
+{
+  "description": "Reusable components library for Strapi projects",
+  "sharedComponents": {
+    "shared.seo": {
+      "collectionName": "components_shared_seos",
+      "info": {
+        "displayName": "SEO",
+        "icon": "search",
+        "description": "SEO metadata for content"
+      },
+      "attributes": {
+        "metaTitle": {
+          "type": "string",
+          "required": true,
+          "maxLength": 60
+        },
+        "metaDescription": {
+          "type": "text",
+          "maxLength": 160
+        },
+        "keywords": {
+          "type": "string"
+        },
+        "ogImage": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        },
+        "ogTitle": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "ogDescription": {
+          "type": "text",
+          "maxLength": 160
+        },
+        "canonicalURL": {
+          "type": "string"
+        },
+        "noIndex": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "usage": "Use in Articles, Products, Pages for SEO optimization"
+    },
+    "shared.address": {
+      "collectionName": "components_shared_addresses",
+      "info": {
+        "displayName": "Address",
+        "icon": "map-marker-alt"
+      },
+      "attributes": {
+        "street": {
+          "type": "string",
+          "required": true
+        },
+        "street2": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string",
+          "required": true
+        },
+        "state": {
+          "type": "string"
+        },
+        "zipCode": {
+          "type": "string",
+          "required": true
+        },
+        "country": {
+          "type": "string",
+          "required": true,
+          "default": "USA"
+        },
+        "latitude": {
+          "type": "float"
+        },
+        "longitude": {
+          "type": "float"
+        }
+      },
+      "usage": "Use in Users, Companies, Stores, Orders for address information"
+    },
+    "shared.button": {
+      "collectionName": "components_shared_buttons",
+      "info": {
+        "displayName": "Button",
+        "icon": "hand-pointer"
+      },
+      "attributes": {
+        "text": {
+          "type": "string",
+          "required": true
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "variant": {
+          "type": "enumeration",
+          "enum": ["primary", "secondary", "outline", "ghost"],
+          "default": "primary"
+        },
+        "size": {
+          "type": "enumeration",
+          "enum": ["small", "medium", "large"],
+          "default": "medium"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "openInNewTab": {
+          "type": "boolean",
+          "default": false
+        },
+        "fullWidth": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "usage": "Use in Hero sections, CTAs, Cards for interactive buttons"
+    },
+    "shared.social-links": {
+      "collectionName": "components_shared_social_links",
+      "info": {
+        "displayName": "Social Links",
+        "icon": "share-alt"
+      },
+      "attributes": {
+        "facebook": {
+          "type": "string"
+        },
+        "twitter": {
+          "type": "string"
+        },
+        "instagram": {
+          "type": "string"
+        },
+        "linkedin": {
+          "type": "string"
+        },
+        "youtube": {
+          "type": "string"
+        },
+        "github": {
+          "type": "string"
+        },
+        "tiktok": {
+          "type": "string"
+        }
+      },
+      "usage": "Use in Site Settings, Team Members, Author Profiles"
+    },
+    "shared.image-with-caption": {
+      "collectionName": "components_shared_images_with_caption",
+      "info": {
+        "displayName": "Image with Caption",
+        "icon": "image"
+      },
+      "attributes": {
+        "image": {
+          "type": "media",
+          "multiple": false,
+          "required": true,
+          "allowedTypes": ["images"]
+        },
+        "caption": {
+          "type": "text"
+        },
+        "altText": {
+          "type": "string",
+          "required": true
+        },
+        "credit": {
+          "type": "string"
+        }
+      },
+      "usage": "Use in Articles, Galleries for images with metadata"
+    },
+    "shared.video": {
+      "collectionName": "components_shared_videos",
+      "info": {
+        "displayName": "Video",
+        "icon": "video"
+      },
+      "attributes": {
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "provider": {
+          "type": "enumeration",
+          "enum": ["youtube", "vimeo", "custom"],
+          "default": "youtube"
+        },
+        "thumbnail": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        },
+        "autoplay": {
+          "type": "boolean",
+          "default": false
+        },
+        "muted": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "usage": "Use in Articles, Products, Pages for video embeds"
+    },
+    "shared.link": {
+      "collectionName": "components_shared_links",
+      "info": {
+        "displayName": "Link",
+        "icon": "link"
+      },
+      "attributes": {
+        "text": {
+          "type": "string",
+          "required": true
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "openInNewTab": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "usage": "Use in Navigation, Footer, Quick Links"
+    }
+  },
+  "sectionComponents": {
+    "sections.hero": {
+      "collectionName": "components_sections_heroes",
+      "info": {
+        "displayName": "Hero Section",
+        "icon": "star"
+      },
+      "attributes": {
+        "headline": {
+          "type": "string",
+          "required": true
+        },
+        "subtitle": {
+          "type": "text"
+        },
+        "description": {
+          "type": "text"
+        },
+        "backgroundImage": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        },
+        "button": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.button"
+        },
+        "secondaryButton": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.button"
+        },
+        "alignment": {
+          "type": "enumeration",
+          "enum": ["left", "center", "right"],
+          "default": "center"
+        },
+        "overlayOpacity": {
+          "type": "integer",
+          "min": 0,
+          "max": 100,
+          "default": 50
+        }
+      },
+      "usage": "Use in Homepage, Landing Pages for hero sections"
+    },
+    "sections.feature": {
+      "collectionName": "components_sections_features",
+      "info": {
+        "displayName": "Feature",
+        "icon": "star"
+      },
+      "attributes": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "description": {
+          "type": "text"
+        },
+        "icon": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        },
+        "iconName": {
+          "type": "string"
+        },
+        "link": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.link"
+        }
+      },
+      "usage": "Use in Homepage, Product Pages as repeatable component"
+    },
+    "sections.testimonial": {
+      "collectionName": "components_sections_testimonials",
+      "info": {
+        "displayName": "Testimonial",
+        "icon": "quote-right"
+      },
+      "attributes": {
+        "quote": {
+          "type": "text",
+          "required": true
+        },
+        "author": {
+          "type": "string",
+          "required": true
+        },
+        "position": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        },
+        "rating": {
+          "type": "integer",
+          "min": 1,
+          "max": 5
+        }
+      },
+      "usage": "Use in Homepage, About Page as repeatable component"
+    },
+    "sections.cta": {
+      "collectionName": "components_sections_ctas",
+      "info": {
+        "displayName": "Call to Action",
+        "icon": "bullhorn"
+      },
+      "attributes": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "description": {
+          "type": "text"
+        },
+        "button": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.button"
+        },
+        "backgroundImage": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        },
+        "backgroundColor": {
+          "type": "string",
+          "default": "#000000"
+        }
+      },
+      "usage": "Use in Homepage, Landing Pages for call-to-action sections"
+    },
+    "sections.faq-item": {
+      "collectionName": "components_sections_faq_items",
+      "info": {
+        "displayName": "FAQ Item",
+        "icon": "question-circle"
+      },
+      "attributes": {
+        "question": {
+          "type": "string",
+          "required": true
+        },
+        "answer": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "usage": "Use in FAQ Page as repeatable component"
+    },
+    "sections.gallery-item": {
+      "collectionName": "components_sections_gallery_items",
+      "info": {
+        "displayName": "Gallery Item",
+        "icon": "images"
+      },
+      "attributes": {
+        "image": {
+          "type": "media",
+          "multiple": false,
+          "required": true,
+          "allowedTypes": ["images"]
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "text"
+        },
+        "link": {
+          "type": "string"
+        }
+      },
+      "usage": "Use in Gallery Pages as repeatable component"
+    },
+    "sections.stats": {
+      "collectionName": "components_sections_stats",
+      "info": {
+        "displayName": "Statistic",
+        "icon": "chart-bar"
+      },
+      "attributes": {
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "suffix": {
+          "type": "string"
+        },
+        "description": {
+          "type": "text"
+        },
+        "icon": {
+          "type": "string"
+        }
+      },
+      "usage": "Use in About Page, Homepage for statistics/metrics"
+    }
+  },
+  "nestedComponentExample": {
+    "description": "Example of using nested components",
+    "shared.card": {
+      "collectionName": "components_shared_cards",
+      "info": {
+        "displayName": "Card",
+        "icon": "square"
+      },
+      "attributes": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "description": {
+          "type": "text"
+        },
+        "image": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        },
+        "button": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.button"
+        },
+        "tags": {
+          "type": "component",
+          "repeatable": true,
+          "component": "shared.tag"
+        }
+      }
+    },
+    "shared.tag": {
+      "collectionName": "components_shared_tags",
+      "info": {
+        "displayName": "Tag",
+        "icon": "tag"
+      },
+      "attributes": {
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "color": {
+          "type": "string",
+          "default": "#000000"
+        }
+      }
+    }
+  },
+  "dynamicZoneExample": {
+    "description": "Example of using Dynamic Zone for flexible page builder",
+    "contentType": {
+      "kind": "collectionType",
+      "collectionName": "pages",
+      "info": {
+        "singularName": "page",
+        "pluralName": "pages",
+        "displayName": "Page"
+      },
+      "attributes": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "slug": {
+          "type": "uid",
+          "targetField": "title"
+        },
+        "content": {
+          "type": "dynamiczone",
+          "components": [
+            "sections.hero",
+            "sections.feature",
+            "sections.testimonial",
+            "sections.cta",
+            "sections.gallery-item",
+            "sections.faq-item",
+            "sections.stats"
+          ]
+        },
+        "seo": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.seo"
+        }
+      }
+    },
+    "usage": "This allows editors to build custom pages by mixing different sections"
+  },
+  "frontendExample": {
+    "description": "React component example for rendering dynamic zones",
+    "code": "function PageContent({ content }) {\n  return (\n    <div>\n      {content.map((section, index) => {\n        switch (section.__component) {\n          case 'sections.hero':\n            return <HeroSection key={index} {...section} />;\n          case 'sections.feature':\n            return <FeaturesSection key={index} {...section} />;\n          case 'sections.testimonial':\n            return <TestimonialsSection key={index} {...section} />;\n          case 'sections.cta':\n            return <CTASection key={index} {...section} />;\n          case 'sections.gallery-item':\n            return <GallerySection key={index} {...section} />;\n          case 'sections.faq-item':\n            return <FAQSection key={index} {...section} />;\n          case 'sections.stats':\n            return <StatsSection key={index} {...section} />;\n          default:\n            return null;\n        }\n      })}\n    </div>\n  );\n}"
+  }
+}

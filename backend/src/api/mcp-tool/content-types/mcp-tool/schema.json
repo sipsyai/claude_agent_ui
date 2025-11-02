@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "mcp_tools",
+  "info": {
+    "singularName": "mcp-tool",
+    "pluralName": "mcp-tools",
+    "displayName": "MCP Tool",
+    "description": "Tools provided by MCP servers"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "text",
+      "maxLength": 1000
+    },
+    "inputSchema": {
+      "type": "json",
+      "default": {}
+    },
+    "mcpServer": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::mcp-server.mcp-server",
+      "inversedBy": "mcpTools"
+    }
+  }
+}

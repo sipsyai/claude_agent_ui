@@ -1,0 +1,72 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Claude-specific
+.cui/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backups
+backups/
+database/backups/*.sql
+
+# Backend specific
+backend/.tmp/
+backend/.strapi/
+backend/dist/
+
+# Test directories
+test-downloads/
+test-injection-downloads/
+test-results/
+test-results-new/
+.playwright-mcp/
+agent_data_itsm/
+markdown-downloads/
+
+# Large log directories
+logs/**/*.json

@@ -1,0 +1,49 @@
+{
+  "collectionName": "components_skill_input_fields",
+  "info": {
+    "displayName": "Input Field",
+    "description": "Dynamic form field for skill execution",
+    "icon": "textField"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "Field name (used as identifier)"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": ["text", "textarea", "dropdown", "multiselect", "checkbox", "number", "filepath"],
+      "required": true,
+      "default": "text",
+      "description": "Input field type"
+    },
+    "label": {
+      "type": "string",
+      "required": true,
+      "description": "Display label for the field"
+    },
+    "description": {
+      "type": "text",
+      "description": "Help text or description for the field"
+    },
+    "placeholder": {
+      "type": "string",
+      "description": "Placeholder text"
+    },
+    "required": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this field is required"
+    },
+    "options": {
+      "type": "json",
+      "description": "Options array for dropdown/multiselect types"
+    },
+    "default": {
+      "type": "json",
+      "description": "Default value for the field"
+    }
+  }
+}

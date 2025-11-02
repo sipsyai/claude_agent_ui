@@ -1,0 +1,402 @@
+{
+  "description": "Single Type examples for common use cases",
+  "singleTypes": {
+    "homepage": {
+      "kind": "singleType",
+      "collectionName": "homepage",
+      "info": {
+        "singularName": "homepage",
+        "pluralName": "homepage",
+        "displayName": "Homepage"
+      },
+      "options": {
+        "draftAndPublish": false
+      },
+      "attributes": {
+        "hero": {
+          "type": "component",
+          "repeatable": false,
+          "component": "sections.hero"
+        },
+        "features": {
+          "type": "component",
+          "repeatable": true,
+          "component": "sections.feature"
+        },
+        "testimonials": {
+          "type": "component",
+          "repeatable": true,
+          "component": "sections.testimonial"
+        },
+        "cta": {
+          "type": "component",
+          "repeatable": false,
+          "component": "sections.cta"
+        },
+        "seo": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.seo"
+        }
+      }
+    },
+    "siteSettings": {
+      "kind": "singleType",
+      "collectionName": "site_settings",
+      "info": {
+        "singularName": "site-setting",
+        "pluralName": "site-settings",
+        "displayName": "Site Settings"
+      },
+      "options": {
+        "draftAndPublish": false
+      },
+      "attributes": {
+        "siteName": {
+          "type": "string",
+          "required": true,
+          "default": "My Site"
+        },
+        "logo": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        },
+        "favicon": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        },
+        "contactEmail": {
+          "type": "email",
+          "required": true
+        },
+        "contactPhone": {
+          "type": "string"
+        },
+        "address": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.address"
+        },
+        "socialLinks": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.social-links"
+        },
+        "footer": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.footer"
+        },
+        "maintenance": {
+          "type": "boolean",
+          "default": false
+        },
+        "maintenanceMessage": {
+          "type": "text"
+        }
+      }
+    },
+    "aboutPage": {
+      "kind": "singleType",
+      "collectionName": "about_page",
+      "info": {
+        "singularName": "about-page",
+        "pluralName": "about-page",
+        "displayName": "About Page"
+      },
+      "options": {
+        "draftAndPublish": false
+      },
+      "attributes": {
+        "title": {
+          "type": "string",
+          "required": true,
+          "default": "About Us"
+        },
+        "content": {
+          "type": "richtext",
+          "required": true
+        },
+        "missionStatement": {
+          "type": "text"
+        },
+        "visionStatement": {
+          "type": "text"
+        },
+        "teamMembers": {
+          "type": "component",
+          "repeatable": true,
+          "component": "team.member"
+        },
+        "companyHistory": {
+          "type": "component",
+          "repeatable": true,
+          "component": "about.timeline-item"
+        },
+        "values": {
+          "type": "component",
+          "repeatable": true,
+          "component": "about.value"
+        },
+        "seo": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.seo"
+        }
+      }
+    },
+    "contactPage": {
+      "kind": "singleType",
+      "collectionName": "contact_page",
+      "info": {
+        "singularName": "contact-page",
+        "pluralName": "contact-page",
+        "displayName": "Contact Page"
+      },
+      "options": {
+        "draftAndPublish": false
+      },
+      "attributes": {
+        "title": {
+          "type": "string",
+          "default": "Get in Touch"
+        },
+        "description": {
+          "type": "text"
+        },
+        "email": {
+          "type": "email",
+          "required": true
+        },
+        "phone": {
+          "type": "string"
+        },
+        "address": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.address"
+        },
+        "mapEmbed": {
+          "type": "text"
+        },
+        "officeHours": {
+          "type": "component",
+          "repeatable": false,
+          "component": "contact.office-hours"
+        },
+        "departments": {
+          "type": "component",
+          "repeatable": true,
+          "component": "contact.department"
+        },
+        "seo": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.seo"
+        }
+      }
+    }
+  },
+  "components": {
+    "sections.hero": {
+      "collectionName": "components_sections_heroes",
+      "info": {
+        "displayName": "Hero"
+      },
+      "attributes": {
+        "headline": {
+          "type": "string",
+          "required": true
+        },
+        "subtitle": {
+          "type": "text"
+        },
+        "backgroundImage": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        },
+        "button": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.button"
+        }
+      }
+    },
+    "sections.feature": {
+      "collectionName": "components_sections_features",
+      "info": {
+        "displayName": "Feature"
+      },
+      "attributes": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "description": {
+          "type": "text"
+        },
+        "icon": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        }
+      }
+    },
+    "sections.testimonial": {
+      "collectionName": "components_sections_testimonials",
+      "info": {
+        "displayName": "Testimonial"
+      },
+      "attributes": {
+        "quote": {
+          "type": "text",
+          "required": true
+        },
+        "author": {
+          "type": "string",
+          "required": true
+        },
+        "position": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        },
+        "rating": {
+          "type": "integer",
+          "min": 1,
+          "max": 5
+        }
+      }
+    },
+    "sections.cta": {
+      "collectionName": "components_sections_ctas",
+      "info": {
+        "displayName": "Call to Action"
+      },
+      "attributes": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "description": {
+          "type": "text"
+        },
+        "button": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.button"
+        },
+        "backgroundImage": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        }
+      }
+    },
+    "shared.button": {
+      "collectionName": "components_shared_buttons",
+      "info": {
+        "displayName": "Button"
+      },
+      "attributes": {
+        "text": {
+          "type": "string",
+          "required": true
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "variant": {
+          "type": "enumeration",
+          "enum": ["primary", "secondary", "outline"],
+          "default": "primary"
+        },
+        "openInNewTab": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "shared.social-links": {
+      "collectionName": "components_shared_social_links",
+      "info": {
+        "displayName": "Social Links"
+      },
+      "attributes": {
+        "facebook": {
+          "type": "string"
+        },
+        "twitter": {
+          "type": "string"
+        },
+        "instagram": {
+          "type": "string"
+        },
+        "linkedin": {
+          "type": "string"
+        },
+        "youtube": {
+          "type": "string"
+        }
+      }
+    },
+    "team.member": {
+      "collectionName": "components_team_members",
+      "info": {
+        "displayName": "Team Member"
+      },
+      "attributes": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "position": {
+          "type": "string",
+          "required": true
+        },
+        "bio": {
+          "type": "text"
+        },
+        "photo": {
+          "type": "media",
+          "multiple": false,
+          "allowedTypes": ["images"]
+        },
+        "email": {
+          "type": "email"
+        },
+        "socialLinks": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.social-links"
+        }
+      }
+    }
+  },
+  "usage": {
+    "description": "How to use Single Types",
+    "apiExamples": {
+      "getHomepage": "GET /api/homepage?populate=deep",
+      "updateHomepage": "PUT /api/homepage { data: { hero: {...} } }",
+      "getSiteSettings": "GET /api/site-setting?populate=*",
+      "getAboutPage": "GET /api/about-page?populate=deep",
+      "getContactPage": "GET /api/contact-page?populate=*"
+    },
+    "notes": [
+      "Single Types don't have IDs in the URL (use /api/homepage instead of /api/homepage/1)",
+      "Only one entry exists per Single Type",
+      "No POST or DELETE endpoints for Single Types",
+      "Perfect for unique pages like Homepage, About, Contact"
+    ]
+  }
+}

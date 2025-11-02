@@ -1,0 +1,33 @@
+{
+  "collectionName": "components_shared_metadata",
+  "info": {
+    "displayName": "Metadata",
+    "icon": "tag",
+    "description": "Key-value metadata pairs for flexible data storage"
+  },
+  "options": {},
+  "attributes": {
+    "key": {
+      "type": "string",
+      "required": true,
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "value": {
+      "type": "text",
+      "required": false,
+      "maxLength": 5000
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": ["string", "number", "boolean", "json", "date"],
+      "default": "string",
+      "required": true
+    },
+    "description": {
+      "type": "string",
+      "required": false,
+      "maxLength": 255
+    }
+  }
+}

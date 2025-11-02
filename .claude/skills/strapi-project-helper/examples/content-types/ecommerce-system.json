@@ -1,0 +1,222 @@
+{
+  "description": "E-commerce system with Products, Orders, and Cart",
+  "contentTypes": {
+    "product": {
+      "kind": "collectionType",
+      "collectionName": "products",
+      "info": {
+        "singularName": "product",
+        "pluralName": "products",
+        "displayName": "Product"
+      },
+      "options": {
+        "draftAndPublish": true
+      },
+      "attributes": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "slug": {
+          "type": "uid",
+          "targetField": "name",
+          "required": true
+        },
+        "description": {
+          "type": "richtext"
+        },
+        "price": {
+          "type": "decimal",
+          "required": true,
+          "min": 0
+        },
+        "salePrice": {
+          "type": "decimal",
+          "min": 0
+        },
+        "stock": {
+          "type": "integer",
+          "default": 0,
+          "min": 0
+        },
+        "sku": {
+          "type": "string",
+          "unique": true
+        },
+        "images": {
+          "type": "media",
+          "multiple": true,
+          "allowedTypes": ["images"]
+        },
+        "category": {
+          "type": "relation",
+          "relation": "manyToOne",
+          "target": "api::category.category",
+          "inversedBy": "products"
+        },
+        "tags": {
+          "type": "relation",
+          "relation": "manyToMany",
+          "target": "api::tag.tag"
+        },
+        "isActive": {
+          "type": "boolean",
+          "default": true
+        },
+        "isFeatured": {
+          "type": "boolean",
+          "default": false
+        },
+        "rating": {
+          "type": "float",
+          "min": 0,
+          "max": 5,
+          "default": 0
+        },
+        "reviewCount": {
+          "type": "integer",
+          "default": 0,
+          "min": 0
+        }
+      }
+    },
+    "order": {
+      "kind": "collectionType",
+      "collectionName": "orders",
+      "info": {
+        "singularName": "order",
+        "pluralName": "orders",
+        "displayName": "Order"
+      },
+      "options": {
+        "draftAndPublish": false,
+        "timestamps": true
+      },
+      "attributes": {
+        "orderNumber": {
+          "type": "string",
+          "required": true,
+          "unique": true
+        },
+        "user": {
+          "type": "relation",
+          "relation": "manyToOne",
+          "target": "plugin::users-permissions.user"
+        },
+        "items": {
+          "type": "component",
+          "repeatable": true,
+          "component": "order.order-item"
+        },
+        "subtotal": {
+          "type": "decimal",
+          "required": true,
+          "min": 0
+        },
+        "tax": {
+          "type": "decimal",
+          "default": 0,
+          "min": 0
+        },
+        "shipping": {
+          "type": "decimal",
+          "default": 0,
+          "min": 0
+        },
+        "total": {
+          "type": "decimal",
+          "required": true,
+          "min": 0
+        },
+        "status": {
+          "type": "enumeration",
+          "enum": ["pending", "processing", "shipped", "delivered", "cancelled"],
+          "default": "pending"
+        },
+        "paymentStatus": {
+          "type": "enumeration",
+          "enum": ["pending", "paid", "failed", "refunded"],
+          "default": "pending"
+        },
+        "shippingAddress": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.address"
+        },
+        "billingAddress": {
+          "type": "component",
+          "repeatable": false,
+          "component": "shared.address"
+        }
+      }
+    }
+  },
+  "components": {
+    "order.order-item": {
+      "collectionName": "components_order_order_items",
+      "info": {
+        "displayName": "Order Item"
+      },
+      "attributes": {
+        "product": {
+          "type": "relation",
+          "relation": "oneToOne",
+          "target": "api::product.product"
+        },
+        "quantity": {
+          "type": "integer",
+          "required": true,
+          "min": 1
+        },
+        "price": {
+          "type": "decimal",
+          "required": true,
+          "min": 0
+        },
+        "total": {
+          "type": "decimal",
+          "required": true,
+          "min": 0
+        }
+      }
+    },
+    "shared.address": {
+      "collectionName": "components_shared_addresses",
+      "info": {
+        "displayName": "Address"
+      },
+      "attributes": {
+        "street": {
+          "type": "string",
+          "required": true
+        },
+        "city": {
+          "type": "string",
+          "required": true
+        },
+        "state": {
+          "type": "string"
+        },
+        "zipCode": {
+          "type": "string",
+          "required": true
+        },
+        "country": {
+          "type": "string",
+          "required": true,
+          "default": "USA"
+        }
+      }
+    }
+  },
+  "usage": {
+    "apiExamples": {
+      "getProducts": "GET /api/products?populate=*",
+      "getProductBySlug": "GET /api/products?filters[slug][$eq]=product-slug&populate=*",
+      "getFeaturedProducts": "GET /api/products?filters[isFeatured][$eq]=true&populate=*",
+      "getProductsByCategory": "GET /api/products?filters[category][slug][$eq]=electronics&populate=*",
+      "createOrder": "POST /api/orders { data: { orderNumber: 'ORD-001', user: 1, items: [...], total: 99.99 } }",
+      "updateOrderStatus": "PUT /api/orders/1 { data: { status: 'shipped' } }"
+    }
+  }
+}

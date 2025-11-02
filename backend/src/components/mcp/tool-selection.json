@@ -1,0 +1,31 @@
+{
+  "collectionName": "components_mcp_tool_selections",
+  "info": {
+    "displayName": "MCP Tool Selection",
+    "icon": "puzzle",
+    "description": "Select and configure MCP tools from the MCP Tool collection"
+  },
+  "options": {},
+  "attributes": {
+    "mcpTool": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::mcp-tool.mcp-tool"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this tool is enabled for this agent/skill"
+    },
+    "permissions": {
+      "type": "json",
+      "default": {},
+      "description": "Tool-specific permissions and restrictions"
+    },
+    "customConfig": {
+      "type": "json",
+      "default": {},
+      "description": "Custom configuration overrides for this tool"
+    }
+  }
+}

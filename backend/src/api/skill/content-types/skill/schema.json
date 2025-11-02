@@ -1,0 +1,128 @@
+{
+  "kind": "collectionType",
+  "collectionName": "skills",
+  "info": {
+    "singularName": "skill",
+    "pluralName": "skills",
+    "displayName": "Skill",
+    "description": "Claude Agent SDK skills with full frontmatter support"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "uid",
+      "targetField": "displayName",
+      "required": true,
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "displayName": {
+      "type": "string",
+      "maxLength": 200,
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "minLength": 10,
+      "maxLength": 1024,
+      "required": true
+    },
+    "skillConfig": {
+      "type": "text",
+      "default": "# ⚠️ FORCED SKILL EXECUTION MODE\n\nYou are executing ONLY the \"{skillName}\" skill.\n- Do NOT attempt to use any other skills or commands.\n- Do NOT look for other skills in the filesystem.\n- Follow ONLY the instructions defined in this skill.\n- Use ONLY the tools specified in this skill's configuration.\n\n---\n\n"
+    },
+    "skillmd": {
+      "type": "text",
+      "minLength": 50,
+      "required": true
+    },
+    "experienceScore": {
+      "type": "decimal",
+      "default": 0,
+      "min": 0,
+      "max": 100
+    },
+    "category": {
+      "type": "enumeration",
+      "default": "custom",
+      "enum": [
+        "general-purpose",
+        "code-analysis",
+        "data-processing",
+        "web-scraping",
+        "file-manipulation",
+        "api-integration",
+        "browser-automation",
+        "testing",
+        "custom"
+      ]
+    },
+    "isPublic": {
+      "type": "boolean",
+      "default": true
+    },
+    "version": {
+      "type": "string",
+      "default": "1.0.0",
+      "regex": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "license": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "trainingHistory": {
+      "type": "component",
+      "component": "skill.training-session",
+      "repeatable": true
+    },
+    "additionalFiles": {
+      "type": "component",
+      "component": "skill.skill-file",
+      "repeatable": true
+    },
+    "agentSelection": {
+      "type": "component",
+      "component": "agent.agent-selection",
+      "repeatable": true
+    },
+    "trainingAgent": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::agent.agent",
+      "description": "Agent responsible for training this skill"
+    },
+    "mcpConfig": {
+      "type": "component",
+      "component": "mcp.server-selection",
+      "repeatable": true
+    },
+    "toolConfig": {
+      "type": "component",
+      "component": "agent.tool-configuration",
+      "repeatable": false
+    },
+    "modelConfig": {
+      "type": "component",
+      "component": "agent.model-configuration",
+      "repeatable": false
+    },
+    "analytics": {
+      "type": "component",
+      "component": "agent.analytics",
+      "repeatable": false
+    },
+    "tasks": {
+      "type": "component",
+      "component": "task.task-selection",
+      "repeatable": true
+    },
+    "inputFields": {
+      "type": "component",
+      "component": "skill.input-field",
+      "repeatable": true
+    }
+  }
+}

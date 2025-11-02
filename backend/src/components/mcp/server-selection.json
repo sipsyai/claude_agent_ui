@@ -1,0 +1,49 @@
+{
+  "collectionName": "components_mcp_server_selections",
+  "info": {
+    "displayName": "MCP Server Selection",
+    "icon": "server",
+    "description": "Select and configure MCP servers from the MCP Server collection"
+  },
+  "options": {},
+  "attributes": {
+    "mcpServer": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::mcp-server.mcp-server",
+      "required": true
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this server is enabled for this agent/skill"
+    },
+    "customArgs": {
+      "type": "json",
+      "default": null,
+      "description": "Override server command arguments (null = use server defaults)"
+    },
+    "customEnv": {
+      "type": "json",
+      "default": null,
+      "description": "Override server environment variables (null = use server defaults)"
+    },
+    "customStartupTimeout": {
+      "type": "integer",
+      "min": 1000,
+      "max": 300000,
+      "description": "Override server startup timeout (null = use server default)"
+    },
+    "selectedTools": {
+      "type": "component",
+      "repeatable": true,
+      "component": "mcp.tool-selection",
+      "description": "Selected tools from this MCP server with custom permissions"
+    },
+    "metadata": {
+      "type": "json",
+      "default": {},
+      "description": "Additional metadata for this server selection"
+    }
+  }
+}

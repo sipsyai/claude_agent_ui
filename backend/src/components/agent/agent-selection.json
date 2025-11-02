@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_agent_agent_selections",
+  "info": {
+    "displayName": "Agent Selection",
+    "description": "Agent selection component with enabled flag and metadata"
+  },
+  "options": {},
+  "attributes": {
+    "agent": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::agent.agent",
+      "required": true
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

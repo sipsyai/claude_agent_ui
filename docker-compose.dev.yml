@@ -1,0 +1,53 @@
+# ============================================================
+# Claude Agent UI - Development Docker Compose Override
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# ============================================================
+
+services:
+  postgres:
+    ports:
+      - "5432:5432"  # Expose for local development tools
+    volumes:
+      - ./database/dev-data:/var/lib/postgresql/data  # Local development data
+
+  strapi:
+    build:
+      target: development  # Use development stage
+    environment:
+      NODE_ENV: development
+      STRAPI_LOG_LEVEL: debug
+    volumes:
+      - ./backend:/opt/app:delegated  # Hot reload
+      - /opt/app/node_modules  # Prevent overwriting
+    ports:
+      - "1337:1337"
+      - "9229:9229"  # Node.js debugger
+    command: npm run develop  # Strapi development mode
+
+  express:
+    build:
+      target: development
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+    volumes:
+      - ./src:/app/src:delegated
+      - /app/node_modules
+    ports:
+      - "3001:3001"
+      - "9230:9230"  # Node.js debugger
+    command: npm run dev  # Nodemon for hot reload
+
+  frontend:
+    build:
+      target: development
+    volumes:
+      - .:/app:delegated
+      - /app/node_modules
+    ports:
+      - "5173:5173"  # Vite dev server
+      - "24678:24678"  # Vite HMR
+    command: npm run dev -- --host 0.0.0.0
+    environment:
+      VITE_STRAPI_URL: http://localhost:1337/api
+      VITE_EXPRESS_URL: http://localhost:3001/api

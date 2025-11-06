@@ -32,7 +32,7 @@
     "systemPrompt": {
       "type": "text",
       "minLength": 10,
-      "maxLength": 10000,
+      "maxLength": 50000,
       "required": true
     },
     "enabled": {

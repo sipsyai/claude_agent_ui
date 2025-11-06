@@ -14,6 +14,7 @@ import MCPServersPage from './components/MCPServersPage';
 import TasksPage from './components/TasksPage';
 import SettingsPage from './components/SettingsPage';
 import * as api from './services/api';
+import ChatPage from './components/ChatPage';
 
 type SetupStep = 'home' | 'landing' | 'validating';
 
@@ -178,6 +179,8 @@ const App: React.FC = () => {
     switch(managerView) {
       case ManagerView.Dashboard:
         return <DashboardPage />;
+      case ManagerView.Chat:
+        return <ChatPage />;
       case ManagerView.Agents:
         return <AgentsPage agents={discoveredAgents} directory={directoryName} onAgentCreated={handleAgentCreated} />;
       case ManagerView.Commands:
@@ -211,6 +214,7 @@ const App: React.FC = () => {
         directoryName: directoryName,
         onChangeDirectory: handleChangeDirectory,
       }}
+      noContainer={managerView === ManagerView.Chat}
     >
       {renderDashboardContent()}
       {selectedAgent && (

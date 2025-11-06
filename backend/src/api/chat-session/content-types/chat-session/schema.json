@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "chat_sessions",
+  "info": {
+    "singularName": "chat-session",
+    "pluralName": "chat-sessions",
+    "displayName": "Chat Session",
+    "description": "Chat sessions for Claude Agent UI"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["active", "archived"],
+      "default": "active"
+    },
+    "sessionId": {
+      "type": "string",
+      "unique": true
+    },
+    "skills": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::skill.skill"
+    },
+    "messages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::chat-message.chat-message",
+      "mappedBy": "session"
+    },
+    "permissionMode": {
+      "type": "enumeration",
+      "enum": ["default", "bypass", "auto"],
+      "default": "default"
+    },
+    "planMode": {
+      "type": "boolean",
+      "default": false
+    },
+    "agent": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::agent.agent",
+      "description": "Agent to use for this chat session (provides systemPrompt and configuration)"
+    },
+    "customSystemPrompt": {
+      "type": "text",
+      "description": "Optional custom system prompt override (if not using an agent)"
+    }
+  }
+}

@@ -120,6 +120,18 @@ You are executing ONLY the "{skillName}" skill.
       allowedTools = (allowedTools as any).split(',').map((t: string) => t.trim());
     }
 
+    // ✅ CRITICAL: Add 'Skill' tool to allowedTools for skill execution
+    if (!allowedTools) {
+      allowedTools = ['Skill'];
+    } else {
+      if (!Array.isArray(allowedTools)) {
+        allowedTools = [allowedTools as any];
+      }
+      if (!allowedTools.includes('Skill')) {
+        allowedTools = [...allowedTools, 'Skill'];
+      }
+    }
+
     // Build MCP servers from skill's mcpConfig component (Strapi 5)
     // Falls back to loading all servers from .mcp.json if no mcpConfig
     let mcpServers = await buildMcpServersFromSkillConfig(skill as any, projectPath);
@@ -173,16 +185,18 @@ You are executing ONLY the "{skillName}" skill.
     // Map UI permission modes to CLI permission modes
     const cliPermissionMode = task.permissionMode === 'bypass' ? 'bypassPermissions' : task.permissionMode;
 
-    logger.info('Executing skill with SDK', {
+    logger.info('🚀 Executing skill with SDK (with settingSources)', {
         skillId: skill.id,
         prompt: task.userPrompt,
         hasSystemPrompt: !!systemPrompt,
+        settingSources: ['project'], // ✅ Skills enabled
         allowedTools,
         disallowedTools,
         hasMcpServers: !!mcpServers,
         mcpServers: mcpServers ? Object.keys(mcpServers)
    : [],
-        permissionMode: cliPermissionMode
+        permissionMode: cliPermissionMode,
+        skillToolIncluded: allowedTools?.includes('Skill') || false
       });
 
       // Build SDK payload
@@ -192,6 +206,11 @@ You are executing ONLY the "{skillName}" skill.
           systemPrompt: systemPrompt,
           model: 'claude-sonnet-4-5',
           cwd: projectPath,
+
+          // ✅ CRITICAL: Enable skills filesystem settings
+          settingSources: ['project'], // Loads .claude/skills/ directory
+          includePartialMessages: true, // Enable streaming for real-time updates
+
           allowedTools: allowedTools &&
   Array.isArray(allowedTools) ? allowedTools :
   undefined,
@@ -225,6 +244,11 @@ You are executing ONLY the "{skillName}" skill.
           systemPrompt: systemPrompt,
           model: 'claude-sonnet-4-5',
           cwd: projectPath,
+
+          // ✅ CRITICAL: Enable skills filesystem settings
+          settingSources: ['project'], // Loads .claude/skills/ directory
+          includePartialMessages: true, // Enable streaming for real-time updates
+
           allowedTools: allowedTools &&
   Array.isArray(allowedTools) ? allowedTools :
   undefined,
@@ -531,12 +555,45 @@ router.post('/:id/execute', async (req: Request, res: Response) => {
 
       // ALWAYS fetch from Strapi first (single source of truth)
       try {
-        logger.info('[SkillExecution] Fetching skill from Strapi', {
-          taskId: id,
-          skillId: task.agentId
-        });
+        // ✅ FIX: Check if skill_name is in inputValues first (more reliable than agentId)
+        const skillNameFromInput = task.inputValues?.skill_name;
+        let strapiSkill: any = null;
 
-        const strapiSkill = await strapiClient.getSkill(task.agentId);
+        if (skillNameFromInput) {
+          // Try to find skill by name first
+          logger.info('[SkillExecution] Fetching skill from Strapi by name', {
+            taskId: id,
+            skillName: skillNameFromInput
+          });
+
+          const skills = await strapiClient.getAllSkills({
+            filters: { name: { $eq: skillNameFromInput } }
+          });
+
+          if (skills && skills.length > 0) {
+            strapiSkill = skills[0];
+            logger.info('[SkillExecution] Found skill by name', {
+              taskId: id,
+              skillId: strapiSkill.id,
+              skillName: strapiSkill.name
+            });
+          } else {
+            logger.warn('[SkillExecution] Skill not found by name, trying agentId', {
+              taskId: id,
+              skillName: skillNameFromInput
+            });
+          }
+        }
+
+        // Fallback to agentId if skill not found by name
+        if (!strapiSkill) {
+          logger.info('[SkillExecution] Fetching skill from Strapi by ID', {
+            taskId: id,
+            skillId: task.agentId
+          });
+
+          strapiSkill = await strapiClient.getSkill(task.agentId);
+        }
 
         // Sync to filesystem before execution
         const { skillSyncService } = await import('../services/skill-sync-service.js');
@@ -752,10 +809,11 @@ router.post('/:id/execute', async (req: Request, res: Response) => {
       // Map UI permission modes to CLI permission modes
       const cliPermissionMode = task.permissionMode === 'bypass' ? 'bypassPermissions' : task.permissionMode;
 
-      logger.info('Executing agent with SDK', {
+      logger.info('🚀 Executing agent with SDK (with settingSources)', {
         agentId: agent.id,
         prompt: task.userPrompt,
         hasSystemPrompt: !!enhancedSystemPrompt,
+        settingSources: ['project'], // ✅ Skills enabled
         allowedTools,
         disallowedTools: finalDisallowedTools,
         hasMcpServers: !!mcpServers,
@@ -769,6 +827,11 @@ router.post('/:id/execute', async (req: Request, res: Response) => {
           systemPrompt: enhancedSystemPrompt,
           model: 'claude-sonnet-4-5',
           cwd: projectPath,
+
+          // ✅ Enable skills filesystem settings for agent execution too
+          settingSources: ['project'], // Loads .claude/skills/ directory
+          includePartialMessages: true, // Enable streaming for real-time updates
+
           allowedTools: allowedTools as string[] | undefined,
           disallowedTools: finalDisallowedTools,
           mcpServers: mcpServers as any,

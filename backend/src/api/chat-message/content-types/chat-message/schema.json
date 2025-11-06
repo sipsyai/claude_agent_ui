@@ -1,0 +1,41 @@
+{
+  "kind": "collectionType",
+  "collectionName": "chat_messages",
+  "info": {
+    "singularName": "chat-message",
+    "pluralName": "chat-messages",
+    "displayName": "Chat Message",
+    "description": "Chat messages for Claude Agent UI"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "session": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::chat-session.chat-session",
+      "inversedBy": "messages"
+    },
+    "role": {
+      "type": "enumeration",
+      "enum": ["user", "assistant", "system"],
+      "required": true
+    },
+    "content": {
+      "type": "richtext",
+      "required": true
+    },
+    "attachments": {
+      "type": "json"
+    },
+    "metadata": {
+      "type": "json"
+    },
+    "timestamp": {
+      "type": "datetime",
+      "required": true
+    }
+  }
+}

@@ -38,6 +38,23 @@ import type {
   UpdateTaskDTO,
 } from '../types/index.js';
 
+// ============= HELPER FUNCTIONS =============
+
+/**
+ * Generate a URL-friendly slug from a string
+ * @param text - Input text to slugify
+ * @returns Slugified string (lowercase, hyphens, no special chars)
+ */
+function generateSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-')      // Replace spaces with hyphens
+    .replace(/-+/g, '-')       // Replace multiple hyphens with single hyphen
+    .replace(/^-+|-+$/g, '');  // Remove leading/trailing hyphens
+}
+
 // ============= CONFIGURATION =============
 
 const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:1337';
@@ -1029,6 +1046,12 @@ export class StrapiClient {
       systemPrompt: agent.systemPrompt,
       enabled: agent.enabled,
     };
+
+    // Generate slug from name if name is provided
+    // Strapi's auto-generation doesn't always work with programmatic API calls
+    if (agent.name) {
+      data.slug = generateSlug(agent.name);
+    }
 
     // Component fields - pass through as-is
     if (agent.toolConfig) {

@@ -5,16 +5,21 @@ import Sidebar, { SidebarProps } from './Sidebar';
 interface LayoutProps {
   children: React.ReactNode;
   sidebarProps: SidebarProps;
+  noContainer?: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, sidebarProps }) => {
+const Layout: React.FC<LayoutProps> = ({ children, sidebarProps, noContainer = false }) => {
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar {...sidebarProps} />
-      <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {noContainer ? (
+          children
+        ) : (
+          <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 overflow-y-auto flex-1">
             {children}
-        </div>
+          </div>
+        )}
       </main>
     </div>
   );

@@ -17,13 +17,14 @@ export interface Agent {
 }
 
 export enum ManagerView {
-  Dashboard = 'dashboard',
-  Agents = 'agents',
-  Commands = 'commands',
-  Skills = 'skills',
-  MCPServers = 'mcp-servers',
-  Tasks = 'tasks',
-  Settings = 'settings',
+    Dashboard = 'dashboard',
+    Chat = 'chat',  // ← BU SATIRI EKLEYİN
+    Agents = 'agents',
+    Commands = 'commands',
+    Skills = 'skills',
+    MCPServers = 'mcp-servers',
+    Tasks = 'tasks',
+    Settings = 'settings',
 }
 
 /**

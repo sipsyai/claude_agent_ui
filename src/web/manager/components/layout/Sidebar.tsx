@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { ManagerView } from '../../types';
+
 import {
   LayoutGridIcon,
   CommandLineIcon,
@@ -10,6 +11,7 @@ import {
   CpuChipIcon,
   ServerIcon,
   FolderIcon,
+  MessageSquareIcon,
 } from '../ui/Icons';
 import { Button } from '../ui/Button';
 
@@ -22,6 +24,7 @@ export interface SidebarProps {
 
 const menuItems = [
   { view: ManagerView.Dashboard, label: 'Dashboard', icon: LayoutGridIcon },
+  { view: ManagerView.Chat, label: 'Chat', icon: MessageSquareIcon },
   { view: ManagerView.Agents, label: 'Agents', icon: CpuChipIcon },
   { view: ManagerView.Commands, label: 'Commands', icon: CommandLineIcon },
   { view: ManagerView.Skills, label: 'Skills', icon: PuzzlePieceIcon },

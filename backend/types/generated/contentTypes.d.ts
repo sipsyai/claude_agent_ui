@@ -476,11 +476,93 @@ export interface ApiAgentAgent extends Struct.CollectionTypeSchema {
     systemPrompt: Schema.Attribute.Text &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{
-        maxLength: 10000;
+        maxLength: 50000;
         minLength: 10;
       }>;
     tasks: Schema.Attribute.Component<'task.task-selection', true>;
     toolConfig: Schema.Attribute.Component<'agent.tool-configuration', false>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiChatMessageChatMessage extends Struct.CollectionTypeSchema {
+  collectionName: 'chat_messages';
+  info: {
+    description: 'Chat messages for Claude Agent UI';
+    displayName: 'Chat Message';
+    pluralName: 'chat-messages';
+    singularName: 'chat-message';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    attachments: Schema.Attribute.JSON;
+    content: Schema.Attribute.RichText & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::chat-message.chat-message'
+    > &
+      Schema.Attribute.Private;
+    metadata: Schema.Attribute.JSON;
+    publishedAt: Schema.Attribute.DateTime;
+    role: Schema.Attribute.Enumeration<['user', 'assistant', 'system']> &
+      Schema.Attribute.Required;
+    session: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::chat-session.chat-session'
+    >;
+    timestamp: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiChatSessionChatSession extends Struct.CollectionTypeSchema {
+  collectionName: 'chat_sessions';
+  info: {
+    description: 'Chat sessions for Claude Agent UI';
+    displayName: 'Chat Session';
+    pluralName: 'chat-sessions';
+    singularName: 'chat-session';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    agent: Schema.Attribute.Relation<'manyToOne', 'api::agent.agent'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    customSystemPrompt: Schema.Attribute.Text;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::chat-session.chat-session'
+    > &
+      Schema.Attribute.Private;
+    messages: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::chat-message.chat-message'
+    >;
+    permissionMode: Schema.Attribute.Enumeration<
+      ['default', 'bypass', 'auto']
+    > &
+      Schema.Attribute.DefaultTo<'default'>;
+    planMode: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    publishedAt: Schema.Attribute.DateTime;
+    sessionId: Schema.Attribute.String & Schema.Attribute.Unique;
+    skills: Schema.Attribute.Relation<'manyToMany', 'api::skill.skill'>;
+    status: Schema.Attribute.Enumeration<['active', 'archived']> &
+      Schema.Attribute.DefaultTo<'active'>;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1257,6 +1339,8 @@ declare module '@strapi/strapi' {
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::agent.agent': ApiAgentAgent;
+      'api::chat-message.chat-message': ApiChatMessageChatMessage;
+      'api::chat-session.chat-session': ApiChatSessionChatSession;
       'api::mcp-server.mcp-server': ApiMcpServerMcpServer;
       'api::mcp-tool.mcp-tool': ApiMcpToolMcpTool;
       'api::skill.skill': ApiSkillSkill;

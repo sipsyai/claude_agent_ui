@@ -44,11 +44,14 @@
     "migrate:markdown": "tsx scripts/migrate-from-markdown.ts",
     "validate-migration": "tsx scripts/validate-migration.ts",
     "rollback-migration": "tsx scripts/rollback-migration.ts",
-    "import-training-agent": "tsx scripts/import-training-agent.ts"
+    "import-training-agent": "tsx scripts/import-training-agent.ts",
+    "run-payload": "tsx run-sdk-payload.ts"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.1.27",
+    "@anthropic-ai/claude-agent-sdk": "^0.1.30",
     "@anthropic-ai/sdk": "^0.54.0",
+    "@assistant-ui/react": "^0.11.35",
+    "@assistant-ui/react-markdown": "^0.11.3",
     "@modelcontextprotocol/sdk": "^1.17.0",
     "@musistudio/llms": "^1.0.38",
     "@radix-ui/react-checkbox": "^1.3.2",
@@ -62,6 +65,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@types/better-sqlite3": "^7.6.13",
     "@types/eventsource": "^1.1.15",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "@types/web-push": "^3.6.4",
     "axios": "^1.13.1",
     "better-sqlite3": "^12.4.1",
@@ -81,6 +85,7 @@
     "react-dom": "^18.2.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^6.22.0",
+    "react-syntax-highlighter": "^16.1.0",
     "tailwind-merge": "^3.3.1",
     "uuid": "^11.1.0",
     "web-push": "^3.6.7",

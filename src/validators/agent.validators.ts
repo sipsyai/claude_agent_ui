@@ -45,6 +45,9 @@ export const createAgentSchema = z.object({
     .optional()
     .default({}),
 
+  mcpTools: z.record(z.string(), z.array(z.string()))
+    .optional(),
+
   mcpServers: z.array(z.string())
     .optional()
     .default([]),

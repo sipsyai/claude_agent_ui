@@ -70,3 +70,80 @@ markdown-downloads/
 
 # Large log directories
 logs/**/*.json
+
+# Claude settings (user-specific)
+.claude/settings.json
+
+# Development notes and reports
+*_NOTES.md
+*_REPORT.md
+*_PLAN.md
+*_GUIDE.md
+*_RESULTS.md
+*_SUCCESS.md
+*_ANALYSIS.md
+*_USAGE.md
+*_README.md
+*_QUICK_GUIDE.md
+docs/reports/
+docs/tests/
+
+# Test files
+test-*.json
+test-*.ts
+test-*.js
+test-*.txt
+*-test.json
+test_*.py
+agent-detail.json
+strapi-agents.json
+
+# Python development scripts
+scripts/*.py
+*.py
+!backend/**/*.py
+
+# Output directories
+output/
+scripts/challenge_output/
+
+# CSV data files
+*.csv
+
+# Screenshots and images
+*_screenshot.png
+error_screenshot.png
+
+# Temporary files
+nul
+*.backup
+*.old
+*.new
+
+# Requirements files (project-specific)
+requirements_motadata.txt
+
+# Backend public assets (if not needed)
+backend/favicon.ico
+backend/public/favicon.ico
+
+# Additional markdown docs
+LINKEDIN_JOBFINDER*.md
+PLAYWRIGHT_*.md
+README_MOTADATA*.md
+TEST_PLAYWRIGHT.md
+
+# Backup and old files
+ChatPage_OLD.tsx
+*.txt.backup
+fix_chat_log.txt
+
+# Test utilities
+check-agents-tools.cjs
+run-sdk-payload.ts
+
+# Docs
+docs/chat-process/
+
+# Claude project instructions (user-specific)
+CLAUDE.md

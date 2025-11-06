@@ -217,7 +217,7 @@ export function createExecutionRoutes(): Router {
       const systemPrompt = agent.systemPrompt || '';
 
       // Merge tools from agent and skills
-      const { allowedTools, disallowedTools } = mergeSkillTools(agent.toolConfig?.allowedTools || [], skills);
+      const { allowedTools, disallowedTools } = mergeSkillTools(agent.toolConfig?.allowedTools || [], agent.toolConfig?.disallowedTools || [], skills);
 
       // Load MCP config from .mcp.json
       const workingDirectory = process.cwd();
@@ -540,7 +540,7 @@ export function createExecutionRoutes(): Router {
       const systemPrompt = agent.systemPrompt || '';
 
       // Merge tools from agent and skills
-      const { allowedTools, disallowedTools } = mergeSkillTools(agent.toolConfig?.allowedTools || [], skills);
+      const { allowedTools, disallowedTools } = mergeSkillTools(agent.toolConfig?.allowedTools || [], agent.toolConfig?.disallowedTools || [], skills);
 
       // Load MCP config from .mcp.json
       const workingDirectory = process.cwd(); // Could be configurable per agent
@@ -890,10 +890,13 @@ export function createExecutionRoutes(): Router {
    * Based on legacy implementation
    */
   function mergeSkillTools(
-    agentTools: string[] | undefined,
+    agentAllowedTools: string[] | undefined,
+    agentDisallowedTools: string[] | undefined,
     skills: any[]
   ): { allowedTools: string[]; disallowedTools: string[] } {
-    let allowedTools = [...(agentTools || [])];
+    let allowedTools = [...(agentAllowedTools || [])];
+    let disallowedTools = [...(agentDisallowedTools || [])];
+
     const allBuiltInTools = [
       'WebFetch', 'WebSearch', 'Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep',
       'Task', 'TodoWrite', 'ExitPlanMode', 'NotebookEdit', 'BashOutput',
@@ -902,15 +905,22 @@ export function createExecutionRoutes(): Router {
 
     // Merge tools from skills
     for (const skill of skills) {
-      if (skill.allowedTools && Array.isArray(skill.allowedTools)) {
-        allowedTools = [...new Set([...allowedTools, ...skill.allowedTools])];
+      // Merge allowed tools from skill
+      if (skill.toolConfig?.allowedTools && Array.isArray(skill.toolConfig?.allowedTools)) {
+        allowedTools = [...new Set([...allowedTools, ...skill.toolConfig.allowedTools])];
+      }
+
+      // Merge disallowed tools from skill
+      if (skill.toolConfig?.disallowedTools && Array.isArray(skill.toolConfig?.disallowedTools)) {
+        disallowedTools = [...new Set([...disallowedTools, ...skill.toolConfig.disallowedTools])];
       }
     }
 
     // Enforce strict tool allowlist: block all tools not explicitly allowed
-    let disallowedTools: string[] = [];
+    // (only if there are allowed tools defined)
     if (allowedTools.length > 0) {
-      disallowedTools = allBuiltInTools.filter(tool => !allowedTools.includes(tool));
+      const implicitlyDisallowed = allBuiltInTools.filter(tool => !allowedTools.includes(tool));
+      disallowedTools = [...new Set([...disallowedTools, ...implicitlyDisallowed])];
       logger.debug('Enforcing strict tool allowlist', { allowedTools, disallowedTools });
     }
 

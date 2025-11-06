@@ -82,7 +82,20 @@ export function createStrapiManagerRoutes(): Router {
     }
 
     const agents = await strapiClient.getAllAgents({
-      populate: ['skillSelection', 'mcpConfig', 'toolConfig', 'modelConfig', 'analytics'],
+      populate: {
+        skillSelection: true,
+        toolConfig: true,
+        modelConfig: true,
+        analytics: true,
+        mcpConfig: {
+          populate: {
+            mcpServer: true,
+            selectedTools: {
+              populate: ['mcpTool']
+            }
+          }
+        }
+      },
       filters,
       sort: [query.sort],
       pagination: {
@@ -135,14 +148,6 @@ export function createStrapiManagerRoutes(): Router {
     // Frontend sends { directory, agent }, extract agent data
     const agentData = req.body.agent || req.body;
 
-    // Transform mcpTools to mcpServers if present (frontend uses mcpTools, backend expects mcpServers)
-    if (agentData.mcpTools && !agentData.mcpServers) {
-      agentData.mcpServers = Object.keys(agentData.mcpTools);
-      // Also preserve mcpTools in metadata for frontend
-      if (!agentData.metadata) agentData.metadata = {};
-      agentData.metadata.mcpTools = agentData.mcpTools;
-    }
-
     // Transform skill names to skill IDs (Strapi expects skill documentIds, not names)
     if (agentData.skills && Array.isArray(agentData.skills) && agentData.skills.length > 0) {
       try {
@@ -165,14 +170,109 @@ export function createStrapiManagerRoutes(): Router {
 
     logger.info('Creating agent in Strapi', { name: validated.name });
 
-    const agent = await strapiClient.createAgent(validated);
+    // Prepare agent data for Strapi with proper transformations
+    const strapiAgentData: any = {
+      name: validated.name,
+      description: validated.description,
+      systemPrompt: validated.systemPrompt,
+      enabled: validated.enabled,
+      skills: validated.skills,
+    };
 
-    res.status(201).json({
-      success: true,
-      agentId: agent.id,
-      filePath: `strapi://${agent.id}`,
-      message: `Agent "${agent.name}" created successfully in Strapi`
-    });
+    // Transform model to modelConfig component (required by Strapi schema)
+    strapiAgentData.modelConfig = {
+      model: validated.model || 'sonnet',
+      temperature: 1.0,
+    };
+
+    // Transform metadata from record to array of components
+    if (validated.metadata && Object.keys(validated.metadata).length > 0) {
+      strapiAgentData.metadata = Object.entries(validated.metadata).map(([key, value]) => ({
+        key,
+        value: typeof value === 'string' ? value : JSON.stringify(value),
+        type: typeof value === 'number' ? 'number' : typeof value === 'boolean' ? 'boolean' : 'string',
+      }));
+    }
+
+    // Transform tools to toolConfig component
+    if ((validated.tools && validated.tools.length > 0) ||
+        (validated.disallowedTools && validated.disallowedTools.length > 0)) {
+      strapiAgentData.toolConfig = {
+        allowedTools: validated.tools || [],
+        disallowedTools: validated.disallowedTools || [],
+      };
+    }
+
+    // Transform mcpTools (Record<serverId, toolNames[]>) to mcpConfig component
+    if (validated.mcpTools && Object.keys(validated.mcpTools).length > 0) {
+      const mcpConfig = [];
+
+      // Get all MCP servers and tools for mapping
+      const allMCPServers = await strapiClient.getAllMCPServers({ populate: true });
+
+      for (const [serverId, toolNames] of Object.entries(validated.mcpTools)) {
+        // Find server by ID (frontend sends documentId as serverId)
+        logger.info(`Looking for MCP server`, {
+          serverId,
+          serverIds: allMCPServers.map(s => ({ id: s.id, name: s.name }))
+        });
+        const server = allMCPServers.find(s => s.id === serverId);
+        if (!server) {
+          logger.warn(`MCP Server not found: ${serverId}`);
+          continue;
+        }
+
+        // Map tool names to tool IDs
+        const selectedTools = [];
+        for (const toolName of toolNames) {
+          const tool = server.mcpTools?.find(t =>
+            (typeof t === 'string' ? t : t.name) === toolName
+          );
+          if (tool) {
+            const toolId = typeof tool === 'string' ? tool : tool.id;
+            selectedTools.push({ mcpTool: toolId });
+          } else {
+            logger.warn(`MCP Tool not found: ${toolName} in server ${server.name}`);
+          }
+        }
+
+        if (selectedTools.length > 0) {
+          mcpConfig.push({
+            mcpServer: server.id,
+            selectedTools
+          });
+        }
+      }
+
+      if (mcpConfig.length > 0) {
+        strapiAgentData.mcpConfig = mcpConfig;
+      }
+    }
+
+    try {
+      logger.info('Sending agent data to Strapi for creation', {
+        name: validated.name,
+        dataKeys: Object.keys(strapiAgentData),
+        mcpConfig: strapiAgentData.mcpConfig
+      });
+
+      const agent = await strapiClient.createAgent(strapiAgentData);
+
+      res.status(201).json({
+        success: true,
+        agentId: agent.id,
+        filePath: `strapi://${agent.id}`,
+        message: `Agent "${agent.name}" created successfully in Strapi`
+      });
+    } catch (error: any) {
+      logger.error('Failed to create agent in Strapi', {
+        name: validated.name,
+        error: error.message,
+        response: error.response?.data,
+        strapiAgentData
+      });
+      throw error;
+    }
   }));
 
   /**
@@ -183,14 +283,6 @@ export function createStrapiManagerRoutes(): Router {
     const { id } = agentIdSchema.parse(req.params);
     // Frontend sends { directory, agent }, extract agent data
     const agentData = req.body.agent || req.body;
-
-    // Transform mcpTools to mcpServers if present (frontend uses mcpTools, backend expects mcpServers)
-    if (agentData.mcpTools && !agentData.mcpServers) {
-      agentData.mcpServers = Object.keys(agentData.mcpTools);
-      // Also preserve mcpTools in metadata for frontend
-      if (!agentData.metadata) agentData.metadata = {};
-      agentData.metadata.mcpTools = agentData.mcpTools;
-    }
 
     // Transform skill names to skill IDs (Strapi expects skill documentIds, not names)
     if (agentData.skills && Array.isArray(agentData.skills) && agentData.skills.length > 0) {
@@ -216,14 +308,124 @@ export function createStrapiManagerRoutes(): Router {
 
     logger.info('Updating agent in Strapi', { id, updates: Object.keys(validated) });
 
-    const agent = await strapiClient.updateAgent(id, validated);
+    // Prepare agent data for Strapi with proper transformations
+    const strapiAgentData: any = {};
 
-    res.json({
-      success: true,
-      agentId: agent.id,
-      filePath: `strapi://${agent.id}`,
-      message: `Agent "${agent.name}" updated successfully in Strapi`
-    });
+    // Copy simple fields
+    if (validated.name !== undefined) strapiAgentData.name = validated.name;
+    if (validated.description !== undefined) strapiAgentData.description = validated.description;
+    if (validated.systemPrompt !== undefined) strapiAgentData.systemPrompt = validated.systemPrompt;
+    if (validated.enabled !== undefined) strapiAgentData.enabled = validated.enabled;
+    if (validated.skills !== undefined) strapiAgentData.skills = validated.skills;
+
+    // Transform model to modelConfig component (required by Strapi schema)
+    if (validated.model !== undefined) {
+      strapiAgentData.modelConfig = {
+        model: validated.model,
+        temperature: 1.0,
+      };
+    }
+
+    // Transform metadata from record to array of components
+    if (validated.metadata !== undefined) {
+      if (validated.metadata && Object.keys(validated.metadata).length > 0) {
+        strapiAgentData.metadata = Object.entries(validated.metadata).map(([key, value]) => ({
+          key,
+          value: typeof value === 'string' ? value : JSON.stringify(value),
+          type: typeof value === 'number' ? 'number' : typeof value === 'boolean' ? 'boolean' : 'string',
+        }));
+      } else {
+        strapiAgentData.metadata = null; // Clear if empty
+      }
+    }
+
+    // Transform tools to toolConfig component
+    if (validated.tools !== undefined || validated.disallowedTools !== undefined) {
+      const hasAllowedTools = validated.tools && validated.tools.length > 0;
+      const hasDisallowedTools = validated.disallowedTools && validated.disallowedTools.length > 0;
+
+      if (hasAllowedTools || hasDisallowedTools) {
+        strapiAgentData.toolConfig = {
+          allowedTools: validated.tools || [],
+          disallowedTools: validated.disallowedTools || [],
+        };
+      } else {
+        strapiAgentData.toolConfig = null; // Clear if both empty
+      }
+    }
+
+    // Transform mcpTools (Record<serverId, toolNames[]>) to mcpConfig component
+    if (validated.mcpTools !== undefined) {
+      if (validated.mcpTools && Object.keys(validated.mcpTools).length > 0) {
+        const mcpConfig = [];
+
+        // Get all MCP servers and tools for mapping
+        const allMCPServers = await strapiClient.getAllMCPServers({ populate: true });
+
+        for (const [serverId, toolNames] of Object.entries(validated.mcpTools)) {
+          // Find server by ID (frontend sends documentId as serverId)
+          logger.info(`[UPDATE] Looking for MCP server`, {
+            serverId,
+            serverIds: allMCPServers.map(s => ({ id: s.id, name: s.name }))
+          });
+          const server = allMCPServers.find(s => s.id === serverId);
+          if (!server) {
+            logger.warn(`MCP Server not found: ${serverId}`);
+            continue;
+          }
+
+          // Map tool names to tool IDs
+          const selectedTools = [];
+          for (const toolName of toolNames) {
+            const tool = server.mcpTools?.find(t =>
+              (typeof t === 'string' ? t : t.name) === toolName
+            );
+            if (tool) {
+              const toolId = typeof tool === 'string' ? tool : tool.id;
+              selectedTools.push({ mcpTool: toolId });
+            } else {
+              logger.warn(`MCP Tool not found: ${toolName} in server ${server.name}`);
+            }
+          }
+
+          if (selectedTools.length > 0) {
+            mcpConfig.push({
+              mcpServer: server.id,
+              selectedTools
+            });
+          }
+        }
+
+        strapiAgentData.mcpConfig = mcpConfig.length > 0 ? mcpConfig : null;
+      } else {
+        strapiAgentData.mcpConfig = null; // Clear if empty
+      }
+    }
+
+    try {
+      logger.info('Sending agent data to Strapi for update', {
+        id,
+        dataKeys: Object.keys(strapiAgentData),
+        mcpConfig: strapiAgentData.mcpConfig
+      });
+
+      const agent = await strapiClient.updateAgent(id, strapiAgentData);
+
+      res.json({
+        success: true,
+        agentId: agent.id,
+        filePath: `strapi://${agent.id}`,
+        message: `Agent "${agent.name}" updated successfully in Strapi`
+      });
+    } catch (error: any) {
+      logger.error('Failed to update agent in Strapi', {
+        id,
+        error: error.message,
+        response: error.response?.data,
+        strapiAgentData
+      });
+      throw error;
+    }
   }));
 
   /**

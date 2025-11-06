@@ -205,6 +205,7 @@ const AgentsPage: React.FC<AgentsPageProps> = ({ agents: initialAgents, director
                       </div>
                       <div className="space-y-1.5">
                         {agent.mcpConfig.slice(0, 2).map((config, idx) => {
+                          if (!config.mcpServer) return null;
                           const serverName = typeof config.mcpServer === 'string' ? config.mcpServer : config.mcpServer.name;
                           const toolsCount = config.selectedTools?.length || 0;
                           return (
@@ -213,6 +214,7 @@ const AgentsPage: React.FC<AgentsPageProps> = ({ agents: initialAgents, director
                               {toolsCount > 0 && (
                                 <div className="flex flex-wrap gap-1">
                                   {config.selectedTools!.slice(0, 3).map((toolSel, tidx) => {
+                                    if (!toolSel.mcpTool) return null;
                                     const toolName = typeof toolSel.mcpTool === 'string' ? toolSel.mcpTool : toolSel.mcpTool.name;
                                     return (
                                       <span key={tidx} className="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded">

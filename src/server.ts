@@ -5,10 +5,12 @@ import { dirname } from 'path';
 import cors from 'cors';
 import { createLogger, type Logger } from './services/logger.js';
 import { ConfigService } from './services/config-service.js';
+import { chatLogService } from './services/chat-log-service.js';
 import { createManagerRoutes } from './routes/manager.routes.js';
 import { createStrapiManagerRoutes } from './routes/manager.routes.strapi.js';
 import { createExecutionRoutes } from './routes/execution.routes.js';
 import taskRoutes from './routes/task.routes.js';
+import chatRoutes from './routes/chat.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { requestLogger } from './middleware/request-logger.js';
 
@@ -82,6 +84,15 @@ export class AgentUIServer {
       // Don't fail server start if config initialization fails
     }
 
+    // Initialize Chat Log Service
+    try {
+      await chatLogService.init();
+      this.logger.info('ChatLogService initialized successfully');
+    } catch (error) {
+      this.logger.warn('Failed to initialize ChatLogService', error);
+      // Don't fail server start if log service initialization fails
+    }
+
     return new Promise<void>((resolve, reject) => {
       this.server = this.app.listen(this.port, this.host, () => {
         this.logger.info(`🚀 Claude Agent UI Server running at http://${this.host}:${this.port}`);
@@ -152,6 +163,51 @@ export class AgentUIServer {
       });
     });
 
+    // Quick endpoints for getting agents and skills lists
+    this.app.get('/api/agents', async (req, res) => {
+      try {
+        const strapiUrl = process.env.STRAPI_URL || 'http://localhost:1337';
+        const strapiToken = process.env.STRAPI_API_TOKEN;
+
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (strapiToken) {
+          headers['Authorization'] = `Bearer ${strapiToken}`;
+        }
+
+        const response = await fetch(`${strapiUrl}/api/agents`, { headers });
+        const data = await response.json();
+
+        res.json({ agents: data.data });
+      } catch (error) {
+        this.logger.error('Failed to get agents', error);
+        res.status(500).json({ error: 'Failed to get agents' });
+      }
+    });
+
+    this.app.get('/api/skills', async (req, res) => {
+      try {
+        const strapiUrl = process.env.STRAPI_URL || 'http://localhost:1337';
+        const strapiToken = process.env.STRAPI_API_TOKEN;
+
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (strapiToken) {
+          headers['Authorization'] = `Bearer ${strapiToken}`;
+        }
+
+        const response = await fetch(`${strapiUrl}/api/skills`, { headers });
+        const data = await response.json();
+
+        res.json({ skills: data.data });
+      } catch (error) {
+        this.logger.error('Failed to get skills', error);
+        res.status(500).json({ error: 'Failed to get skills' });
+      }
+    });
+
     // Manager API routes (file system based - legacy)
     this.app.use('/api/manager', createManagerRoutes());
 
@@ -163,6 +219,9 @@ export class AgentUIServer {
 
     // Task API routes
     this.app.use('/api/tasks', taskRoutes);
+
+    // Chat API routes
+    this.app.use('/api/chat', chatRoutes);
 
     // React Router catch-all - must be after all API routes
     const isDev = process.env.NODE_ENV === 'development';

@@ -28,12 +28,14 @@ const AgentCreatorForm: React.FC<AgentCreatorFormProps> = ({
   const [description, setDescription] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('');
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
+  const [disallowedTools, setDisallowedTools] = useState<string[]>([]);
   const [selectedMCPTools, setSelectedMCPTools] = useState<Record<string, string[]>>({});
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [model, setModel] = useState<'sonnet' | 'opus' | 'haiku' | ''>('');
   const [inputFields, setInputFields] = useState<api.InputField[]>([]);
   const [outputSchema, setOutputSchema] = useState('');
   const [availableTools, setAvailableTools] = useState<api.Tool[]>([]);
+  const [activeToolTab, setActiveToolTab] = useState<'allowed' | 'disallowed'>('allowed');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -53,6 +55,7 @@ const AgentCreatorForm: React.FC<AgentCreatorFormProps> = ({
 
         // Transform component-based structure to form state
         setSelectedTools(editAgent.toolConfig?.allowedTools || []);
+        setDisallowedTools(editAgent.toolConfig?.disallowedTools || []);
 
         // Transform mcpConfig (component array) to Record<string, string[]>
         const mcpToolsRecord: Record<string, string[]> = {};
@@ -160,6 +163,7 @@ const AgentCreatorForm: React.FC<AgentCreatorFormProps> = ({
             description: description.trim(),
             systemPrompt: systemPrompt.trim(),
             tools: selectedTools.length > 0 ? selectedTools : undefined,
+            disallowedTools: disallowedTools.length > 0 ? disallowedTools : undefined,
             model: model || undefined,
             inputFields: validInputFields.length > 0 ? validInputFields : undefined,
             outputSchema: parsedOutputSchema,
@@ -176,6 +180,7 @@ const AgentCreatorForm: React.FC<AgentCreatorFormProps> = ({
             description: description.trim(),
             systemPrompt: systemPrompt.trim(),
             tools: selectedTools.length > 0 ? selectedTools : undefined,
+            disallowedTools: disallowedTools.length > 0 ? disallowedTools : undefined,
             model: model || undefined,
             inputFields: validInputFields.length > 0 ? validInputFields : undefined,
             outputSchema: parsedOutputSchema,
@@ -291,36 +296,96 @@ const AgentCreatorForm: React.FC<AgentCreatorFormProps> = ({
             <label className="block text-sm font-medium mb-2">
               Claude Built-in Tools (Optional)
             </label>
+
+            {/* Tool Tabs */}
+            <div className="flex gap-2 mb-2">
+              <button
+                type="button"
+                onClick={() => setActiveToolTab('allowed')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md border-b-2 transition-colors ${
+                  activeToolTab === 'allowed'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Allowed Tools ({selectedTools.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveToolTab('disallowed')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md border-b-2 transition-colors ${
+                  activeToolTab === 'disallowed'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Disallowed Tools ({disallowedTools.length})
+              </button>
+            </div>
+
+            {/* Tab Content */}
             <div className="border border-border rounded-md p-3 max-h-48 overflow-y-auto">
               {availableTools.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Loading tools...</p>
               ) : (
                 <div className="space-y-2">
-                  {availableTools.map((tool) => (
-                    <label
-                      key={tool.name}
-                      className="flex items-start gap-2 cursor-pointer hover:bg-secondary/50 p-2 rounded"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedTools.includes(tool.name)}
-                        onChange={() => handleToolToggle(tool.name)}
-                        disabled={isCreating}
-                        className="mt-1 w-4 h-4"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">{tool.name}</div>
-                        <div className="text-xs text-muted-foreground">{tool.description}</div>
-                      </div>
-                    </label>
-                  ))}
+                  {activeToolTab === 'allowed' ? (
+                    availableTools.map((tool) => (
+                      <label
+                        key={tool.name}
+                        className="flex items-start gap-2 cursor-pointer hover:bg-secondary/50 p-2 rounded"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedTools.includes(tool.name)}
+                          onChange={() => handleToolToggle(tool.name)}
+                          disabled={isCreating}
+                          className="mt-1 w-4 h-4"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{tool.name}</div>
+                          <div className="text-xs text-muted-foreground">{tool.description}</div>
+                        </div>
+                      </label>
+                    ))
+                  ) : (
+                    availableTools.map((tool) => (
+                      <label
+                        key={tool.name}
+                        className="flex items-start gap-2 cursor-pointer hover:bg-secondary/50 p-2 rounded"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={disallowedTools.includes(tool.name)}
+                          onChange={() => {
+                            if (disallowedTools.includes(tool.name)) {
+                              setDisallowedTools(disallowedTools.filter(t => t !== tool.name));
+                            } else {
+                              setDisallowedTools([...disallowedTools, tool.name]);
+                            }
+                          }}
+                          disabled={isCreating}
+                          className="mt-1 w-4 h-4"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{tool.name}</div>
+                          <div className="text-xs text-muted-foreground">{tool.description}</div>
+                        </div>
+                      </label>
+                    ))
+                  )}
                 </div>
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {selectedTools.length > 0
-                ? `Selected: ${selectedTools.join(', ')}`
-                : 'Leave empty to allow all built-in tools'}
+              {activeToolTab === 'allowed'
+                ? (selectedTools.length > 0
+                    ? `Selected: ${selectedTools.join(', ')}`
+                    : 'Leave empty to allow all tools. Select specific tools to restrict what the agent can use.')
+                : (disallowedTools.length > 0
+                    ? `Disallowed: ${disallowedTools.join(', ')}`
+                    : 'Leave empty to allow all tools. Select specific tools to explicitly block.')
+              }
             </p>
           </div>
 

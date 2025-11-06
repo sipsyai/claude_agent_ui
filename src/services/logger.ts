@@ -40,9 +40,17 @@ export class CUILogger {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  warn(message: string, context?: any): void {
-    if (context !== undefined) {
-      this.pinoLogger.warn(context, message);
+  warn(message: string, error?: Error | unknown, context?: any): void {
+    if (error instanceof Error) {
+      const logData = { err: error, ...context };
+      this.pinoLogger.warn(logData, message);
+    } else if (error !== undefined && context !== undefined) {
+      // error is actually context, context is extra data
+      const logData = { ...error, ...context };
+      this.pinoLogger.warn(logData, message);
+    } else if (error !== undefined) {
+      // error is context
+      this.pinoLogger.warn(error, message);
     } else {
       this.pinoLogger.warn(message);
     }

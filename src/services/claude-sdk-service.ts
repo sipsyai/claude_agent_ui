@@ -238,6 +238,9 @@ export class ClaudeSdkService extends EventEmitter {
 
       // ✅ Working directory (required for settingSources)
       cwd: config.workingDirectory || process.cwd(),
+
+      // ✅ Extended thinking configuration (required for thinking strategies)
+      maxThinkingTokens: config.maxThinkingTokens || 10000,
     };
 
     // System prompt

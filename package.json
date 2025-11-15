@@ -48,11 +48,11 @@
     "run-payload": "tsx run-sdk-payload.ts"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.1.30",
+    "@anthropic-ai/claude-agent-sdk": "^0.1.42",
     "@anthropic-ai/sdk": "^0.54.0",
     "@assistant-ui/react": "^0.11.35",
     "@assistant-ui/react-markdown": "^0.11.3",
-    "@modelcontextprotocol/sdk": "^1.17.0",
+    "@modelcontextprotocol/sdk": "^1.20.2",
     "@musistudio/llms": "^1.0.38",
     "@radix-ui/react-checkbox": "^1.3.2",
     "@radix-ui/react-dialog": "^1.1.14",

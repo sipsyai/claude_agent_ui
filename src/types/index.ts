@@ -122,6 +122,7 @@ export interface ConversationConfig {
   previousMessages?: ConversationMessage[]; // Messages from previous session for resume context
   permissionMode?: string; // Permission mode: "acceptEdits" | "bypassPermissions" | "default" | "plan"
   skills?: any[]; // ✅ NEW: Skills array from Strapi (will be synced to filesystem)
+  maxThinkingTokens?: number; // ✅ Extended thinking budget in tokens (default: 10000)
 }
 
 // API request/response types

@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a",
+  "spec": "012-flow-editor-visual-layout-ux-i-yile-tirmesi",
   "state": "building",
   "subtasks": {
-    "completed": 20,
-    "total": 22,
+    "completed": 15,
+    "total": 16,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Polish & Enhancements",
+    "current": "Testing and Verification",
     "id": null,
-    "total": 5
+    "total": 4
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 22,
-    "started_at": "2026-01-02T18:56:17.111587"
+    "number": 16,
+    "started_at": "2026-01-02T22:05:59.548625"
   },
-  "last_update": "2026-01-02T20:34:39.342722"
+  "last_update": "2026-01-02T22:56:53.933222"
 }

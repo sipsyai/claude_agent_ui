@@ -162,5 +162,17 @@ export default {
         middlewares: [],
       },
     },
+
+    // Get global flow statistics
+    {
+      method: 'GET',
+      path: '/flows/stats/global',
+      handler: 'flow.getGlobalStats',
+      config: {
+        auth: false,
+        policies: [],
+        middlewares: [],
+      },
+    },
   ],
 };

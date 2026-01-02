@@ -330,4 +330,65 @@ export default factories.createCoreController('api::flow.flow', ({ strapi }) => 
       return ctx.badRequest('Find recent executions failed', { error: error.message });
     }
   },
+
+  /**
+   * Get global flow statistics
+   * GET /api/flows/stats/global
+   */
+  async getGlobalStats(ctx) {
+    try {
+      strapi.log.info('Fetching global flow statistics');
+
+      const executionService = strapi.service('api::flow-execution.flow-execution');
+
+      if (!executionService) {
+        strapi.log.error('Flow execution service not found');
+        return ctx.internalServerError('Flow execution service not available');
+      }
+
+      const stats = await executionService.getGlobalStats();
+
+      if (!stats) {
+        strapi.log.warn('Global stats returned null or undefined');
+        // Return a default empty stats object if no data
+        return ctx.send({
+          data: {
+            total: 0,
+            completed: 0,
+            failed: 0,
+            running: 0,
+            cancelled: 0,
+            pending: 0,
+            successRate: '0',
+            failureRate: '0',
+            avgExecutionTime: 0,
+            totalTokensUsed: 0,
+            totalCost: '0',
+            uniqueFlows: 0,
+            byTrigger: { manual: 0, schedule: 0, webhook: 0, api: 0 },
+            todayCount: 0,
+            lastExecution: null,
+          },
+        });
+      }
+
+      strapi.log.info('Global flow statistics retrieved successfully', {
+        totalExecutions: stats.total,
+        successRate: stats.successRate,
+      });
+
+      ctx.send({
+        data: stats,
+      });
+    } catch (error: any) {
+      strapi.log.error('Get global stats failed:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+      return ctx.internalServerError('Failed to retrieve global flow statistics', {
+        error: error.message,
+      });
+    }
+  },
 }));

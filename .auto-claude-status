@@ -3,23 +3,23 @@
   "spec": "009-fix-api-errors-and-react-router-deprecation-warnin",
   "state": "building",
   "subtasks": {
-    "completed": 0,
+    "completed": 2,
     "total": 15,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Frontend: React Router v7 Future Flags",
+    "current": "Backend: Fix 403 Authorization Errors on /api/flows",
     "id": null,
-    "total": 1
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 1,
+    "number": 3,
     "started_at": "2026-01-02T18:48:01.857571"
   },
-  "last_update": "2026-01-02T18:48:01.869898"
+  "last_update": "2026-01-02T18:52:04.817489"
 }

@@ -1,8 +1,33 @@
 {
-  "subtasks": {},
+  "subtasks": {
+    "subtask-1-1": {
+      "attempts": [
+        {
+          "session": 1,
+          "timestamp": "2026-01-02T18:48:50.995597",
+          "approach": "Implemented: Add v7_startTransition and v7_relativeSplatPath future flags to BrowserRouter in src/web/main.tsx",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-2-1": {
+      "attempts": [
+        {
+          "session": 2,
+          "timestamp": "2026-01-02T18:51:57.103002",
+          "approach": "Implemented: Investigate backend authorization middleware for /api/flows endpoints",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    }
+  },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-02T18:48:01.857123",
-    "last_updated": "2026-01-02T18:48:01.857135"
+    "last_updated": "2026-01-02T18:51:57.103015"
   }
 }

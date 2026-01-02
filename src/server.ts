@@ -154,13 +154,77 @@ export class AgentUIServer {
   }
 
   private setupRoutes(): void {
-    // Health check endpoint
-    this.app.get('/health', (req, res) => {
-      res.json({
-        status: 'ok',
+    // Health check endpoint - validates Express and Strapi connectivity
+    this.app.get('/health', async (req, res) => {
+      const healthStatus: any = {
+        status: 'healthy',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-      });
+        uptime: process.uptime(),
+        services: {
+          express: {
+            status: 'healthy',
+          },
+          strapi: {
+            status: 'unknown',
+            database: {
+              connected: false,
+            },
+          },
+        },
+      };
+
+      try {
+        // Check Strapi connectivity and database health
+        const strapiUrl = process.env.STRAPI_URL || 'http://localhost:1337';
+        const strapiToken = process.env.STRAPI_API_TOKEN;
+
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (strapiToken) {
+          headers['Authorization'] = `Bearer ${strapiToken}`;
+        }
+
+        // Query Strapi health endpoint with timeout
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+        try {
+          const response = await fetch(`${strapiUrl}/_health`, {
+            headers,
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeout);
+
+          if (response.ok) {
+            const strapiHealth = await response.json();
+            healthStatus.services.strapi = {
+              status: strapiHealth.status || 'healthy',
+              database: strapiHealth.database || { connected: false },
+              pool: strapiHealth.pool,
+              responseTime: strapiHealth.responseTime,
+            };
+          } else {
+            healthStatus.services.strapi.status = 'unhealthy';
+            healthStatus.status = 'degraded';
+          }
+        } catch (fetchError) {
+          clearTimeout(timeout);
+          healthStatus.services.strapi.status = 'unreachable';
+          healthStatus.services.strapi.error = fetchError.message;
+          healthStatus.status = 'degraded';
+        }
+
+        // Return appropriate status code
+        const statusCode = healthStatus.status === 'healthy' ? 200 : 503;
+        res.status(statusCode).json(healthStatus);
+      } catch (error) {
+        this.logger.error('Health check failed:', error);
+        healthStatus.status = 'unhealthy';
+        healthStatus.error = error.message;
+        res.status(503).json(healthStatus);
+      }
     });
 
     // Quick endpoints for getting agents and skills lists

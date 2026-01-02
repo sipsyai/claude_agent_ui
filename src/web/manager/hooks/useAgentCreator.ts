@@ -1,37 +1,351 @@
 /**
- * Hook for managing interactive agent creation with Claude Manager
+ * useAgentCreator Hook
+ *
+ * A custom React hook for managing interactive agent creation with Claude Manager through
+ * a conversational interface. This hook orchestrates the complete agent creation workflow
+ * including SSE streaming, message handling, and state management.
+ *
+ * ## Features
+ * - **Conversational Agent Creation**: Interactive chat-based workflow for creating new agents
+ * - **SSE Streaming**: Real-time message streaming from Claude API using Server-Sent Events
+ * - **State Management**: Comprehensive tracking of conversation, processing, creation, and error states
+ * - **Tool Use Detection**: Automatically detects when Claude writes agent files via Write tool
+ * - **Authentication**: Automatic token-based authentication with cookie management
+ * - **Error Handling**: Robust error handling with optional error callbacks
+ * - **Session Management**: Complete conversation lifecycle with reset functionality
+ * - **Ref-based Updates**: Uses refs to avoid closure issues with async streaming
+ *
+ * ## State Management
+ * The hook manages the following state:
+ *
+ * ### Message State
+ * - `messages`: Array of conversation messages (user, assistant, system)
+ * - Each message includes id, role, content, and timestamp
+ * - Messages are updated in real-time as SSE events arrive
+ *
+ * ### Processing State
+ * - `isProcessing`: True when waiting for/receiving assistant response
+ * - Indicates active network request and stream reading
+ * - Automatically set to false when stream completes or errors
+ *
+ * ### Creation State
+ * - `isCreating`: True when Claude is actively writing the agent file
+ * - Set when status events indicate "Creating" or "Writing"
+ * - Set to false when Write tool completes
+ *
+ * ### Result State
+ * - `createdAgentName`: Name of successfully created agent (extracted from file path)
+ * - Extracted from Write tool's file_path matching pattern `.claude/agents/{name}.md`
+ * - Used to trigger onAgentCreated callback
+ *
+ * ### Error State
+ * - `error`: Error object if any operation fails
+ * - Triggers onError callback when set
+ * - Can be cleared with reset()
+ *
+ * ## SSE Streaming Handling
+ * The hook implements a robust SSE streaming mechanism:
+ *
+ * ### Stream Lifecycle
+ * 1. **Initiate**: POST to `/api/manager/agents/create-with-claude/message`
+ * 2. **Read**: Obtain ReadableStream reader and decode chunks
+ * 3. **Parse**: Split by newlines, extract `data: ` prefixed JSON
+ * 4. **Handle**: Process each event type (message, status, complete, error)
+ * 5. **Cleanup**: Release reader lock when stream completes or errors
+ *
+ * ### Event Types
+ * - **message (assistant)**: Extract text blocks and tool uses from content array
+ * - **message (result)**: Final query completion indicator
+ * - **status**: Check for "Creating"/"Writing" keywords to update isCreating
+ * - **complete**: Mark processing as finished
+ * - **error**: Set error state and invoke error callback
+ *
+ * ### Tool Use Detection
+ * When an assistant message contains tool_use blocks:
+ * - Filters content array for `type: 'tool_use'` blocks
+ * - Checks if `name === 'Write'` (file write operation)
+ * - Extracts `file_path` from tool input
+ * - Matches against `.claude/agents/{name}.md` pattern
+ * - Extracts agent name and triggers onAgentCreated callback
+ *
+ * ### Stream Cancellation
+ * - Reader reference stored in `streamReaderRef` for cleanup
+ * - Automatically cancelled on component unmount or reset()
+ * - Prevents memory leaks and dangling streams
+ *
+ * ## Lifecycle
+ * The typical usage flow:
+ *
+ * 1. **Initialize**: Call useAgentCreator() with options
+ * 2. **Start**: Call startConversation() to begin with initial message
+ * 3. **Converse**: User calls sendMessage() with responses to Claude's questions
+ * 4. **Stream**: Hook processes SSE events, updates messages state
+ * 5. **Detect**: Hook detects Write tool usage, sets createdAgentName
+ * 6. **Callback**: onAgentCreated() invoked with agent name and file path
+ * 7. **Reset** (optional): Call reset() to clear state and start over
+ *
+ * ## Authentication
+ * The hook automatically handles authentication:
+ * - Reads `cui-auth-token` cookie from document.cookie
+ * - Adds `Authorization: Bearer {token}` header to all requests
+ * - Token extraction and header injection via helper functions
+ *
+ * @example
+ * // Basic usage with agent creation detection
+ * function AgentCreatorPanel() {
+ *   const {
+ *     messages,
+ *     isProcessing,
+ *     isCreating,
+ *     createdAgentName,
+ *     error,
+ *     startConversation,
+ *     sendMessage,
+ *     reset
+ *   } = useAgentCreator({
+ *     directory: '/path/to/project',
+ *     onAgentCreated: (name, path) => {
+ *       console.log(`Agent "${name}" created at ${path}`);
+ *       // Navigate to agent details page or refresh agent list
+ *     },
+ *     onError: (err) => {
+ *       console.error('Agent creation failed:', err);
+ *     }
+ *   });
+ *
+ *   return (
+ *     <div>
+ *       {!messages.length && (
+ *         <button onClick={startConversation} disabled={isProcessing}>
+ *           Start Creating Agent
+ *         </button>
+ *       )}
+ *       {messages.map(msg => (
+ *         <div key={msg.id}>{msg.role}: {msg.content}</div>
+ *       ))}
+ *       {isCreating && <p>Claude is writing your agent file...</p>}
+ *       {createdAgentName && <p>Successfully created agent: {createdAgentName}</p>}
+ *       {error && <p className="error">{error.message}</p>}
+ *     </div>
+ *   );
+ * }
+ *
+ * @example
+ * // With custom directory and callbacks
+ * const { startConversation, sendMessage } = useAgentCreator({
+ *   directory: process.env.PROJECT_ROOT,
+ *   onAgentCreated: (agentName, filePath) => {
+ *     toast.success(`Created ${agentName}`);
+ *     router.push(`/agents/${agentName}`);
+ *   },
+ *   onError: (error) => {
+ *     toast.error(`Failed: ${error.message}`);
+ *   }
+ * });
+ *
+ * @example
+ * // Handling user input and sending messages
+ * function ChatInterface() {
+ *   const [input, setInput] = useState('');
+ *   const { messages, isProcessing, sendMessage } = useAgentCreator();
+ *
+ *   const handleSubmit = async (e) => {
+ *     e.preventDefault();
+ *     if (!input.trim() || isProcessing) return;
+ *
+ *     await sendMessage(input);
+ *     setInput('');
+ *   };
+ *
+ *   return (
+ *     <form onSubmit={handleSubmit}>
+ *       {messages.map(msg => <MessageBubble key={msg.id} message={msg} />)}
+ *       <input
+ *         value={input}
+ *         onChange={(e) => setInput(e.target.value)}
+ *         disabled={isProcessing}
+ *         placeholder={isProcessing ? 'Waiting for response...' : 'Type your message...'}
+ *       />
+ *       <button type="submit" disabled={isProcessing || !input.trim()}>Send</button>
+ *     </form>
+ *   );
+ * }
+ *
+ * @example
+ * // Reset conversation after agent creation
+ * function AgentCreator() {
+ *   const { createdAgentName, reset, startConversation } = useAgentCreator({
+ *     onAgentCreated: (name) => {
+ *       setTimeout(() => {
+ *         if (confirm(`Agent "${name}" created! Create another?`)) {
+ *           reset();
+ *           startConversation();
+ *         }
+ *       }, 1000);
+ *     }
+ *   });
+ *
+ *   // ... render UI
+ * }
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 const API_BASE = '/api/manager';
 
+/**
+ * Message object representing a single message in the conversation
+ */
 interface Message {
+  /** Unique message identifier (format: `msg-{timestamp}-{role}`) */
   id: string;
+  /** Message author role */
   role: 'user' | 'assistant' | 'system';
+  /** Message text content */
   content: string;
+  /** Message creation timestamp */
   timestamp: Date;
 }
 
+/**
+ * Configuration options for useAgentCreator hook
+ */
 interface UseAgentCreatorOptions {
+  /**
+   * Project directory path where agent should be created
+   * Passed to the API to determine where to write `.claude/agents/{name}.md`
+   *
+   * @example '/path/to/my/project'
+   */
   directory?: string;
+
+  /**
+   * Callback invoked when agent file is successfully created
+   *
+   * @param agentName - Name of created agent (extracted from filename)
+   * @param filePath - Full path to created agent file
+   *
+   * @example
+   * onAgentCreated: (name, path) => {
+   *   console.log(`Agent ${name} created at ${path}`);
+   *   refreshAgentList();
+   * }
+   */
   onAgentCreated?: (agentName: string, filePath: string) => void;
+
+  /**
+   * Callback invoked when any error occurs during agent creation
+   *
+   * @param error - Error object with message and stack trace
+   *
+   * @example
+   * onError: (err) => {
+   *   toast.error(`Failed to create agent: ${err.message}`);
+   * }
+   */
   onError?: (error: Error) => void;
 }
 
+/**
+ * Return value interface for useAgentCreator hook
+ */
 interface UseAgentCreatorReturn {
+  /**
+   * Array of conversation messages in chronological order
+   * Includes user messages (sent via sendMessage), assistant messages (from Claude),
+   * and system messages (from API)
+   */
   messages: Message[];
+
+  /**
+   * True when waiting for assistant response or processing stream
+   * Use to disable input, show loading indicators, or prevent duplicate sends
+   */
   isProcessing: boolean;
+
+  /**
+   * True when Claude is actively writing the agent file
+   * Set when status events contain "Creating" or "Writing" keywords
+   * Useful for showing specific "Creating agent..." UI feedback
+   */
   isCreating: boolean;
+
+  /**
+   * Name of successfully created agent, or null if not yet created
+   * Extracted from Write tool's file_path (.claude/agents/{name}.md)
+   * Set when agent file is written, triggers onAgentCreated callback
+   */
   createdAgentName: string | null;
+
+  /**
+   * Error object if any operation failed, or null if no errors
+   * Set when network requests fail, stream parsing fails, or API returns error
+   * Triggers onError callback when set
+   */
   error: Error | null;
+
+  /**
+   * Start a new conversation with the agent creator
+   * Sends initial message "Let's create a new agent." to begin workflow
+   *
+   * @returns Promise that resolves when initial message is sent and stream processed
+   *
+   * @example
+   * <button onClick={startConversation} disabled={isProcessing}>
+   *   Start Creating Agent
+   * </button>
+   */
   startConversation: () => Promise<void>;
+
+  /**
+   * Send a user message in the ongoing conversation
+   * Appends message to conversation history and streams Claude's response
+   *
+   * @param content - User message text content
+   * @returns Promise that resolves when message is sent and stream processed
+   *
+   * @example
+   * await sendMessage('Create an agent for web scraping');
+   *
+   * @example
+   * // With form submission
+   * const handleSubmit = async (e) => {
+   *   e.preventDefault();
+   *   await sendMessage(userInput);
+   *   setUserInput('');
+   * };
+   */
   sendMessage: (content: string) => Promise<void>;
+
+  /**
+   * Reset all conversation state and cancel any active streams
+   * Clears messages, errors, creation status, and cancels ongoing SSE stream
+   * Use when starting over or when component unmounts
+   *
+   * @example
+   * // Reset after successful creation
+   * if (createdAgentName) {
+   *   setTimeout(() => reset(), 2000);
+   * }
+   *
+   * @example
+   * // Cleanup on unmount
+   * useEffect(() => {
+   *   return () => reset();
+   * }, [reset]);
+   */
   reset: () => void;
 }
 
 /**
  * Get auth token from cookie
+ *
+ * Extracts the authentication token from the browser's cookies by looking for
+ * the `cui-auth-token` cookie. This token is used for authenticating API requests.
+ *
+ * @returns The decoded auth token string, or null if not found
+ *
+ * @internal
  */
 function getAuthToken(): string | null {
   const cookies = document.cookie.split(';');
@@ -46,6 +360,14 @@ function getAuthToken(): string | null {
 
 /**
  * Create fetch options with auth header
+ *
+ * Enhances standard fetch options by automatically adding the Authorization header
+ * with the bearer token from cookies. Merges with any existing headers provided.
+ *
+ * @param options - Standard fetch RequestInit options (method, headers, body, etc.)
+ * @returns Enhanced RequestInit with Authorization header if token is available
+ *
+ * @internal
  */
 function createFetchOptions(options: RequestInit = {}): RequestInit {
   const token = getAuthToken();
@@ -82,6 +404,16 @@ export function useAgentCreator(options: UseAgentCreatorOptions = {}): UseAgentC
 
   /**
    * Send a message in the ongoing conversation
+   *
+   * Internal implementation that handles the full message send workflow including
+   * adding user message to state, building conversation history, sending POST request,
+   * and processing the SSE response stream.
+   *
+   * @param content - User message text content
+   * @param currentMessages - Current message array (passed to avoid closure issues)
+   * @returns Promise that resolves when stream completes
+   *
+   * @internal
    */
   const sendMessageInternal = useCallback(async (content: string, currentMessages: Message[]) => {
     try {
@@ -168,6 +500,11 @@ export function useAgentCreator(options: UseAgentCreatorOptions = {}): UseAgentC
 
   /**
    * Start a new conversation with the agent creator
+   *
+   * Initiates the agent creation workflow by sending the initial message
+   * "Let's create a new agent." with an empty conversation history.
+   *
+   * @returns Promise that resolves when initial message is sent and stream processed
    */
   const startConversation = useCallback(async () => {
     // Send initial message to start conversation
@@ -176,6 +513,12 @@ export function useAgentCreator(options: UseAgentCreatorOptions = {}): UseAgentC
 
   /**
    * Public API: Send a message in the ongoing conversation
+   *
+   * Uses messagesRef to get current messages without closure issues, then
+   * delegates to sendMessageInternal for the actual send operation.
+   *
+   * @param content - User message text content
+   * @returns Promise that resolves when message is sent and stream processed
    */
   const sendMessage = useCallback(async (content: string) => {
     // Use messagesRef to get current messages without closure issues
@@ -185,6 +528,20 @@ export function useAgentCreator(options: UseAgentCreatorOptions = {}): UseAgentC
 
   /**
    * Handle stream events
+   *
+   * Processes SSE events from the agent creation stream. Handles multiple event types:
+   * - **message (assistant)**: Extracts text blocks and detects Write tool usage
+   * - **message (result)**: Marks query as completed
+   * - **status**: Updates isCreating flag when "Creating" or "Writing" detected
+   * - **complete**: Marks processing as finished
+   * - **error**: Sets error state and invokes error callback
+   *
+   * When Write tool is detected for `.claude/agents/{name}.md`, extracts agent name
+   * and invokes onAgentCreated callback.
+   *
+   * @param data - Parsed SSE event data object
+   *
+   * @internal
    */
   const handleStreamEvent = useCallback((data: any) => {
     // Debug logging
@@ -255,6 +612,12 @@ export function useAgentCreator(options: UseAgentCreatorOptions = {}): UseAgentC
 
   /**
    * Reset the conversation state
+   *
+   * Cancels any ongoing SSE stream, clears all conversation state including messages,
+   * processing flags, creation status, created agent name, and errors. Safe to call
+   * at any time, even if no conversation is active.
+   *
+   * @returns void
    */
   const reset = useCallback(() => {
     // Cancel any ongoing stream

@@ -39,7 +39,32 @@
       "description": "Created FlowExecutionService - main flow runner that orchestrates node execution, manages state, and handles errors. Uses EventEmitter for SSE updates, supports node handler registration for extensibility, implements retry logic for agent nodes, and integrates with Strapi for execution persistence. Singleton pattern with flowExecutionService export.",
       "category": "service",
       "discovered_at": "2026-01-02T09:22:47.306617+00:00"
+    },
+    "src/services/flow-sdk-service.ts": {
+      "description": "FlowSdkService is the singleton wrapper around ClaudeSdkService for flow execution. It handles: MCP config path setup, working directory configuration, event-based result collection, and timeout handling. AgentNodeHandler uses this service to execute agents within flows via the executeAgent() method.",
+      "category": "service",
+      "discovered_at": "2026-01-02T12:31:18.706202+00:00"
+    },
+    "src/routes/flow.routes.ts": {
+      "description": "Flow REST API with SSE streaming for real-time execution updates. Endpoints: POST /api/flows/:id/execute (SSE), GET /api/flows/executions/:id/stream (SSE monitoring), GET/POST /api/flows/executions/:id (status/cancel). Uses FlowSSEStream helper class and integrates with flowExecutionService events.",
+      "category": "api",
+      "discovered_at": "2026-01-02T12:36:10.933992+00:00"
+    },
+    "src/services/strapi-client.ts": {
+      "description": "Enhanced Strapi client with comprehensive flow-related methods. Includes properly typed Flow CRUD (getAllFlows, getFlow, getFlowBySlug, getActiveFlows, getFlowsByCategory, getFlowsByStatus, createFlow, updateFlow, deleteFlow, duplicateFlow), FlowExecution CRUD (getAllFlowExecutions, getFlowExecution, createFlowExecution, updateFlowExecution, deleteFlowExecution, getFlowExecutionsByFlowId, getRunningFlowExecutions, getRecentFlowExecutions, getFlowExecutionsByStatus), and statistics/maintenance methods (getFlowStats, getGlobalFlowStats, cleanupOldFlowExecutions). All methods use proper types from flow-types.ts.",
+      "category": "api-integration",
+      "discovered_at": "2026-01-02T12:41:48.418205+00:00"
+    },
+    "src/web/manager/types.ts": {
+      "description": "Added frontend flow types to types.ts: Flow, FlowNode (InputNode/AgentNode/OutputNode union), FlowExecution, NodeExecution, FlowExecutionUpdate for SSE, FlowStats, GlobalFlowStats. Also added 'Flows' to ManagerView enum. Frontend types use string for dates (vs backend Date objects). Type guards isInputNode/isAgentNode/isOutputNode available for discriminated union narrowing.",
+      "category": "frontend",
+      "discovered_at": "2026-01-02T12:44:23.311302+00:00"
+    },
+    "src/web/manager/services/flow-api.ts": {
+      "description": "Created Flow API Service for frontend that provides comprehensive API client functions for flow operations including CRUD, status management, flow execution with SSE streaming, and execution monitoring. Follows existing patterns from api.ts and chat-api.ts.",
+      "category": "frontend",
+      "discovered_at": "2026-01-02T12:48:51.168457+00:00"
     }
   },
-  "last_updated": "2026-01-02T09:22:47.306636+00:00"
+  "last_updated": "2026-01-02T12:48:51.168474+00:00"
 }

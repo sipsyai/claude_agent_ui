@@ -185,11 +185,12 @@
           "id": "3.3",
           "title": "Create Flow List Page",
           "description": "Implement the flows listing page with create, edit, delete, and execute actions",
-          "status": "pending",
+          "status": "in_progress",
           "files": [
             "src/web/manager/components/FlowsPage.tsx"
           ],
-          "notes": ""
+          "notes": "Implementing flows listing page with create, edit, delete, execute, duplicate, and activate/deactivate actions. Following patterns from SkillsPage.tsx.",
+          "updated_at": "2026-01-02T12:50:31.946131+00:00"
         },
         {
           "id": "3.4",
@@ -373,5 +374,5 @@
       "Leverage existing patterns in codebase"
     ]
   },
-  "last_updated": "2026-01-02T12:48:16.376453+00:00"
+  "last_updated": "2026-01-02T12:50:31.946163+00:00"
 }

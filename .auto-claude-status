@@ -3,23 +3,23 @@
   "spec": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
   "state": "building",
   "subtasks": {
-    "completed": 6,
+    "completed": 13,
     "total": 27,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Flow Execution Engine",
+    "current": "Frontend Flow Builder",
     "id": null,
-    "total": 6
+    "total": 7
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 8,
-    "started_at": "2026-01-02T11:49:30.382494"
+    "number": 6,
+    "started_at": "2026-01-02T15:21:47.333199"
   },
-  "last_update": "2026-01-02T12:18:31.229461"
+  "last_update": "2026-01-02T15:49:24.186904"
 }

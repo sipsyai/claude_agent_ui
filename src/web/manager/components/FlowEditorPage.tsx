@@ -8,17 +8,10 @@ import type {
   InputNode,
   AgentNode,
   OutputNode,
-  FlowInputField,
-  InputFieldType,
-  FlowOutputType,
-  FlowOutputFormat,
-  isInputNode,
-  isAgentNode,
-  isOutputNode,
 } from '../types';
 import * as flowApi from '../services/flow-api';
 import * as api from '../services/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/Card';
+import { Card, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
@@ -27,15 +20,16 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   PlusIcon,
-  TrashIcon,
   SpinnerIcon,
   CheckCircleIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   PlayIcon,
   CpuChipIcon,
-  PuzzlePieceIcon,
 } from './ui/Icons';
+import InputNodeConfig from './flow/InputNodeConfig';
+import AgentNodeConfig from './flow/AgentNodeConfig';
+import OutputNodeConfig from './flow/OutputNodeConfig';
 
 // Props interface
 interface FlowEditorPageProps {
@@ -69,34 +63,6 @@ const STATUS_OPTIONS: { value: FlowStatus; label: string }[] = [
   { value: 'archived', label: 'Archived' },
 ];
 
-// Input field type options
-const INPUT_FIELD_TYPES: { value: InputFieldType; label: string }[] = [
-  { value: 'text', label: 'Text' },
-  { value: 'textarea', label: 'Text Area' },
-  { value: 'number', label: 'Number' },
-  { value: 'url', label: 'URL' },
-  { value: 'email', label: 'Email' },
-  { value: 'file', label: 'File' },
-  { value: 'select', label: 'Select' },
-  { value: 'checkbox', label: 'Checkbox' },
-  { value: 'date', label: 'Date' },
-];
-
-// Output type options
-const OUTPUT_TYPE_OPTIONS: { value: FlowOutputType; label: string }[] = [
-  { value: 'response', label: 'Direct Response' },
-  { value: 'file', label: 'Save to File' },
-  { value: 'webhook', label: 'Send to Webhook' },
-];
-
-// Output format options
-const OUTPUT_FORMAT_OPTIONS: { value: FlowOutputFormat; label: string }[] = [
-  { value: 'json', label: 'JSON' },
-  { value: 'markdown', label: 'Markdown' },
-  { value: 'text', label: 'Plain Text' },
-  { value: 'html', label: 'HTML' },
-  { value: 'csv', label: 'CSV' },
-];
 
 // Generate unique ID
 const generateId = () => `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -347,38 +313,6 @@ const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ flowId, onClose, onSave
     }
   };
 
-  // Add new input field
-  const addInputField = () => {
-    const newField: FlowInputField = {
-      name: `field_${inputNode.inputFields.length + 1}`,
-      type: 'text',
-      label: `Field ${inputNode.inputFields.length + 1}`,
-      required: false,
-    };
-    setInputNode(prev => ({
-      ...prev,
-      inputFields: [...prev.inputFields, newField],
-    }));
-  };
-
-  // Update input field
-  const updateInputField = (index: number, updates: Partial<FlowInputField>) => {
-    setInputNode(prev => ({
-      ...prev,
-      inputFields: prev.inputFields.map((field, i) =>
-        i === index ? { ...field, ...updates } : field
-      ),
-    }));
-  };
-
-  // Remove input field
-  const removeInputField = (index: number) => {
-    setInputNode(prev => ({
-      ...prev,
-      inputFields: prev.inputFields.filter((_, i) => i !== index),
-    }));
-  };
-
   // Add new agent node
   const addAgentNode = () => {
     const newAgent = createDefaultAgentNode();
@@ -607,119 +541,11 @@ const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ flowId, onClose, onSave
             icon={<PlayIcon className="h-5 w-5" />}
           />
           {expandedSections.has('input') && (
-            <CardContent className="space-y-4 border-t">
-              {/* Node Name */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Node Name</label>
-                  <Input
-                    value={inputNode.name}
-                    onChange={(e) => setInputNode(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Input"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Description</label>
-                  <Input
-                    value={inputNode.description || ''}
-                    onChange={(e) => setInputNode(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Input configuration"
-                  />
-                </div>
-              </div>
-
-              {/* Input Fields */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium">Input Fields</label>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={addInputField}
-                    className="flex items-center gap-1"
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                    Add Field
-                  </Button>
-                </div>
-
-                {inputNode.inputFields.length === 0 ? (
-                  <div className="text-center py-8 bg-secondary/30 rounded-lg text-muted-foreground">
-                    No input fields defined. Click "Add Field" to create one.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {inputNode.inputFields.map((field, index) => (
-                      <div
-                        key={index}
-                        className="p-4 bg-secondary/30 rounded-lg space-y-3"
-                      >
-                        <div className="grid grid-cols-3 gap-3">
-                          <div>
-                            <label className="block text-xs font-medium mb-1">Name (key)</label>
-                            <Input
-                              value={field.name}
-                              onChange={(e) => updateInputField(index, { name: e.target.value })}
-                              placeholder="field_name"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium mb-1">Label</label>
-                            <Input
-                              value={field.label}
-                              onChange={(e) => updateInputField(index, { label: e.target.value })}
-                              placeholder="Field Label"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium mb-1">Type</label>
-                            <Select
-                              value={field.type}
-                              onChange={(e) => updateInputField(index, { type: e.target.value as InputFieldType })}
-                            >
-                              {INPUT_FIELD_TYPES.map(t => (
-                                <option key={t.value} value={t.value}>
-                                  {t.label}
-                                </option>
-                              ))}
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-medium mb-1">Placeholder</label>
-                            <Input
-                              value={field.placeholder || ''}
-                              onChange={(e) => updateInputField(index, { placeholder: e.target.value })}
-                              placeholder="Enter placeholder text..."
-                            />
-                          </div>
-                          <div className="flex items-end gap-4">
-                            <label className="flex items-center gap-2 text-sm">
-                              <input
-                                type="checkbox"
-                                checked={field.required}
-                                onChange={(e) => updateInputField(index, { required: e.target.checked })}
-                                className="w-4 h-4 rounded"
-                              />
-                              Required
-                            </label>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => removeInputField(index)}
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <CardContent className="border-t">
+              <InputNodeConfig
+                node={inputNode}
+                onChange={(updates) => setInputNode(prev => ({ ...prev, ...updates }))}
+              />
             </CardContent>
           )}
         </Card>
@@ -735,143 +561,16 @@ const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ flowId, onClose, onSave
           {expandedSections.has('agents') && (
             <CardContent className="space-y-4 border-t">
               {agentNodes.map((agent, index) => (
-                <div
+                <AgentNodeConfig
                   key={agent.nodeId}
-                  className="p-4 bg-secondary/30 rounded-lg space-y-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium flex items-center gap-2">
-                      <CpuChipIcon className="h-4 w-4 text-purple-600" />
-                      {agent.name}
-                    </h4>
-                    {agentNodes.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeAgentNode(index)}
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* Agent Selection and Name */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium mb-1">Node Name</label>
-                      <Input
-                        value={agent.name}
-                        onChange={(e) => updateAgentNode(index, { name: e.target.value })}
-                        placeholder="Agent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium mb-1">Select Agent</label>
-                      <Select
-                        value={agent.agentId}
-                        onChange={(e) => updateAgentNode(index, { agentId: e.target.value })}
-                      >
-                        <option value="">-- Select an Agent --</option>
-                        {availableAgents.map(a => (
-                          <option key={a.id} value={a.id}>
-                            {a.name}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Prompt Template */}
-                  <div>
-                    <label className="block text-xs font-medium mb-1">
-                      Prompt Template
-                      <span className="text-muted-foreground font-normal ml-1">
-                        (Use &#123;&#123;input&#125;&#125; for input data)
-                      </span>
-                    </label>
-                    <Textarea
-                      value={agent.promptTemplate}
-                      onChange={(e) => updateAgentNode(index, { promptTemplate: e.target.value })}
-                      placeholder="Process the following input:&#10;&#10;{{input}}"
-                      className="min-h-[100px] font-mono text-sm"
-                    />
-                  </div>
-
-                  {/* Skills Selection */}
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Skills to Use</label>
-                    <div className="flex flex-wrap gap-2">
-                      {availableSkills.length === 0 ? (
-                        <span className="text-muted-foreground text-sm">No skills available</span>
-                      ) : (
-                        availableSkills.map(skill => (
-                          <label
-                            key={skill.id}
-                            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs cursor-pointer transition-colors ${
-                              agent.skills.includes(skill.id)
-                                ? 'bg-purple-100 text-purple-700 border border-purple-300'
-                                : 'bg-secondary border border-border hover:bg-secondary/80'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={agent.skills.includes(skill.id)}
-                              onChange={(e) => {
-                                const newSkills = e.target.checked
-                                  ? [...agent.skills, skill.id]
-                                  : agent.skills.filter(s => s !== skill.id);
-                                updateAgentNode(index, { skills: newSkills });
-                              }}
-                              className="hidden"
-                            />
-                            <PuzzlePieceIcon className="h-3 w-3" />
-                            {skill.displayName || skill.name}
-                          </label>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Advanced Settings */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium mb-1">
-                        Timeout (ms)
-                      </label>
-                      <Input
-                        type="number"
-                        value={agent.timeout}
-                        onChange={(e) => updateAgentNode(index, { timeout: parseInt(e.target.value) || 60000 })}
-                        min={1000}
-                        max={600000}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium mb-1">
-                        Max Retries
-                      </label>
-                      <Input
-                        type="number"
-                        value={agent.maxRetries}
-                        onChange={(e) => updateAgentNode(index, { maxRetries: parseInt(e.target.value) || 0 })}
-                        min={0}
-                        max={10}
-                      />
-                    </div>
-                    <div className="flex items-end">
-                      <label className="flex items-center gap-2 text-sm pb-2">
-                        <input
-                          type="checkbox"
-                          checked={agent.retryOnError}
-                          onChange={(e) => updateAgentNode(index, { retryOnError: e.target.checked })}
-                          className="w-4 h-4 rounded"
-                        />
-                        Retry on Error
-                      </label>
-                    </div>
-                  </div>
-                </div>
+                  node={agent}
+                  index={index}
+                  onChange={(updates) => updateAgentNode(index, updates)}
+                  onRemove={() => removeAgentNode(index)}
+                  canRemove={agentNodes.length > 1}
+                  availableAgents={availableAgents}
+                  availableSkills={availableSkills}
+                />
               ))}
 
               {/* Add Agent Button */}
@@ -897,134 +596,11 @@ const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ flowId, onClose, onSave
             icon={<CheckCircleIcon className="h-5 w-5" />}
           />
           {expandedSections.has('output') && (
-            <CardContent className="space-y-4 border-t">
-              {/* Node Name */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Node Name</label>
-                  <Input
-                    value={outputNode.name}
-                    onChange={(e) => setOutputNode(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Output"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Description</label>
-                  <Input
-                    value={outputNode.description || ''}
-                    onChange={(e) => setOutputNode(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Output configuration"
-                  />
-                </div>
-              </div>
-
-              {/* Output Type and Format */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Output Type</label>
-                  <Select
-                    value={outputNode.outputType}
-                    onChange={(e) => setOutputNode(prev => ({ ...prev, outputType: e.target.value as FlowOutputType }))}
-                  >
-                    {OUTPUT_TYPE_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Format</label>
-                  <Select
-                    value={outputNode.format}
-                    onChange={(e) => setOutputNode(prev => ({ ...prev, format: e.target.value as FlowOutputFormat }))}
-                  >
-                    {OUTPUT_FORMAT_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-
-              {/* File Options (if outputType is 'file') */}
-              {outputNode.outputType === 'file' && (
-                <div className="p-4 bg-secondary/30 rounded-lg space-y-3">
-                  <h5 className="font-medium text-sm">File Settings</h5>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium mb-1">File Path</label>
-                      <Input
-                        value={outputNode.filePath || ''}
-                        onChange={(e) => setOutputNode(prev => ({ ...prev, filePath: e.target.value }))}
-                        placeholder="/path/to/output"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium mb-1">File Name</label>
-                      <Input
-                        value={outputNode.fileName || ''}
-                        onChange={(e) => setOutputNode(prev => ({ ...prev, fileName: e.target.value }))}
-                        placeholder="output.md"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Webhook Options (if outputType is 'webhook') */}
-              {outputNode.outputType === 'webhook' && (
-                <div className="p-4 bg-secondary/30 rounded-lg space-y-3">
-                  <h5 className="font-medium text-sm">Webhook Settings</h5>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Webhook URL</label>
-                    <Input
-                      value={outputNode.webhookUrl || ''}
-                      onChange={(e) => setOutputNode(prev => ({ ...prev, webhookUrl: e.target.value }))}
-                      placeholder="https://example.com/webhook"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Additional Options */}
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={outputNode.includeMetadata}
-                    onChange={(e) => setOutputNode(prev => ({ ...prev, includeMetadata: e.target.checked }))}
-                    className="w-4 h-4 rounded"
-                  />
-                  Include Metadata
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={outputNode.includeTimestamp}
-                    onChange={(e) => setOutputNode(prev => ({ ...prev, includeTimestamp: e.target.checked }))}
-                    className="w-4 h-4 rounded"
-                  />
-                  Include Timestamp
-                </label>
-              </div>
-
-              {/* Transform Template */}
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Transform Template (Optional)
-                  <span className="text-muted-foreground font-normal ml-1">
-                    - Use &#123;&#123;result&#125;&#125; for agent output
-                  </span>
-                </label>
-                <Textarea
-                  value={outputNode.transformTemplate || ''}
-                  onChange={(e) => setOutputNode(prev => ({ ...prev, transformTemplate: e.target.value }))}
-                  placeholder="Leave empty for raw output, or use template:&#10;&#10;# Results&#10;{{result}}"
-                  className="min-h-[80px] font-mono text-sm"
-                />
-              </div>
+            <CardContent className="border-t">
+              <OutputNodeConfig
+                node={outputNode}
+                onChange={(updates) => setOutputNode(prev => ({ ...prev, ...updates }))}
+              />
             </CardContent>
           )}
         </Card>

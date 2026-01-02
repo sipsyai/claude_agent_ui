@@ -1,3 +1,335 @@
+/**
+ * @file SkillCreationModal.tsx
+ * @description Modal dialog for creating and editing agent skills through a comprehensive form interface.
+ * This component provides a multi-section configuration form with validation, tool selection, input field
+ * builder, advanced settings, and file upload capabilities for extending Claude's capabilities.
+ *
+ * ## Features
+ * - **Dual-Mode Operation**: Create new skills or edit existing ones
+ * - **Comprehensive Form**: 10+ configuration sections (core, tools, MCP, inputs, advanced, files, instructions)
+ * - **Multi-Level Validation**: Required fields, pattern matching, length constraints, semantic versioning
+ * - **Tool Configuration**: Tab-based allowed/disallowed tool selection
+ * - **MCP Integration**: Select specific MCP server tools
+ * - **Input Field Builder**: Dynamic form field creation with 7 field types
+ * - **Advanced Settings**: Collapsible model configuration override (model, temperature, maxTokens, timeout)
+ * - **File Upload**: Additional files for reference documentation, examples, troubleshooting guides
+ * - **Analytics Display**: Read-only execution stats in edit mode
+ * - **Training History**: Read-only training session records in edit mode
+ * - **Auto-Close**: Modal auto-closes 2 seconds after successful creation/update
+ * - **Form Reset**: Complete state reset on close
+ * - **Color-Coded Feedback**: Green success, red error messages with icons
+ *
+ * ## Skill Creation Workflow
+ * The component supports two distinct operational modes:
+ *
+ * ### Create Mode Workflow
+ * 1. **Modal Opens**: User clicks "Create New Skill" button
+ * 2. **Empty Form Loads**: All fields initialize to default values
+ * 3. **User Fills Form**: Enters skill name, description, instructions, selects tools
+ * 4. **Validation**: Client-side validation on submit (required fields, patterns, lengths)
+ * 5. **API Call**: POST request to `/skills/create` with form data
+ * 6. **File Creation**: Backend creates `.claude/skills/{name}/skill.md` file
+ * 7. **Data Transform**: Form state → Strapi API payload format
+ * 8. **Success Feedback**: Green banner with file path, auto-close after 2s
+ * 9. **Callback Invoked**: `onSkillCreated()` triggers parent refresh
+ * 10. **Modal Closes**: Form state reset, modal closes
+ *
+ * ### Edit Mode Workflow
+ * 1. **Modal Opens**: User clicks "Edit" on existing skill
+ * 2. **Pre-Population**: `useEffect` loads existing skill data into form fields
+ * 3. **Data Transform**: Strapi API format → Form state (complex transformations for MCP tools, files)
+ * 4. **User Edits**: Modifies description, tools, instructions (name field disabled)
+ * 5. **Validation**: Client-side validation on submit (excludes name validation)
+ * 6. **API Call**: PUT request to `/skills/{id}` with updated data
+ * 7. **File Update**: Backend updates existing skill.md file
+ * 8. **Success Feedback**: Green banner with "updated successfully", auto-close after 2s
+ * 9. **Callback Invoked**: `onSkillCreated()` triggers parent refresh
+ * 10. **Modal Closes**: Form state reset, modal closes
+ *
+ * ### Data Transformation (Edit Mode)
+ * Complex transformations when loading edit data:
+ * - **MCP Tools**: `mcpConfig` array → `Record<serverId, toolNames[]>` (uses documentId as key)
+ * - **Additional Files**: API file objects → `SkillFileUpload[]` (extracts fileId from number/string/object)
+ * - **Tool Config**: `toolConfig.allowedTools` array → `selectedTools` state
+ * - **Model Config**: `modelConfig` object → `modelConfig` state with enabled flag
+ *
+ * ## Form Handling
+ * The component manages complex form state across multiple configuration sections:
+ *
+ * ### Form State Management
+ * - **Core State**: `formState` object with 7 properties (name, description, skillmd, category, isPublic, version, license)
+ * - **Tool State**: `selectedTools`, `disallowedTools` arrays
+ * - **MCP State**: `selectedMCPTools` Record<serverId, toolNames[]>
+ * - **Input Fields State**: `inputFields` array with dynamic field definitions
+ * - **Model Config State**: `modelConfigEnabled` boolean, `modelConfig` object
+ * - **File State**: `additionalFiles` array, `fileUploadLoading` boolean
+ * - **Validation State**: `errors` object with field-level error messages
+ * - **Creation State**: `creationStatus` ('idle' | 'loading' | 'success' | 'error')
+ * - **Result State**: `creationResult` string for success/error messages
+ *
+ * ### Input Change Handler
+ * ```typescript
+ * handleInputChange(field, value)
+ * ```
+ * - Updates specific field in `formState`
+ * - Clears error for that field (real-time error clearing)
+ * - Provides immediate user feedback
+ *
+ * ### Form Validation
+ * Multi-level validation with specific rules:
+ * - **Name** (create mode only): Required, lowercase letters/numbers/hyphens only, max 64 chars
+ * - **Description**: Required, max 1024 chars
+ * - **Skill Instructions**: Required, min 50 chars
+ * - **Version**: Required, semantic versioning format (e.g., "1.0.0")
+ * - **License**: Optional, max 100 chars if provided
+ * - Returns boolean, sets `errors` object with field-specific messages
+ *
+ * ## Modal Behavior
+ * The component provides controlled modal interactions:
+ *
+ * ### Opening/Closing
+ * - Controlled by parent via `isOpen` prop
+ * - Dialog `onOpenChange` handler calls `handleClose()` when backdrop clicked
+ * - Manual close via Cancel button or X button (from Dialog component)
+ * - Auto-close after 2 seconds on success (setTimeout in handleSubmit)
+ * - Close disabled when `creationStatus === 'loading'` (prevents accidental close during save)
+ *
+ * ### Form Reset on Close
+ * `handleClose()` resets all state to defaults:
+ * - Core form fields → empty strings, defaults
+ * - Tool selections → empty arrays
+ * - MCP tools → empty object
+ * - Input fields → empty array
+ * - Errors → empty object
+ * - Creation status → 'idle'
+ * - Model config → disabled, defaults
+ * - Advanced settings → collapsed
+ * - Active tab → 'allowed'
+ * - Additional files → empty array
+ *
+ * ### Layout Structure
+ * - **Header**: Title (Create New Skill / Edit Skill), description
+ * - **Content**: Scrollable form area (max-h-[60vh]) with 10+ configuration sections
+ * - **Result Banner**: Color-coded feedback (green success / red error) with icons
+ * - **Footer**: Cancel button, Submit button (Create Skill / Update Skill)
+ *
+ * ## Form Fields
+ * The modal contains 10+ configuration sections:
+ *
+ * ### 1. Core Configuration
+ * - **Skill Name** (required, disabled in edit mode): Lowercase letters, numbers, hyphens, max 64 chars
+ * - **Description** (required): Multi-line description, max 1024 chars, textarea with 3 rows
+ * - **Category** (required): Dropdown with 9 categories (custom, general-purpose, code-analysis, data-processing, etc.)
+ * - **Version** (required): Semantic versioning (e.g., "1.0.0"), validated with regex `/^\d+\.\d+\.\d+$/`
+ * - **License** (optional): Text input, max 100 chars (MIT, Apache-2.0, GPL-3.0, etc.)
+ * - **Is Public** (required): Checkbox toggle for availability to all agents
+ *
+ * ### 2. Tool Configuration (Tab System)
+ * - **Allowed Tools Tab**: Multi-select checkboxes for tools the skill can use
+ *   - Empty selection = allow all tools
+ *   - Specific selection = restrict to selected tools
+ *   - Counter badge shows selected count
+ * - **Disallowed Tools Tab**: Multi-select checkboxes for explicitly blocked tools
+ *   - Empty selection = allow all tools
+ *   - Specific selection = block selected tools
+ *   - Counter badge shows disallowed count
+ * - **Tool List**: Scrollable area (max-h-48) with tool name and description
+ * - **Toggle Handler**: `handleToolToggle(toolName)` adds/removes from selectedTools
+ *
+ * ### 3. MCP Server Tools
+ * - **MCPToolsSelector Component**: Separate component for MCP tool selection
+ * - **State**: `selectedMCPTools` Record<serverId, toolNames[]>
+ * - **Description**: "Select specific MCP tools this skill can use. Leave empty to allow all MCP tools."
+ *
+ * ### 4. Input Fields Builder
+ * - **Dynamic Field Creation**: "+ Add Field" button appends new InputField to array
+ * - **Field Configuration**: Each field has:
+ *   - Name (required): Field identifier for template variables
+ *   - Label (required): Display label in forms
+ *   - Type (required): Dropdown with 7 types (text, textarea, dropdown, multiselect, checkbox, number, filepath)
+ *   - Placeholder (optional): Input placeholder text
+ *   - Options (required for dropdown/multiselect): Comma-separated list
+ *   - Description (optional): Help text for field
+ *   - Required (optional): Checkbox for required validation
+ * - **Remove Button**: Deletes field from array
+ * - **Template Variables**: Instructions use `{{field_name}}` syntax for field values
+ * - **Empty State**: Dashed border with "No input fields defined" message
+ *
+ * ### 5. Advanced Settings (Collapsible)
+ * - **Collapsible Section**: Arrow icon (▶ / ▼) indicates expand/collapse state
+ * - **Model Configuration Override**: Checkbox to enable custom model settings
+ *   - **Model Dropdown**: haiku, sonnet, sonnet-4, opus, opus-4
+ *   - **Temperature Slider**: 0.00 - 1.00 range with 0.01 step, real-time value display
+ *   - **Max Tokens**: Number input, 1-200000 range, optional
+ *   - **Timeout**: Number input, minimum 1000ms, optional
+ * - **Default State**: Collapsed on open, expanded state persists until form reset
+ *
+ * ### 6. Analytics Display (Edit Mode Only)
+ * - **Read-Only Section**: Shows execution statistics
+ * - **Metrics Grid**: 2x2 grid with 4 metrics:
+ *   - Executions: Total execution count
+ *   - Success Rate: Percentage with 1 decimal place
+ *   - Avg Time: Average execution time in milliseconds
+ *   - Last Executed: Date string (toLocaleDateString) or "Never"
+ * - **Styling**: Gray background (bg-secondary/10) with border
+ *
+ * ### 7. Training History Display (Edit Mode Only)
+ * - **Read-Only Section**: Shows past training sessions
+ * - **Session List**: Scrollable area (max-h-48) with session cards
+ * - **Session Card**: Each session shows:
+ *   - Training Type: Session type label
+ *   - Success Badge: Green (✓ Success) or Red (✗ Failed)
+ *   - Score: Training score out of 100 (if available)
+ *   - Notes: Session notes (if available)
+ *   - Timestamp: Date and time of session
+ * - **Border Indicator**: Left border (border-primary) on each card
+ *
+ * ### 8. Additional Files
+ * - **File Upload Button**: "+ Upload File" triggers hidden file input
+ * - **Accepted Types**: .md, .pdf, .txt, .json files
+ * - **Upload Workflow**:
+ *   1. User clicks "Upload File"
+ *   2. File input dialog opens
+ *   3. User selects file
+ *   4. `uploadFile()` API call with FormData
+ *   5. Loading state shows "Uploading..."
+ *   6. File added to `additionalFiles` array with fileId
+ *   7. Button returns to "Upload File"
+ * - **File Configuration**: Each file has:
+ *   - File Type dropdown (8 types: REFERENCE, EXAMPLES, TROUBLESHOOTING, CHANGELOG, FAQ, API_DOCS, TUTORIAL, CUSTOM)
+ *   - Description textarea (optional)
+ *   - Remove button (destructive variant)
+ *   - File ID display (for debugging)
+ * - **Display Order**: Auto-incremented based on array index
+ * - **Empty State**: Dashed border with "No files uploaded yet" message
+ *
+ * ### 9. Skill Instructions
+ * - **Markdown Textarea**: Large textarea (10 rows) for skill instructions
+ * - **Monospace Font**: font-mono class for code-like appearance
+ * - **Validation**: Required, minimum 50 characters
+ * - **Placeholder**: Multi-line example with markdown structure
+ * - **Template Variables**: Supports `{{field_name}}` for input field values
+ * - **Format**: Encourages markdown with headings, lists, examples
+ *
+ * ## Styling Behavior
+ * The component uses Tailwind CSS for styling:
+ *
+ * ### Dialog Styling
+ * - **Max Width**: sm:max-w-[700px] for spacious layout
+ * - **Content Area**: max-h-[60vh] with overflow-y-auto for scrolling
+ * - **Padding**: p-4 for content area, pr-3 for scrollbar spacing
+ * - **Grid Layout**: grid gap-4 for vertical spacing between sections
+ *
+ * ### Form Controls
+ * - **Labels**: text-sm font-medium text-muted-foreground
+ * - **Required Indicator**: text-red-400 asterisk (*)
+ * - **Help Text**: text-xs text-muted-foreground below inputs
+ * - **Error Messages**: text-red-500 text-xs with red border on input
+ * - **Disabled State**: Disabled cursor and opacity for loading state
+ *
+ * ### Tab System
+ * - **Tab Headers**: flex border-b for tab bar
+ * - **Active Tab**: border-primary text-primary with bottom border-b-2
+ * - **Inactive Tab**: border-transparent text-muted-foreground with hover:text-foreground
+ * - **Tab Content**: border border-border rounded-md p-3 for content area
+ *
+ * ### Result Banner
+ * - **Success**: bg-green-900/50 text-green-300 with CheckCircleIcon
+ * - **Error**: bg-red-900/50 text-red-300 with XCircleIcon
+ * - **Layout**: flex items-start space-x-3 for icon and text alignment
+ *
+ * ### Collapsible Sections
+ * - **Header Button**: w-full flex items-center justify-between hover:bg-secondary/50
+ * - **Collapsed Indicator**: ▶ (right arrow)
+ * - **Expanded Indicator**: ▼ (down arrow)
+ * - **Content**: Border-t separator when expanded
+ *
+ * @interface SkillCreationModalProps
+ * @property {boolean} isOpen - Controls modal visibility
+ * @property {() => void} onClose - Callback when modal closes (via backdrop, cancel button, or auto-close)
+ * @property {() => void} onSkillCreated - Callback after successful skill creation/update, used to refresh parent skill list
+ * @property {Skill} [editSkill] - Optional skill object for edit mode. If provided, modal enters edit mode with pre-populated fields
+ *
+ * @example
+ * // Basic usage - Create new skill
+ * function SkillsPage() {
+ *   const [isModalOpen, setIsModalOpen] = useState(false);
+ *
+ *   const handleSkillCreated = () => {
+ *     // Refresh skills list
+ *     loadSkills();
+ *   };
+ *
+ *   return (
+ *     <>
+ *       <Button onClick={() => setIsModalOpen(true)}>Create Skill</Button>
+ *       <SkillCreationModal
+ *         isOpen={isModalOpen}
+ *         onClose={() => setIsModalOpen(false)}
+ *         onSkillCreated={handleSkillCreated}
+ *       />
+ *     </>
+ *   );
+ * }
+ *
+ * @example
+ * // Edit existing skill
+ * function SkillList({ skills }: { skills: Skill[] }) {
+ *   const [editingSkill, setEditingSkill] = useState<Skill | undefined>();
+ *
+ *   return (
+ *     <>
+ *       {skills.map(skill => (
+ *         <div key={skill.id}>
+ *           <h3>{skill.name}</h3>
+ *           <Button onClick={() => setEditingSkill(skill)}>Edit</Button>
+ *         </div>
+ *       ))}
+ *       <SkillCreationModal
+ *         isOpen={!!editingSkill}
+ *         onClose={() => setEditingSkill(undefined)}
+ *         onSkillCreated={() => {
+ *           setEditingSkill(undefined);
+ *           loadSkills();
+ *         }}
+ *         editSkill={editingSkill}
+ *       />
+ *     </>
+ *   );
+ * }
+ *
+ * @example
+ * // Understanding input fields builder
+ * // When user creates input fields like:
+ * // - name: "target_path", type: "text", label: "Target Path", required: true
+ * // - name: "format", type: "dropdown", options: ["json", "csv"], required: false
+ * //
+ * // The skill.md can use template variables:
+ * // "Process the file at {{target_path}} and convert to {{format}} format"
+ * //
+ * // When skill is executed, user sees form with:
+ * // - Text input labeled "Target Path" (required)
+ * // - Dropdown labeled "Format" with json/csv options (optional)
+ * //
+ * // Submitted values replace template variables in instructions
+ *
+ * @example
+ * // Understanding tool configuration workflow
+ * // Skill creator wants to restrict skill to specific tools:
+ * //
+ * // 1. User clicks "Allowed Tools" tab
+ * // 2. Selects "Read", "Write", "Grep" from available tools
+ * // 3. Badge shows "Allowed Tools (3)"
+ * // 4. Help text shows: "Selected: Read, Write, Grep"
+ * // 5. When skill executes, only these 3 tools are available
+ * //
+ * // Alternatively, user can block specific tools:
+ * // 1. User clicks "Disallowed Tools" tab
+ * // 2. Selects "Bash", "WebFetch" to block
+ * // 3. Badge shows "Disallowed Tools (2)"
+ * // 4. Help text shows: "Disallowed: Bash, WebFetch"
+ * // 5. When skill executes, all tools EXCEPT these 2 are available
+ */
 import React, { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/Dialog';
 import { Button } from './ui/Button';
@@ -15,8 +347,23 @@ interface SkillCreationModalProps {
   editSkill?: Skill; // Optional: If provided, modal will be in edit mode
 }
 
+/**
+ * Creation status type for tracking form submission state
+ * @typedef {'idle' | 'loading' | 'success' | 'error'} CreationStatus
+ */
 type CreationStatus = 'idle' | 'loading' | 'success' | 'error';
 
+/**
+ * Form state interface containing all skill configuration fields
+ * @interface FormState
+ * @property {string} name - Skill identifier (lowercase, hyphens, max 64 chars) - immutable in edit mode
+ * @property {string} description - Skill description for discovery (max 1024 chars)
+ * @property {string} skillmd - Markdown instructions for skill execution (min 50 chars)
+ * @property {string} category - Skill category for organization
+ * @property {boolean} isPublic - Whether skill is available to all agents
+ * @property {string} version - Semantic version (e.g., "1.0.0")
+ * @property {string} license - Optional license type (e.g., "MIT", max 100 chars)
+ */
 interface FormState {
   name: string;
   description: string;
@@ -158,6 +505,16 @@ const SkillCreationModal: React.FC<SkillCreationModalProps> = ({ isOpen, onClose
     }
   }, [isEditMode, editSkill]);
 
+  /**
+   * Handles input field changes for form state
+   * @internal
+   * @param field - Form field name to update
+   * @param value - New value for the field
+   *
+   * Updates the specified field in formState and clears any associated error
+   * for real-time error feedback. Provides immediate user feedback when
+   * correcting validation errors.
+   */
   const handleInputChange = (field: keyof FormState, value: string) => {
     setFormState(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -169,6 +526,14 @@ const SkillCreationModal: React.FC<SkillCreationModalProps> = ({ isOpen, onClose
     }
   };
 
+  /**
+   * Toggles tool selection in allowed tools list
+   * @internal
+   * @param toolName - Name of the tool to toggle
+   *
+   * Adds or removes tool from selectedTools array. If tool is already selected,
+   * removes it; otherwise adds it to the selection.
+   */
   const handleToolToggle = (toolName: string) => {
     setSelectedTools((prev) =>
       prev.includes(toolName)
@@ -177,6 +542,20 @@ const SkillCreationModal: React.FC<SkillCreationModalProps> = ({ isOpen, onClose
     );
   };
 
+  /**
+   * Validates all form fields before submission
+   * @internal
+   * @returns {boolean} True if all validations pass, false otherwise
+   *
+   * Performs comprehensive validation:
+   * - Name (create mode): required, lowercase/numbers/hyphens only, max 64 chars
+   * - Description: required, max 1024 chars
+   * - Skill Instructions: required, min 50 chars
+   * - Version: required, semantic versioning format (e.g., "1.0.0")
+   * - License: optional, max 100 chars if provided
+   *
+   * Sets errors object with field-specific messages for any validation failures.
+   */
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -221,6 +600,35 @@ const SkillCreationModal: React.FC<SkillCreationModalProps> = ({ isOpen, onClose
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * Handles form submission for creating or updating a skill
+   * @internal
+   *
+   * Workflow:
+   * 1. Validates form fields using validateForm()
+   * 2. Sets loading state and clears previous results
+   * 3. Builds API payload based on mode (create vs edit)
+   * 4. Calls createSkill() or updateSkill() API
+   * 5. Handles success: sets success state, shows message, auto-closes after 2s
+   * 6. Handles error: sets error state, shows error message
+   * 7. Invokes onSkillCreated callback on success
+   *
+   * Create Mode:
+   * - Generates displayName from name (e.g., "test-skill" → "Test Skill")
+   * - Includes all form fields in payload
+   * - Creates new skill file at .claude/skills/{name}/skill.md
+   *
+   * Edit Mode:
+   * - Excludes name from payload (immutable)
+   * - Updates existing skill file
+   * - Preserves existing skill.id for API call
+   *
+   * Data Transformations:
+   * - Empty arrays/objects excluded from payload (undefined)
+   * - Model config included only if enabled
+   * - Additional files included only if non-empty
+   * - MCP tools transformed to API format
+   */
   const handleSubmit = useCallback(async () => {
     if (!validateForm()) {
       return;
@@ -314,6 +722,27 @@ const SkillCreationModal: React.FC<SkillCreationModalProps> = ({ isOpen, onClose
     }
   }, [isEditMode, editSkill, formState, selectedTools, disallowedTools, selectedMCPTools, inputFields, modelConfigEnabled, modelConfig, additionalFiles, onSkillCreated]);
 
+  /**
+   * Handles modal close and resets all form state
+   * @internal
+   *
+   * Resets all state to initial values:
+   * - Core form fields (name, description, skillmd, category, isPublic, version, license)
+   * - Tool selections (selectedTools, disallowedTools)
+   * - MCP tools (selectedMCPTools)
+   * - Input fields (inputFields)
+   * - Validation errors (errors)
+   * - Creation status and result
+   * - Model configuration (modelConfigEnabled, modelConfig)
+   * - UI state (showAdvanced, activeToolTab)
+   * - File uploads (additionalFiles, fileUploadLoading)
+   *
+   * Called when:
+   * - User clicks Cancel button
+   * - User clicks backdrop (Dialog onOpenChange)
+   * - Auto-close timeout after success (2s)
+   * - User clicks X button in dialog header
+   */
   const handleClose = () => {
     setFormState({
       name: '',
@@ -347,6 +776,22 @@ const SkillCreationModal: React.FC<SkillCreationModalProps> = ({ isOpen, onClose
     onClose();
   };
 
+  /**
+   * Renders color-coded result banner based on creation status
+   * @internal
+   * @returns {JSX.Element | null} Result banner element or null if idle
+   *
+   * Status-based rendering:
+   * - idle: Returns null (no banner)
+   * - loading: Not rendered (spinner shows in submit button instead)
+   * - success: Green banner with CheckCircleIcon and success message
+   * - error: Red banner with XCircleIcon and error message
+   *
+   * Banner styling:
+   * - Success: bg-green-900/50 text-green-300
+   * - Error: bg-red-900/50 text-red-300
+   * - Layout: flex items-start space-x-3 for icon-text alignment
+   */
   const renderResult = () => {
     if (creationStatus === 'idle') return null;
 
@@ -1156,5 +1601,7 @@ const SkillCreationModal: React.FC<SkillCreationModalProps> = ({ isOpen, onClose
     </Dialog>
   );
 };
+
+SkillCreationModal.displayName = 'SkillCreationModal';
 
 export default SkillCreationModal;

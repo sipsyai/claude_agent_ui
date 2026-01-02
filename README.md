@@ -35,6 +35,111 @@ A comprehensive web-based management interface for Claude agents, skills, slash 
 - **Task History**: View past task executions
 - **Status Tracking**: Monitor task progress and completion
 
+## Architecture
+
+The Claude Agent UI is a hybrid full-stack application combining multiple services in a containerized environment to deliver real-time AI agent execution, persistent data storage, and extensible tool integration.
+
+### System Overview
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        Browser[Web Browser]
+    end
+
+    subgraph "Docker Network: frontend"
+        subgraph "Frontend Container"
+            React[React SPA<br/>Vite + Tailwind + Radix UI]
+            Nginx[Nginx<br/>Reverse Proxy]
+            React --> Nginx
+        end
+
+        subgraph "Express Container"
+            Express[Express Server<br/>Port 3001]
+            ClaudeSDK[Claude SDK Service<br/>Agent Execution]
+            MCPService[MCP Service<br/>Tool Integration]
+            StrapiClient[Strapi Client<br/>Data Access Layer]
+            SSE[SSE Streaming<br/>Real-time Events]
+
+            Express --> ClaudeSDK
+            Express --> MCPService
+            Express --> StrapiClient
+            Express --> SSE
+        end
+
+        subgraph "Strapi Container"
+            Strapi[Strapi CMS<br/>REST API<br/>Port 1337]
+        end
+    end
+
+    subgraph "Docker Network: backend"
+        subgraph "PostgreSQL Container"
+            Postgres[(PostgreSQL 16<br/>Database<br/>Port 5432)]
+        end
+    end
+
+    subgraph "External Services"
+        AnthropicAPI[Anthropic API<br/>Claude Models]
+        MCPServers[MCP Servers<br/>stdio/sse/http]
+    end
+
+    %% Client connections
+    Browser -->|HTTP/HTTPS| Nginx
+
+    %% Nginx routing
+    Nginx -->|/api/*| Express
+    Nginx -->|/strapi/*| Strapi
+
+    %% Express to Strapi
+    StrapiClient -->|REST API| Strapi
+
+    %% Strapi to Database
+    Strapi -->|SQL Queries| Postgres
+
+    %% Claude SDK connections
+    ClaudeSDK -->|HTTPS Streaming| AnthropicAPI
+
+    %% MCP connections
+    MCPService -->|JSON-RPC| MCPServers
+
+    %% SSE streaming to client
+    SSE -.->|Server-Sent Events| Nginx
+    Nginx -.->|SSE| Browser
+
+    %% Styling
+    classDef frontend fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    classDef backend fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef data fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef external fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+
+    class React,Nginx frontend
+    class Express,ClaudeSDK,MCPService,StrapiClient,SSE,Strapi backend
+    class Postgres data
+    class AnthropicAPI,MCPServers external
+```
+
+### Key Components
+
+- **React Frontend** - Modern SPA with Vite, Tailwind CSS, and Radix UI for component library
+- **Nginx** - Reverse proxy handling routing and SSE connections
+- **Express Server** - Business logic, SSE streaming, and service orchestration
+- **Strapi CMS** - Headless CMS providing REST API for data persistence
+- **PostgreSQL** - Primary database for all application data
+- **Claude SDK** - Integration with Anthropic's Claude API for agent execution
+- **MCP Servers** - External tool integration via Model Context Protocol
+
+### Architecture Documentation
+
+For detailed architecture information, see:
+
+- **[Architecture Overview](./docs/architecture/README.md)** - Start here for a guided tour (15 min read)
+- **[System Overview](./docs/architecture/01-system-overview.md)** - Detailed component breakdown and interactions
+- **[Data Flow](./docs/architecture/02-data-flow.md)** - Agent execution, CRUD operations, MCP integration, and chat flows
+- **[Deployment](./docs/architecture/03-deployment.md)** - Docker containers, networks, volumes, and operational procedures
+- **[Components](./docs/architecture/04-components.md)** - Service layer, frontend hierarchy, and data model
+- **[Sequence Diagrams](./docs/architecture/05-sequences.md)** - Detailed flows for key operations
+- **[Technology Stack](./docs/architecture/06-tech-stack.md)** - Complete tech stack with version requirements and rationale
+
 ## Prerequisites
 
 - Node.js >= 20.19.0

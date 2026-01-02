@@ -1,0 +1,85 @@
+{
+  "collectionName": "components_flow_output_nodes",
+  "info": {
+    "displayName": "Output Node",
+    "icon": "logout",
+    "description": "Flow output node for defining how results are delivered"
+  },
+  "options": {},
+  "attributes": {
+    "nodeId": {
+      "type": "string",
+      "required": true,
+      "description": "Unique identifier for this node within the flow"
+    },
+    "name": {
+      "type": "string",
+      "required": true,
+      "default": "Output",
+      "description": "Display name for this output node"
+    },
+    "description": {
+      "type": "text",
+      "description": "Description of what this output node produces"
+    },
+    "outputType": {
+      "type": "enumeration",
+      "enum": ["response", "file", "database", "webhook", "email"],
+      "required": true,
+      "default": "response",
+      "description": "How to deliver the output"
+    },
+    "format": {
+      "type": "enumeration",
+      "enum": ["json", "markdown", "text", "html", "csv", "zip"],
+      "default": "json",
+      "description": "Output format for the result"
+    },
+    "saveToFile": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to save output to a file"
+    },
+    "filePath": {
+      "type": "string",
+      "description": "File path template for saving output. Use {{variableName}} for interpolation"
+    },
+    "fileName": {
+      "type": "string",
+      "description": "File name template for saving output"
+    },
+    "includeMetadata": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to include execution metadata in output"
+    },
+    "includeTimestamp": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to include timestamp in output"
+    },
+    "transformTemplate": {
+      "type": "text",
+      "description": "Optional template for transforming the final output"
+    },
+    "webhookUrl": {
+      "type": "string",
+      "description": "Webhook URL for outputType=webhook"
+    },
+    "webhookHeaders": {
+      "type": "json",
+      "default": {},
+      "description": "Headers to send with webhook request"
+    },
+    "position": {
+      "type": "json",
+      "default": { "x": 0, "y": 200 },
+      "description": "UI position coordinates for the node"
+    },
+    "metadata": {
+      "type": "json",
+      "default": {},
+      "description": "Additional metadata for the node"
+    }
+  }
+}

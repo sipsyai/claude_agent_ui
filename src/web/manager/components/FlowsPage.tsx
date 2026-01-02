@@ -23,10 +23,12 @@ import {
   PlusIcon,
   RefreshIcon,
   ArchiveIcon,
+  EyeIcon,
 } from './ui/Icons';
 import FlowExecutionModal from './FlowExecutionModal';
 
 interface FlowsPageProps {
+  onViewFlow?: (flow: Flow) => void;
   onEditFlow?: (flow: Flow) => void;
   onCreateFlow?: () => void;
 }
@@ -88,7 +90,7 @@ const ExecutionStatusIcon: React.FC<{ status: FlowExecutionStatus }> = ({ status
   }
 };
 
-const FlowsPage: React.FC<FlowsPageProps> = ({ onEditFlow, onCreateFlow }) => {
+const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateFlow }) => {
   const [flows, setFlows] = useState<Flow[]>([]);
   const [recentExecutions, setRecentExecutions] = useState<Map<string, FlowExecution[]>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -384,13 +386,19 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onEditFlow, onCreateFlow }) => {
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="flex items-center gap-2 flex-1">
+                      <CardTitle
+                        className="flex items-center gap-2 flex-1 cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => onViewFlow?.(flow)}
+                      >
                         <span className="text-primary">⚡</span>
                         <span className="truncate">{flow.name}</span>
                       </CardTitle>
                       <StatusBadge status={flow.status} />
                     </div>
-                    <CardDescription className="line-clamp-2">
+                    <CardDescription
+                      className="line-clamp-2 cursor-pointer hover:text-foreground transition-colors"
+                      onClick={() => onViewFlow?.(flow)}
+                    >
                       {flow.description || 'No description'}
                     </CardDescription>
                   </CardHeader>
@@ -454,6 +462,18 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onEditFlow, onCreateFlow }) => {
                   </CardContent>
 
                   <CardFooter className="flex gap-2 pt-3 flex-wrap">
+                    {/* View Button */}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => onViewFlow?.(flow)}
+                      className="flex items-center gap-1"
+                      title="View flow details and execution history"
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                      View
+                    </Button>
+
                     {/* Execute Button */}
                     <Button
                       size="sm"

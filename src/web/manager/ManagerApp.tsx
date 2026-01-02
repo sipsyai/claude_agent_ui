@@ -14,6 +14,7 @@ import MCPServersPage from './components/MCPServersPage';
 import TasksPage from './components/TasksPage';
 import FlowsPage from './components/FlowsPage';
 import FlowEditorPage from './components/FlowEditorPage';
+import FlowDetailPage from './components/FlowDetailPage';
 import SettingsPage from './components/SettingsPage';
 import * as api from './services/api';
 import ChatPage from './components/ChatPage';
@@ -35,9 +36,10 @@ const App: React.FC = () => {
   const [managerView, setManagerView] = useState<ManagerView>(ManagerView.Dashboard);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Flow editor state
+  // Flow state
   const [editingFlowId, setEditingFlowId] = useState<string | null>(null);
   const [isCreatingFlow, setIsCreatingFlow] = useState(false);
+  const [viewingFlowId, setViewingFlowId] = useState<string | null>(null);
 
   // Load saved directory from localStorage on mount
   useEffect(() => {
@@ -161,19 +163,31 @@ const App: React.FC = () => {
   };
 
   // Flow handlers
+  const handleViewFlow = (flow: Flow) => {
+    setViewingFlowId(flow.id);
+    setEditingFlowId(null);
+    setIsCreatingFlow(false);
+  };
+
   const handleEditFlow = (flow: Flow) => {
     setEditingFlowId(flow.id);
     setIsCreatingFlow(false);
+    setViewingFlowId(null);
   };
 
   const handleCreateFlow = () => {
     setEditingFlowId(null);
     setIsCreatingFlow(true);
+    setViewingFlowId(null);
   };
 
   const handleCloseFlowEditor = () => {
     setEditingFlowId(null);
     setIsCreatingFlow(false);
+  };
+
+  const handleCloseFlowDetail = () => {
+    setViewingFlowId(null);
   };
 
   const handleFlowSaved = (_flow: Flow) => {
@@ -203,6 +217,17 @@ const App: React.FC = () => {
   };
 
   const renderDashboardContent = () => {
+    // Handle flow detail view
+    if (managerView === ManagerView.Flows && viewingFlowId) {
+      return (
+        <FlowDetailPage
+          flowId={viewingFlowId}
+          onBack={handleCloseFlowDetail}
+          onEdit={handleEditFlow}
+        />
+      );
+    }
+
     // Handle flow editor view
     if (managerView === ManagerView.Flows && (isCreatingFlow || editingFlowId)) {
       return (
@@ -232,6 +257,7 @@ const App: React.FC = () => {
       case ManagerView.Flows:
         return (
           <FlowsPage
+            onViewFlow={handleViewFlow}
             onEditFlow={handleEditFlow}
             onCreateFlow={handleCreateFlow}
           />

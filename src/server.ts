@@ -6,6 +6,7 @@ import cors from 'cors';
 import { createLogger, type Logger } from './services/logger.js';
 import { ConfigService } from './services/config-service.js';
 import { chatLogService } from './services/chat-log-service.js';
+import { initializeFlowSystem } from './services/flow-init.js';
 import { createManagerRoutes } from './routes/manager.routes.js';
 import { createStrapiManagerRoutes } from './routes/manager.routes.strapi.js';
 import { createExecutionRoutes } from './routes/execution.routes.js';
@@ -91,6 +92,21 @@ export class AgentUIServer {
     } catch (error) {
       this.logger.warn('Failed to initialize ChatLogService', error);
       // Don't fail server start if log service initialization fails
+    }
+
+    // Initialize Flow Execution System
+    try {
+      const flowInitialized = await initializeFlowSystem({
+        workingDirectory: process.cwd(),
+      });
+      if (flowInitialized) {
+        this.logger.info('Flow execution system initialized successfully');
+      } else {
+        this.logger.warn('Flow execution system initialization returned false');
+      }
+    } catch (error) {
+      this.logger.warn('Failed to initialize Flow execution system', error);
+      // Don't fail server start if flow system initialization fails
     }
 
     return new Promise<void>((resolve, reject) => {

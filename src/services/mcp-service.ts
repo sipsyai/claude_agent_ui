@@ -185,7 +185,27 @@ export class MCPService {
 
   /**
    * Get project MCP config path (.mcp.json at project root)
-   * SDK-aligned location
+   *
+   * @description
+   * Returns the absolute path to the .mcp.json configuration file at the project root.
+   * This location is SDK-aligned with Anthropic's Claude Agent SDK expectations, which
+   * looks for MCP server configurations at the project root rather than in .claude/ subdirectory.
+   *
+   * The .mcp.json file is the canonical location for MCP server configurations that are
+   * automatically loaded by the Claude Agent SDK. This service reads/writes this file to
+   * manage server configurations programmatically.
+   *
+   * @param projectPath - Absolute path to the project directory
+   *
+   * @returns Absolute path to the .mcp.json file (e.g., '/path/to/project/.mcp.json')
+   *
+   * @example
+   * ```typescript
+   * const configPath = this.getMCPConfigPath('/Users/dev/my-project');
+   * // Returns: '/Users/dev/my-project/.mcp.json'
+   * ```
+   *
+   * @private
    */
   private getMCPConfigPath(projectPath: string): string {
     return path.join(projectPath, '.mcp.json');
@@ -193,6 +213,55 @@ export class MCPService {
 
   /**
    * Check for legacy config locations and auto-migrate if found
+   *
+   * @description
+   * Automatically detects and migrates legacy MCP configurations from the old
+   * .claude/mcp.json location to the new SDK-aligned .mcp.json location at project root.
+   *
+   * This method implements a smart migration strategy:
+   * 1. If no legacy config exists: No action taken
+   * 2. If legacy config is empty: Delete legacy file
+   * 3. If only legacy config exists: Move to new location
+   * 4. If both exist: Merge configs (new config takes precedence), then delete legacy
+   *
+   * The migration is automatic and transparent to users. After migration, the legacy
+   * .claude/mcp.json file is deleted to avoid confusion. All migrations are logged
+   * with server counts for audit purposes.
+   *
+   * This ensures backward compatibility for projects using the old config location
+   * while transitioning to the SDK-aligned format expected by Claude Agent SDK.
+   *
+   * @param projectPath - Absolute path to the project directory to check for legacy configs
+   *
+   * @returns Promise that resolves when migration is complete (or skipped if no legacy config)
+   *
+   * @example
+   * ```typescript
+   * // Before migration:
+   * // .claude/mcp.json exists with { "mcpServers": { "filesystem": {...} } }
+   * // .mcp.json doesn't exist
+   *
+   * await this.checkAndMigrateLegacyConfigs('/path/to/project');
+   *
+   * // After migration:
+   * // .claude/mcp.json is deleted
+   * // .mcp.json now contains { "mcpServers": { "filesystem": {...} } }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Merge scenario - both configs exist
+   * // .claude/mcp.json: { "mcpServers": { "old-server": {...}, "shared": { version: 1 } } }
+   * // .mcp.json: { "mcpServers": { "new-server": {...}, "shared": { version: 2 } } }
+   *
+   * await this.checkAndMigrateLegacyConfigs('/path/to/project');
+   *
+   * // Result in .mcp.json:
+   * // { "mcpServers": { "old-server": {...}, "new-server": {...}, "shared": { version: 2 } } }
+   * // Note: new config's "shared" server overwrites legacy version
+   * ```
+   *
+   * @private
    */
   private async checkAndMigrateLegacyConfigs(projectPath: string): Promise<void> {
     const legacyPath = path.join(projectPath, '.claude', 'mcp.json');
@@ -261,6 +330,68 @@ export class MCPService {
 
   /**
    * Read MCP config from file with env var substitution
+   *
+   * @description
+   * Reads and parses an MCP configuration file (.mcp.json), applying environment
+   * variable substitution to all string values. This enables secure configuration
+   * management by allowing sensitive values (like API keys) to be stored in
+   * environment variables rather than committed to version control.
+   *
+   * The method performs the following steps:
+   * 1. Check if config file exists (returns null if not found)
+   * 2. Read file contents as UTF-8 text
+   * 3. Parse JSON into MCPConfig object
+   * 4. Apply environment variable substitution using ${VAR_NAME} syntax
+   * 5. Return the fully-resolved configuration
+   *
+   * Environment variable substitution supports the format:
+   * - ${VAR_NAME} - Replaced with process.env.VAR_NAME value
+   * - If environment variable is not set, the literal string is preserved
+   *
+   * Errors during read/parse are logged and null is returned, allowing the
+   * application to gracefully handle missing or invalid configurations.
+   *
+   * @param configPath - Absolute path to the MCP configuration file to read
+   *
+   * @returns Promise resolving to parsed MCPConfig with env vars substituted,
+   *          or null if file doesn't exist or parsing fails
+   *
+   * @example
+   * ```typescript
+   * // Config file at /project/.mcp.json:
+   * // {
+   * //   "mcpServers": {
+   * //     "github": {
+   * //       "command": "npx",
+   * //       "args": ["-y", "@modelcontextprotocol/server-github"],
+   * //       "env": { "GITHUB_TOKEN": "${GITHUB_TOKEN}" }
+   * //     }
+   * //   }
+   * // }
+   *
+   * // With environment variable: GITHUB_TOKEN=ghp_abc123
+   * const config = await this.readMCPConfig('/project/.mcp.json');
+   *
+   * // Result:
+   * // {
+   * //   mcpServers: {
+   * //     github: {
+   * //       command: "npx",
+   * //       args: ["-y", "@modelcontextprotocol/server-github"],
+   * //       env: { GITHUB_TOKEN: "ghp_abc123" }  // <- Substituted!
+   * //     }
+   * //   }
+   * // }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // File doesn't exist
+   * const config = await this.readMCPConfig('/nonexistent/.mcp.json');
+   * console.log(config); // null
+   * ```
+   *
+   * @private
    */
   private async readMCPConfig(configPath: string): Promise<MCPConfig | null> {
     try {
@@ -283,6 +414,67 @@ export class MCPService {
 
   /**
    * Write MCP config to file
+   *
+   * @description
+   * Writes an MCPConfig object to disk as a formatted JSON file. This method ensures
+   * the configuration is persisted in a human-readable format with proper indentation
+   * (2 spaces) and UTF-8 encoding.
+   *
+   * The method performs the following operations:
+   * 1. Ensure parent directory exists (creates recursively if needed)
+   * 2. Serialize config object to formatted JSON (2-space indentation)
+   * 3. Write to file with UTF-8 encoding
+   * 4. Log success with file path
+   *
+   * If the write operation fails (e.g., due to permission issues), the error is
+   * logged and re-thrown to allow the caller to handle it appropriately.
+   *
+   * This method does NOT perform environment variable substitution in reverse -
+   * it writes the config exactly as provided. Callers are responsible for ensuring
+   * sensitive values use ${VAR_NAME} placeholders if desired.
+   *
+   * @param configPath - Absolute path to the MCP configuration file to write
+   * @param config - MCPConfig object to serialize and write to disk
+   *
+   * @returns Promise that resolves when the file is successfully written
+   *
+   * @throws Error if directory creation fails or file write operation fails
+   *
+   * @example
+   * ```typescript
+   * const config: MCPConfig = {
+   *   mcpServers: {
+   *     filesystem: {
+   *       command: 'npx',
+   *       args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+   *       env: { DEBUG: 'true' }
+   *     }
+   *   }
+   * };
+   *
+   * await this.writeMCPConfig('/project/.mcp.json', config);
+   *
+   * // File written to /project/.mcp.json:
+   * // {
+   * //   "mcpServers": {
+   * //     "filesystem": {
+   * //       "command": "npx",
+   * //       "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+   * //       "env": { "DEBUG": "true" }
+   * //     }
+   * //   }
+   * // }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Writing to nested directory (auto-creates parent dirs)
+   * const config: MCPConfig = { mcpServers: {} };
+   * await this.writeMCPConfig('/project/configs/mcp/.mcp.json', config);
+   * // Creates /project/configs/mcp/ directory if it doesn't exist
+   * ```
+   *
+   * @private
    */
   private async writeMCPConfig(configPath: string, config: MCPConfig): Promise<void> {
     try {
@@ -302,6 +494,91 @@ export class MCPService {
 
   /**
    * Convert MCP config entries to MCPServer objects
+   *
+   * @description
+   * Transforms the raw MCPConfig object (from .mcp.json file) into a normalized array
+   * of MCPServerInternal objects. This method flattens the key-value structure of
+   * mcpServers into a consistent array format that's easier to work with programmatically.
+   *
+   * The transformation process:
+   * 1. Extracts server name from object keys
+   * 2. Determines transport type (stdio, sdk, sse, http) from config or defaults to 'stdio'
+   * 3. Creates MCPServerInternal objects with normalized structure
+   * 4. Preserves all original config properties (command, args, env, disabled)
+   * 5. Uses server name as both 'id' and 'name' for consistency
+   *
+   * This method safely handles null or empty configs by returning an empty array,
+   * making it safe to use in all contexts without null checks.
+   *
+   * The resulting MCPServerInternal[] array is the internal representation used
+   * throughout the service for server management operations.
+   *
+   * @param config - MCPConfig object read from file, or null if file doesn't exist
+   *
+   * @returns Array of MCPServerInternal objects with normalized structure.
+   *          Returns empty array if config is null or has no servers.
+   *
+   * @example
+   * ```typescript
+   * const config: MCPConfig = {
+   *   mcpServers: {
+   *     filesystem: {
+   *       command: 'npx',
+   *       args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+   *       env: { DEBUG: 'true' }
+   *     },
+   *     github: {
+   *       command: 'npx',
+   *       args: ['-y', '@modelcontextprotocol/server-github'],
+   *       env: { GITHUB_TOKEN: '${GITHUB_TOKEN}' },
+   *       disabled: true
+   *     },
+   *     customSdk: {
+   *       type: 'sdk',
+   *       name: 'customSdk'
+   *     }
+   *   }
+   * };
+   *
+   * const servers = this.configToServers(config);
+   *
+   * // Result:
+   * // [
+   * //   {
+   * //     id: 'filesystem',
+   * //     name: 'filesystem',
+   * //     type: 'stdio',  // <- Inferred from missing 'type' field
+   * //     config: { command: 'npx', args: [...], env: {...} },
+   * //     disabled: undefined
+   * //   },
+   * //   {
+   * //     id: 'github',
+   * //     name: 'github',
+   * //     type: 'stdio',
+   * //     config: { command: 'npx', args: [...], env: {...}, disabled: true },
+   * //     disabled: true
+   * //   },
+   * //   {
+   * //     id: 'customSdk',
+   * //     name: 'customSdk',
+   * //     type: 'sdk',  // <- Explicit type from config
+   * //     config: { type: 'sdk', name: 'customSdk' },
+   * //     disabled: undefined
+   * //   }
+   * // ]
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handling null/empty configs
+   * const servers1 = this.configToServers(null);
+   * console.log(servers1); // []
+   *
+   * const servers2 = this.configToServers({ mcpServers: {} });
+   * console.log(servers2); // []
+   * ```
+   *
+   * @private
    */
   private configToServers(config: MCPConfig | null): MCPServerInternal[] {
     if (!config || !config.mcpServers) {

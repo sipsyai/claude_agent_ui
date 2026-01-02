@@ -289,8 +289,9 @@
             "type": "manual",
             "instructions": "Collapse sidebar, refresh page, verify sidebar remains collapsed"
           },
-          "status": "pending",
-          "notes": "Use localStorage key 'flowEditor.sidebarCollapsed'; restore on mount"
+          "status": "completed",
+          "notes": "localStorage persistence was already fully implemented in subtask-2-1 when ConfigSidebar was created. Implementation verified:\n- Loads from localStorage on mount (line 254: localStorage.getItem('flowEditor.sidebarCollapsed'))\n- Saves to localStorage when state changes (line 267: localStorage.setItem('flowEditor.sidebarCollapsed', String(isCollapsed)))\n- Only operates in uncontrolled mode\n- Preserves user preference separately from mobile auto-collapse\n- Uses correct key as specified in plan\n\nNo code changes needed. Feature is fully functional and ready for manual verification.",
+          "updated_at": "2026-01-02T19:39:17.234326+00:00"
         }
       ]
     },
@@ -531,5 +532,5 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2026-01-02T19:35:40.556883+00:00"
+  "last_updated": "2026-01-02T19:39:17.234352+00:00"
 }

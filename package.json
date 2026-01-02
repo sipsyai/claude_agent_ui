@@ -46,6 +46,7 @@
     "rollback-migration": "tsx scripts/migration-tools/rollback-migration.ts",
     "test:rollback": "tsx scripts/migration-tools/test-rollback-procedure.ts",
     "test:health": "bash scripts/test-health-endpoints.sh",
+    "test:backup-restore": "bash scripts/test-backup-restore.sh",
     "verify:tables": "tsx scripts/verify-postgres-tables.ts",
     "import-training-agent": "tsx scripts/import-training-agent.ts",
     "run-payload": "tsx run-sdk-payload.ts"

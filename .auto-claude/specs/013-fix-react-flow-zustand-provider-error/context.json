@@ -1,0 +1,17 @@
+{
+  "task_description": "Fix React Flow zustand provider error by wrapping FlowCanvas and CanvasToolbar components in ReactFlowProvider",
+  "scoped_services": ["main"],
+  "files_to_modify": [
+    "src/web/manager/components/FlowEditorVisual.tsx"
+  ],
+  "files_to_reference": [],
+  "patterns": {},
+  "service_contexts": {
+    "main": {
+      "affected_components": ["FlowCanvas", "CanvasToolbar"],
+      "error_message": "Seems like you have not used zustand provider as an ancestor",
+      "solution": "Add ReactFlowProvider wrapper inside FlowCanvasProvider"
+    }
+  },
+  "created_at": "2026-01-03T10:30:00Z"
+}

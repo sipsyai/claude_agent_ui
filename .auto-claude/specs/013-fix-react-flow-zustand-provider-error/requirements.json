@@ -1,0 +1,6 @@
+{
+  "task_description": "Fix the React Flow error by wrapping FlowCanvas and CanvasToolbar components in ReactFlowProvider. The error occurs because components using useReactFlow() hook are not properly wrapped in the React Flow provider hierarchy.",
+  "workflow_type": "feature",
+  "services_involved": [],
+  "created_at": "2026-01-03T00:15:37.078493"
+}

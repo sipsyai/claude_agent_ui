@@ -1,0 +1,65 @@
+{
+  "complexity": "simple",
+  "workflow_type": "simple",
+  "confidence": 0.85,
+  "reasoning": "This is a well-defined bug fix that requires wrapping two specific components in a React provider. Limited scope (1-2 files), single service, no infrastructure changes, and uses standard React patterns already present in the codebase.",
+
+  "analysis": {
+    "scope": {
+      "estimated_files": 2,
+      "estimated_services": 1,
+      "is_cross_cutting": false,
+      "notes": "Localized change to add ReactFlowProvider wrapper around FlowCanvas and CanvasToolbar components. Likely modifies 1-2 parent component files."
+    },
+    "integrations": {
+      "external_services": [],
+      "new_dependencies": [],
+      "research_needed": false,
+      "notes": "React Flow is already an existing dependency. ReactFlowProvider is a standard context provider from the library. No research needed - this is a well-documented pattern."
+    },
+    "infrastructure": {
+      "docker_changes": false,
+      "database_changes": false,
+      "config_changes": false,
+      "notes": "No infrastructure impact. Pure component hierarchy change in the frontend React application."
+    },
+    "knowledge": {
+      "patterns_exist": true,
+      "research_required": false,
+      "unfamiliar_tech": [],
+      "notes": "Standard React context provider pattern. React Flow is already in use in the codebase. This is a straightforward provider wrapper fix."
+    },
+    "risk": {
+      "level": "low",
+      "concerns": [
+        "Provider placement in wrong location could affect rendering",
+        "Need to verify all components using useReactFlow() are within provider boundary"
+      ],
+      "notes": "Low risk fix. Easy to verify and rollback if needed. Main concern is ensuring provider wraps all necessary components."
+    }
+  },
+
+  "recommended_phases": [
+    "discovery",
+    "quick_spec",
+    "validation"
+  ],
+
+  "flags": {
+    "needs_research": false,
+    "needs_self_critique": false,
+    "needs_infrastructure_setup": false
+  },
+
+  "validation_recommendations": {
+    "risk_level": "low",
+    "skip_validation": false,
+    "minimal_mode": true,
+    "test_types_required": ["unit"],
+    "security_scan_required": false,
+    "staging_deployment_required": false,
+    "reasoning": "Simple bug fix with no security implications. Minimal validation sufficient - verify components render correctly and existing unit tests pass. No infrastructure or security concerns."
+  },
+
+  "created_at": "2026-01-03T00:15:37.000000Z"
+}

@@ -6,9 +6,12 @@ import cors from 'cors';
 import { createLogger, type Logger } from './services/logger.js';
 import { ConfigService } from './services/config-service.js';
 import { chatLogService } from './services/chat-log-service.js';
+import { initializeFlowSystem } from './services/flow-init.js';
 import { createManagerRoutes } from './routes/manager.routes.js';
 import { createStrapiManagerRoutes } from './routes/manager.routes.strapi.js';
 import { createExecutionRoutes } from './routes/execution.routes.js';
+import { createFlowRoutes } from './routes/flow.routes.js';
+import { createWebhookRoutes } from './routes/webhook.routes.js';
 import taskRoutes from './routes/task.routes.js';
 import chatRoutes from './routes/chat.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
@@ -91,6 +94,21 @@ export class AgentUIServer {
     } catch (error) {
       this.logger.warn('Failed to initialize ChatLogService', error);
       // Don't fail server start if log service initialization fails
+    }
+
+    // Initialize Flow Execution System
+    try {
+      const flowInitialized = await initializeFlowSystem({
+        workingDirectory: process.cwd(),
+      });
+      if (flowInitialized) {
+        this.logger.info('Flow execution system initialized successfully');
+      } else {
+        this.logger.warn('Flow execution system initialization returned false');
+      }
+    } catch (error) {
+      this.logger.warn('Failed to initialize Flow execution system', error);
+      // Don't fail server start if flow system initialization fails
     }
 
     return new Promise<void>((resolve, reject) => {
@@ -286,6 +304,12 @@ export class AgentUIServer {
 
     // Chat API routes
     this.app.use('/api/chat', chatRoutes);
+
+    // Flow API routes (flow management and execution with SSE)
+    this.app.use('/api/flows', createFlowRoutes());
+
+    // Webhook API routes (external triggers for flows)
+    this.app.use('/api/webhooks', createWebhookRoutes());
 
     // React Router catch-all - must be after all API routes
     const isDev = process.env.NODE_ENV === 'development';

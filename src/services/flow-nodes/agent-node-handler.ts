@@ -4,19 +4,26 @@
  * Handles agent nodes in flow execution.
  * Responsibilities:
  * - Fetch agent configuration from Strapi
- * - Execute agent using Claude SDK Service
+ * - Execute agent using shared FlowSdkService
  * - Handle prompt template interpolation
+ * - Sync skills to filesystem before execution
  * - Track token usage and costs
  * - Support retry logic for errors
  *
+ * Integration with ClaudeSdkService:
+ * This handler uses the FlowSdkService which wraps ClaudeSdkService
+ * to provide a shared, reusable SDK instance for all flow executions.
+ * This approach avoids creating new SDK instances for each agent node,
+ * improving performance and resource management.
+ *
  * @see src/types/flow-types.ts for AgentNode type definition
- * @see src/services/claude-sdk-service.ts for agent execution
+ * @see src/services/flow-sdk-service.ts for SDK integration
+ * @see src/services/claude-sdk-service.ts for underlying SDK
  */
 
-import { EventEmitter } from 'events';
-import { v4 as uuidv4 } from 'uuid';
 import { createLogger, type Logger } from '../logger.js';
 import { strapiClient } from '../strapi-client.js';
+import { flowSdkService, type AgentExecutionConfig } from '../flow-sdk-service.js';
 import type { NodeHandler } from '../flow-execution-service.js';
 import type {
   FlowNode,
@@ -92,7 +99,10 @@ export class AgentNodeHandler implements NodeHandler {
         agentModel: agent.modelConfig?.model,
       });
 
-      // 2. Interpolate prompt template with context variables
+      // 2. Load and sync skills for this execution
+      const skills = await this.loadAndSyncSkills(agentNode.skills, context.input, agentNode.nodeId, context);
+
+      // 3. Interpolate prompt template with context variables
       const interpolatedPrompt = this.interpolateTemplate(
         agentNode.promptTemplate,
         context.variables,
@@ -103,24 +113,33 @@ export class AgentNodeHandler implements NodeHandler {
         promptLength: interpolatedPrompt.length,
       });
 
-      // 3. Determine model to use (node override > agent default)
+      // 4. Determine model to use (node override > agent default)
       const model = agentNode.modelOverride !== 'default'
         ? agentNode.modelOverride
         : agent.modelConfig?.model || DEFAULT_MODEL;
 
-      // 4. Execute the agent
+      // 5. Build tool configuration
+      const { allowedTools, disallowedTools } = this.mergeToolConfig(agent, skills);
+
+      // 6. Determine working directory
+      // Priority: flow metadata > node metadata > default (process.cwd())
+      const workingDirectory = this.getWorkingDirectory(agentNode, context);
+
+      // 7. Execute the agent using shared FlowSdkService
       const executionResult = await this.executeAgent({
         agent,
         prompt: interpolatedPrompt,
         model,
-        skills: agentNode.skills,
-        maxTokens: agentNode.maxTokens,
+        skills,
+        allowedTools,
+        disallowedTools,
         timeout: agentNode.timeout,
         context,
         nodeId: agentNode.nodeId,
+        workingDirectory,
       });
 
-      // 5. Calculate cost
+      // 8. Calculate cost
       const tokenCosts = TOKEN_COSTS[model] || TOKEN_COSTS[DEFAULT_MODEL];
       const cost = (
         (executionResult.inputTokens * tokenCosts.input) +
@@ -130,6 +149,7 @@ export class AgentNodeHandler implements NodeHandler {
       context.log('info', 'Agent execution completed', node.nodeId, {
         tokensUsed: executionResult.totalTokens,
         cost: cost.toFixed(6),
+        durationMs: executionResult.durationMs,
       });
 
       return {
@@ -222,144 +242,189 @@ export class AgentNodeHandler implements NodeHandler {
   }
 
   /**
-   * Execute the agent using Claude SDK
-   * This is a simplified execution that creates a conversation and waits for result
+   * Load and sync skills to filesystem for SDK to discover
+   * This ensures skills are available before agent execution
    */
-  private async executeAgent(params: {
-    agent: Agent;
-    prompt: string;
-    model: string;
-    skills: string[];
-    maxTokens?: number;
-    timeout: number;
-    context: FlowExecutionContext;
-    nodeId: string;
-  }): Promise<{
-    result: string;
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-  }> {
-    const { agent, prompt, model, skills, maxTokens, timeout, context, nodeId } = params;
-
-    // Import ClaudeSdkService dynamically to avoid circular dependencies
-    const { ClaudeSdkService } = await import('../claude-sdk-service.js');
-    const { ClaudeHistoryReader } = await import('../claude-history-reader.js');
-    const { ConversationStatusManager } = await import('../conversation-status-manager.js');
-
-    // Create a temporary SDK service instance for this execution
-    const historyReader = new ClaudeHistoryReader();
-    const statusManager = new ConversationStatusManager();
-    const sdkService = new ClaudeSdkService(historyReader, statusManager);
-
-    return new Promise(async (resolve, reject) => {
-      const executionTimeout = setTimeout(() => {
-        reject(new Error(`Agent execution timed out after ${timeout}ms`));
-      }, timeout);
-
-      try {
-        let result = '';
-        let inputTokens = 0;
-        let outputTokens = 0;
-
-        // Set up event listeners
-        const messageHandler = (event: { streamingId: string; message: any }) => {
-          const msg = event.message;
-
-          // Handle assistant messages (collect text content)
-          if (msg.type === 'assistant' && msg.message?.content) {
-            for (const block of msg.message.content) {
-              if (block.type === 'text') {
-                result += block.text;
-              }
-            }
-          }
-
-          // Handle result messages (get token usage)
-          if (msg.type === 'result') {
-            inputTokens = msg.usage?.input_tokens || 0;
-            outputTokens = msg.usage?.output_tokens || 0;
-          }
-        };
-
-        const closeHandler = (event: { streamingId: string; code: number }) => {
-          clearTimeout(executionTimeout);
-          sdkService.removeListener('claude-message', messageHandler);
-          sdkService.removeListener('process-closed', closeHandler);
-          sdkService.removeListener('process-error', errorHandler);
-
-          // Stop the conversation
-          sdkService.stopConversation(event.streamingId).catch(() => {});
-
-          resolve({
-            result,
-            inputTokens,
-            outputTokens,
-            totalTokens: inputTokens + outputTokens,
-          });
-        };
-
-        const errorHandler = (event: { streamingId: string; error: string }) => {
-          clearTimeout(executionTimeout);
-          sdkService.removeListener('claude-message', messageHandler);
-          sdkService.removeListener('process-closed', closeHandler);
-          sdkService.removeListener('process-error', errorHandler);
-
-          reject(new Error(`Agent execution error: ${event.error}`));
-        };
-
-        sdkService.on('claude-message', messageHandler);
-        sdkService.on('process-closed', closeHandler);
-        sdkService.on('process-error', errorHandler);
-
-        // Build conversation config
-        const conversationConfig = {
-          initialPrompt: prompt,
-          model: model as any,
-          systemPrompt: agent.systemPrompt,
-          workingDirectory: process.cwd(),
-          permissionMode: 'acceptEdits' as const, // Auto-accept for flow execution
-          allowedTools: agent.toolConfig?.allowedTools || undefined,
-          disallowedTools: agent.toolConfig?.disallowedTools || undefined,
-          skills: await this.loadSkillsForAgent(skills),
-        };
-
-        // Start the conversation
-        const { streamingId } = await sdkService.startConversation(conversationConfig);
-
-        context.log('debug', 'Agent conversation started', nodeId, { streamingId });
-
-      } catch (error) {
-        clearTimeout(executionTimeout);
-        reject(error);
-      }
-    });
-  }
-
-  /**
-   * Load skill configurations for the agent
-   */
-  private async loadSkillsForAgent(skillIds: string[]): Promise<any[]> {
+  private async loadAndSyncSkills(
+    skillIds: string[],
+    inputValues: Record<string, any>,
+    nodeId: string,
+    context: FlowExecutionContext
+  ): Promise<any[]> {
     if (!skillIds || skillIds.length === 0) {
       return [];
     }
 
     try {
+      // Fetch skills from Strapi
       const skills = await Promise.all(
         skillIds.map(async (skillId) => {
           try {
-            const skill = await strapiClient.getSkill(skillId);
-            return skill;
+            return await strapiClient.getSkill(skillId);
           } catch {
+            this.logger.warn('Failed to load skill', { skillId });
             return null;
           }
         })
       );
 
-      return skills.filter(Boolean);
+      const validSkills = skills.filter((s): s is NonNullable<typeof s> => s !== null);
+
+      if (validSkills.length === 0) {
+        return [];
+      }
+
+      // Sync skills to filesystem
+      try {
+        const { skillSyncService } = await import('../skill-sync-service.js');
+        await skillSyncService.syncAllSkills(validSkills, inputValues);
+
+        context.log('debug', `Synced ${validSkills.length} skills to filesystem`, nodeId, {
+          skillNames: validSkills.map(s => s?.name || 'unknown'),
+        });
+      } catch (syncError) {
+        this.logger.warn('Failed to sync skills to filesystem', { error: syncError });
+        context.log('warn', 'Skill sync failed, continuing without filesystem skills', nodeId);
+        // Continue execution - skills may still work through MCP config
+      }
+
+      return validSkills;
     } catch (error) {
-      this.logger.warn('Failed to load skills for agent', { error, skillIds });
+      this.logger.warn('Failed to load skills', { error, skillIds });
       return [];
+    }
+  }
+
+  /**
+   * Get the working directory for agent execution
+   * Priority: node metadata > flow metadata > default (process.cwd())
+   */
+  private getWorkingDirectory(node: AgentNode, context: FlowExecutionContext): string {
+    // Check node metadata for working directory
+    if (node.metadata?.workingDirectory) {
+      return node.metadata.workingDirectory as string;
+    }
+
+    // Check flow metadata for working directory
+    if (context.flow.metadata?.workingDirectory) {
+      return context.flow.metadata.workingDirectory as string;
+    }
+
+    // Default to process.cwd()
+    return process.cwd();
+  }
+
+  /**
+   * Merge tool configuration from agent and skills
+   * Skills can add to allowed tools and disallowed tools
+   *
+   * Returns string arrays for flexibility since the SDK accepts string tool names
+   * even though the Agent type uses a stricter ToolName union type
+   */
+  private mergeToolConfig(agent: Agent, skills: any[]): {
+    allowedTools: string[];
+    disallowedTools: string[];
+  } {
+    // Start with agent's tool configuration (convert from ToolName[] to string[])
+    const agentAllowed = agent.toolConfig?.allowedTools || [];
+    const agentDisallowed = agent.toolConfig?.disallowedTools || [];
+    let allowedTools: string[] = agentAllowed.map(t => String(t));
+    let disallowedTools: string[] = agentDisallowed.map(t => String(t));
+
+    const allBuiltInTools: string[] = [
+      'WebFetch', 'WebSearch', 'Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep',
+      'Task', 'TodoWrite', 'NotebookEdit', 'BashOutput',
+      'KillShell', 'AskUserQuestion', 'Skill', 'SlashCommand'
+    ];
+
+    // Merge tools from skills
+    for (const skill of skills) {
+      if (skill?.toolConfig?.allowedTools && Array.isArray(skill.toolConfig.allowedTools)) {
+        const skillAllowedTools = skill.toolConfig.allowedTools.map((t: any) => String(t));
+        allowedTools = Array.from(new Set([...allowedTools, ...skillAllowedTools]));
+      }
+
+      if (skill?.toolConfig?.disallowedTools && Array.isArray(skill.toolConfig.disallowedTools)) {
+        const skillDisallowedTools = skill.toolConfig.disallowedTools.map((t: any) => String(t));
+        disallowedTools = Array.from(new Set([...disallowedTools, ...skillDisallowedTools]));
+      }
+    }
+
+    // Enforce strict tool allowlist: block all tools not explicitly allowed
+    if (allowedTools.length > 0) {
+      const implicitlyDisallowed = allBuiltInTools.filter(tool => !allowedTools.includes(tool));
+      disallowedTools = Array.from(new Set([...disallowedTools, ...implicitlyDisallowed]));
+    }
+
+    return { allowedTools, disallowedTools };
+  }
+
+  /**
+   * Execute the agent using shared FlowSdkService
+   * This leverages the singleton SDK service for efficient resource usage
+   * and properly integrates with ClaudeSdkService via FlowSdkService
+   */
+  private async executeAgent(params: {
+    agent: Agent;
+    prompt: string;
+    model: string;
+    skills: any[];
+    allowedTools: string[];
+    disallowedTools: string[];
+    timeout: number;
+    context: FlowExecutionContext;
+    nodeId: string;
+    workingDirectory: string;
+  }): Promise<{
+    result: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    durationMs: number;
+  }> {
+    const { agent, prompt, model, skills, allowedTools, disallowedTools, timeout, context, nodeId, workingDirectory } = params;
+
+    context.log('debug', 'Starting agent execution via FlowSdkService', nodeId, {
+      model,
+      skillCount: skills.length,
+      allowedToolsCount: allowedTools.length,
+      timeout,
+      workingDirectory,
+    });
+
+    // Build execution config for FlowSdkService
+    // This config is passed to ClaudeSdkService for agent execution
+    const executionConfig: AgentExecutionConfig = {
+      prompt,
+      systemPrompt: agent.systemPrompt,
+      model,
+      workingDirectory,
+      allowedTools: allowedTools.length > 0 ? allowedTools : undefined,
+      disallowedTools: disallowedTools.length > 0 ? disallowedTools : undefined,
+      permissionMode: 'acceptEdits', // Auto-accept for flow execution
+      skills,
+      timeout,
+    };
+
+    try {
+      // Execute using shared SDK service
+      const result = await flowSdkService.executeAgent(executionConfig);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Agent execution failed');
+      }
+
+      return {
+        result: result.result,
+        inputTokens: result.inputTokens,
+        outputTokens: result.outputTokens,
+        totalTokens: result.totalTokens,
+        durationMs: result.durationMs,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      context.log('error', `Agent execution failed: ${errorMessage}`, nodeId);
+      throw error;
     }
   }
 }

@@ -141,6 +141,7 @@ import {
   ServerIcon,
   FolderIcon,
   MessageSquareIcon,
+  PlayCircleIcon,
 } from '../ui/Icons';
 import { Button } from '../ui/Button';
 
@@ -221,6 +222,7 @@ const menuItems = [
   { view: ManagerView.Agents, label: 'Agents', icon: CpuChipIcon },
   { view: ManagerView.Commands, label: 'Commands', icon: CommandLineIcon },
   { view: ManagerView.Skills, label: 'Skills', icon: PuzzlePieceIcon },
+  { view: ManagerView.Flows, label: 'Flows', icon: PlayCircleIcon },
   { view: ManagerView.MCPServers, label: 'MCP Servers', icon: ServerIcon },
   { view: ManagerView.Tasks, label: 'Tasks', icon: ClipboardListIcon },
   { view: ManagerView.Settings, label: 'Settings', icon: SlidersHorizontalIcon },

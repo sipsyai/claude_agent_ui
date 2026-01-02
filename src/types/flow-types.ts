@@ -66,6 +66,16 @@ export type FlowModelOverride = 'default' | ClaudeModel;
  */
 export type FlowNodeType = 'input' | 'agent' | 'output';
 
+/**
+ * Schedule type for flow scheduling
+ */
+export type FlowScheduleType = 'once' | 'cron' | 'interval';
+
+/**
+ * Interval unit for interval-based scheduling
+ */
+export type FlowIntervalUnit = 'minutes' | 'hours' | 'days' | 'weeks';
+
 // =============================================================================
 // INPUT FIELD TYPES
 // =============================================================================
@@ -272,6 +282,63 @@ export interface OutputNode extends FlowNodeBase {
 export type FlowNode = InputNode | AgentNode | OutputNode;
 
 // =============================================================================
+// FLOW SCHEDULE
+// =============================================================================
+
+/**
+ * Schedule configuration for automated flow execution
+ */
+export interface FlowSchedule {
+  /** Whether the schedule is currently active */
+  isEnabled: boolean;
+
+  /** Type of schedule */
+  scheduleType: FlowScheduleType;
+
+  /** Cron expression for cron-based scheduling (e.g., '0 9 * * 1-5' for weekdays at 9am) */
+  cronExpression?: string;
+
+  /** Interval value for interval-based scheduling */
+  intervalValue: number;
+
+  /** Unit for interval-based scheduling */
+  intervalUnit: FlowIntervalUnit;
+
+  /** When the schedule becomes active */
+  startDate?: Date;
+
+  /** When the schedule expires */
+  endDate?: Date;
+
+  /** Timezone for the schedule (e.g., 'America/New_York', 'Europe/Istanbul') */
+  timezone: string;
+
+  /** Calculated next run time (managed by scheduler service) */
+  nextRunAt?: Date;
+
+  /** Last time the flow was executed by this schedule */
+  lastRunAt?: Date;
+
+  /** Number of times this schedule has triggered an execution */
+  runCount: number;
+
+  /** Maximum number of runs (optional, unlimited if not set) */
+  maxRuns?: number;
+
+  /** Default input values to use when the schedule triggers */
+  defaultInput: Record<string, any>;
+
+  /** Whether to retry if the scheduled execution fails */
+  retryOnFailure: boolean;
+
+  /** Maximum number of retry attempts on failure */
+  maxRetries: number;
+
+  /** Delay in minutes between retry attempts */
+  retryDelayMinutes: number;
+}
+
+// =============================================================================
 // FLOW DEFINITION
 // =============================================================================
 
@@ -341,6 +408,15 @@ export interface Flow {
 
   /** Additional metadata */
   metadata?: Record<string, any>;
+
+  /** Schedule configuration for automated execution */
+  schedule?: FlowSchedule;
+
+  /** Whether webhook triggering is enabled for this flow */
+  webhookEnabled: boolean;
+
+  /** Secret token for authenticating webhook requests */
+  webhookSecret?: string;
 
   /** Creation timestamp */
   createdAt?: Date;
@@ -421,6 +497,9 @@ export interface NodeExecution {
   /** Error details if failed */
   errorDetails?: Record<string, any>;
 
+  /** Classified error information */
+  flowError?: FlowError;
+
   /** Tokens used (for agent nodes) */
   tokensUsed?: number;
 
@@ -429,6 +508,15 @@ export interface NodeExecution {
 
   /** Retry count */
   retryCount?: number;
+
+  /** Detailed retry state tracking */
+  retryState?: NodeRetryState;
+
+  /** Whether the node was skipped due to error recovery */
+  wasSkipped?: boolean;
+
+  /** Default value used if error recovery action was 'use_default' */
+  defaultValueUsed?: any;
 }
 
 // =============================================================================
@@ -628,7 +716,139 @@ export type FlowExecutionUpdateType =
   | 'node_started'
   | 'node_completed'
   | 'node_failed'
+  | 'node_retrying'
   | 'log';
+
+// =============================================================================
+// ERROR HANDLING TYPES
+// =============================================================================
+
+/**
+ * Error category for classification
+ * - transient: Temporary errors that may succeed on retry (network, rate limit, timeout)
+ * - permanent: Errors that will not succeed on retry (validation, authentication, not found)
+ * - unknown: Unclassified errors (treated as potentially transient)
+ */
+export type ErrorCategory = 'transient' | 'permanent' | 'unknown';
+
+/**
+ * Error recovery action to take when a node fails
+ * - retry: Attempt to retry the node (default for transient errors)
+ * - skip: Skip this node and continue to next
+ * - fail: Fail the entire flow execution
+ * - use_default: Use a default value and continue
+ */
+export type ErrorRecoveryAction = 'retry' | 'skip' | 'fail' | 'use_default';
+
+/**
+ * Detailed error information with classification
+ */
+export interface FlowError {
+  /** Error message */
+  message: string;
+
+  /** Error code (if available) */
+  code?: string;
+
+  /** HTTP status code (if applicable) */
+  statusCode?: number;
+
+  /** Error category for handling decisions */
+  category: ErrorCategory;
+
+  /** Suggested recovery action */
+  suggestedAction: ErrorRecoveryAction;
+
+  /** Whether the error is retryable */
+  isRetryable: boolean;
+
+  /** Original error stack trace */
+  stack?: string;
+
+  /** Additional context about the error */
+  context?: Record<string, any>;
+
+  /** Timestamp when error occurred */
+  timestamp: Date;
+}
+
+/**
+ * Retry attempt information
+ */
+export interface RetryAttempt {
+  /** Attempt number (1-based) */
+  attemptNumber: number;
+
+  /** When the retry started */
+  startedAt: Date;
+
+  /** When the retry completed (success or failure) */
+  completedAt?: Date;
+
+  /** Delay before this retry attempt (in ms) */
+  delayMs: number;
+
+  /** Error from this attempt (if failed) */
+  error?: string;
+
+  /** Whether this attempt succeeded */
+  success: boolean;
+}
+
+/**
+ * Retry state tracking for a node
+ */
+export interface NodeRetryState {
+  /** Current retry count (0 = original attempt) */
+  retryCount: number;
+
+  /** Maximum retries allowed for this node */
+  maxRetries: number;
+
+  /** Array of all retry attempts */
+  attempts: RetryAttempt[];
+
+  /** Last error that triggered retry */
+  lastError?: FlowError;
+
+  /** Whether currently waiting for retry */
+  isWaitingForRetry: boolean;
+
+  /** When the next retry will be attempted */
+  nextRetryAt?: Date;
+
+  /** Total time spent on retries (in ms) */
+  totalRetryTime: number;
+}
+
+/**
+ * Retry configuration options
+ */
+export interface RetryConfig {
+  /** Whether retries are enabled */
+  enabled: boolean;
+
+  /** Maximum number of retry attempts */
+  maxRetries: number;
+
+  /** Initial delay before first retry (in ms) */
+  initialDelayMs: number;
+
+  /** Maximum delay between retries (in ms) */
+  maxDelayMs: number;
+
+  /** Backoff multiplier for exponential backoff */
+  backoffMultiplier: number;
+
+  /** Whether to add jitter to retry delays */
+  useJitter: boolean;
+
+  /** Specific error codes to retry on */
+  retryOnCodes?: string[];
+
+  /** Error categories to retry on */
+  retryOnCategories?: ErrorCategory[];
+}
 
 /**
  * SSE update event for real-time execution monitoring
@@ -654,10 +874,17 @@ export interface FlowExecutionUpdate {
     status?: FlowExecutionStatus | NodeExecutionStatus;
     output?: Record<string, any>;
     error?: string;
+    errorCategory?: ErrorCategory;
     log?: FlowExecutionLog;
     tokensUsed?: number;
     cost?: number;
     executionTime?: number;
+    /** Retry-specific data */
+    retryCount?: number;
+    maxRetries?: number;
+    nextRetryIn?: number;
+    retryReason?: string;
+    isRetryable?: boolean;
   };
 }
 

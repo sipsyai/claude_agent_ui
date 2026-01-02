@@ -37,6 +37,22 @@ import type {
   CreateTaskDTO,
   UpdateTaskDTO,
 } from '../types/index.js';
+import type {
+  Flow,
+  FlowExecution,
+  FlowExecutionStatus,
+  FlowTriggerType,
+  FlowStatus,
+  FlowCategory,
+  FlowStats,
+  GlobalFlowStats,
+  FlowNode,
+  FlowInputSchema,
+  FlowOutputSchema,
+  FlowSchedule,
+  NodeExecution,
+  FlowExecutionLog,
+} from '../types/flow-types.js';
 
 // ============= HELPER FUNCTIONS =============
 
@@ -6016,13 +6032,15 @@ export class StrapiClient {
   // ============= FLOWS =============
 
   /**
-   * Get all flows with optional filtering
+   * Get all flows with optional filtering, sorting, and pagination
+   * @param options - Query options for filtering, sorting, and pagination
+   * @returns Array of Flow objects
    */
   async getAllFlows(options?: {
     filters?: Record<string, any>;
     sort?: string[];
     pagination?: { page: number; pageSize: number };
-  }): Promise<any[]> {
+  }): Promise<Flow[]> {
     const cacheKey = `flows:all:${JSON.stringify(options)}`;
     const cached = this.cache.get(cacheKey);
     if (cached) {
@@ -6046,8 +6064,10 @@ export class StrapiClient {
 
   /**
    * Get a single flow by ID with populated relations
+   * @param id - Flow document ID
+   * @returns Flow object
    */
-  async getFlow(id: string): Promise<any> {
+  async getFlow(id: string): Promise<Flow> {
     const cacheKey = `flow:${id}`;
     const cached = this.cache.get(cacheKey);
     if (cached) {
@@ -6072,12 +6092,82 @@ export class StrapiClient {
   }
 
   /**
-   * Create a new flow
+   * Get a flow by slug
+   * @param slug - URL-friendly slug identifier
+   * @returns Flow object or null if not found
    */
-  async createFlow(flowData: any): Promise<any> {
+  async getFlowBySlug(slug: string): Promise<Flow | null> {
+    const cacheKey = `flow:slug:${slug}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const { data } = await this.client.get<StrapiResponse<StrapiAttributes<any>[]>>(
+      '/flows',
+      {
+        params: {
+          filters: { slug: { $eq: slug } },
+          populate: '*',
+        },
+      }
+    );
+
+    if (!data.data || data.data.length === 0) {
+      return null;
+    }
+
+    const flow = this.transformFlow(data.data[0]);
+    this.cache.set(cacheKey, flow);
+
+    return flow;
+  }
+
+  /**
+   * Get all active flows (isActive = true)
+   * @returns Array of active Flow objects
+   */
+  async getActiveFlows(): Promise<Flow[]> {
+    return this.getAllFlows({
+      filters: { isActive: true },
+      sort: ['name:asc'],
+    });
+  }
+
+  /**
+   * Get flows by category
+   * @param category - Flow category
+   * @returns Array of Flow objects in the specified category
+   */
+  async getFlowsByCategory(category: FlowCategory): Promise<Flow[]> {
+    return this.getAllFlows({
+      filters: { category },
+      sort: ['name:asc'],
+    });
+  }
+
+  /**
+   * Get flows by status
+   * @param status - Flow status
+   * @returns Array of Flow objects with the specified status
+   */
+  async getFlowsByStatus(status: FlowStatus): Promise<Flow[]> {
+    return this.getAllFlows({
+      filters: { status },
+      sort: ['updatedAt:desc'],
+    });
+  }
+
+  /**
+   * Create a new flow
+   * @param flowData - Flow creation data
+   * @returns Created Flow object
+   */
+  async createFlow(flowData: Partial<Flow>): Promise<Flow> {
+    const preparedData = this.prepareFlowData(flowData);
     const { data } = await this.client.post<StrapiData<any>>(
       '/flows',
-      { data: flowData }
+      { data: preparedData }
     );
 
     if (!data.data) {
@@ -6090,11 +6180,15 @@ export class StrapiClient {
 
   /**
    * Update an existing flow
+   * @param id - Flow document ID
+   * @param flowData - Flow update data
+   * @returns Updated Flow object
    */
-  async updateFlow(id: string, flowData: any): Promise<any> {
+  async updateFlow(id: string, flowData: Partial<Flow>): Promise<Flow> {
+    const preparedData = this.prepareFlowData(flowData);
     const { data } = await this.client.put<StrapiData<any>>(
       `/flows/${id}`,
-      { data: flowData }
+      { data: preparedData }
     );
 
     if (!data.data) {
@@ -6109,6 +6203,7 @@ export class StrapiClient {
 
   /**
    * Delete a flow
+   * @param id - Flow document ID
    */
   async deleteFlow(id: string): Promise<void> {
     await this.client.delete(`/flows/${id}`);
@@ -6117,9 +6212,34 @@ export class StrapiClient {
   }
 
   /**
+   * Duplicate a flow with a new name
+   * @param id - Source flow document ID
+   * @param newName - Name for the duplicated flow
+   * @returns Duplicated Flow object
+   */
+  async duplicateFlow(id: string, newName?: string): Promise<Flow> {
+    const original = await this.getFlow(id);
+
+    const duplicateData: Partial<Flow> = {
+      name: newName || `${original.name} (Copy)`,
+      description: original.description,
+      nodes: original.nodes,
+      inputSchema: original.inputSchema,
+      outputSchema: original.outputSchema,
+      isActive: false,
+      status: 'draft' as FlowStatus,
+      version: '1.0.0',
+      category: original.category,
+      metadata: original.metadata,
+    };
+
+    return this.createFlow(duplicateData);
+  }
+
+  /**
    * Transform Strapi flow response to Flow domain model
    */
-  private transformFlow(strapiData: StrapiAttributes<any>): any {
+  private transformFlow(strapiData: StrapiAttributes<any>): Flow {
     const attrs = this.extractAttributes(strapiData);
 
     return {
@@ -6127,29 +6247,61 @@ export class StrapiClient {
       name: attrs.name,
       slug: attrs.slug,
       description: attrs.description,
-      nodes: attrs.nodes || [],
-      status: attrs.status || 'draft',
-      inputSchema: attrs.inputSchema || { properties: {}, required: [] },
-      outputSchema: attrs.outputSchema || { properties: {} },
+      nodes: (attrs.nodes || []) as FlowNode[],
+      status: (attrs.status || 'draft') as FlowStatus,
+      inputSchema: (attrs.inputSchema || { properties: {}, required: [] }) as FlowInputSchema,
+      outputSchema: (attrs.outputSchema || { properties: {} }) as FlowOutputSchema,
       isActive: attrs.isActive ?? false,
       version: attrs.version || '1.0.0',
-      category: attrs.category || 'custom',
+      category: (attrs.category || 'custom') as FlowCategory,
       metadata: attrs.metadata,
+      schedule: attrs.schedule || undefined,
+      webhookEnabled: attrs.webhookEnabled ?? false,
+      webhookSecret: attrs.webhookSecret,
       createdAt: new Date(attrs.createdAt),
       updatedAt: new Date(attrs.updatedAt),
     };
   }
 
+  /**
+   * Prepare flow data for Strapi API
+   */
+  private prepareFlowData(flow: Partial<Flow>): Record<string, any> {
+    const data: Record<string, any> = {};
+
+    if (flow.name !== undefined) {
+      data.name = flow.name;
+      // Generate slug from name
+      data.slug = generateSlug(flow.name);
+    }
+    if (flow.description !== undefined) data.description = flow.description;
+    if (flow.nodes !== undefined) data.nodes = flow.nodes;
+    if (flow.status !== undefined) data.status = flow.status;
+    if (flow.inputSchema !== undefined) data.inputSchema = flow.inputSchema;
+    if (flow.outputSchema !== undefined) data.outputSchema = flow.outputSchema;
+    if (flow.isActive !== undefined) data.isActive = flow.isActive;
+    if (flow.version !== undefined) data.version = flow.version;
+    if (flow.category !== undefined) data.category = flow.category;
+    if (flow.metadata !== undefined) data.metadata = flow.metadata;
+    if (flow.schedule !== undefined) data.schedule = flow.schedule;
+    if (flow.webhookEnabled !== undefined) data.webhookEnabled = flow.webhookEnabled;
+    if (flow.webhookSecret !== undefined) data.webhookSecret = flow.webhookSecret;
+
+    return data;
+  }
+
   // ============= FLOW EXECUTIONS =============
 
   /**
-   * Get all flow executions with optional filtering
+   * Get all flow executions with optional filtering, sorting, and pagination
+   * @param options - Query options for filtering, sorting, and pagination
+   * @returns Array of FlowExecution objects
    */
   async getAllFlowExecutions(options?: {
     filters?: Record<string, any>;
     sort?: string[];
     pagination?: { page: number; pageSize: number };
-  }): Promise<any[]> {
+  }): Promise<FlowExecution[]> {
     const params = this.buildQueryParams({
       ...options,
       populate: ['flow'],
@@ -6164,8 +6316,10 @@ export class StrapiClient {
 
   /**
    * Get a single flow execution by ID
+   * @param id - Flow execution document ID
+   * @returns FlowExecution object
    */
-  async getFlowExecution(id: string): Promise<any> {
+  async getFlowExecution(id: string): Promise<FlowExecution> {
     const { data } = await this.client.get<StrapiData<any>>(
       `/flow-executions/${id}`,
       {
@@ -6186,20 +6340,22 @@ export class StrapiClient {
 
   /**
    * Create a new flow execution record
+   * @param executionData - Flow execution creation data
+   * @returns Created FlowExecution object
    */
   async createFlowExecution(executionData: {
     flowId: string;
-    status: string;
+    status: FlowExecutionStatus;
     input?: Record<string, any>;
-    triggeredBy: string;
+    triggeredBy: FlowTriggerType;
     triggerData?: Record<string, any>;
     startedAt?: Date;
-    logs?: any[];
-    nodeExecutions?: any[];
+    logs?: FlowExecutionLog[];
+    nodeExecutions?: NodeExecution[];
     tokensUsed?: number;
     cost?: number;
     retryCount?: number;
-  }): Promise<any> {
+  }): Promise<FlowExecution> {
     const { data } = await this.client.post<StrapiData<any>>(
       '/flow-executions',
       {
@@ -6228,20 +6384,23 @@ export class StrapiClient {
 
   /**
    * Update a flow execution record
+   * @param id - Flow execution document ID
+   * @param executionData - Flow execution update data
+   * @returns Updated FlowExecution object
    */
   async updateFlowExecution(id: string, executionData: {
-    status?: string;
+    status?: FlowExecutionStatus;
     output?: Record<string, any>;
-    logs?: any[];
+    logs?: FlowExecutionLog[];
     error?: string;
     errorDetails?: Record<string, any>;
     completedAt?: Date;
     executionTime?: number;
-    nodeExecutions?: any[];
+    nodeExecutions?: NodeExecution[];
     currentNodeId?: string;
     tokensUsed?: number;
     cost?: number;
-  }): Promise<any> {
+  }): Promise<FlowExecution> {
     const updateData: Record<string, any> = {};
 
     if (executionData.status !== undefined) updateData.status = executionData.status;
@@ -6270,6 +6429,7 @@ export class StrapiClient {
 
   /**
    * Delete a flow execution record
+   * @param id - Flow execution document ID
    */
   async deleteFlowExecution(id: string): Promise<void> {
     await this.client.delete(`/flow-executions/${id}`);
@@ -6277,11 +6437,14 @@ export class StrapiClient {
 
   /**
    * Get flow executions by flow ID
+   * @param flowId - Flow document ID
+   * @param options - Optional sort and pagination
+   * @returns Array of FlowExecution objects for the specified flow
    */
   async getFlowExecutionsByFlowId(flowId: string, options?: {
     sort?: string[];
     pagination?: { page: number; pageSize: number };
-  }): Promise<any[]> {
+  }): Promise<FlowExecution[]> {
     return this.getAllFlowExecutions({
       ...options,
       filters: { flow: { documentId: flowId } },
@@ -6290,8 +6453,9 @@ export class StrapiClient {
 
   /**
    * Get running flow executions
+   * @returns Array of FlowExecution objects with status 'running'
    */
-  async getRunningFlowExecutions(): Promise<any[]> {
+  async getRunningFlowExecutions(): Promise<FlowExecution[]> {
     return this.getAllFlowExecutions({
       filters: { status: 'running' },
       sort: ['startedAt:desc'],
@@ -6299,29 +6463,152 @@ export class StrapiClient {
   }
 
   /**
+   * Get recent flow executions
+   * @param limit - Maximum number of executions to return
+   * @returns Array of recent FlowExecution objects
+   */
+  async getRecentFlowExecutions(limit: number = 10): Promise<FlowExecution[]> {
+    return this.getAllFlowExecutions({
+      sort: ['createdAt:desc'],
+      pagination: { page: 1, pageSize: limit },
+    });
+  }
+
+  /**
+   * Get flow executions by status
+   * @param status - Execution status to filter by
+   * @returns Array of FlowExecution objects with the specified status
+   */
+  async getFlowExecutionsByStatus(status: FlowExecutionStatus): Promise<FlowExecution[]> {
+    return this.getAllFlowExecutions({
+      filters: { status },
+      sort: ['createdAt:desc'],
+    });
+  }
+
+  /**
+   * Get statistics for a specific flow
+   * @param flowId - Flow document ID
+   * @returns FlowStats object with execution statistics
+   */
+  async getFlowStats(flowId: string): Promise<FlowStats> {
+    const executions = await this.getFlowExecutionsByFlowId(flowId);
+
+    const stats: FlowStats = {
+      flowId,
+      totalExecutions: executions.length,
+      successCount: executions.filter(e => e.status === 'completed').length,
+      failedCount: executions.filter(e => e.status === 'failed').length,
+      cancelledCount: executions.filter(e => e.status === 'cancelled').length,
+      successRate: 0,
+      averageExecutionTime: 0,
+      totalTokensUsed: 0,
+      totalCost: 0,
+    };
+
+    // Calculate rates and totals
+    if (stats.totalExecutions > 0) {
+      stats.successRate = (stats.successCount / stats.totalExecutions) * 100;
+
+      const completedExecutions = executions.filter(e => e.executionTime !== undefined);
+      if (completedExecutions.length > 0) {
+        stats.averageExecutionTime = completedExecutions.reduce((sum, e) => sum + (e.executionTime || 0), 0) / completedExecutions.length;
+      }
+
+      stats.totalTokensUsed = executions.reduce((sum, e) => sum + (e.tokensUsed || 0), 0);
+      stats.totalCost = executions.reduce((sum, e) => sum + (e.cost || 0), 0);
+
+      // Find last execution time
+      const lastExecution = executions.find(e => e.startedAt);
+      if (lastExecution?.startedAt) {
+        stats.lastExecutedAt = lastExecution.startedAt;
+      }
+    }
+
+    return stats;
+  }
+
+  /**
+   * Get global statistics across all flows
+   * @returns GlobalFlowStats object with aggregate statistics
+   */
+  async getGlobalFlowStats(): Promise<GlobalFlowStats> {
+    const [flows, executions] = await Promise.all([
+      this.getAllFlows(),
+      this.getAllFlowExecutions({ sort: ['createdAt:desc'] }),
+    ]);
+
+    const stats: GlobalFlowStats = {
+      totalFlows: flows.length,
+      activeFlows: flows.filter(f => f.isActive).length,
+      totalExecutions: executions.length,
+      runningExecutions: executions.filter(e => e.status === 'running').length,
+      successCount: executions.filter(e => e.status === 'completed').length,
+      failedCount: executions.filter(e => e.status === 'failed').length,
+      successRate: 0,
+      totalTokensUsed: 0,
+      totalCost: 0,
+    };
+
+    // Calculate success rate
+    const completedOrFailed = stats.successCount + stats.failedCount;
+    if (completedOrFailed > 0) {
+      stats.successRate = (stats.successCount / completedOrFailed) * 100;
+    }
+
+    // Calculate totals
+    stats.totalTokensUsed = executions.reduce((sum, e) => sum + (e.tokensUsed || 0), 0);
+    stats.totalCost = executions.reduce((sum, e) => sum + (e.cost || 0), 0);
+
+    return stats;
+  }
+
+  /**
+   * Clean up old flow executions
+   * @param olderThanDays - Delete executions older than this many days
+   * @returns Number of deleted executions
+   */
+  async cleanupOldFlowExecutions(olderThanDays: number = 30): Promise<number> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
+
+    const oldExecutions = await this.getAllFlowExecutions({
+      filters: {
+        createdAt: { $lt: cutoffDate.toISOString() },
+        status: { $in: ['completed', 'failed', 'cancelled'] },
+      },
+    });
+
+    // Delete each old execution
+    await Promise.all(oldExecutions.map(e => this.deleteFlowExecution(e.id)));
+
+    return oldExecutions.length;
+  }
+
+  /**
    * Transform Strapi flow execution response to FlowExecution domain model
    */
-  private transformFlowExecution(strapiData: StrapiAttributes<any>): any {
+  private transformFlowExecution(strapiData: StrapiAttributes<any>): FlowExecution {
     const attrs = this.extractAttributes(strapiData);
 
     return {
       id: strapiData.documentId,
       flowId: attrs.flow?.documentId || attrs.flow,
       flow: attrs.flow?.documentId ? this.transformFlow(attrs.flow) : undefined,
-      status: attrs.status || 'pending',
+      status: (attrs.status || 'pending') as FlowExecutionStatus,
       input: attrs.input,
       output: attrs.output,
-      logs: attrs.logs || [],
+      logs: (attrs.logs || []) as FlowExecutionLog[],
       error: attrs.error,
       errorDetails: attrs.errorDetails,
       startedAt: attrs.startedAt ? new Date(attrs.startedAt) : undefined,
       completedAt: attrs.completedAt ? new Date(attrs.completedAt) : undefined,
       executionTime: attrs.executionTime,
-      nodeExecutions: attrs.nodeExecutions || [],
+      nodeExecutions: (attrs.nodeExecutions || []) as NodeExecution[],
       currentNodeId: attrs.currentNodeId,
       tokensUsed: attrs.tokensUsed || 0,
       cost: attrs.cost || 0,
-      triggeredBy: attrs.triggeredBy || 'manual',
+      triggeredBy: (attrs.triggeredBy || 'manual') as FlowTriggerType,
       triggerData: attrs.triggerData,
       retryCount: attrs.retryCount || 0,
       parentExecutionId: attrs.parentExecutionId,

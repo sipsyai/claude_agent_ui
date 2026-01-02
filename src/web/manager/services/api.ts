@@ -28,18 +28,7 @@ const EXECUTE_BASE = `${EXPRESS_API}/execute`;
 const API_BASE = `${EXPRESS_API}/manager`;
 
 /**
- * Retrieves the authentication token from browser cookies.
- *
- * Looks for the 'cui-auth-token' cookie and returns its decoded value.
- * This token is used to authenticate API requests to the backend.
- *
- * @returns The decoded auth token string if found, null otherwise
- *
- * @example
- * const token = getAuthToken();
- * if (token) {
- *   // Use token for authenticated requests
- * }
+ * Get auth token from cookie
  */
 function getAuthToken(): string | null {
   const cookies = document.cookie.split(';');
@@ -53,19 +42,7 @@ function getAuthToken(): string | null {
 }
 
 /**
- * Creates fetch options with authentication header.
- *
- * Merges provided options with an Authorization header containing the Bearer token
- * from the authentication cookie. Used internally for all authenticated API requests.
- *
- * @param options - Optional fetch configuration to merge with auth headers
- * @returns RequestInit object with auth header added
- *
- * @example
- * const options = createFetchOptions({
- *   method: 'POST',
- *   body: JSON.stringify({ data: 'value' })
- * });
+ * Create fetch options with auth header
  */
 function createFetchOptions(options: RequestInit = {}): RequestInit {
   const token = getAuthToken();
@@ -159,23 +136,7 @@ export interface ProjectAnalysis {
 }
 
 /**
- * Validates project setup including CLI, SDK, folder structure, and resources.
- *
- * Checks if the project has the correct setup for Claude Code agents, including:
- * - CLI installation and version
- * - SDK installation
- * - .claude folder structure
- * - Available agents, commands, and skills
- *
- * @param directoryPath - Absolute path to the project directory to validate
- * @returns Promise resolving to validation results with status for each component
- * @throws Error if validation request fails
- *
- * @example
- * const result = await validateProject('/path/to/project');
- * if (result.cli.status === 'success') {
- *   console.log('CLI is properly installed');
- * }
+ * Validate project setup
  */
 export async function validateProject(directoryPath: string): Promise<ValidationResult> {
   const response = await fetch(`${API_BASE}/validate`, createFetchOptions({
@@ -192,22 +153,8 @@ export async function validateProject(directoryPath: string): Promise<Validation
 }
 
 /**
- * Retrieves all agents from the Strapi database.
- *
- * Fetches agent configurations from the Strapi API, optionally filtered by directory.
- * Each agent contains system prompts, tool configurations, and model settings.
- *
- * @param directory - Optional project directory path to filter agents
- * @returns Promise resolving to array of agent objects
- * @throws Error if the API request fails
- *
- * @example
- * const agents = await getAgents();
- * agents.forEach(agent => console.log(agent.name));
- *
- * @example
- * // Get agents for specific directory
- * const projectAgents = await getAgents('/path/to/project');
+ * Get agents
+ * Now using Strapi API for CRUD operations
  */
 export async function getAgents(directory?: string): Promise<AgentType[]> {
   // Use Strapi endpoint for data retrieval
@@ -227,18 +174,7 @@ export async function getAgents(directory?: string): Promise<AgentType[]> {
 }
 
 /**
- * Retrieves all slash commands from the file system.
- *
- * Fetches command configurations from .claude/commands directory. Commands are
- * markdown files that define custom prompts and workflows for Claude Code.
- *
- * @param directory - Optional project directory path to search for commands
- * @returns Promise resolving to array of slash command objects
- * @throws Error if the API request fails
- *
- * @example
- * const commands = await getCommands('/path/to/project');
- * commands.forEach(cmd => console.log(`/${cmd.name}`));
+ * Get slash commands
  */
 export async function getCommands(directory?: string): Promise<SlashCommand[]> {
   const url = new URL(`${API_BASE}/commands`, window.location.origin);
@@ -257,24 +193,8 @@ export async function getCommands(directory?: string): Promise<SlashCommand[]> {
 }
 
 /**
- * Retrieves all skills from the Strapi database.
- *
- * Fetches skill configurations from the Strapi API. Skills are reusable capabilities
- * that agents can invoke. Optionally includes usage information showing which agents
- * use each skill.
- *
- * @param directory - Optional project directory path to filter skills
- * @param includeUsage - Whether to include usage statistics (which agents use this skill)
- * @returns Promise resolving to array of skill objects
- * @throws Error if the API request fails
- *
- * @example
- * const skills = await getSkills();
- * skills.forEach(skill => console.log(skill.name));
- *
- * @example
- * // Get skills with usage information
- * const skillsWithUsage = await getSkills('/path/to/project', true);
+ * Get skills
+ * Now using Strapi API for CRUD operations
  */
 export async function getSkills(directory?: string, includeUsage = false): Promise<SkillType[]> {
   // Use Strapi endpoint for data retrieval
@@ -297,22 +217,7 @@ export async function getSkills(directory?: string, includeUsage = false): Promi
 }
 
 /**
- * Retrieves usage statistics for all skills.
- *
- * Returns information about which agents use each skill and how many times
- * it's referenced across the project. Useful for understanding skill adoption
- * and identifying unused skills.
- *
- * @param directory - Optional project directory path to analyze
- * @returns Promise resolving to array of usage statistics per skill
- * @throws Error if the API request fails
- *
- * @example
- * const usage = await getSkillsUsage();
- * usage.forEach(skill => {
- *   console.log(`${skill.name}: used ${skill.usageCount} times`);
- *   console.log(`Used by: ${skill.usedInAgents.join(', ')}`);
- * });
+ * Get usage information for all skills
  */
 export async function getSkillsUsage(directory?: string): Promise<Array<{
   id: string;
@@ -336,20 +241,7 @@ export async function getSkillsUsage(directory?: string): Promise<Array<{
 }
 
 /**
- * Analyzes entire project structure and resources.
- *
- * Performs a comprehensive analysis of the project by fetching all agents, commands,
- * and skills in parallel. Returns a complete snapshot of available resources.
- *
- * @param directory - Optional project directory path to analyze
- * @returns Promise resolving to project analysis with all resources
- * @throws Error if any API request fails
- *
- * @example
- * const analysis = await analyzeProject('/path/to/project');
- * console.log(`Found ${analysis.agents.length} agents`);
- * console.log(`Found ${analysis.skills.length} skills`);
- * console.log(`Found ${analysis.commands.length} commands`);
+ * Analyze entire project
  */
 export async function analyzeProject(directory?: string): Promise<ProjectAnalysis> {
   // Fetch all data from Strapi endpoints in parallel
@@ -368,20 +260,8 @@ export async function analyzeProject(directory?: string): Promise<ProjectAnalysi
 }
 
 /**
- * Retrieves detailed information for a specific agent.
- *
- * Fetches complete agent configuration including system prompt, tool configuration,
- * model settings, input fields, and skill associations.
- *
- * @param id - Agent document ID (Strapi documentId)
- * @param directory - Optional project directory path
- * @returns Promise resolving to agent details
- * @throws Error if agent not found or request fails
- *
- * @example
- * const agent = await getAgentDetails('agent-123');
- * console.log(agent.systemPrompt);
- * console.log(agent.toolConfig);
+ * Get agent details
+ * Now using Strapi API
  */
 export async function getAgentDetails(id: string, directory?: string): Promise<AgentType> {
   const url = new URL(`${STRAPI_BASE}/agents/${id}`, window.location.origin);
@@ -400,19 +280,7 @@ export async function getAgentDetails(id: string, directory?: string): Promise<A
 }
 
 /**
- * Retrieves detailed information for a specific slash command.
- *
- * Fetches the full command configuration including metadata, content,
- * and allowed tools from the file system.
- *
- * @param id - Command identifier (filename without extension)
- * @param directory - Optional project directory path
- * @returns Promise resolving to command details
- * @throws Error if command not found or request fails
- *
- * @example
- * const command = await getCommandDetails('code-review');
- * console.log(command.content);
+ * Get command details
  */
 export async function getCommandDetails(id: string, directory?: string): Promise<SlashCommand> {
   const url = new URL(`${API_BASE}/commands/${id}`, window.location.origin);
@@ -431,20 +299,8 @@ export async function getCommandDetails(id: string, directory?: string): Promise
 }
 
 /**
- * Retrieves detailed information for a specific skill.
- *
- * Fetches complete skill configuration including skill.md content, tool permissions,
- * input fields, model configuration, and additional files.
- *
- * @param id - Skill document ID (Strapi documentId)
- * @param directory - Optional project directory path
- * @returns Promise resolving to skill details
- * @throws Error if skill not found or request fails
- *
- * @example
- * const skill = await getSkillDetails('skill-456');
- * console.log(skill.skillmd);
- * console.log(skill.allowedTools);
+ * Get skill details
+ * Now using Strapi API
  */
 export async function getSkillDetails(id: string, directory?: string): Promise<SkillType> {
   const url = new URL(`${STRAPI_BASE}/skills/${id}`, window.location.origin);
@@ -483,17 +339,7 @@ export interface Tool {
 }
 
 /**
- * Retrieves all available Claude Code tools.
- *
- * Fetches the list of built-in tools that can be assigned to agents and skills.
- * Tools include capabilities like Bash, Read, Write, Edit, Grep, etc.
- *
- * @returns Promise resolving to array of available tools
- * @throws Error if the API request fails
- *
- * @example
- * const tools = await getTools();
- * tools.forEach(tool => console.log(`${tool.name}: ${tool.description}`));
+ * Get available tools
  */
 export async function getTools(): Promise<Tool[]> {
   const response = await fetch(`${API_BASE}/tools`, createFetchOptions());
@@ -514,7 +360,7 @@ export interface CreateAgentRequest {
   description: string;
   systemPrompt: string;
   tools?: string[];
-  disallowedTools?: string[]; // Tools that are explicitly disallowed for this agent
+  disallowedTools?: string[];
   model?: 'sonnet' | 'opus' | 'haiku';
   inputFields?: InputField[];
   outputSchema?: string | object;
@@ -578,25 +424,8 @@ export interface CreateSkillResponse {
 }
 
 /**
- * Creates a new agent in Strapi and syncs to file system.
- *
- * Creates an agent with the specified configuration, saves it to Strapi database,
- * and generates the corresponding agent.json file in the .claude/agents directory.
- *
- * @param agent - Agent configuration including name, description, systemPrompt, tools, etc.
- * @param directory - Optional project directory path where agent file will be created
- * @returns Promise resolving to creation result with agent ID and file path
- * @throws Error if creation fails or validation errors occur
- *
- * @example
- * const result = await createAgent({
- *   name: 'code-reviewer',
- *   description: 'Reviews code for best practices',
- *   systemPrompt: 'You are a code review expert...',
- *   tools: ['Read', 'Grep'],
- *   model: 'sonnet'
- * });
- * console.log(`Agent created at ${result.filePath}`);
+ * Create a new agent
+ * Now using Strapi API
  */
 export async function createAgent(
   agent: CreateAgentRequest,
@@ -617,24 +446,8 @@ export async function createAgent(
 }
 
 /**
- * Updates an existing agent in Strapi and syncs to file system.
- *
- * Updates the agent configuration in Strapi database and regenerates the
- * agent.json file in the .claude/agents directory with the new settings.
- *
- * @param id - Agent document ID (Strapi documentId)
- * @param agent - Updated agent configuration
- * @param directory - Optional project directory path
- * @returns Promise resolving to update result with agent ID and file path
- * @throws Error if update fails or agent not found
- *
- * @example
- * const result = await updateAgent('agent-123', {
- *   name: 'code-reviewer',
- *   description: 'Reviews code with updated guidelines',
- *   systemPrompt: 'New system prompt...',
- *   tools: ['Read', 'Grep', 'Edit']
- * });
+ * Update an existing agent
+ * Now using Strapi API
  */
 export async function updateAgent(
   id: string,
@@ -656,27 +469,8 @@ export async function updateAgent(
 }
 
 /**
- * Creates a new skill in Strapi and syncs to file system.
- *
- * Creates a skill with the specified configuration, saves it to Strapi database,
- * and generates the skill.md file in the .claude/skills directory. Skills can
- * include tool permissions, input fields, model configurations, and additional files.
- *
- * @param skill - Skill configuration including name, description, skillmd content, tools, etc.
- * @param directory - Optional project directory path where skill file will be created
- * @returns Promise resolving to creation result with skill object and file path
- * @throws Error if creation fails or validation errors occur
- *
- * @example
- * const result = await createSkill({
- *   name: 'web-scraper',
- *   displayName: 'Web Scraper',
- *   description: 'Scrapes content from websites',
- *   skillmd: '# Web Scraper\n\nInstructions...',
- *   allowedTools: ['WebFetch', 'Grep'],
- *   category: 'web-scraping'
- * });
- * console.log(`Skill created at ${result.path}`);
+ * Create a new skill
+ * Now using Strapi API
  */
 export async function createSkill(
   skill: CreateSkillRequest,
@@ -698,23 +492,8 @@ export async function createSkill(
 }
 
 /**
- * Updates an existing skill in Strapi and syncs to file system.
- *
- * Updates the skill configuration in Strapi database and regenerates the
- * skill.md file in the .claude/skills directory with the new settings.
- *
- * @param id - Skill document ID (Strapi documentId)
- * @param skill - Updated skill configuration (partial update supported)
- * @param directory - Optional project directory path
- * @returns Promise resolving to update result with skill object and file path
- * @throws Error if update fails or skill not found
- *
- * @example
- * const result = await updateSkill('skill-456', {
- *   description: 'Updated description',
- *   skillmd: '# Updated content...',
- *   allowedTools: ['WebFetch', 'Grep', 'Read']
- * });
+ * Update an existing skill
+ * Now using Strapi API
  */
 export async function updateSkill(
   id: string,
@@ -737,34 +516,8 @@ export async function updateSkill(
 }
 
 /**
- * Executes an agent with streaming Server-Sent Events (SSE) response.
- *
- * Starts agent execution and streams events in real-time including status updates,
- * messages, tool usage, and completion. Uses SSE for low-latency streaming of
- * execution progress.
- *
- * @param agentId - Agent document ID (Strapi documentId)
- * @param userPrompt - User's input prompt/task for the agent
- * @param directory - Optional working directory for agent execution
- * @param permissionMode - Permission handling mode ('default', 'acceptEdits', 'bypass', 'plan')
- * @param onEvent - Callback function invoked for each SSE event
- * @returns Promise that resolves when stream completes
- * @throws Error if execution fails to start or no response body
- *
- * @example
- * await executeAgent(
- *   'agent-123',
- *   'Review the authentication code',
- *   '/path/to/project',
- *   'default',
- *   (event) => {
- *     if (event.type === 'message') {
- *       console.log(event.content);
- *     } else if (event.type === 'complete') {
- *       console.log('Execution complete');
- *     }
- *   }
- * );
+ * Execute an agent with streaming response
+ * Now using dedicated execution endpoint for SSE streaming
  */
 export async function executeAgent(
   agentId: string,
@@ -864,26 +617,7 @@ export interface CreateTaskRequest {
 }
 
 /**
- * Retrieves all tasks with optional filtering.
- *
- * Fetches task history from the database with support for filtering by status,
- * agent ID, and pagination. Tasks represent agent or skill execution requests.
- *
- * @param params - Optional filtering and pagination parameters
- * @param params.status - Filter by task status ('pending', 'running', 'completed', 'failed')
- * @param params.agentId - Filter by agent or skill document ID
- * @param params.limit - Maximum number of tasks to return
- * @param params.offset - Number of tasks to skip (for pagination)
- * @returns Promise resolving to array of task objects
- * @throws Error if the API request fails
- *
- * @example
- * // Get all completed tasks
- * const completedTasks = await getTasks({ status: 'completed', limit: 10 });
- *
- * @example
- * // Get tasks for specific agent
- * const agentTasks = await getTasks({ agentId: 'agent-123' });
+ * Get all tasks with optional filtering
  */
 export async function getTasks(params?: {
   status?: TaskStatus;
@@ -908,19 +642,7 @@ export async function getTasks(params?: {
 }
 
 /**
- * Retrieves a specific task by ID.
- *
- * Fetches complete task details including status, execution log, results,
- * and error information if applicable.
- *
- * @param taskId - Task ID (UUID)
- * @returns Promise resolving to task object with full details
- * @throws Error if task not found or request fails
- *
- * @example
- * const task = await getTask('task-uuid-123');
- * console.log(`Status: ${task.status}`);
- * if (task.error) console.error(task.error);
+ * Get task by ID
  */
 export async function getTask(taskId: string): Promise<Task> {
   const response = await fetch(`${TASK_API_BASE}/tasks/${taskId}`, createFetchOptions());
@@ -934,26 +656,7 @@ export async function getTask(taskId: string): Promise<Task> {
 }
 
 /**
- * Creates a new task for agent or skill execution.
- *
- * Creates a task record in the database with the specified configuration.
- * The task can be executed later using executeTask(). Supports both agent
- * and skill tasks with optional input values.
- *
- * @param request - Task creation request with name, description, agent/skill ID, etc.
- * @returns Promise resolving to created task object
- * @throws Error if creation fails or validation errors occur
- *
- * @example
- * const task = await createTask({
- *   name: 'Code Review Task',
- *   description: 'Review authentication module',
- *   agentId: 'agent-123',
- *   taskType: 'agent',
- *   userPrompt: 'Review the auth code for security issues',
- *   permissionMode: 'default',
- *   directory: '/path/to/project'
- * });
+ * Create a new task
  */
 export async function createTask(request: CreateTaskRequest): Promise<Task> {
   const response = await fetch(`${TASK_API_BASE}/tasks`, createFetchOptions({
@@ -972,26 +675,8 @@ export async function createTask(request: CreateTaskRequest): Promise<Task> {
 }
 
 /**
- * Executes a task with streaming Server-Sent Events (SSE) response.
- *
- * Starts task execution and streams events in real-time. Works for both agent
- * and skill tasks. The task must already exist (created via createTask).
- *
- * @param taskId - Task ID (UUID)
- * @param onEvent - Callback function invoked for each SSE event
- * @returns Promise that resolves when stream completes
- * @throws Error if execution fails to start or task not found
- *
- * @example
- * await executeTask('task-uuid-123', (event) => {
- *   if (event.type === 'status') {
- *     console.log(`Status: ${event.status}`);
- *   } else if (event.type === 'message') {
- *     console.log(event.content);
- *   } else if (event.type === 'complete') {
- *     console.log('Task complete');
- *   }
- * });
+ * Execute a task with streaming response
+ * Uses task.routes.ts endpoint for both local and Strapi tasks
  */
 export async function executeTask(
   taskId: string,
@@ -1043,17 +728,7 @@ export async function executeTask(
 }
 
 /**
- * Deletes a task from the database.
- *
- * Permanently removes the task and all associated execution logs.
- * This action cannot be undone.
- *
- * @param taskId - Task ID (UUID) to delete
- * @returns Promise that resolves when deletion completes
- * @throws Error if deletion fails or task not found
- *
- * @example
- * await deleteTask('task-uuid-123');
+ * Delete a task
  */
 export async function deleteTask(taskId: string): Promise<void> {
   const response = await fetch(`${TASK_API_BASE}/tasks/${taskId}`, createFetchOptions({
@@ -1098,20 +773,8 @@ export type {
 };
 
 /**
- * Retrieves all MCP (Model Context Protocol) servers from Strapi.
- *
- * Fetches configured MCP servers that provide additional tools and capabilities
- * to agents and skills. Supports stdio, SSE, HTTP, and SDK-based servers.
- *
- * @param directory - Optional project directory path to filter servers
- * @returns Promise resolving to array of MCP server configurations
- * @throws Error if the API request fails
- *
- * @example
- * const servers = await getMCPServers();
- * servers.forEach(server => {
- *   console.log(`${server.name}: ${server.config.type}`);
- * });
+ * Get all MCP servers from project config
+ * Now using Strapi API
  */
 export async function getMCPServers(directory?: string): Promise<MCPServerType[]> {
   const url = new URL(`${STRAPI_BASE}/mcp-servers`, window.location.origin);
@@ -1130,19 +793,8 @@ export async function getMCPServers(directory?: string): Promise<MCPServerType[]
 }
 
 /**
- * Retrieves detailed information for a specific MCP server.
- *
- * Fetches complete server configuration including connection details,
- * environment variables, and associated tools.
- *
- * @param id - MCP server document ID (Strapi documentId)
- * @param directory - Optional project directory path
- * @returns Promise resolving to MCP server details
- * @throws Error if server not found or request fails
- *
- * @example
- * const server = await getMCPServerDetails('server-123');
- * console.log(server.config);
+ * Get MCP server details by ID
+ * Now using Strapi API
  */
 export async function getMCPServerDetails(
   id: string,
@@ -1164,24 +816,8 @@ export async function getMCPServerDetails(
 }
 
 /**
- * Creates a new MCP server in Strapi and project configuration.
- *
- * Creates an MCP server with the specified configuration, saves it to Strapi,
- * and updates the claude_desktop_config.json file in the project.
- *
- * @param name - Unique name for the MCP server
- * @param config - Server configuration (type, command, args, env, etc.)
- * @param directory - Optional project directory path
- * @returns Promise resolving to creation result with server object
- * @throws Error if creation fails or validation errors occur
- *
- * @example
- * const result = await createMCPServer('filesystem', {
- *   type: 'stdio',
- *   command: 'node',
- *   args: ['/path/to/mcp-server.js'],
- *   env: { NODE_ENV: 'production' }
- * });
+ * Create a new MCP server
+ * Now using Strapi API
  */
 export async function createMCPServer(
   name: string,
@@ -1203,23 +839,8 @@ export async function createMCPServer(
 }
 
 /**
- * Updates an existing MCP server in Strapi and project configuration.
- *
- * Updates the server configuration in Strapi and regenerates the
- * claude_desktop_config.json file with the new settings.
- *
- * @param id - MCP server document ID (Strapi documentId)
- * @param config - Updated server configuration
- * @param directory - Optional project directory path
- * @returns Promise resolving to update result with server object
- * @throws Error if update fails or server not found
- *
- * @example
- * const result = await updateMCPServer('server-123', {
- *   type: 'stdio',
- *   command: 'node',
- *   args: ['/updated/path.js']
- * });
+ * Update an existing MCP server
+ * Now using Strapi API
  */
 export async function updateMCPServer(
   id: string,
@@ -1241,18 +862,7 @@ export async function updateMCPServer(
 }
 
 /**
- * Deletes an MCP server from Strapi and project configuration.
- *
- * Removes the server from Strapi database and updates the
- * claude_desktop_config.json file to remove the server entry.
- *
- * @param id - MCP server document ID (Strapi documentId)
- * @param directory - Optional project directory path
- * @returns Promise that resolves when deletion completes
- * @throws Error if deletion fails or server not found
- *
- * @example
- * await deleteMCPServer('server-123');
+ * Delete an MCP server
  */
 export async function deleteMCPServer(
   id: string,
@@ -1274,23 +884,7 @@ export async function deleteMCPServer(
 }
 
 /**
- * Tests an MCP server connection.
- *
- * Attempts to connect to the MCP server and verify it's working correctly.
- * Returns success status and any error messages if connection fails.
- *
- * @param id - MCP server document ID (Strapi documentId)
- * @param directory - Optional project directory path
- * @returns Promise resolving to test result with success status and message
- * @throws Error if test request fails
- *
- * @example
- * const result = await testMCPServer('server-123');
- * if (result.success) {
- *   console.log('Server is working');
- * } else {
- *   console.error(result.error);
- * }
+ * Test an MCP server
  */
 export async function testMCPServer(
   id: string,
@@ -1311,19 +905,7 @@ export async function testMCPServer(
 }
 
 /**
- * Toggles an MCP server's enabled/disabled state.
- *
- * Switches the server between enabled and disabled states. Disabled servers
- * are not available for use by agents and skills.
- *
- * @param id - MCP server document ID (Strapi documentId)
- * @param directory - Optional project directory path
- * @returns Promise resolving to new disabled state and message
- * @throws Error if toggle fails or server not found
- *
- * @example
- * const result = await toggleMCPServer('server-123');
- * console.log(`Server is now ${result.disabled ? 'disabled' : 'enabled'}`);
+ * Toggle MCP server enabled/disabled state
  */
 export async function toggleMCPServer(
   id: string,
@@ -1344,21 +926,7 @@ export async function toggleMCPServer(
 }
 
 /**
- * Lists all tools provided by an MCP server.
- *
- * Retrieves the list of tools/capabilities exposed by the MCP server.
- * Each tool includes name, description, and input schema.
- *
- * @param id - MCP server document ID (Strapi documentId)
- * @param directory - Optional project directory path
- * @returns Promise resolving to tool list with success status
- * @throws Error if request fails
- *
- * @example
- * const result = await listMCPServerTools('server-123');
- * if (result.success) {
- *   result.tools.forEach(tool => console.log(tool.name));
- * }
+ * List tools provided by an MCP server
  */
 export async function listMCPServerTools(
   id: string,
@@ -1382,19 +950,8 @@ export async function listMCPServerTools(
 }
 
 /**
- * Refreshes and syncs MCP server tools to Strapi.
- *
- * Fetches the latest tools from the MCP server and saves them as separate
- * entities in Strapi. This allows tools to be tracked and referenced by agents.
- *
- * @param id - MCP server document ID (Strapi documentId)
- * @param directory - Optional project directory path
- * @returns Promise resolving to refresh result with tool count and list
- * @throws Error if refresh fails
- *
- * @example
- * const result = await refreshMCPServerTools('server-123');
- * console.log(`Refreshed ${result.toolsCount} tools`);
+ * Refresh and sync MCP server tools to Strapi
+ * Fetches tools from MCP server and saves them as separate entities in Strapi
  */
 export async function refreshMCPServerTools(
   id: string,
@@ -1418,18 +975,7 @@ export async function refreshMCPServerTools(
 }
 
 /**
- * Exports MCP server configuration.
- *
- * Generates a JSON configuration containing all MCP servers in the format
- * compatible with claude_desktop_config.json.
- *
- * @param directory - Optional project directory path
- * @returns Promise resolving to MCP configuration object
- * @throws Error if export fails
- *
- * @example
- * const config = await exportMCPConfig();
- * console.log(JSON.stringify(config, null, 2));
+ * Export MCP configuration
  */
 export async function exportMCPConfig(directory?: string): Promise<any> {
   const url = new URL(`${STRAPI_BASE}/mcp-servers/export`, window.location.origin);
@@ -1447,20 +993,7 @@ export async function exportMCPConfig(directory?: string): Promise<any> {
 }
 
 /**
- * Imports MCP server configuration.
- *
- * Imports MCP servers from a configuration object in claude_desktop_config.json format.
- * Supports merge mode (adds to existing servers) or overwrite mode (replaces all servers).
- *
- * @param config - MCP configuration object to import
- * @param mode - Import mode: 'merge' adds to existing, 'overwrite' replaces all
- * @param directory - Optional project directory path
- * @returns Promise resolving to import result with success status
- * @throws Error if import fails or validation errors occur
- *
- * @example
- * const result = await importMCPConfig(configObj, 'merge');
- * console.log(result.message);
+ * Import MCP configuration
  */
 export async function importMCPConfig(
   config: any,
@@ -1482,23 +1015,7 @@ export async function importMCPConfig(
 }
 
 /**
- * Deletes multiple MCP servers in a single operation.
- *
- * Removes multiple servers from Strapi and updates the project configuration.
- * Returns detailed results including success count and any errors.
- *
- * @param serverIds - Array of MCP server document IDs to delete
- * @param directory - Optional project directory path
- * @returns Promise resolving to bulk delete result with counts and errors
- * @throws Error if the bulk delete request fails
- *
- * @example
- * const result = await bulkDeleteMCPServers(['server-1', 'server-2']);
- * console.log(`Deleted ${result.successCount} servers`);
- * if (result.failed > 0) {
- *   console.error(`Failed to delete ${result.failed} servers`);
- *   result.errors.forEach(err => console.error(err));
- * }
+ * Bulk delete MCP servers
  */
 export async function bulkDeleteMCPServers(
   serverIds: string[],
@@ -1526,21 +1043,7 @@ export async function bulkDeleteMCPServers(
 }
 
 /**
- * Retrieves training history for a skill.
- *
- * Fetches historical training records showing how the skill has been improved
- * over time, including scores before/after training and issues found.
- *
- * @param skillId - Skill document ID (Strapi documentId)
- * @param directory - Optional project directory path
- * @returns Promise resolving to array of training records
- * @throws Error if request fails or skill not found
- *
- * @example
- * const history = await getSkillTrainingHistory('skill-456');
- * history.forEach(record => {
- *   console.log(`${record.date}: ${record.scoreBefore} -> ${record.scoreAfter}`);
- * });
+ * Get training history for a skill
  */
 export async function getSkillTrainingHistory(
   skillId: string,
@@ -1564,20 +1067,7 @@ export async function getSkillTrainingHistory(
 }
 
 /**
- * Uploads a file to Strapi Media Library.
- *
- * Uploads a file for use as a skill attachment or other media. Returns the
- * file metadata including URL for later reference.
- *
- * @param file - File object to upload
- * @returns Promise resolving to uploaded file metadata
- * @throws Error if upload fails
- *
- * @example
- * const fileInput = document.querySelector('input[type="file"]');
- * const file = fileInput.files[0];
- * const uploadedFile = await uploadFile(file);
- * console.log(`File uploaded: ${uploadedFile.url}`);
+ * Upload a file to Strapi Media Library
  */
 export async function uploadFile(file: File): Promise<{
   id: number;
@@ -1605,16 +1095,7 @@ export async function uploadFile(file: File): Promise<{
 }
 
 /**
- * Deletes a file from Strapi Media Library.
- *
- * Permanently removes a file from the media library. This action cannot be undone.
- *
- * @param fileId - File document ID (Strapi documentId)
- * @returns Promise that resolves when deletion completes
- * @throws Error if deletion fails or file not found
- *
- * @example
- * await deleteFile('file-doc-id-123');
+ * Delete a file from Strapi Media Library
  */
 export async function deleteFile(fileId: string): Promise<void> {
   const response = await fetch(`${STRAPI_BASE}/upload/${fileId}`, {

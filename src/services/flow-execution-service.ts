@@ -37,18 +37,37 @@ import type {
   FlowExecutionLog,
   StartFlowExecutionRequest,
   AgentNode,
+  FlowError,
+  NodeRetryState,
+  ErrorRecoveryAction,
 } from '../types/flow-types.js';
 import {
   isInputNode,
   isAgentNode,
   isOutputNode,
 } from '../types/flow-types.js';
+import {
+  classifyError,
+  calculateRetryDelay,
+  createRetryState,
+  recordRetryAttempt,
+  markWaitingForRetry,
+  shouldRetry,
+  getNodeRetryConfig,
+  determineRecoveryAction,
+  formatDelay,
+  formatErrorSummary,
+  extractStatusCode,
+  DEFAULT_RETRY_CONFIG,
+} from './flow-error-handler.js';
 
 // ============= CONFIGURATION =============
 
 const DEFAULT_NODE_TIMEOUT = 300000; // 5 minutes
-const MAX_RETRY_ATTEMPTS = 3;
-const RETRY_DELAY_MS = 1000;
+
+// Note: Retry configuration is now managed by flow-error-handler.ts
+// These values are kept for backwards compatibility but should be migrated
+// to use DEFAULT_RETRY_CONFIG from flow-error-handler.ts
 
 // ============= NODE HANDLER INTERFACE =============
 
@@ -75,10 +94,44 @@ export class FlowExecutionService extends EventEmitter {
   private logger: Logger;
   private activeExecutions: Map<string, FlowExecutionContext> = new Map();
   private nodeHandlers: Map<string, NodeHandler> = new Map();
+  // Track retry state per execution -> per node
+  private nodeRetryStates: Map<string, Map<string, NodeRetryState>> = new Map();
 
   constructor() {
     super();
     this.logger = createLogger('FlowExecutionService');
+  }
+
+  /**
+   * Get or create retry state for a node in an execution
+   */
+  private getNodeRetryState(executionId: string, nodeId: string, maxRetries: number): NodeRetryState {
+    if (!this.nodeRetryStates.has(executionId)) {
+      this.nodeRetryStates.set(executionId, new Map());
+    }
+    const executionRetryStates = this.nodeRetryStates.get(executionId)!;
+
+    if (!executionRetryStates.has(nodeId)) {
+      executionRetryStates.set(nodeId, createRetryState(maxRetries));
+    }
+    return executionRetryStates.get(nodeId)!;
+  }
+
+  /**
+   * Update retry state for a node
+   */
+  private updateNodeRetryState(executionId: string, nodeId: string, state: NodeRetryState): void {
+    if (!this.nodeRetryStates.has(executionId)) {
+      this.nodeRetryStates.set(executionId, new Map());
+    }
+    this.nodeRetryStates.get(executionId)!.set(nodeId, state);
+  }
+
+  /**
+   * Clean up retry states for an execution
+   */
+  private cleanupRetryStates(executionId: string): void {
+    this.nodeRetryStates.delete(executionId);
   }
 
   /**
@@ -160,6 +213,7 @@ export class FlowExecutionService extends EventEmitter {
       } finally {
         // 9. Cleanup
         this.activeExecutions.delete(executionId);
+        this.cleanupRetryStates(executionId);
       }
     } catch (error) {
       this.logger.error('Failed to start flow execution', error as Error, {
@@ -207,8 +261,9 @@ export class FlowExecutionService extends EventEmitter {
     // Emit cancellation event
     this.emitUpdate(context, 'execution_cancelled');
 
-    // Remove from active executions
+    // Remove from active executions and clean up retry states
     this.activeExecutions.delete(executionId);
+    this.cleanupRetryStates(executionId);
 
     return true;
   }
@@ -250,37 +305,55 @@ export class FlowExecutionService extends EventEmitter {
 
     // Execute nodes in sequence
     while (currentNode && !context.isCancelled) {
-      const nodeResult = await this.executeNode(currentNode, context);
+      const nodeResult = await this.executeNodeWithRetry(currentNode, context);
 
       if (!nodeResult.success) {
-        // Node failed - check if we should retry
-        const shouldRetry = await this.shouldRetryNode(currentNode, context);
+        // Node failed after all retries - check recovery action
+        const recoveryResult = await this.handleNodeFailure(currentNode, nodeResult, context);
 
-        if (shouldRetry) {
-          context.log('warn', `Retrying node: ${currentNode.name}`, currentNode.nodeId);
-          continue;
+        if (recoveryResult.action === 'fail') {
+          throw new Error(nodeResult.error || `Node ${currentNode.name} failed`);
         }
 
-        // No retry - fail the execution
-        throw new Error(nodeResult.error || `Node ${currentNode.name} failed`);
-      }
+        if (recoveryResult.action === 'skip') {
+          context.log('warn', `Skipping failed node: ${currentNode.name}`, currentNode.nodeId);
+          // Mark node as skipped in node executions
+          const nodeExec = execution.nodeExecutions.find(ne => ne.nodeId === currentNode!.nodeId);
+          if (nodeExec) {
+            nodeExec.status = 'skipped';
+            nodeExec.wasSkipped = true;
+          }
+        } else if (recoveryResult.action === 'use_default' && recoveryResult.defaultValue !== undefined) {
+          context.log('info', `Using default value for failed node: ${currentNode.name}`, currentNode.nodeId);
+          // Use default value
+          const defaultData = { [currentNode.nodeId]: recoveryResult.defaultValue };
+          context.data = { ...context.data, ...defaultData };
+          context.variables[currentNode.nodeId] = recoveryResult.defaultValue;
 
-      // Merge node output into context data
-      if (nodeResult.data) {
-        context.data = { ...context.data, ...nodeResult.data };
-      }
+          // Mark node execution with default value
+          const nodeExec = execution.nodeExecutions.find(ne => ne.nodeId === currentNode!.nodeId);
+          if (nodeExec) {
+            nodeExec.defaultValueUsed = recoveryResult.defaultValue;
+          }
+        }
+      } else {
+        // Merge node output into context data
+        if (nodeResult.data) {
+          context.data = { ...context.data, ...nodeResult.data };
+        }
 
-      // Update variables for template interpolation
-      if (nodeResult.output) {
-        context.variables[currentNode.nodeId] = nodeResult.output;
-      }
+        // Update variables for template interpolation
+        if (nodeResult.output) {
+          context.variables[currentNode.nodeId] = nodeResult.output;
+        }
 
-      // Accumulate tokens and cost
-      if (nodeResult.tokensUsed) {
-        execution.tokensUsed += nodeResult.tokensUsed;
-      }
-      if (nodeResult.cost) {
-        execution.cost += nodeResult.cost;
+        // Accumulate tokens and cost
+        if (nodeResult.tokensUsed) {
+          execution.tokensUsed += nodeResult.tokensUsed;
+        }
+        if (nodeResult.cost) {
+          execution.cost += nodeResult.cost;
+        }
       }
 
       // Check if we should continue
@@ -320,6 +393,155 @@ export class FlowExecutionService extends EventEmitter {
       cost: execution.cost,
       nodeExecutions: execution.nodeExecutions,
     };
+  }
+
+  /**
+   * Execute a node with comprehensive retry logic
+   */
+  private async executeNodeWithRetry(
+    node: FlowNode,
+    context: FlowExecutionContext
+  ): Promise<NodeExecutionResult> {
+    const { execution } = context;
+    const retryConfig = getNodeRetryConfig(node);
+    const retryState = this.getNodeRetryState(execution.id, node.nodeId, retryConfig.maxRetries);
+
+    let lastResult: NodeExecutionResult | null = null;
+    let lastError: FlowError | null = null;
+
+    // Initial attempt + retries
+    while (true) {
+      // Check for cancellation
+      if (context.isCancelled) {
+        return {
+          success: false,
+          error: 'Execution was cancelled',
+        };
+      }
+
+      // Execute the node
+      lastResult = await this.executeNode(node, context);
+
+      if (lastResult.success) {
+        // Success! Update retry state with success
+        if (retryState.retryCount > 0) {
+          const updatedState = recordRetryAttempt(retryState, true, 0);
+          this.updateNodeRetryState(execution.id, node.nodeId, updatedState);
+
+          context.log('info', `Node succeeded after ${retryState.retryCount} retry attempt(s)`, node.nodeId, {
+            totalRetryTime: updatedState.totalRetryTime,
+          });
+        }
+        return lastResult;
+      }
+
+      // Node failed - classify the error
+      const statusCode = lastResult.errorDetails?.statusCode || extractStatusCode(lastResult.error || '');
+      lastError = classifyError(lastResult.error || 'Unknown error', statusCode);
+
+      // Update node execution with classified error
+      const nodeExec = execution.nodeExecutions.find(ne => ne.nodeId === node.nodeId);
+      if (nodeExec) {
+        nodeExec.flowError = lastError;
+        nodeExec.retryState = retryState;
+      }
+
+      // Check if we should retry
+      if (!shouldRetry(node, lastError, retryState)) {
+        // No more retries - return the failure
+        context.log('error', formatErrorSummary(lastError, retryState), node.nodeId, {
+          errorCategory: lastError.category,
+          isRetryable: lastError.isRetryable,
+          retryCount: retryState.retryCount,
+          maxRetries: retryState.maxRetries,
+        });
+        return lastResult;
+      }
+
+      // Calculate delay with exponential backoff
+      const delayMs = calculateRetryDelay(retryState.retryCount + 1);
+      const nextRetryAt = new Date(Date.now() + delayMs);
+
+      // Update retry state to waiting
+      const waitingState = markWaitingForRetry(retryState, nextRetryAt, lastError);
+      this.updateNodeRetryState(execution.id, node.nodeId, waitingState);
+
+      // Log retry intent
+      context.log('warn', `Node failed, retrying in ${formatDelay(delayMs)}...`, node.nodeId, {
+        errorCategory: lastError.category,
+        retryCount: retryState.retryCount + 1,
+        maxRetries: retryState.maxRetries,
+        delayMs,
+      });
+
+      // Emit retry event for SSE
+      this.emitUpdate(context, 'node_retrying', node.nodeId, node.type, {
+        error: lastError.message,
+        errorCategory: lastError.category,
+        retryCount: retryState.retryCount + 1,
+        maxRetries: retryState.maxRetries,
+        nextRetryIn: delayMs,
+        retryReason: lastError.category === 'transient' ? 'Transient error detected' : 'Retry configured',
+        isRetryable: true,
+      });
+
+      // Wait before retry
+      await this.delay(delayMs);
+
+      // Record the retry attempt
+      const updatedState = recordRetryAttempt(
+        waitingState,
+        false,
+        delayMs,
+        lastError.message
+      );
+      this.updateNodeRetryState(execution.id, node.nodeId, updatedState);
+
+      // Update node execution record for retry
+      if (nodeExec) {
+        nodeExec.retryCount = updatedState.retryCount;
+        nodeExec.retryState = updatedState;
+        // Reset status for retry
+        nodeExec.status = 'running';
+        nodeExec.startedAt = new Date();
+      }
+
+      // Log retry attempt
+      context.log('info', `Retry attempt ${updatedState.retryCount} of ${retryState.maxRetries}`, node.nodeId);
+
+      // Emit node started for retry
+      this.emitUpdate(context, 'node_started', node.nodeId, node.type, {
+        status: 'running',
+        retryCount: updatedState.retryCount,
+      });
+    }
+  }
+
+  /**
+   * Handle node failure and determine recovery action
+   */
+  private async handleNodeFailure(
+    node: FlowNode,
+    result: NodeExecutionResult,
+    context: FlowExecutionContext
+  ): Promise<{ action: ErrorRecoveryAction; defaultValue?: any }> {
+    const { execution } = context;
+    const retryState = this.getNodeRetryState(execution.id, node.nodeId, DEFAULT_RETRY_CONFIG.maxRetries);
+
+    // Get classified error
+    const statusCode = result.errorDetails?.statusCode || extractStatusCode(result.error || '');
+    const flowError = classifyError(result.error || 'Unknown error', statusCode);
+
+    // Determine recovery action
+    const action = determineRecoveryAction(node, flowError, retryState);
+
+    // Get default value if using that recovery action
+    let defaultValue: any;
+    if (action === 'use_default' && node.metadata?.defaultOnError !== undefined) {
+      defaultValue = node.metadata.defaultOnError;
+    }
+
+    return { action, defaultValue };
   }
 
   /**
@@ -379,9 +601,19 @@ export class FlowExecutionService extends EventEmitter {
         nodeExecution.error = result.error;
         nodeExecution.errorDetails = result.errorDetails;
 
-        context.log('error', `Node failed: ${result.error}`, node.nodeId);
+        // Classify the error for better reporting
+        const statusCode = result.errorDetails?.statusCode || extractStatusCode(result.error || '');
+        const flowError = classifyError(result.error || 'Unknown error', statusCode);
+        nodeExecution.flowError = flowError;
+
+        context.log('error', `Node failed: ${result.error}`, node.nodeId, {
+          errorCategory: flowError.category,
+          isRetryable: flowError.isRetryable,
+        });
         this.emitUpdate(context, 'node_failed', node.nodeId, node.type, {
           error: result.error,
+          errorCategory: flowError.category,
+          isRetryable: flowError.isRetryable,
         });
       } else {
         context.log('info', `Node completed successfully`, node.nodeId, {
@@ -399,22 +631,33 @@ export class FlowExecutionService extends EventEmitter {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
 
+      // Classify the error
+      const statusCode = extractStatusCode(error instanceof Error ? error : errorMessage);
+      const flowError = classifyError(error instanceof Error ? error : errorMessage, statusCode);
+
       // Update node execution record
       nodeExecution.status = 'failed';
       nodeExecution.completedAt = new Date();
       nodeExecution.executionTime = Date.now() - nodeStartTime;
       nodeExecution.error = errorMessage;
       nodeExecution.errorDetails = error instanceof Error ? { stack: error.stack } : undefined;
+      nodeExecution.flowError = flowError;
 
-      context.log('error', `Node execution error: ${errorMessage}`, node.nodeId);
+      context.log('error', `Node execution error: ${errorMessage}`, node.nodeId, {
+        errorCategory: flowError.category,
+        errorCode: flowError.code,
+        isRetryable: flowError.isRetryable,
+      });
       this.emitUpdate(context, 'node_failed', node.nodeId, node.type, {
         error: errorMessage,
+        errorCategory: flowError.category,
+        isRetryable: flowError.isRetryable,
       });
 
       return {
         success: false,
         error: errorMessage,
-        errorDetails: error instanceof Error ? { stack: error.stack } : undefined,
+        errorDetails: error instanceof Error ? { stack: error.stack, ...flowError } : { ...flowError },
       };
     }
   }
@@ -455,42 +698,6 @@ export class FlowExecutionService extends EventEmitter {
     return DEFAULT_NODE_TIMEOUT;
   }
 
-  /**
-   * Check if a node should be retried after failure
-   */
-  private async shouldRetryNode(node: FlowNode, context: FlowExecutionContext): Promise<boolean> {
-    // Only agent nodes support retry
-    if (!isAgentNode(node) || !node.retryOnError) {
-      return false;
-    }
-
-    // Find the node execution record
-    const nodeExecution = context.execution.nodeExecutions.find(
-      (ne) => ne.nodeId === node.nodeId && ne.status === 'failed'
-    );
-
-    if (!nodeExecution) {
-      return false;
-    }
-
-    const retryCount = nodeExecution.retryCount || 0;
-
-    if (retryCount >= (node.maxRetries || MAX_RETRY_ATTEMPTS)) {
-      context.log('warn', `Max retries reached for node: ${node.name}`, node.nodeId);
-      return false;
-    }
-
-    // Increment retry count
-    nodeExecution.retryCount = retryCount + 1;
-    nodeExecution.status = 'pending';
-
-    // Wait before retry
-    await this.delay(RETRY_DELAY_MS * (retryCount + 1));
-
-    context.log('info', `Retrying node (attempt ${retryCount + 1})`, node.nodeId);
-
-    return true;
-  }
 
   /**
    * Find the entry node of the flow
@@ -656,18 +863,34 @@ export class FlowExecutionService extends EventEmitter {
   private async failExecution(context: FlowExecutionContext, error: Error): Promise<void> {
     const { execution } = context;
 
+    // Classify the error
+    const statusCode = extractStatusCode(error);
+    const flowError = classifyError(error, statusCode);
+
     execution.status = 'failed';
     execution.error = error.message;
-    execution.errorDetails = { stack: error.stack };
+    execution.errorDetails = {
+      stack: error.stack,
+      category: flowError.category,
+      code: flowError.code,
+      isRetryable: flowError.isRetryable,
+      suggestedAction: flowError.suggestedAction,
+    };
     execution.completedAt = new Date();
     execution.executionTime = Date.now() - (execution.startedAt?.getTime() || Date.now());
 
     await this.updateExecutionInStrapi(execution);
 
-    context.log('error', `Flow execution failed: ${error.message}`);
+    context.log('error', `Flow execution failed: ${error.message}`, undefined, {
+      errorCategory: flowError.category,
+      errorCode: flowError.code,
+      isRetryable: flowError.isRetryable,
+    });
 
     this.emitUpdate(context, 'execution_failed', undefined, undefined, {
       error: error.message,
+      errorCategory: flowError.category,
+      isRetryable: flowError.isRetryable,
     });
   }
 

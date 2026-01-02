@@ -1,0 +1,34 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)",
+      "Read(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/003-create-architecture-documentation-with-system-diag/**)",
+      "Write(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/003-create-architecture-documentation-with-system-diag/**)",
+      "Edit(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/003-create-architecture-documentation-with-system-diag/**)",
+      "Glob(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/003-create-architecture-documentation-with-system-diag/**)",
+      "Grep(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/003-create-architecture-documentation-with-system-diag/**)",
+      "Read(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/003-create-architecture-documentation-with-system-diag/.auto-claude/specs/003-create-architecture-documentation-with-system-diag/**)",
+      "Write(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/003-create-architecture-documentation-with-system-diag/.auto-claude/specs/003-create-architecture-documentation-with-system-diag/**)",
+      "Edit(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/003-create-architecture-documentation-with-system-diag/.auto-claude/specs/003-create-architecture-documentation-with-system-diag/**)",
+      "Bash(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__get-library-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
+    ]
+  }
+}

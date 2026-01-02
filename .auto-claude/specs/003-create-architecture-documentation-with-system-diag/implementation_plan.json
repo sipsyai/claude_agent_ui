@@ -1,0 +1,286 @@
+{
+  "feature": "Create architecture documentation with system diagrams",
+  "description": "Create comprehensive visual documentation showing how the hybrid architecture components (React + Express + Strapi + PostgreSQL + Claude SDK + MCP) interact, including data flow, service communication, and deployment topology.",
+  "created_at": "2026-01-02T06:52:48.975Z",
+  "updated_at": "2026-01-02T10:00:00.000Z",
+  "status": "in_progress",
+  "planStatus": "approved",
+  "workflow_type": "documentation",
+  "spec_file": "spec.md",
+  "estimated_hours": 6,
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Research & Analysis",
+      "description": "Deep dive into codebase to understand all component interactions and communication patterns",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Analyze Service Layer Architecture",
+          "description": "Map all services in src/services/ and understand their responsibilities, dependencies, and communication patterns. Document how claude-sdk-service, strapi-client, mcp-service, and other services interact.",
+          "status": "completed",
+          "estimated_minutes": 30,
+          "priority": "high",
+          "files_to_create": [],
+          "files_to_modify": [],
+          "notes": "Completed comprehensive service layer analysis. Documented 26 services across 8 categories: Core AI (5), Data Layer (1), MCP Integration (1), Chat (2), Skills (2), Infrastructure (7), Utilities (6), Prompts (2). Key findings: clear separation of concerns, strapi-client as single data gateway, event-driven architecture for real-time features, comprehensive skill and MCP integration flows. Created detailed analysis document with service responsibilities, dependencies, communication patterns, and critical data flows.",
+          "updated_at": "2026-01-02T06:58:45.972917+00:00"
+        },
+        {
+          "id": "1.2",
+          "title": "Analyze API Routes & Data Flow",
+          "description": "Document all API endpoints in src/routes/, trace request flows from frontend through Express to Strapi/Claude SDK. Identify SSE streaming patterns for agent execution.",
+          "status": "pending",
+          "estimated_minutes": 25,
+          "priority": "high",
+          "files_to_create": [],
+          "files_to_modify": [],
+          "notes": ""
+        },
+        {
+          "id": "1.3",
+          "title": "Analyze Docker & Deployment Architecture",
+          "description": "Document the Docker Compose setup including all services (postgres, strapi, express, frontend), networks (backend, frontend), volumes, and health checks.",
+          "status": "pending",
+          "estimated_minutes": 20,
+          "priority": "high",
+          "files_to_create": [],
+          "files_to_modify": [],
+          "notes": ""
+        },
+        {
+          "id": "1.4",
+          "title": "Analyze MCP Protocol Integration",
+          "description": "Document how MCP servers are configured, discovered, and integrated. Understand the tool discovery and execution flow.",
+          "status": "pending",
+          "estimated_minutes": 20,
+          "priority": "medium",
+          "files_to_create": [],
+          "files_to_modify": [],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Diagram Creation",
+      "description": "Create comprehensive Mermaid diagrams for all architecture aspects",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Create High-Level System Architecture Diagram",
+          "description": "Create a Mermaid diagram showing all major components: React Frontend, Nginx, Express Server, Strapi CMS, PostgreSQL, Claude SDK, and MCP Servers. Show how they connect and communicate.",
+          "status": "pending",
+          "estimated_minutes": 30,
+          "priority": "critical",
+          "files_to_create": [
+            "docs/architecture/01-system-overview.md"
+          ],
+          "files_to_modify": [],
+          "notes": ""
+        },
+        {
+          "id": "2.2",
+          "title": "Create Data Flow Diagram",
+          "description": "Create diagrams showing: (1) Agent execution flow with SSE streaming, (2) CRUD operations through Strapi, (3) MCP tool invocation flow, (4) Chat/conversation data flow.",
+          "status": "pending",
+          "estimated_minutes": 35,
+          "priority": "critical",
+          "files_to_create": [
+            "docs/architecture/02-data-flow.md"
+          ],
+          "files_to_modify": [],
+          "notes": ""
+        },
+        {
+          "id": "2.3",
+          "title": "Create Deployment Topology Diagram",
+          "description": "Create Docker deployment diagram showing containers, networks, volumes, port mappings, health checks, and resource limits. Include development vs production configurations.",
+          "status": "pending",
+          "estimated_minutes": 25,
+          "priority": "high",
+          "files_to_create": [
+            "docs/architecture/03-deployment.md"
+          ],
+          "files_to_modify": [],
+          "notes": ""
+        },
+        {
+          "id": "2.4",
+          "title": "Create Service Component Diagrams",
+          "description": "Create detailed component diagrams for: (1) Express service layer with all services, (2) Frontend component hierarchy, (3) Strapi content types and relationships.",
+          "status": "pending",
+          "estimated_minutes": 30,
+          "priority": "high",
+          "files_to_create": [
+            "docs/architecture/04-components.md"
+          ],
+          "files_to_modify": [],
+          "notes": ""
+        },
+        {
+          "id": "2.5",
+          "title": "Create Sequence Diagrams for Key Flows",
+          "description": "Create sequence diagrams for: (1) Agent creation and execution, (2) MCP server connection and tool discovery, (3) Skill management flow, (4) Real-time SSE communication.",
+          "status": "pending",
+          "estimated_minutes": 35,
+          "priority": "high",
+          "files_to_create": [
+            "docs/architecture/05-sequences.md"
+          ],
+          "files_to_modify": [],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "Documentation & Integration",
+      "description": "Create comprehensive documentation and integrate with existing docs",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Create Architecture Index & Overview",
+          "description": "Create the main architecture documentation index page that links all diagram documents and provides a comprehensive architecture overview.",
+          "status": "pending",
+          "estimated_minutes": 25,
+          "priority": "critical",
+          "files_to_create": [
+            "docs/architecture/README.md"
+          ],
+          "files_to_modify": [],
+          "notes": ""
+        },
+        {
+          "id": "3.2",
+          "title": "Create Technology Stack Reference",
+          "description": "Document the complete technology stack with version requirements, explaining why each technology was chosen and how it fits into the overall architecture.",
+          "status": "pending",
+          "estimated_minutes": 20,
+          "priority": "medium",
+          "files_to_create": [
+            "docs/architecture/06-tech-stack.md"
+          ],
+          "files_to_modify": [],
+          "notes": ""
+        },
+        {
+          "id": "3.3",
+          "title": "Update Main README with Architecture Section",
+          "description": "Add an Architecture section to the main README.md that includes the high-level system diagram and links to detailed documentation.",
+          "status": "pending",
+          "estimated_minutes": 15,
+          "priority": "high",
+          "files_to_create": [],
+          "files_to_modify": [
+            "README.md"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "3.4",
+          "title": "Review and Finalize Documentation",
+          "description": "Review all created documentation for accuracy, consistency, and completeness. Ensure all diagrams render correctly in Markdown viewers.",
+          "status": "pending",
+          "estimated_minutes": 20,
+          "priority": "high",
+          "files_to_create": [],
+          "files_to_modify": [],
+          "notes": ""
+        }
+      ]
+    }
+  ],
+  "dependencies": {
+    "1.2": [
+      "1.1"
+    ],
+    "1.4": [
+      "1.1"
+    ],
+    "2.1": [
+      "1.1",
+      "1.2",
+      "1.3"
+    ],
+    "2.2": [
+      "1.1",
+      "1.2"
+    ],
+    "2.3": [
+      "1.3"
+    ],
+    "2.4": [
+      "1.1",
+      "1.2"
+    ],
+    "2.5": [
+      "1.1",
+      "1.2",
+      "1.4"
+    ],
+    "3.1": [
+      "2.1",
+      "2.2",
+      "2.3",
+      "2.4",
+      "2.5"
+    ],
+    "3.2": [
+      "1.1"
+    ],
+    "3.3": [
+      "3.1"
+    ],
+    "3.4": [
+      "3.1",
+      "3.2",
+      "3.3"
+    ]
+  },
+  "services_involved": [
+    "React Frontend (Vite + Tailwind + Radix UI)",
+    "Express Backend (Business Logic + SSE)",
+    "Strapi CMS (Data Layer)",
+    "PostgreSQL Database",
+    "Claude SDK (AI Agent Execution)",
+    "MCP Protocol (Tool Integration)",
+    "Nginx (Reverse Proxy)",
+    "Docker Compose (Container Orchestration)"
+  ],
+  "success_criteria": [
+    "High-level system architecture diagram clearly shows all major components and their interactions",
+    "Data flow diagrams accurately depict SSE streaming, API calls, and database operations",
+    "Deployment topology diagram shows complete Docker infrastructure",
+    "Sequence diagrams explain key user flows step by step",
+    "All Mermaid diagrams render correctly in GitHub/GitLab markdown viewers",
+    "Documentation is linked from main README for easy discovery",
+    "Architecture docs help new developers understand system within 15 minutes"
+  ],
+  "output_artifacts": [
+    "docs/architecture/README.md",
+    "docs/architecture/01-system-overview.md",
+    "docs/architecture/02-data-flow.md",
+    "docs/architecture/03-deployment.md",
+    "docs/architecture/04-components.md",
+    "docs/architecture/05-sequences.md",
+    "docs/architecture/06-tech-stack.md"
+  ],
+  "final_acceptance": [
+    "All Mermaid diagrams render without errors",
+    "Diagrams accurately reflect current codebase structure",
+    "All links between documentation pages work",
+    "No orphaned or broken references",
+    "Documentation follows existing project style",
+    "Technical terms are explained or linked to definitions"
+  ],
+  "qa_signoff": {
+    "status": "pending",
+    "issues": "",
+    "tests_passed": ""
+  },
+  "last_updated": "2026-01-02T06:58:45.972927+00:00"
+}

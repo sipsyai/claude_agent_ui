@@ -3,23 +3,23 @@
   "spec": "002-add-jsdoc-documentation-for-backend-services",
   "state": "building",
   "subtasks": {
-    "completed": 18,
+    "completed": 25,
     "total": 42,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Chat and Logging Services",
+    "current": "Skill Management Services",
     "id": null,
-    "total": 8
+    "total": 5
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 20,
+    "number": 27,
     "started_at": "2026-01-02T09:50:58.101660"
   },
-  "last_update": "2026-01-02T11:07:16.926286"
+  "last_update": "2026-01-02T11:39:08.841120"
 }

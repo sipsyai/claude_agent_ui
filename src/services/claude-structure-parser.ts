@@ -24,82 +24,563 @@ export interface SlashCommand {
 
 /**
  * Training record for skill execution analysis
+ *
+ * @description
+ * Represents a single training session record in a skill's training history.
+ * Each record captures the performance metrics before and after a training execution,
+ * along with issues identified and whether corrections were successfully applied.
+ *
+ * **Used in:**
+ * - Skill interface's `trainingHistory` array field
+ * - SKILL.md YAML frontmatter `training_history` field
+ * - Skill performance tracking and improvement workflows
+ *
+ * @example
+ * // Example training record from SKILL.md frontmatter
+ * const trainingRecord: TrainingRecord = {
+ *   date: '2024-01-15T10:30:00Z',
+ *   scoreBefore: 75,
+ *   scoreAfter: 85,
+ *   issuesFound: [
+ *     'Missing error handling in validation step',
+ *     'Inconsistent file path handling'
+ *   ],
+ *   correctionsMade: true,
+ *   executionSuccess: true
+ * };
+ *
+ * @example
+ * // Failed training session
+ * const failedTraining: TrainingRecord = {
+ *   date: '2024-01-16T14:20:00Z',
+ *   scoreBefore: 85,
+ *   scoreAfter: 85, // No improvement due to failure
+ *   issuesFound: [
+ *     'Timeout during skill execution',
+ *     'MCP server connection failed'
+ *   ],
+ *   correctionsMade: false,
+ *   executionSuccess: false
+ * };
  */
 export interface TrainingRecord {
+  /** ISO 8601 timestamp of training session (e.g., '2024-01-15T10:30:00Z') */
   date: string;
+  /** Skill experience score before training (0-100) */
   scoreBefore: number;
+  /** Skill experience score after training (0-100) */
   scoreAfter: number;
+  /** List of issues identified during training execution */
   issuesFound: string[];
+  /** Whether corrections were successfully applied to the skill */
   correctionsMade: boolean;
+  /** Whether the training execution completed successfully */
   executionSuccess: boolean;
 }
 
 /**
  * Represents a parsed skill from .claude/skills/
+ *
+ * @description
+ * Represents a skill parsed from the `.claude/skills/` directory structure.
+ * Each skill is a specialized capability that can be invoked by Claude agents during task execution.
+ * Skills are discovered by the Claude Agent SDK via the `settingSources: ['project']` configuration.
+ *
+ * **Directory Structure:**
+ * ```
+ * .claude/skills/
+ * └── {skill-name}/
+ *     ├── SKILL.md              # Required: Skill definition with YAML frontmatter
+ *     ├── skill.config.json     # Optional: Input field definitions
+ *     ├── reference.md          # Optional: Reference documentation
+ *     ├── examples.md           # Optional: Usage examples
+ *     ├── scripts/              # Optional: Helper scripts
+ *     └── templates/            # Optional: Template files
+ * ```
+ *
+ * **SKILL.md YAML Frontmatter Format:**
+ * ```yaml
+ * ---
+ * name: skill-name
+ * description: "Use when you need to..."
+ * allowed-tools:
+ *   - Tool1
+ *   - Tool2
+ * mcp_tools:
+ *   server-id:
+ *     - tool1
+ *     - tool2
+ * experience_score: 85
+ * training_history:
+ *   - date: '2024-01-15T10:30:00Z'
+ *     scoreBefore: 75
+ *     scoreAfter: 85
+ *     issuesFound: ['Missing error handling']
+ *     correctionsMade: true
+ *     executionSuccess: true
+ * ---
+ *
+ * # Skill Content (Markdown)
+ * Detailed skill instructions and usage guidelines...
+ * ```
+ *
+ * @example
+ * // Parse all skills from project
+ * const parser = new ClaudeStructureParser();
+ * const skills = await parser.parseSkills('/path/to/project');
+ *
+ * console.log(`Found ${skills.length} skills`);
+ * skills.forEach(skill => {
+ *   console.log(`- ${skill.name}: ${skill.description}`);
+ *   console.log(`  Allowed Tools: ${skill.metadata?.allowedTools?.join(', ') || 'none'}`);
+ *   console.log(`  Experience: ${skill.experienceScore || 0}/100`);
+ * });
+ *
+ * @example
+ * // Access skill metadata and supporting files
+ * const skill = skills.find(s => s.id === 'data-analysis');
+ * if (skill) {
+ *   // Check tool configuration
+ *   console.log('Allowed Tools:', skill.metadata?.allowedTools);
+ *   console.log('MCP Tools:', skill.metadata?.mcpTools);
+ *
+ *   // Access supporting files
+ *   if (skill.supportingFiles?.reference) {
+ *     console.log('Reference Documentation:', skill.supportingFiles.reference);
+ *   }
+ *
+ *   // Check input field requirements
+ *   if (skill.metadata?.inputFields) {
+ *     console.log('Input Fields:', skill.metadata.inputFields.map(f => f.name));
+ *   }
+ * }
+ *
+ * @example
+ * // Check skill usage and training history
+ * const popularSkills = skills
+ *   .filter(s => (s.usageCount || 0) > 0)
+ *   .sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0));
+ *
+ * popularSkills.forEach(skill => {
+ *   console.log(`${skill.name} (used by ${skill.usageCount} agents)`);
+ *   console.log(`  Experience: ${skill.experienceScore}/100`);
+ *   console.log(`  Training Sessions: ${skill.trainingHistory?.length || 0}`);
+ * });
+ *
+ * @see ClaudeStructureParser.parseSkills - Parses all skills from .claude/skills/
+ * @see ClaudeStructureParser.parseSkill - Parses a single skill directory
+ * @see InputField - Input field definitions from skill.config.json
+ * @see TrainingRecord - Training history records from YAML frontmatter
  */
 export interface Skill {
+  /** Unique identifier (skill directory name, e.g., 'data-analysis') */
   id: string;
+  /** Human-readable skill name from YAML frontmatter */
   name: string;
+  /** Skill description explaining when to use this skill (must include "Use when") */
   description: string;
+  /** Absolute path to skill directory (e.g., '/project/.claude/skills/data-analysis') */
   path: string;
+  /** Absolute path to SKILL.md file */
   skillMdPath: string;
+  /** Markdown content from SKILL.md body (excluding YAML frontmatter) */
   content: string;
+  /** Skill configuration from YAML frontmatter */
   metadata?: {
+    /** List of allowed tool names (e.g., ['Read', 'Write', 'Bash']) */
     allowedTools?: string[];
-    mcpTools?: Record<string, string[]>; // { serverId: [toolName1, toolName2, ...] }
-    inputFields?: InputField[]; // Input parameters for skill execution
+    /** MCP server tools organized by server ID (e.g., { 'github': ['create_issue', 'search_repos'] }) */
+    mcpTools?: Record<string, string[]>;
+    /** Input field definitions from skill.config.json inputs array */
+    inputFields?: InputField[];
   };
+  /** Supporting files found in skill directory */
   supportingFiles?: {
+    /** Content of reference.md file */
     reference?: string;
+    /** Content of examples.md file */
     examples?: string;
+    /** List of script filenames in scripts/ directory */
     scripts?: string[];
+    /** List of template filenames in templates/ directory */
     templates?: string[];
   };
-  usedInAgents?: string[]; // List of agent IDs that use this skill
-  usageCount?: number; // Number of agents using this skill
-  experienceScore?: number; // 0-100 skill proficiency score
-  trainingHistory?: TrainingRecord[]; // History of training sessions
+  /** List of agent IDs that reference this skill (populated by external analysis) */
+  usedInAgents?: string[];
+  /** Number of agents using this skill (populated by external analysis) */
+  usageCount?: number;
+  /** Skill proficiency score (0-100) from YAML frontmatter experience_score */
+  experienceScore?: number;
+  /** Training session history from YAML frontmatter training_history */
+  trainingHistory?: TrainingRecord[];
 }
 
 /**
  * Input field definition for agent and skill execution
+ *
+ * @description
+ * Defines a single input parameter that users can configure when executing an agent or skill.
+ * Input fields are displayed in the UI as form controls, allowing users to provide custom
+ * values that are injected into the agent/skill prompt or configuration before execution.
+ *
+ * **Supported Field Types:**
+ * - `text`: Single-line text input
+ * - `textarea`: Multi-line text input
+ * - `dropdown`: Single-select dropdown menu (requires `options` array)
+ * - `multiselect`: Multi-select checkbox list (requires `options` array)
+ * - `checkbox`: Boolean toggle (true/false)
+ * - `number`: Numeric input with validation
+ * - `filepath`: File path input with file picker integration
+ *
+ * **Used in:**
+ * - Agent interface's `metadata.inputFields` array (from YAML frontmatter `input_fields` or `input-fields`)
+ * - Skill interface's `metadata.inputFields` array (from skill.config.json `inputs` array)
+ * - UI form rendering for parameterized agent/skill execution
+ * - Template parameter injection (e.g., {{param_name}} syntax)
+ *
+ * @example
+ * // Basic text input field
+ * const textField: InputField = {
+ *   name: 'project_name',
+ *   type: 'text',
+ *   label: 'Project Name',
+ *   description: 'The name of your project',
+ *   placeholder: 'my-awesome-project',
+ *   required: true
+ * };
+ *
+ * @example
+ * // Dropdown field with options
+ * const dropdownField: InputField = {
+ *   name: 'environment',
+ *   type: 'dropdown',
+ *   label: 'Environment',
+ *   description: 'Target deployment environment',
+ *   required: true,
+ *   options: ['development', 'staging', 'production'],
+ *   default: 'development'
+ * };
+ *
+ * @example
+ * // Multiselect field for features
+ * const multiselectField: InputField = {
+ *   name: 'features',
+ *   type: 'multiselect',
+ *   label: 'Features',
+ *   description: 'Select features to enable',
+ *   options: ['authentication', 'database', 'api', 'logging'],
+ *   default: ['authentication', 'logging']
+ * };
+ *
+ * @example
+ * // Checkbox for boolean toggle
+ * const checkboxField: InputField = {
+ *   name: 'include_tests',
+ *   type: 'checkbox',
+ *   label: 'Include Tests',
+ *   description: 'Generate test files for the project',
+ *   default: true
+ * };
+ *
+ * @example
+ * // Number field with validation
+ * const numberField: InputField = {
+ *   name: 'max_retries',
+ *   type: 'number',
+ *   label: 'Max Retries',
+ *   description: 'Maximum number of retry attempts',
+ *   placeholder: '3',
+ *   required: false,
+ *   default: 3
+ * };
+ *
+ * @example
+ * // Filepath field for file selection
+ * const filepathField: InputField = {
+ *   name: 'config_file',
+ *   type: 'filepath',
+ *   label: 'Config File',
+ *   description: 'Path to configuration file',
+ *   placeholder: '/path/to/config.json',
+ *   required: true
+ * };
+ *
+ * @see Skill - Uses inputFields for skill.config.json inputs
+ * @see Agent - Uses inputFields for agent YAML frontmatter input_fields
  */
 export interface InputField {
+  /** Unique identifier for the field (used in template injection as {{name}}) */
   name: string;
+  /** Input field type determining UI rendering and validation */
   type: 'text' | 'textarea' | 'dropdown' | 'multiselect' | 'checkbox' | 'number' | 'filepath';
+  /** Human-readable label displayed in UI form */
   label: string;
+  /** Optional help text explaining the field's purpose */
   description?: string;
+  /** Placeholder text shown in empty input fields */
   placeholder?: string;
+  /** Whether the field must be filled before execution */
   required?: boolean;
-  options?: string[]; // For dropdown and multiselect
+  /** Available options for dropdown and multiselect types */
+  options?: string[];
+  /** Default value used if user doesn't provide input */
   default?: any;
 }
 
 /**
  * Represents a parsed agent from .claude/agents/
+ *
+ * @description
+ * Represents an agent parsed from the `.claude/agents/` directory.
+ * Each agent is a specialized AI assistant with a custom system prompt, tool access,
+ * and skill capabilities. Agents are discovered by the Claude Agent SDK and can be
+ * selected by users for conversation sessions.
+ *
+ * **File Structure:**
+ * ```
+ * .claude/agents/
+ * └── {agent-name}.md
+ * ```
+ *
+ * **Agent YAML Frontmatter Format:**
+ * ```yaml
+ * ---
+ * name: Code Assistant
+ * description: Helps with coding tasks
+ * model: sonnet
+ * tools:
+ *   - Read
+ *   - Write
+ *   - Bash
+ * allowed-tools:
+ *   - Read
+ *   - Write
+ * mcp-tools:
+ *   github:
+ *     - create_issue
+ *     - search_repos
+ * skills:
+ *   - data-analysis
+ *   - code-review
+ * input-fields:
+ *   - name: project_type
+ *     type: dropdown
+ *     label: Project Type
+ *     options:
+ *       - web
+ *       - mobile
+ *       - backend
+ *     required: true
+ * output-schema:
+ *   type: object
+ *   properties:
+ *     summary: { type: string }
+ *     recommendations: { type: array, items: { type: string } }
+ * ---
+ *
+ * # Agent System Prompt (Markdown)
+ * You are a helpful coding assistant...
+ * ```
+ *
+ * @example
+ * // Parse all agents from project
+ * const parser = new ClaudeStructureParser();
+ * const agents = await parser.parseAgents('/path/to/project');
+ *
+ * console.log(`Found ${agents.length} agents`);
+ * agents.forEach(agent => {
+ *   console.log(`- ${agent.name}: ${agent.description}`);
+ *   console.log(`  Model: ${agent.metadata?.model || 'default'}`);
+ *   console.log(`  Skills: ${agent.metadata?.skills?.join(', ') || 'none'}`);
+ * });
+ *
+ * @example
+ * // Access agent metadata and configuration
+ * const agent = agents.find(a => a.id === 'code-assistant');
+ * if (agent) {
+ *   // Check tool configuration
+ *   console.log('Allowed Tools:', agent.metadata?.allowedTools);
+ *   console.log('MCP Tools:', agent.metadata?.mcpTools);
+ *
+ *   // Check model preference
+ *   console.log('Model:', agent.metadata?.model); // 'sonnet', 'opus', 'haiku'
+ *
+ *   // Check input field requirements
+ *   if (agent.metadata?.inputFields) {
+ *     console.log('Input Fields:', agent.metadata.inputFields.map(f => f.name));
+ *   }
+ *
+ *   // Check output schema
+ *   if (agent.metadata?.outputSchema) {
+ *     console.log('Output Schema:', agent.metadata.outputSchema);
+ *   }
+ *
+ *   // Check skill assignments
+ *   if (agent.metadata?.skills) {
+ *     console.log('Assigned Skills:', agent.metadata.skills);
+ *   }
+ * }
+ *
+ * @example
+ * // Filter agents by capabilities
+ * const agentsWithSkills = agents.filter(a =>
+ *   a.metadata?.skills && a.metadata.skills.length > 0
+ * );
+ *
+ * const mcpEnabledAgents = agents.filter(a =>
+ *   a.metadata?.mcpTools && Object.keys(a.metadata.mcpTools).length > 0
+ * );
+ *
+ * console.log(`Agents with skills: ${agentsWithSkills.length}`);
+ * console.log(`MCP-enabled agents: ${mcpEnabledAgents.length}`);
+ *
+ * @see ClaudeStructureParser.parseAgents - Parses all agents from .claude/agents/
+ * @see ClaudeStructureParser.parseAgent - Parses a single agent file
+ * @see InputField - Input field definitions from YAML frontmatter input_fields
+ * @see Skill - Skills that agents can reference via metadata.skills
  */
 export interface Agent {
+  /** Unique identifier (filename without .md extension, e.g., 'code-assistant') */
   id: string;
+  /** Human-readable agent name from YAML frontmatter */
   name: string;
+  /** Agent description explaining the agent's purpose and capabilities */
   description: string;
+  /** Absolute path to agent markdown file (e.g., '/project/.claude/agents/code-assistant.md') */
   path: string;
+  /** Markdown content (system prompt) from agent file body (excluding YAML frontmatter) */
   content: string;
+  /** Agent configuration from YAML frontmatter */
   metadata?: {
+    /** List of tool names the agent can use (e.g., ['Read', 'Write', 'Bash']) */
     tools?: string[];
+    /** List of allowed tool names (restricts tools further, subset of tools) */
     allowedTools?: string[];
+    /** Preferred Claude model ('sonnet', 'opus', 'haiku') */
     model?: string;
+    /** Input field definitions from YAML frontmatter input_fields or input-fields */
     inputFields?: InputField[];
+    /** Output schema for structured responses (JSON Schema as object or JSON string) */
     outputSchema?: string | object;
+    /** MCP server tools organized by server ID (e.g., { 'github': ['create_issue'] }) */
     mcpTools?: Record<string, string[]>;
-    skills?: string[]; // List of skill IDs that this agent can use
+    /** List of skill IDs that this agent can invoke (e.g., ['data-analysis', 'code-review']) */
+    skills?: string[];
   };
 }
 
 /**
- * Service for parsing Claude Code's .claude folder structure
- * Extracts slash commands and skills from the project
+ * ClaudeStructureParser - Service for parsing Claude Code's .claude folder structure
+ *
+ * @description
+ * Parses the `.claude` directory structure to extract slash commands, skills, and agents
+ * from a Claude Code project. This service enables discovery and analysis of project-level
+ * Claude configurations, including agent definitions, skill libraries, and custom commands.
+ *
+ * **Parsed Directory Structure:**
+ * ```
+ * .claude/
+ * ├── commands/           # Slash commands (*.md files with YAML frontmatter)
+ * │   ├── command1.md
+ * │   └── subdir/
+ * │       └── command2.md
+ * ├── skills/             # Skills (directories with SKILL.md files)
+ * │   ├── skill-name/
+ * │   │   ├── SKILL.md
+ * │   │   ├── skill.config.json
+ * │   │   ├── reference.md
+ * │   │   └── examples.md
+ * │   └── another-skill/
+ * │       └── SKILL.md
+ * └── agents/             # Agents (*.md files with YAML frontmatter)
+ *     ├── agent1.md
+ *     └── agent2.md
+ * ```
+ *
+ * **Key Features:**
+ * - YAML frontmatter parsing using js-yaml library
+ * - Recursive directory scanning for commands and skills
+ * - Input field extraction from skill.config.json files
+ * - Supporting file discovery (reference.md, examples.md, scripts/, templates/)
+ * - Training history and experience score parsing from SKILL.md
+ * - MCP tools configuration parsing for agents and skills
+ * - Tool configuration parsing (allowed-tools, tools, mcp-tools)
+ * - Flexible tool field format support (array or comma-separated string)
+ * - Graceful handling of missing or malformed files
+ *
+ * **YAML Frontmatter Formats Supported:**
+ * - Skills: name, description, allowed-tools, mcp_tools, experience_score, training_history
+ * - Agents: name, description, model, tools, allowed-tools, mcp-tools, skills, input-fields, output-schema
+ * - Commands: description, allowed-tools, argument-hint, model, disable-model-invocation
+ *
+ * @example
+ * // Parse entire .claude directory structure
+ * const parser = new ClaudeStructureParser();
+ * const analysis = await parser.analyzeProject('/path/to/project');
+ *
+ * console.log(`Found ${analysis.skills.length} skills`);
+ * console.log(`Found ${analysis.agents.length} agents`);
+ * console.log(`Found ${analysis.commands.length} commands`);
+ * console.log(`Has .claude folder: ${analysis.hasClaudeFolder}`);
+ *
+ * @example
+ * // Parse only skills
+ * const parser = new ClaudeStructureParser();
+ * const skills = await parser.parseSkills('/path/to/project');
+ *
+ * skills.forEach(skill => {
+ *   console.log(`${skill.name}: ${skill.description}`);
+ *   console.log(`  Experience: ${skill.experienceScore || 0}/100`);
+ *   console.log(`  Training Sessions: ${skill.trainingHistory?.length || 0}`);
+ * });
+ *
+ * @example
+ * // Parse only agents
+ * const parser = new ClaudeStructureParser();
+ * const agents = await parser.parseAgents('/path/to/project');
+ *
+ * agents.forEach(agent => {
+ *   console.log(`${agent.name}: ${agent.description}`);
+ *   console.log(`  Model: ${agent.metadata?.model || 'default'}`);
+ *   console.log(`  Skills: ${agent.metadata?.skills?.join(', ') || 'none'}`);
+ * });
+ *
+ * @example
+ * // Parse a specific skill by name
+ * const parser = new ClaudeStructureParser();
+ * const skill = await parser.parseSpecificSkill('/path/to/project', 'data-analysis');
+ *
+ * if (skill) {
+ *   console.log(`Skill: ${skill.name}`);
+ *   console.log(`Description: ${skill.description}`);
+ *   console.log(`Content:\n${skill.content}`);
+ * } else {
+ *   console.log('Skill not found');
+ * }
+ *
+ * @example
+ * // Check for input fields in skills
+ * const parser = new ClaudeStructureParser();
+ * const skills = await parser.parseSkills('/path/to/project');
+ *
+ * const skillsWithInputs = skills.filter(s =>
+ *   s.metadata?.inputFields && s.metadata.inputFields.length > 0
+ * );
+ *
+ * skillsWithInputs.forEach(skill => {
+ *   console.log(`${skill.name} requires inputs:`);
+ *   skill.metadata!.inputFields!.forEach(field => {
+ *     console.log(`  - ${field.name} (${field.type}): ${field.label}`);
+ *   });
+ * });
+ *
+ * @see Skill - Skill interface returned by parseSkills
+ * @see Agent - Agent interface returned by parseAgents
+ * @see InputField - Input field definition for parameterized execution
+ * @see TrainingRecord - Training history record for skill performance tracking
  */
 export class ClaudeStructureParser {
+  /** Logger instance for debugging and error tracking */
   private logger: Logger;
 
   constructor() {
@@ -208,6 +689,125 @@ export class ClaudeStructureParser {
 
   /**
    * Parse all skills from .claude/skills/
+   *
+   * @description
+   * Scans the `.claude/skills/` directory and parses all skill subdirectories.
+   * Each subdirectory must contain a `SKILL.md` file with YAML frontmatter to be considered a valid skill.
+   * Optionally parses `skill.config.json` for input field definitions and supporting files
+   * (reference.md, examples.md, scripts/, templates/).
+   *
+   * **Parsing Workflow:**
+   * 1. Check if `.claude/skills/` directory exists (returns empty array if not found)
+   * 2. Read all entries in the skills directory
+   * 3. For each subdirectory, call `parseSkill()` to extract skill data
+   * 4. Filter out null results (failed parses or missing SKILL.md)
+   * 5. Log parsed skill names and count
+   * 6. Return array of successfully parsed skills
+   *
+   * **Skill Discovery:**
+   * - Only directory entries are processed (ignores loose files)
+   * - Each skill directory must contain `SKILL.md` with YAML frontmatter
+   * - Missing or malformed skills are logged as warnings and skipped
+   * - Skills are discovered by Claude Agent SDK via `settingSources: ['project']`
+   *
+   * @param projectPath - Absolute path to project root directory
+   * @returns Promise resolving to array of parsed Skill objects (empty array if no skills found)
+   *
+   * @example
+   * // Parse all skills from project
+   * const parser = new ClaudeStructureParser();
+   * const skills = await parser.parseSkills('/path/to/project');
+   *
+   * console.log(`Found ${skills.length} skills`);
+   * skills.forEach(skill => {
+   *   console.log(`- ${skill.name}: ${skill.description}`);
+   *   console.log(`  Tools: ${skill.metadata?.allowedTools?.join(', ') || 'none'}`);
+   *   console.log(`  Experience: ${skill.experienceScore || 0}/100`);
+   * });
+   *
+   * @example
+   * // Filter skills by experience level
+   * const parser = new ClaudeStructureParser();
+   * const skills = await parser.parseSkills('/path/to/project');
+   *
+   * const expertSkills = skills.filter(s => (s.experienceScore || 0) >= 80);
+   * const beginnerSkills = skills.filter(s => (s.experienceScore || 0) < 50);
+   *
+   * console.log(`Expert skills (80+): ${expertSkills.length}`);
+   * console.log(`Beginner skills (<50): ${beginnerSkills.length}`);
+   *
+   * @example
+   * // Check for skills with MCP tools configured
+   * const parser = new ClaudeStructureParser();
+   * const skills = await parser.parseSkills('/path/to/project');
+   *
+   * const mcpSkills = skills.filter(s =>
+   *   s.metadata?.mcpTools && Object.keys(s.metadata.mcpTools).length > 0
+   * );
+   *
+   * mcpSkills.forEach(skill => {
+   *   console.log(`${skill.name} uses MCP servers:`);
+   *   Object.entries(skill.metadata!.mcpTools!).forEach(([serverId, tools]) => {
+   *     console.log(`  - ${serverId}: ${tools.join(', ')}`);
+   *   });
+   * });
+   *
+   * @example
+   * // Check for skills with input fields
+   * const parser = new ClaudeStructureParser();
+   * const skills = await parser.parseSkills('/path/to/project');
+   *
+   * const parameterizedSkills = skills.filter(s =>
+   *   s.metadata?.inputFields && s.metadata.inputFields.length > 0
+   * );
+   *
+   * parameterizedSkills.forEach(skill => {
+   *   console.log(`${skill.name} requires inputs:`);
+   *   skill.metadata!.inputFields!.forEach(field => {
+   *     const req = field.required ? '(required)' : '(optional)';
+   *     console.log(`  - ${field.name}: ${field.label} ${req}`);
+   *   });
+   * });
+   *
+   * @example
+   * // Check for skills with supporting files
+   * const parser = new ClaudeStructureParser();
+   * const skills = await parser.parseSkills('/path/to/project');
+   *
+   * skills.forEach(skill => {
+   *   if (skill.supportingFiles?.reference) {
+   *     console.log(`${skill.name} has reference documentation`);
+   *   }
+   *   if (skill.supportingFiles?.examples) {
+   *     console.log(`${skill.name} has usage examples`);
+   *   }
+   *   if (skill.supportingFiles?.scripts && skill.supportingFiles.scripts.length > 0) {
+   *     console.log(`${skill.name} has ${skill.supportingFiles.scripts.length} helper scripts`);
+   *   }
+   * });
+   *
+   * @example
+   * // Analyze training history
+   * const parser = new ClaudeStructureParser();
+   * const skills = await parser.parseSkills('/path/to/project');
+   *
+   * skills.forEach(skill => {
+   *   if (skill.trainingHistory && skill.trainingHistory.length > 0) {
+   *     const successfulTrainings = skill.trainingHistory.filter(t => t.executionSuccess);
+   *     const avgImprovement = skill.trainingHistory.reduce((sum, t) =>
+   *       sum + (t.scoreAfter - t.scoreBefore), 0
+   *     ) / skill.trainingHistory.length;
+   *
+   *     console.log(`${skill.name}:`);
+   *     console.log(`  Training Sessions: ${skill.trainingHistory.length}`);
+   *     console.log(`  Successful: ${successfulTrainings.length}`);
+   *     console.log(`  Avg Improvement: ${avgImprovement.toFixed(1)} points`);
+   *   }
+   * });
+   *
+   * @see parseSkill - Parses a single skill directory
+   * @see parseSpecificSkill - Parses a specific skill by name
+   * @see Skill - Returned skill interface
    */
   async parseSkills(projectPath: string): Promise<Skill[]> {
     const skillsDir = path.join(projectPath, '.claude', 'skills');
@@ -274,6 +874,44 @@ export class ClaudeStructureParser {
 
   /**
    * Parse a single skill directory
+   *
+   * @description
+   * Parses a single skill directory containing SKILL.md with YAML frontmatter.
+   * Extracts skill metadata, content, input fields from skill.config.json, and supporting files
+   * (reference.md, examples.md, scripts/, templates/). This is a private helper method called by
+   * `parseSkills()` and `parseSpecificSkill()`.
+   *
+   * **Required Files:**
+   * - SKILL.md with YAML frontmatter (required)
+   *
+   * **Optional Files:**
+   * - skill.config.json with inputs array (for input field definitions)
+   * - reference.md (reference documentation)
+   * - examples.md (usage examples)
+   * - scripts/ directory (helper scripts)
+   * - templates/ directory (template files)
+   *
+   * **Parsing Workflow:**
+   * 1. Check if SKILL.md exists (returns null if not found)
+   * 2. Read and parse SKILL.md YAML frontmatter
+   * 3. Extract metadata (name, description, allowed-tools, mcp_tools, experience_score, training_history)
+   * 4. Parse skill.config.json if present (for input field definitions)
+   * 5. Scan for supporting files (reference.md, examples.md, scripts/, templates/)
+   * 6. Return Skill object with all parsed data
+   *
+   * **Error Handling:**
+   * - Returns null if SKILL.md is missing
+   * - Logs errors and returns null if parsing fails
+   * - Gracefully handles missing optional files (skill.config.json, supporting files)
+   *
+   * @param skillPath - Absolute path to skill directory (e.g., '/project/.claude/skills/data-analysis')
+   * @param skillName - Skill directory name (used as skill ID, e.g., 'data-analysis')
+   * @returns Promise resolving to Skill object or null if parsing fails
+   * @private
+   *
+   * @see parseSkills - Public method that calls this for all skills
+   * @see parseSpecificSkill - Public method that calls this for a single skill
+   * @see Skill - Returned skill interface
    */
   private async parseSkill(skillPath: string, skillName: string): Promise<Skill | null> {
     const skillMdPath = path.join(skillPath, 'SKILL.md');
@@ -427,6 +1065,133 @@ export class ClaudeStructureParser {
 
   /**
    * Parse all agents from .claude/agents/
+   *
+   * @description
+   * Scans the `.claude/agents/` directory and parses all agent markdown files.
+   * Each `.md` file (except README.md) is parsed as an agent definition with YAML frontmatter
+   * containing agent configuration (name, description, model, tools, skills, etc.).
+   *
+   * **Parsing Workflow:**
+   * 1. Check if `.claude/agents/` directory exists (returns empty array if not found)
+   * 2. Read all entries in the agents directory
+   * 3. For each `.md` file (excluding README.md), call `parseAgent()` to extract agent data
+   * 4. Parse YAML frontmatter for agent metadata (tools, skills, input fields, etc.)
+   * 5. Filter out null results (failed parses or malformed files)
+   * 6. Log parsed agent names and count
+   * 7. Return array of successfully parsed agents
+   *
+   * **Agent Discovery:**
+   * - Only `.md` files are processed (ignores non-markdown files and subdirectories)
+   * - README.md is explicitly excluded to avoid parsing documentation as an agent
+   * - Missing or malformed agents are logged as errors and skipped
+   * - Agents are discovered by Claude Agent SDK and selectable in UI
+   *
+   * @param projectPath - Absolute path to project root directory
+   * @returns Promise resolving to array of parsed Agent objects (empty array if no agents found)
+   *
+   * @example
+   * // Parse all agents from project
+   * const parser = new ClaudeStructureParser();
+   * const agents = await parser.parseAgents('/path/to/project');
+   *
+   * console.log(`Found ${agents.length} agents`);
+   * agents.forEach(agent => {
+   *   console.log(`- ${agent.name}: ${agent.description}`);
+   *   console.log(`  Model: ${agent.metadata?.model || 'default'}`);
+   *   console.log(`  Skills: ${agent.metadata?.skills?.join(', ') || 'none'}`);
+   * });
+   *
+   * @example
+   * // Filter agents by model preference
+   * const parser = new ClaudeStructureParser();
+   * const agents = await parser.parseAgents('/path/to/project');
+   *
+   * const sonnetAgents = agents.filter(a => a.metadata?.model === 'sonnet');
+   * const opusAgents = agents.filter(a => a.metadata?.model === 'opus');
+   *
+   * console.log(`Sonnet agents: ${sonnetAgents.length}`);
+   * console.log(`Opus agents: ${opusAgents.length}`);
+   *
+   * @example
+   * // Find agents with specific skills
+   * const parser = new ClaudeStructureParser();
+   * const agents = await parser.parseAgents('/path/to/project');
+   *
+   * const dataAnalysisAgents = agents.filter(a =>
+   *   a.metadata?.skills?.includes('data-analysis')
+   * );
+   *
+   * console.log('Agents with data-analysis skill:');
+   * dataAnalysisAgents.forEach(agent => {
+   *   console.log(`  - ${agent.name}`);
+   * });
+   *
+   * @example
+   * // Check agents with MCP tools configured
+   * const parser = new ClaudeStructureParser();
+   * const agents = await parser.parseAgents('/path/to/project');
+   *
+   * const mcpAgents = agents.filter(a =>
+   *   a.metadata?.mcpTools && Object.keys(a.metadata.mcpTools).length > 0
+   * );
+   *
+   * mcpAgents.forEach(agent => {
+   *   console.log(`${agent.name} uses MCP servers:`);
+   *   Object.entries(agent.metadata!.mcpTools!).forEach(([serverId, tools]) => {
+   *     console.log(`  - ${serverId}: ${tools.join(', ')}`);
+   *   });
+   * });
+   *
+   * @example
+   * // Find agents with input fields
+   * const parser = new ClaudeStructureParser();
+   * const agents = await parser.parseAgents('/path/to/project');
+   *
+   * const parameterizedAgents = agents.filter(a =>
+   *   a.metadata?.inputFields && a.metadata.inputFields.length > 0
+   * );
+   *
+   * parameterizedAgents.forEach(agent => {
+   *   console.log(`${agent.name} requires inputs:`);
+   *   agent.metadata!.inputFields!.forEach(field => {
+   *     const req = field.required ? '(required)' : '(optional)';
+   *     console.log(`  - ${field.name}: ${field.label} ${req}`);
+   *   });
+   * });
+   *
+   * @example
+   * // Check agents with output schemas
+   * const parser = new ClaudeStructureParser();
+   * const agents = await parser.parseAgents('/path/to/project');
+   *
+   * const structuredAgents = agents.filter(a => a.metadata?.outputSchema);
+   *
+   * structuredAgents.forEach(agent => {
+   *   console.log(`${agent.name} has structured output:`);
+   *   console.log(JSON.stringify(agent.metadata!.outputSchema, null, 2));
+   * });
+   *
+   * @example
+   * // Analyze tool usage across agents
+   * const parser = new ClaudeStructureParser();
+   * const agents = await parser.parseAgents('/path/to/project');
+   *
+   * const toolUsage = new Map<string, number>();
+   * agents.forEach(agent => {
+   *   agent.metadata?.allowedTools?.forEach(tool => {
+   *     toolUsage.set(tool, (toolUsage.get(tool) || 0) + 1);
+   *   });
+   * });
+   *
+   * console.log('Tool usage across agents:');
+   * Array.from(toolUsage.entries())
+   *   .sort((a, b) => b[1] - a[1])
+   *   .forEach(([tool, count]) => {
+   *     console.log(`  ${tool}: ${count} agents`);
+   *   });
+   *
+   * @see parseAgent - Parses a single agent file
+   * @see Agent - Returned agent interface
    */
   async parseAgents(projectPath: string): Promise<Agent[]> {
     const agentsDir = path.join(projectPath, '.claude', 'agents');
@@ -462,6 +1227,45 @@ export class ClaudeStructureParser {
 
   /**
    * Parse a single agent file
+   *
+   * @description
+   * Parses a single agent markdown file containing YAML frontmatter with agent configuration.
+   * Extracts agent metadata (name, description, model, tools, skills, input fields, output schema),
+   * and the system prompt content. This is a private helper method called by `parseAgents()`.
+   *
+   * **YAML Frontmatter Fields:**
+   * - name: Agent name (string)
+   * - description: Agent description (string)
+   * - model: Preferred model ('sonnet', 'opus', 'haiku')
+   * - tools: List of tool names (array or comma-separated string)
+   * - allowed-tools: List of allowed tool names (array or comma-separated string)
+   * - mcp-tools or mcp_tools: MCP server tools organized by server ID (object)
+   * - skills: List of skill IDs (array or comma-separated string)
+   * - input-fields or input_fields: Input field definitions (array)
+   * - output-schema or output_schema: Output schema for structured responses (object or JSON string)
+   *
+   * **Parsing Workflow:**
+   * 1. Read agent markdown file content
+   * 2. Parse YAML frontmatter to extract metadata
+   * 3. Extract body content (system prompt)
+   * 4. Parse input fields from input-fields or input_fields
+   * 5. Parse tools, allowed-tools, skills (supports array or comma-separated string formats)
+   * 6. Parse MCP tools (nested object with server IDs as keys)
+   * 7. Parse output schema (supports object or JSON string)
+   * 8. Return Agent object with all parsed data
+   *
+   * **Error Handling:**
+   * - Returns null if file read or parsing fails
+   * - Logs errors with agent path context
+   * - Gracefully handles missing or malformed metadata fields
+   *
+   * @param agentPath - Absolute path to agent markdown file (e.g., '/project/.claude/agents/code-assistant.md')
+   * @param fileName - Agent filename (e.g., 'code-assistant.md')
+   * @returns Promise resolving to Agent object or null if parsing fails
+   * @private
+   *
+   * @see parseAgents - Public method that calls this for all agents
+   * @see Agent - Returned agent interface
    */
   private async parseAgent(agentPath: string, fileName: string): Promise<Agent | null> {
     try {
@@ -484,7 +1288,7 @@ export class ClaudeStructureParser {
           options: field.options,
           default: field.default,
         }));
-        console.log(`Parsed ${inputFields.length} input fields for agent ${fileName}:`, JSON.stringify(inputFields, null, 2));
+        this.logger.debug(`Parsed ${inputFields.length} input fields for agent ${fileName}`);
       }
 
       // Parse tools (handle both array and comma-separated string formats)

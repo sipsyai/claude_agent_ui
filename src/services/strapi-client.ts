@@ -155,7 +155,7 @@ export class StrapiClient {
    * Get all agents with optional filtering, sorting, and pagination
    */
   async getAllAgents(options?: {
-    populate?: string[];
+    populate?: string[] | Record<string, any>;
     filters?: Record<string, any>;
     sort?: string[];
     pagination?: { page: number; pageSize: number };
@@ -1208,7 +1208,7 @@ export class StrapiClient {
    * Build Strapi query parameters from options
    */
   private buildQueryParams(options?: {
-    populate?: string[];
+    populate?: string[] | Record<string, any>;
     filters?: Record<string, any>;
     sort?: string[];
     pagination?: { page: number; pageSize: number };

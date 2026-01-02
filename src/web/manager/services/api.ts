@@ -360,6 +360,7 @@ export interface CreateAgentRequest {
   description: string;
   systemPrompt: string;
   tools?: string[];
+  disallowedTools?: string[];
   model?: 'sonnet' | 'opus' | 'haiku';
   inputFields?: InputField[];
   outputSchema?: string | object;

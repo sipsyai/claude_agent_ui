@@ -11,6 +11,7 @@ import { createManagerRoutes } from './routes/manager.routes.js';
 import { createStrapiManagerRoutes } from './routes/manager.routes.strapi.js';
 import { createExecutionRoutes } from './routes/execution.routes.js';
 import { createFlowRoutes } from './routes/flow.routes.js';
+import { createWebhookRoutes } from './routes/webhook.routes.js';
 import taskRoutes from './routes/task.routes.js';
 import chatRoutes from './routes/chat.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
@@ -242,6 +243,9 @@ export class AgentUIServer {
 
     // Flow API routes (flow management and execution with SSE)
     this.app.use('/api/flows', createFlowRoutes());
+
+    // Webhook API routes (external triggers for flows)
+    this.app.use('/api/webhooks', createWebhookRoutes());
 
     // React Router catch-all - must be after all API routes
     const isDev = process.env.NODE_ENV === 'development';

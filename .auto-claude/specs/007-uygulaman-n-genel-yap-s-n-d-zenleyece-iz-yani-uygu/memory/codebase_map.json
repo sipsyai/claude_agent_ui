@@ -64,7 +64,47 @@
       "description": "Created Flow API Service for frontend that provides comprehensive API client functions for flow operations including CRUD, status management, flow execution with SSE streaming, and execution monitoring. Follows existing patterns from api.ts and chat-api.ts.",
       "category": "frontend",
       "discovered_at": "2026-01-02T12:48:51.168457+00:00"
+    },
+    "src/web/manager/components/FlowsPage.tsx": {
+      "description": "Created FlowsPage component for flow management. Features: grid view of flows with status/category badges, filter by status (all/active/draft/paused/archived) and category, search by name/description/slug, actions (Execute with SSE, Edit, Activate/Deactivate, Duplicate, Delete), recent executions display, auto-refresh (30s). Uses flow-api.ts for data, follows SkillsPage patterns. 540 lines.",
+      "category": "component",
+      "discovered_at": "2026-01-02T12:53:19.651689+00:00"
+    },
+    "src/web/manager/components/FlowEditorPage.tsx": {
+      "description": "Created FlowEditorPage.tsx (1100+ lines) - a comprehensive flow editor with linear node configuration. Features: flow metadata form (name/slug/description/category/status/version), collapsible node sections (Input -> Agent(s) -> Output), input field management, agent/skills selection from available entities, prompt template with {{input}} interpolation, output type/format configuration, file/webhook settings. Integrates with flow-api.ts for CRUD and api.ts for loading agents/skills. Uses Card, Button, Input, Select, Textarea from ui components.",
+      "category": "frontend",
+      "discovered_at": "2026-01-02T13:01:56.136294+00:00"
+    },
+    "src/web/manager/components/flow/": {
+      "description": "Created flow node configuration components directory. Contains: InputNodeConfig.tsx (input field configuration with 11 field types), AgentNodeConfig.tsx (agent selection, prompt template, skills, execution settings), OutputNodeConfig.tsx (output type, format, file/webhook settings), and index.ts barrel export. These are reusable form components for configuring flow nodes in the FlowEditorPage editor.",
+      "category": "component",
+      "discovered_at": "2026-01-02T13:11:11.632069+00:00"
+    },
+    "src/web/manager/components/FlowExecutionModal.tsx": {
+      "description": "Created FlowExecutionModal - a comprehensive modal for running flows with dynamic input forms and real-time SSE execution status. Features: split-panel layout (input form | execution log), supports 11 input field types with validation, SSE streaming for real-time updates, color-coded message display, execution result output. Integrated into FlowsPage.tsx via selectedFlowForExecution state. Pattern follows AgentExecutionModal and TaskExecutionModal for modal structure and SSE handling.",
+      "category": "frontend",
+      "discovered_at": "2026-01-02T13:17:14.615309+00:00"
+    },
+    "src/web/manager/components/layout/Sidebar.tsx": {
+      "description": "Sidebar navigation menu uses a data-driven approach with menuItems array. Each item has: view (ManagerView enum), label (display text), and icon (Lucide icon component). Adding a new section requires: 1) Add to menuItems array, 2) Import icon from ui/Icons, 3) Ensure ManagerView enum has the value. The view handler (onNavigate) is passed from ManagerApp.tsx which handles routing logic in renderDashboardContent().",
+      "category": "pattern",
+      "discovered_at": "2026-01-02T13:21:07.778233+00:00"
+    },
+    "backend/src/components/flow/schedule.json": {
+      "description": "Created flow/schedule.json Strapi component for automated flow execution scheduling. Supports three schedule types: 'once' (single execution at specific time), 'cron' (cron expression-based recurring), 'interval' (fixed interval recurring). Includes timezone support, start/end date validity windows, run count limits, default input values, and retry configuration on failure. Flow schema updated with 'schedule' component field plus 'webhookEnabled' and 'webhookSecret' for webhook triggers.",
+      "category": "schema",
+      "discovered_at": "2026-01-02T13:27:55.408480+00:00"
+    },
+    "src/services/flow-scheduler-service.ts": {
+      "description": "Created FlowSchedulerService - a simple setInterval-based scheduler for personal use. Checks flows every minute, supports 'once', 'cron', and 'interval' schedule types. Includes basic cron parsing for common patterns. Integrated with flowExecutionService for running flows. Singleton exported as flowSchedulerService. Initialized via flow-init.ts at server startup.",
+      "category": "service",
+      "discovered_at": "2026-01-02T13:34:09.436999+00:00"
+    },
+    "src/routes/webhook.routes.ts": {
+      "description": "Created webhook routes for triggering flows via HTTP. Endpoints: POST /api/webhooks/flows/:identifier (trigger), GET /api/webhooks/flows/:identifier/info (config info), POST /api/webhooks/flows/:identifier/test (test without execution), GET /api/webhooks/flows (list webhook-enabled flows). Supports X-Webhook-Secret or Bearer token auth. Sync mode (waitForCompletion) and async mode with timeout configuration. Registered in server.ts at /api/webhooks path.",
+      "category": "api",
+      "discovered_at": "2026-01-02T13:38:56.934813+00:00"
     }
   },
-  "last_updated": "2026-01-02T12:48:51.168474+00:00"
+  "last_updated": "2026-01-02T13:38:56.934823+00:00"
 }

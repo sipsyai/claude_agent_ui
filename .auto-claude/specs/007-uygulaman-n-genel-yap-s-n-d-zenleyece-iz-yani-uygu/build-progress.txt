@@ -34,10 +34,10 @@ Implementing a workflow/flow system that allows users to:
 - [x] 3.6 Create Flow Execution Modal
 - [x] 3.7 Update Sidebar Navigation
 
-### Phase 4: Scheduling and Activation (Pending)
-- [ ] 4.1 Add Schedule Fields to Flow Schema
-- [ ] 4.2 Implement Simple Scheduler Service
-- [ ] 4.3 Add Webhook Support
+### Phase 4: Scheduling and Activation (In Progress)
+- [x] 4.1 Add Schedule Fields to Flow Schema
+- [x] 4.2 Implement Simple Scheduler Service
+- [x] 4.3 Add Webhook Support
 - [ ] 4.4 Add Schedule UI to Flow Editor
 
 ### Phase 5: Integration and Polish (Pending)
@@ -100,6 +100,16 @@ Implementing a workflow/flow system that allows users to:
   - Sidebar.tsx: Flows menu item with PlayCircleIcon (line 32)
   - ManagerApp.tsx: Flow routing with edit/create state management
   - types.ts: Flows in ManagerView enum
+- **4.3 Completed**: Created Webhook Routes (src/routes/webhook.routes.ts)
+  - POST /api/webhooks/flows/:identifier - Trigger flow via webhook (supports ID or slug)
+  - GET /api/webhooks/flows/:identifier/info - Get webhook configuration info
+  - POST /api/webhooks/flows/:identifier/test - Test webhook without executing
+  - GET /api/webhooks/flows - List all webhook-enabled flows
+  - Features: X-Webhook-Secret or Bearer token authentication
+  - Supports sync mode (waitForCompletion: true) and async mode (default)
+  - Logs client IP, user agent, and request details
+  - Returns execution status URL for async requests
+  - Registered in server.ts at /api/webhooks
 
 ## Architecture Decisions
 

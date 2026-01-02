@@ -251,32 +251,35 @@
           "id": "4.1",
           "title": "Add Schedule Fields to Flow Schema",
           "description": "Add schedule configuration fields to the Flow content type",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "backend/src/api/flow/content-types/flow/schema.json",
             "backend/src/components/flow/schedule.json"
           ],
-          "notes": ""
+          "notes": "Created comprehensive schedule configuration for Flow content type:\n\n**New Strapi Component (backend/src/components/flow/schedule.json):**\n- isEnabled: Boolean toggle for schedule activation\n- scheduleType: enum (once/cron/interval) for different scheduling modes\n- cronExpression: String for cron-based schedules (e.g., '0 9 * * 1-5')\n- intervalValue/intervalUnit: For interval-based scheduling\n- startDate/endDate: Schedule validity window\n- timezone: Timezone support (e.g., 'Europe/Istanbul')\n- nextRunAt/lastRunAt: Tracking fields for scheduler service\n- runCount/maxRuns: Execution limits\n- defaultInput: Default input values for scheduled runs\n- retryOnFailure/maxRetries/retryDelayMinutes: Retry configuration\n\n**Updated Flow Schema (backend/src/api/flow/content-types/flow/schema.json):**\n- Added schedule component field\n- Added webhookEnabled boolean for webhook trigger support\n- Added webhookSecret for webhook authentication\n\n**Updated TypeScript Types:**\n- flow-types.ts: FlowScheduleType, FlowIntervalUnit, FlowSchedule interface\n- frontend types.ts: Matching schedule types for frontend\n- strapi-client.ts: Updated transformFlow and prepareFlowData\n\nCommitted as 0659342.",
+          "updated_at": "2026-01-02T13:27:40.562129+00:00"
         },
         {
           "id": "4.2",
           "title": "Implement Simple Scheduler Service",
           "description": "Create a basic scheduler service using setInterval for personal use",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "src/services/flow-scheduler-service.ts"
           ],
-          "notes": "Simple implementation for personal use, not production-grade"
+          "notes": "Created FlowSchedulerService (src/services/flow-scheduler-service.ts) with setInterval-based scheduling:\n\n- Checks for scheduled flows every minute (configurable CHECK_INTERVAL_MS)\n- Supports all three schedule types: 'once', 'cron', 'interval'\n- Basic cron expression parsing (minutes, hours, day of month, month, day of week) with support for wildcards (*), ranges (1-5), steps, and lists (1,3,5)\n- Interval-based scheduling (minutes, hours, days, weeks)\n- One-time execution scheduling\n- Automatic schedule updates after execution (lastRunAt, nextRunAt, runCount)\n- Prevents duplicate executions by tracking executing flows\n- Respects date ranges (startDate, endDate) and max runs (maxRuns)\n- Emits events for monitoring: 'started', 'stopped', 'flow-executing', 'flow-executed', 'flow-failed'\n\nUpdated flow-init.ts:\n- Imports and initializes flowSchedulerService at startup\n- Adds scheduler event listeners for logging\n- New option enableScheduler (default: true) to disable scheduler if needed\n- New exports: getFlowSchedulerService(), stopFlowScheduler()\n\nCommitted as 6d1e841.",
+          "updated_at": "2026-01-02T13:34:02.807914+00:00"
         },
         {
           "id": "4.3",
           "title": "Add Webhook Trigger Support",
           "description": "Create webhook endpoint for triggering flows via HTTP requests",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "src/routes/webhook.routes.ts"
           ],
-          "notes": ""
+          "notes": "Created webhook routes (src/routes/webhook.routes.ts) with comprehensive webhook support:\n\n**Endpoints Created:**\n- POST /api/webhooks/flows/:identifier - Trigger flow via webhook (identifier can be flow ID or slug)\n- GET /api/webhooks/flows/:identifier/info - Get webhook configuration info\n- POST /api/webhooks/flows/:identifier/test - Test webhook without executing the flow\n- GET /api/webhooks/flows - List all webhook-enabled flows\n\n**Features:**\n- Authentication via X-Webhook-Secret header or Authorization: Bearer token\n- Supports both sync mode (waitForCompletion: true) and async mode (default)\n- Timeout configuration for sync mode (default: 60s, max: 5min)\n- Validates webhookEnabled and isActive flags before execution\n- Logs client IP, user agent, and request details in triggerData\n- Returns execution status URL for async requests\n- Comprehensive error handling with appropriate HTTP status codes\n\n**Validation:**\n- Zod schemas for request validation (webhookIdentifierSchema, webhookBodySchema)\n- Input validation, timeout limits, and required field checks\n\n**Integration:**\n- Registered in server.ts at /api/webhooks\n- Uses flowExecutionService for flow execution\n- Uses strapiClient for flow lookup (supports both ID and slug)",
+          "updated_at": "2026-01-02T13:38:49.725706+00:00"
         },
         {
           "id": "4.4",
@@ -378,5 +381,5 @@
       "Leverage existing patterns in codebase"
     ]
   },
-  "last_updated": "2026-01-02T13:20:52.694249+00:00"
+  "last_updated": "2026-01-02T13:38:49.725740+00:00"
 }

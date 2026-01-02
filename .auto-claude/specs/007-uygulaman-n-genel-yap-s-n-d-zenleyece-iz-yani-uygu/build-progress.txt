@@ -25,14 +25,14 @@ Implementing a workflow/flow system that allows users to:
 - [x] 2.5 Add Express Routes for Flow Execution
 - [x] 2.6 Update Strapi Client for Flows
 
-### Phase 3: Frontend Flow Builder (In Progress)
+### Phase 3: Frontend Flow Builder (Completed)
 - [x] 3.1 Add Flow Types to Frontend
 - [x] 3.2 Create Flow API Service
-- [ ] 3.3 Create Flow List Page
-- [ ] 3.4 Create Flow Editor Page
-- [ ] 3.5 Create Node Configuration Components
-- [ ] 3.6 Create Flow Execution Modal
-- [ ] 3.7 Update Sidebar Navigation
+- [x] 3.3 Create Flow List Page
+- [x] 3.4 Create Flow Editor Page
+- [x] 3.5 Create Node Configuration Components
+- [x] 3.6 Create Flow Execution Modal
+- [x] 3.7 Update Sidebar Navigation
 
 ### Phase 4: Scheduling and Activation (Pending)
 - [ ] 4.1 Add Schedule Fields to Flow Schema
@@ -74,6 +74,32 @@ Implementing a workflow/flow system that allows users to:
   - Flow execution with SSE: executeFlow, createFlowExecutionStream
   - Execution monitoring: getFlowExecutions, getRunningExecutions, getExecution, cancelExecution, monitorExecution
   - Follows existing api.ts and chat-api.ts patterns with auth token handling
+- **3.3 Completed**: Created FlowsPage.tsx (540 lines) with flow listing UI
+  - Previous session
+- **3.4 Completed**: Created FlowEditorPage.tsx (1100+ lines) with comprehensive flow editor
+  - Flow metadata form: name, slug, description, category, status, version, isActive
+  - Linear node editor with collapsible sections:
+    - Input Node: Add/remove input fields (name, type, label, placeholder, required)
+    - Agent Node(s): Select agent, prompt template, skills selection, timeout/retry settings
+    - Output Node: Output type, format, file/webhook settings, transform template
+  - Visual flow indicator (Input → Agent(s) → Output)
+  - Integration with flow-api.ts for CRUD and api.ts for agents/skills
+  - Committed as 121920c
+- **3.5 Completed**: Created node configuration components in src/web/manager/components/flow/
+  - InputNodeConfig.tsx: Configure input fields with 11 types, validation options
+  - AgentNodeConfig.tsx: Agent selection, prompt template, skills, execution settings
+  - OutputNodeConfig.tsx: Output type/format, file/webhook options, transform template
+  - index.ts: Barrel export for all components
+- **3.6 Completed**: Created FlowExecutionModal.tsx (530+ lines)
+  - Dynamic input form generation from InputNode configuration
+  - Supports all 11 input field types with validation
+  - Real-time SSE streaming for execution status updates
+  - Split-panel layout (input form | execution log)
+  - Color-coded message display for different event types
+- **3.7 Completed**: Verified Flows navigation (done in 3.4)
+  - Sidebar.tsx: Flows menu item with PlayCircleIcon (line 32)
+  - ManagerApp.tsx: Flow routing with edit/create state management
+  - types.ts: Flows in ManagerView enum
 
 ## Architecture Decisions
 
@@ -91,3 +117,5 @@ Implementing a workflow/flow system that allows users to:
 - flow.routes.ts - REST API with SSE
 - ManagerApp.tsx - Frontend routing
 - flow-api.ts - Frontend API client for flow operations
+- FlowsPage.tsx - Flow listing and management UI
+- FlowEditorPage.tsx - Flow creation/editing with linear node configuration

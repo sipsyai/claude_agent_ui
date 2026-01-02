@@ -172,6 +172,64 @@ Are you sure you want to continue? (yes/no): yes
 ✅ ROLLBACK COMPLETED SUCCESSFULLY!
 ```
 
+### 4. `test-rollback-procedure.ts`
+
+PostgreSQL rollback testing script to verify backup and restore procedures work correctly.
+
+**Features:**
+- Comprehensive rollback procedure testing
+- Backup creation verification
+- Backup integrity checks
+- Restore procedure validation
+- Detailed test reporting
+- Dry-run mode for safe testing
+
+**Usage:**
+```bash
+# Test in dry-run mode (recommended)
+npm run test:rollback -- --dry-run
+
+# Test with actual restore (use with caution!)
+npm run test:rollback
+
+# Verbose output
+npm run test:rollback -- --dry-run --verbose
+```
+
+**What it Tests:**
+- ✅ PostgreSQL is running
+- ✅ Backup directory exists and is writable
+- ✅ Backup script is executable
+- ✅ Backup can be created successfully
+- ✅ Backup file has valid gzip format
+- ✅ Backup contains valid SQL data
+- ✅ Restore command syntax is correct
+- ✅ Documentation exists
+
+**Example Output:**
+```
+======================================================================
+🧪 POSTGRESQL ROLLBACK PROCEDURE TEST
+======================================================================
+
+✅ PostgreSQL Status: PostgreSQL container is running
+✅ Backup Directory: Directory exists and is writable
+✅ Create Backup: Backup created successfully: backup_20260102_143022.sql.gz
+✅ Backup Integrity: Backup file is valid and contains SQL data
+✅ Restore Procedure (Dry-run): Restore command syntax is valid
+✅ Documentation: All rollback documentation exists
+
+📊 ROLLBACK PROCEDURE TEST REPORT
+======================================================================
+✅ ALL TESTS PASSED! Rollback procedure is verified.
+```
+
+**Test Report:**
+After running the test, a detailed JSON report is saved to:
+```
+database/backups/rollback-test-report.json
+```
+
 ## 📊 Migration Process Flow
 
 ```
@@ -470,6 +528,8 @@ curl -X POST http://localhost:1337/api/agents \
 
 ## 🔗 Related Documentation
 
+- [PostgreSQL Rollback Procedures](../docs/database/POSTGRES_ROLLBACK_PROCEDURES.md) - Comprehensive backup and rollback guide
+- [PostgreSQL Verification Guide](../docs/POSTGRES_VERIFICATION_GUIDE.md) - Table verification
 - [Migration Analysis](../project_migration/migration_analysis.md)
 - [PostgreSQL Analysis](../.claude/Project/analyses/postgresql-analysis.md)
 - [Strapi Analysis](../.claude/Project/analyses/strapi_analysis.md)

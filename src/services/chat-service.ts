@@ -242,7 +242,7 @@
  *   'Write a test file',
  *   [],
  *   '/path/to/project'
- * )) { /* ... */ }
+ * )) { // ... }
  *
  * // Second message overrides with specialized agent
  * for await (const event of chatService.sendMessage(
@@ -252,7 +252,7 @@
  *   '/path/to/project',
  *   undefined, // Use session permission mode
  *   'security-agent-id' // Override with security specialist agent
- * )) { /* ... */ }
+ * )) { // ... }
  * ```
  *
  * @example
@@ -1410,7 +1410,7 @@ export class ChatService extends EventEmitter {
    *   'Write a test file',
    *   [],
    *   '/path/to/project'
-   * )) { /* ... */ }
+   * )) { // ... }
    *
    * // Second message overrides with security specialist agent
    * for await (const event of chatService.sendMessage(
@@ -1420,7 +1420,7 @@ export class ChatService extends EventEmitter {
    *   '/path/to/project',
    *   undefined, // Use session permission mode
    *   'security-agent-id' // Override with security agent
-   * )) { /* ... */ }
+   * )) { // ... }
    * ```
    *
    * @example

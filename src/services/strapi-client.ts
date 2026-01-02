@@ -4140,8 +4140,50 @@ export class StrapiClient {
   // Transform Strapi response format to domain models
 
   /**
-   * Helper to extract attributes from Strapi response
-   * Handles both nested (attributes) and flat formats
+   * Extract attributes from Strapi response
+   *
+   * @description Handles both nested (attributes) and flat response formats from Strapi.
+   * Strapi v5 typically returns data in nested format with `attributes` property, but some
+   * configurations or API endpoints may return flat data directly.
+   *
+   * This method provides a unified interface for accessing response data regardless of format:
+   * - Nested format: `{ documentId: '...', attributes: { name: '...', ... } }`
+   * - Flat format: `{ documentId: '...', name: '...', ... }`
+   *
+   * @param strapiData - Raw Strapi response data (nested or flat)
+   * @returns Extracted attributes object containing all entity fields
+   *
+   * @example
+   * // Nested format (Strapi v5 default)
+   * const nestedData = {
+   *   documentId: 'agent-123',
+   *   attributes: {
+   *     name: 'Research Agent',
+   *     systemPrompt: 'You are a research assistant',
+   *     enabled: true,
+   *     createdAt: '2024-01-01T00:00:00.000Z'
+   *   }
+   * };
+   * const attrs = this.extractAttributes(nestedData);
+   * // Returns: { name: 'Research Agent', systemPrompt: '...', enabled: true, createdAt: '...' }
+   *
+   * @example
+   * // Flat format (some Strapi configurations)
+   * const flatData = {
+   *   documentId: 'agent-123',
+   *   name: 'Research Agent',
+   *   systemPrompt: 'You are a research assistant',
+   *   enabled: true,
+   *   createdAt: '2024-01-01T00:00:00.000Z'
+   * };
+   * const attrs = this.extractAttributes(flatData);
+   * // Returns: { documentId: '...', name: 'Research Agent', systemPrompt: '...', enabled: true, createdAt: '...' }
+   *
+   * @see transformAgent
+   * @see transformSkill
+   * @see transformMCPServer
+   * @see transformMCPTool
+   * @see transformTask
    */
   private extractAttributes(strapiData: any): any {
     // If data has attributes property, use it (Strapi 5 default format)
@@ -4155,7 +4197,143 @@ export class StrapiClient {
 
   /**
    * Transform Strapi agent response to Agent domain model
-   * Updated for component-based structure (Strapi 5)
+   *
+   * @description Converts Strapi v5 API response format to the application's Agent domain model.
+   * Handles component-based structure including toolConfig, modelConfig, analytics, metadata,
+   * mcpConfig (component with nested MCP server and tool relations), skillSelection, and tasks.
+   *
+   * **Strapi Response Format:**
+   * ```typescript
+   * {
+   *   documentId: 'agent-uuid',
+   *   attributes: {
+   *     name: string,
+   *     slug: string,
+   *     description: string,
+   *     systemPrompt: string,
+   *     enabled: boolean,
+   *     toolConfig: { allowedTools: string[], ... },
+   *     modelConfig: { model: string, temperature: number, ... },
+   *     analytics: { tokenUsage: number, ... },
+   *     metadata: [{ key: string, value: string }],
+   *     mcpConfig: [{ mcpServer: { data: {...} }, selectedTools: [...] }],
+   *     skillSelection: [{ skill: { data: {...} }, ... }],
+   *     tasks: [{ data: {...} }],
+   *     createdAt: string,
+   *     updatedAt: string
+   *   }
+   * }
+   * ```
+   *
+   * **Domain Model Format:**
+   * ```typescript
+   * {
+   *   id: string,
+   *   name: string,
+   *   slug: string,
+   *   description: string,
+   *   systemPrompt: string,
+   *   enabled: boolean,
+   *   toolConfig?: {...},
+   *   modelConfig: {...},
+   *   analytics?: {...},
+   *   metadata?: [...],
+   *   mcpConfig: [...],
+   *   skillSelection: [...],
+   *   tasks: [...],
+   *   createdAt: Date,
+   *   updatedAt: Date
+   * }
+   * ```
+   *
+   * @param strapiData - Raw Strapi response data with nested attributes
+   * @returns Transformed Agent object ready for application use
+   *
+   * @example
+   * // Transform basic agent
+   * const strapiResponse = {
+   *   documentId: 'agent-123',
+   *   attributes: {
+   *     name: 'Research Agent',
+   *     slug: 'research-agent',
+   *     description: 'Agent for research tasks',
+   *     systemPrompt: 'You are a research assistant',
+   *     enabled: true,
+   *     modelConfig: {
+   *       model: 'sonnet',
+   *       temperature: 1.0,
+   *       timeout: 300000
+   *     },
+   *     createdAt: '2024-01-01T00:00:00.000Z',
+   *     updatedAt: '2024-01-01T00:00:00.000Z'
+   *   }
+   * };
+   * const agent = this.transformAgent(strapiResponse);
+   * // Returns: {
+   * //   id: 'agent-123',
+   * //   name: 'Research Agent',
+   * //   slug: 'research-agent',
+   * //   description: 'Agent for research tasks',
+   * //   systemPrompt: 'You are a research assistant',
+   * //   enabled: true,
+   * //   modelConfig: { model: 'sonnet', temperature: 1.0, timeout: 300000 },
+   * //   mcpConfig: [],
+   * //   skillSelection: [],
+   * //   tasks: [],
+   * //   createdAt: Date object,
+   * //   updatedAt: Date object
+   * // }
+   *
+   * @example
+   * // Transform agent with component fields
+   * const strapiResponse = {
+   *   documentId: 'agent-456',
+   *   attributes: {
+   *     name: 'Code Agent',
+   *     slug: 'code-agent',
+   *     description: 'Agent for code generation',
+   *     systemPrompt: 'You are a coding assistant',
+   *     enabled: true,
+   *     toolConfig: {
+   *       allowedTools: ['bash', 'read', 'write'],
+   *       maxToolCalls: 50
+   *     },
+   *     modelConfig: {
+   *       model: 'opus',
+   *       temperature: 0.7,
+   *       timeout: 600000
+   *     },
+   *     analytics: {
+   *       totalConversations: 42,
+   *       tokenUsage: 150000
+   *     },
+   *     metadata: [
+   *       { key: 'version', value: '2.0' },
+   *       { key: 'author', value: 'team' }
+   *     ],
+   *     mcpConfig: [
+   *       {
+   *         mcpServer: {
+   *           data: {
+   *             documentId: 'mcp-server-1',
+   *             attributes: { name: 'filesystem' }
+   *           }
+   *         },
+   *         selectedTools: [
+   *           { mcpTool: { data: { documentId: 'tool-1' } } }
+   *         ]
+   *       }
+   *     ],
+   *     createdAt: '2024-01-01T00:00:00.000Z',
+   *     updatedAt: '2024-01-01T00:00:00.000Z'
+   *   }
+   * };
+   * const agent = this.transformAgent(strapiResponse);
+   * // Returns agent with all component fields populated
+   *
+   * @see prepareAgentData - Reverse transformation for API requests
+   * @see getAllAgents
+   * @see getAgent
    */
   private transformAgent(strapiData: StrapiAttributes<any>): Agent {
     const attrs = this.extractAttributes(strapiData);
@@ -4190,7 +4368,164 @@ export class StrapiClient {
 
   /**
    * Transform Strapi skill response to Skill domain model
-   * Updated for component-based structure (Strapi 5)
+   *
+   * @description Converts Strapi v5 API response format to the application's Skill domain model.
+   * Handles component-based structure including trainingHistory (training records), additionalFiles
+   * (file attachments with file relation), agentSelection, toolConfig, modelConfig, analytics,
+   * mcpConfig, tasks, and inputFields (dynamic form fields).
+   *
+   * **Strapi Response Format:**
+   * ```typescript
+   * {
+   *   documentId: 'skill-uuid',
+   *   attributes: {
+   *     name: string,
+   *     displayName: string,
+   *     description: string,
+   *     skillmd: string,
+   *     skillConfig?: { systemPromptPrefix: string, ... },
+   *     experienceScore: number,
+   *     category: string,
+   *     isPublic: boolean,
+   *     version: string,
+   *     license?: string,
+   *     trainingHistory: [{ timestamp: string, agentId: string, ... }],
+   *     additionalFiles: [{ file: { data: {...} }, description: string }],
+   *     agentSelection: [{ agent: { data: {...} }, ... }],
+   *     toolConfig?: {...},
+   *     modelConfig?: {...},
+   *     analytics?: {...},
+   *     mcpConfig: [...],
+   *     tasks: [...],
+   *     inputFields: [{ name: string, type: string, ... }],
+   *     trainingAgent?: { data: { documentId: string } } | string,
+   *     createdAt: string,
+   *     updatedAt: string
+   *   }
+   * }
+   * ```
+   *
+   * **Domain Model Format:**
+   * ```typescript
+   * {
+   *   id: string,
+   *   name: string,
+   *   displayName: string,
+   *   description: string,
+   *   skillmd: string,
+   *   skillConfig?: {...},
+   *   experienceScore: number,
+   *   category: string,
+   *   isPublic: boolean,
+   *   version: string,
+   *   license?: string,
+   *   trainingHistory: [...],
+   *   additionalFiles: [...],
+   *   agentSelection: [...],
+   *   toolConfig?: {...},
+   *   modelConfig?: {...},
+   *   analytics?: {...},
+   *   mcpConfig: [...],
+   *   tasks: [...],
+   *   inputFields: [...],
+   *   trainingAgent?: string,
+   *   createdAt: Date,
+   *   updatedAt: Date
+   * }
+   * ```
+   *
+   * @param strapiData - Raw Strapi response data with nested attributes
+   * @returns Transformed Skill object ready for application use
+   *
+   * @example
+   * // Transform basic skill
+   * const strapiResponse = {
+   *   documentId: 'skill-123',
+   *   attributes: {
+   *     name: 'git-workflow',
+   *     displayName: 'Git Workflow',
+   *     description: 'Manage git operations',
+   *     skillmd: '# Git Workflow\n\nManage git operations...',
+   *     experienceScore: 85,
+   *     category: 'development',
+   *     isPublic: true,
+   *     version: '1.0.0',
+   *     createdAt: '2024-01-01T00:00:00.000Z',
+   *     updatedAt: '2024-01-01T00:00:00.000Z'
+   *   }
+   * };
+   * const skill = this.transformSkill(strapiResponse);
+   * // Returns: {
+   * //   id: 'skill-123',
+   * //   name: 'git-workflow',
+   * //   displayName: 'Git Workflow',
+   * //   description: 'Manage git operations',
+   * //   skillmd: '# Git Workflow\n\nManage git operations...',
+   * //   experienceScore: 85,
+   * //   category: 'development',
+   * //   isPublic: true,
+   * //   version: '1.0.0',
+   * //   trainingHistory: [],
+   * //   additionalFiles: [],
+   * //   ...
+   * //   createdAt: Date object,
+   * //   updatedAt: Date object
+   * // }
+   *
+   * @example
+   * // Transform skill with component fields
+   * const strapiResponse = {
+   *   documentId: 'skill-456',
+   *   attributes: {
+   *     name: 'api-testing',
+   *     displayName: 'API Testing',
+   *     description: 'Test REST APIs',
+   *     skillmd: '# API Testing\n\nTest REST APIs...',
+   *     skillConfig: {
+   *       systemPromptPrefix: 'You are an API testing expert'
+   *     },
+   *     experienceScore: 92,
+   *     category: 'testing',
+   *     isPublic: true,
+   *     version: '2.0.0',
+   *     license: 'MIT',
+   *     trainingHistory: [
+   *       {
+   *         timestamp: '2024-01-15T10:30:00.000Z',
+   *         agentId: 'agent-1',
+   *         feedback: 'positive',
+   *         experienceGained: 5
+   *       }
+   *     ],
+   *     additionalFiles: [
+   *       {
+   *         file: {
+   *           data: {
+   *             documentId: 'file-1',
+   *             attributes: { name: 'examples.json', url: '/uploads/...' }
+   *           }
+   *         },
+   *         description: 'API test examples'
+   *       }
+   *     ],
+   *     inputFields: [
+   *       { name: 'apiUrl', type: 'text', label: 'API URL', required: true },
+   *       { name: 'method', type: 'select', options: ['GET', 'POST', 'PUT', 'DELETE'] }
+   *     ],
+   *     trainingAgent: {
+   *       data: { documentId: 'agent-123' }
+   *     },
+   *     createdAt: '2024-01-01T00:00:00.000Z',
+   *     updatedAt: '2024-01-15T10:30:00.000Z'
+   *   }
+   * };
+   * const skill = this.transformSkill(strapiResponse);
+   * // Returns skill with all component fields populated
+   * // trainingAgent is normalized to 'agent-123'
+   *
+   * @see prepareSkillData - Reverse transformation for API requests
+   * @see getAllSkills
+   * @see getSkill
    */
   private transformSkill(strapiData: StrapiAttributes<any>): Skill {
     const attrs = this.extractAttributes(strapiData);
@@ -4229,6 +4564,180 @@ export class StrapiClient {
 
   /**
    * Transform Strapi MCP server response to MCPServer domain model
+   *
+   * @description Converts Strapi v5 API response format to the application's MCPServer domain model.
+   * Handles both stdio and SDK transport types, builds config object for frontend compatibility,
+   * and recursively transforms nested mcpTools relation when populated.
+   *
+   * **Key Transformations:**
+   * - Creates `config` object with transport-specific fields for frontend use
+   * - Handles nested `mcpTools` relation (can be array or `{ data: [...] }` format)
+   * - Recursively transforms each tool using `transformMCPTool()`
+   * - Converts ISO date strings to Date objects
+   * - Normalizes disabled/enabled state
+   *
+   * **Strapi Response Format:**
+   * ```typescript
+   * {
+   *   documentId: 'mcp-server-uuid',
+   *   attributes: {
+   *     name: string,
+   *     command: string,
+   *     description: string,
+   *     args: string[],
+   *     env: Record<string, string>,
+   *     disabled: boolean,
+   *     transport: 'stdio' | 'sse',
+   *     healthCheckUrl?: string,
+   *     isHealthy: boolean,
+   *     lastHealthCheck?: string,
+   *     startupTimeout: number,
+   *     restartPolicy: string,
+   *     toolsFetchedAt?: string,
+   *     mcpTools?: { data: [...] } | [...],
+   *     createdAt: string,
+   *     updatedAt: string
+   *   }
+   * }
+   * ```
+   *
+   * **Domain Model Format:**
+   * ```typescript
+   * {
+   *   id: string,
+   *   name: string,
+   *   config: {
+   *     type: 'stdio' | 'sse',
+   *     command: string,
+   *     args: string[],
+   *     env: Record<string, string>,
+   *     disabled: boolean
+   *   },
+   *   command: string,
+   *   description: string,
+   *   args: string[],
+   *   env: Record<string, string>,
+   *   disabled: boolean,
+   *   transport: 'stdio' | 'sse',
+   *   healthCheckUrl?: string,
+   *   isHealthy: boolean,
+   *   lastHealthCheck?: Date,
+   *   startupTimeout: number,
+   *   restartPolicy: string,
+   *   toolsFetchedAt?: Date,
+   *   mcpTools?: MCPTool[],
+   *   createdAt: Date,
+   *   updatedAt: Date
+   * }
+   * ```
+   *
+   * @param strapiData - Raw Strapi response data with nested attributes
+   * @returns Transformed MCPServer object ready for application use
+   *
+   * @example
+   * // Transform stdio MCP server
+   * const strapiResponse = {
+   *   documentId: 'mcp-server-123',
+   *   attributes: {
+   *     name: 'filesystem',
+   *     command: 'npx',
+   *     description: 'File system MCP server',
+   *     args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+   *     env: { DEBUG: '1' },
+   *     disabled: false,
+   *     transport: 'stdio',
+   *     isHealthy: true,
+   *     startupTimeout: 30000,
+   *     restartPolicy: 'on-failure',
+   *     createdAt: '2024-01-01T00:00:00.000Z',
+   *     updatedAt: '2024-01-01T00:00:00.000Z'
+   *   }
+   * };
+   * const mcpServer = this.transformMCPServer(strapiResponse);
+   * // Returns: {
+   * //   id: 'mcp-server-123',
+   * //   name: 'filesystem',
+   * //   config: {
+   * //     type: 'stdio',
+   * //     command: 'npx',
+   * //     args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+   * //     env: { DEBUG: '1' },
+   * //     disabled: false
+   * //   },
+   * //   command: 'npx',
+   * //   description: 'File system MCP server',
+   * //   ...
+   * //   createdAt: Date object,
+   * //   updatedAt: Date object
+   * // }
+   *
+   * @example
+   * // Transform MCP server with populated tools (nested data format)
+   * const strapiResponse = {
+   *   documentId: 'mcp-server-456',
+   *   attributes: {
+   *     name: 'github',
+   *     command: 'npx',
+   *     description: 'GitHub MCP server',
+   *     args: ['-y', '@modelcontextprotocol/server-github'],
+   *     env: { GITHUB_TOKEN: '${GITHUB_TOKEN}' },
+   *     disabled: false,
+   *     transport: 'stdio',
+   *     isHealthy: true,
+   *     toolsFetchedAt: '2024-01-15T10:30:00.000Z',
+   *     mcpTools: {
+   *       data: [
+   *         {
+   *           documentId: 'tool-1',
+   *           attributes: {
+   *             name: 'create_issue',
+   *             description: 'Create GitHub issue',
+   *             inputSchema: { type: 'object', properties: {...} }
+   *           }
+   *         },
+   *         {
+   *           documentId: 'tool-2',
+   *           attributes: {
+   *             name: 'list_repos',
+   *             description: 'List repositories'
+   *           }
+   *         }
+   *       ]
+   *     },
+   *     createdAt: '2024-01-01T00:00:00.000Z',
+   *     updatedAt: '2024-01-15T10:30:00.000Z'
+   *   }
+   * };
+   * const mcpServer = this.transformMCPServer(strapiResponse);
+   * // Returns MCP server with mcpTools array populated with 2 transformed tools
+   * // Each tool is transformed via transformMCPTool()
+   *
+   * @example
+   * // Transform MCP server with populated tools (flat array format)
+   * const strapiResponse = {
+   *   documentId: 'mcp-server-789',
+   *   attributes: {
+   *     name: 'slack',
+   *     command: 'npx',
+   *     args: ['-y', '@modelcontextprotocol/server-slack'],
+   *     transport: 'stdio',
+   *     mcpTools: [  // Flat array (some Strapi configurations)
+   *       {
+   *         documentId: 'tool-3',
+   *         attributes: { name: 'send_message', description: 'Send Slack message' }
+   *       }
+   *     ],
+   *     createdAt: '2024-01-01T00:00:00.000Z',
+   *     updatedAt: '2024-01-01T00:00:00.000Z'
+   *   }
+   * };
+   * const mcpServer = this.transformMCPServer(strapiResponse);
+   * // Handles flat array format - mcpTools array populated with 1 transformed tool
+   *
+   * @see transformMCPTool - Used to transform nested tools
+   * @see prepareMCPServerData - Reverse transformation for API requests
+   * @see getAllMCPServers
+   * @see getMCPServer
    */
   private transformMCPServer(strapiData: StrapiAttributes<any>): MCPServer {
     const attrs = this.extractAttributes(strapiData);
@@ -4276,6 +4785,126 @@ export class StrapiClient {
 
   /**
    * Transform Strapi MCP tool response to MCPTool domain model
+   *
+   * @description Converts Strapi v5 API response format to the application's MCPTool domain model.
+   * Handles tool metadata including name, description, JSON schema for input validation, and
+   * parent MCP server relation. Used both directly and as a helper for transformMCPServer.
+   *
+   * **Key Transformations:**
+   * - Normalizes `mcpServer` relation (handles both nested and flat formats)
+   * - Preserves `inputSchema` as-is (JSON Schema object for tool parameter validation)
+   * - Converts ISO date strings to Date objects
+   * - Sets undefined for optional fields instead of null
+   *
+   * **Strapi Response Format:**
+   * ```typescript
+   * {
+   *   documentId: 'mcp-tool-uuid',
+   *   attributes: {
+   *     name: string,
+   *     description?: string,
+   *     inputSchema?: object,  // JSON Schema
+   *     mcpServer?: { documentId: string } | { data: { documentId: string } },
+   *     createdAt: string,
+   *     updatedAt: string
+   *   }
+   * }
+   * ```
+   *
+   * **Domain Model Format:**
+   * ```typescript
+   * {
+   *   id: string,
+   *   name: string,
+   *   description?: string,
+   *   inputSchema?: object,  // JSON Schema for parameter validation
+   *   mcpServer?: string,    // MCP server documentId
+   *   createdAt: Date,
+   *   updatedAt: Date
+   * }
+   * ```
+   *
+   * @param strapiData - Raw Strapi response data with nested attributes
+   * @returns Transformed MCPTool object ready for application use
+   *
+   * @example
+   * // Transform basic MCP tool (no schema)
+   * const strapiResponse = {
+   *   documentId: 'tool-123',
+   *   attributes: {
+   *     name: 'list_files',
+   *     description: 'List files in a directory',
+   *     mcpServer: {
+   *       documentId: 'mcp-server-1'
+   *     },
+   *     createdAt: '2024-01-01T00:00:00.000Z',
+   *     updatedAt: '2024-01-01T00:00:00.000Z'
+   *   }
+   * };
+   * const tool = this.transformMCPTool(strapiResponse);
+   * // Returns: {
+   * //   id: 'tool-123',
+   * //   name: 'list_files',
+   * //   description: 'List files in a directory',
+   * //   inputSchema: undefined,
+   * //   mcpServer: 'mcp-server-1',
+   * //   createdAt: Date object,
+   * //   updatedAt: Date object
+   * // }
+   *
+   * @example
+   * // Transform MCP tool with JSON Schema
+   * const strapiResponse = {
+   *   documentId: 'tool-456',
+   *   attributes: {
+   *     name: 'create_issue',
+   *     description: 'Create GitHub issue',
+   *     inputSchema: {
+   *       type: 'object',
+   *       properties: {
+   *         title: { type: 'string', description: 'Issue title' },
+   *         body: { type: 'string', description: 'Issue body' },
+   *         labels: { type: 'array', items: { type: 'string' } }
+   *       },
+   *       required: ['title', 'body']
+   *     },
+   *     mcpServer: {
+   *       data: {  // Nested data format
+   *         documentId: 'mcp-server-github'
+   *       }
+   *     },
+   *     createdAt: '2024-01-01T00:00:00.000Z',
+   *     updatedAt: '2024-01-15T10:30:00.000Z'
+   *   }
+   * };
+   * const tool = this.transformMCPTool(strapiResponse);
+   * // Returns tool with inputSchema preserved as JSON Schema object
+   * // mcpServer is normalized to 'mcp-server-github'
+   *
+   * @example
+   * // Transform MCP tool without server relation
+   * const strapiResponse = {
+   *   documentId: 'tool-789',
+   *   attributes: {
+   *     name: 'send_message',
+   *     description: 'Send Slack message',
+   *     inputSchema: {
+   *       type: 'object',
+   *       properties: {
+   *         channel: { type: 'string' },
+   *         text: { type: 'string' }
+   *       }
+   *     },
+   *     createdAt: '2024-01-01T00:00:00.000Z',
+   *     updatedAt: '2024-01-01T00:00:00.000Z'
+   *   }
+   * };
+   * const tool = this.transformMCPTool(strapiResponse);
+   * // Returns tool with mcpServer: undefined (orphaned tool)
+   *
+   * @see transformMCPServer - Uses this method to transform nested tools
+   * @see createMCPTool
+   * @see getMCPToolsByServerId
    */
   private transformMCPTool(strapiData: StrapiAttributes<any>): MCPTool {
     const attrs = this.extractAttributes(strapiData);
@@ -4293,6 +4922,175 @@ export class StrapiClient {
 
   /**
    * Transform Strapi task response to Task domain model
+   *
+   * @description Converts Strapi v5 API response format to the application's Task domain model.
+   * Handles task metadata, execution state, agent relation, and extracts name/description from
+   * metadata object. Supports both running and completed task states.
+   *
+   * **Key Transformations:**
+   * - Normalizes `agent` relation to `agentId` and `agentName`
+   * - Extracts `name` from metadata.name (fallback to message or 'Unnamed Task')
+   * - Extracts `description` from metadata.description
+   * - Converts ISO date strings to Date objects (startedAt, completedAt)
+   * - Preserves execution metrics (executionTime, tokensUsed, cost)
+   * - Includes executionLog array for viewing task progress
+   *
+   * **Strapi Response Format:**
+   * ```typescript
+   * {
+   *   documentId: 'task-uuid',
+   *   attributes: {
+   *     agent?: { documentId: string, name: string } | { data: {...} },
+   *     agentId?: string,
+   *     message: string,
+   *     status: 'pending' | 'running' | 'completed' | 'failed',
+   *     result?: string,
+   *     error?: string,
+   *     startedAt?: string,
+   *     completedAt?: string,
+   *     executionTime?: number,
+   *     tokensUsed?: number,
+   *     cost?: number,
+   *     metadata?: { name?: string, description?: string, ... },
+   *     executionLog?: Array<{ timestamp: string, message: string }>,
+   *     createdAt: string,
+   *     updatedAt: string
+   *   }
+   * }
+   * ```
+   *
+   * **Domain Model Format:**
+   * ```typescript
+   * {
+   *   id: string,
+   *   agentId?: string,
+   *   agentName?: string,
+   *   name: string,
+   *   description?: string,
+   *   message: string,
+   *   status: 'pending' | 'running' | 'completed' | 'failed',
+   *   result?: string,
+   *   error?: string,
+   *   startedAt?: Date,
+   *   completedAt?: Date,
+   *   executionTime?: number,
+   *   tokensUsed?: number,
+   *   cost?: number,
+   *   metadata: object,
+   *   executionLog: Array<object>,
+   *   createdAt: Date,
+   *   updatedAt: Date
+   * }
+   * ```
+   *
+   * @param strapiData - Raw Strapi response data with nested attributes
+   * @returns Transformed Task object ready for application use
+   *
+   * @example
+   * // Transform pending task
+   * const strapiResponse = {
+   *   documentId: 'task-123',
+   *   attributes: {
+   *     agent: {
+   *       documentId: 'agent-1',
+   *       name: 'Research Agent'
+   *     },
+   *     message: 'Research latest AI trends',
+   *     status: 'pending',
+   *     metadata: {
+   *       name: 'AI Trends Research',
+   *       description: 'Gather info on latest AI developments',
+   *       priority: 'high'
+   *     },
+   *     createdAt: '2024-01-01T00:00:00.000Z',
+   *     updatedAt: '2024-01-01T00:00:00.000Z'
+   *   }
+   * };
+   * const task = this.transformTask(strapiResponse);
+   * // Returns: {
+   * //   id: 'task-123',
+   * //   agentId: 'agent-1',
+   * //   agentName: 'Research Agent',
+   * //   name: 'AI Trends Research',
+   * //   description: 'Gather info on latest AI developments',
+   * //   message: 'Research latest AI trends',
+   * //   status: 'pending',
+   * //   metadata: { name: '...', description: '...', priority: 'high' },
+   * //   executionLog: [],
+   * //   createdAt: Date object,
+   * //   updatedAt: Date object
+   * // }
+   *
+   * @example
+   * // Transform completed task with metrics
+   * const strapiResponse = {
+   *   documentId: 'task-456',
+   *   attributes: {
+   *     agent: {
+   *       data: {
+   *         documentId: 'agent-2',
+   *         attributes: { name: 'Code Agent' }
+   *       }
+   *     },
+   *     message: 'Generate unit tests',
+   *     status: 'completed',
+   *     result: 'Successfully generated 15 unit tests',
+   *     startedAt: '2024-01-15T10:00:00.000Z',
+   *     completedAt: '2024-01-15T10:05:30.000Z',
+   *     executionTime: 330000,  // milliseconds
+   *     tokensUsed: 12500,
+   *     cost: 0.025,
+   *     metadata: {
+   *       name: 'Unit Test Generation',
+   *       description: 'Generate comprehensive unit tests for user service'
+   *     },
+   *     executionLog: [
+   *       { timestamp: '2024-01-15T10:00:00.000Z', message: 'Task started' },
+   *       { timestamp: '2024-01-15T10:02:00.000Z', message: 'Analyzing code structure' },
+   *       { timestamp: '2024-01-15T10:05:30.000Z', message: 'Tests generated' }
+   *     ],
+   *     createdAt: '2024-01-15T09:55:00.000Z',
+   *     updatedAt: '2024-01-15T10:05:30.000Z'
+   *   }
+   * };
+   * const task = this.transformTask(strapiResponse);
+   * // Returns completed task with execution metrics and log
+   * // executionTime: 330000ms (5.5 minutes), cost: $0.025
+   *
+   * @example
+   * // Transform failed task with error
+   * const strapiResponse = {
+   *   documentId: 'task-789',
+   *   attributes: {
+   *     agentId: 'agent-3',  // Direct ID (no populated relation)
+   *     message: 'Deploy to production',
+   *     status: 'failed',
+   *     error: 'Deployment failed: Invalid credentials',
+   *     startedAt: '2024-01-20T14:00:00.000Z',
+   *     completedAt: '2024-01-20T14:01:15.000Z',
+   *     executionTime: 75000,
+   *     metadata: {},  // No name in metadata
+   *     createdAt: '2024-01-20T13:55:00.000Z',
+   *     updatedAt: '2024-01-20T14:01:15.000Z'
+   *   }
+   * };
+   * const task = this.transformTask(strapiResponse);
+   * // Returns: {
+   * //   ...
+   * //   agentId: 'agent-3',
+   * //   agentName: undefined,  // Relation not populated
+   * //   name: 'Deploy to production',  // Fallback to message
+   * //   description: undefined,
+   * //   status: 'failed',
+   * //   error: 'Deployment failed: Invalid credentials',
+   * //   ...
+   * // }
+   *
+   * @see prepareTaskData - Reverse transformation for API requests
+   * @see getAllTasks
+   * @see getTask
+   * @see createTask
+   * @see updateTask
    */
   private transformTask(strapiData: StrapiAttributes<any>): Task {
     const attrs = this.extractAttributes(strapiData);
@@ -4325,7 +5123,123 @@ export class StrapiClient {
 
   /**
    * Prepare agent data for Strapi API
-   * Updated for component-based structure (Strapi 5)
+   *
+   * @description Prepares Agent domain model for Strapi v5 API requests (create/update operations).
+   * Reverse transformation of transformAgent - converts application format to Strapi's expected format.
+   * Automatically generates URL-friendly slug from name if provided.
+   *
+   * **Key Transformations:**
+   * - Auto-generates `slug` from `name` using generateSlug() helper
+   * - Only includes fields that are provided (partial updates supported)
+   * - Component fields (toolConfig, modelConfig, analytics, metadata) passed through as-is
+   * - Component-based relations (mcpConfig, skillSelection, tasks) passed through as-is
+   * - Omits undefined fields to support partial updates
+   *
+   * **Input (Domain Model):**
+   * ```typescript
+   * {
+   *   name?: string,
+   *   description?: string,
+   *   systemPrompt?: string,
+   *   enabled?: boolean,
+   *   toolConfig?: { allowedTools: string[], ... },
+   *   modelConfig?: { model: string, temperature: number, ... },
+   *   analytics?: { tokenUsage: number, ... },
+   *   metadata?: [{ key: string, value: string }],
+   *   mcpConfig?: [...],
+   *   skillSelection?: [...],
+   *   tasks?: [...]
+   * }
+   * ```
+   *
+   * **Output (Strapi Format):**
+   * ```typescript
+   * {
+   *   name?: string,
+   *   slug?: string,  // Auto-generated from name
+   *   description?: string,
+   *   systemPrompt?: string,
+   *   enabled?: boolean,
+   *   toolConfig?: {...},
+   *   modelConfig?: {...},
+   *   analytics?: {...},
+   *   metadata?: [...],
+   *   mcpConfig?: [...],
+   *   skillSelection?: [...],
+   *   tasks?: [...]
+   * }
+   * ```
+   *
+   * @param agent - Partial Agent object (supports partial updates)
+   * @returns Strapi-formatted data object ready for POST/PUT requests
+   *
+   * @example
+   * // Prepare basic agent for creation
+   * const agentData = {
+   *   name: 'Research Agent',
+   *   description: 'Agent for research tasks',
+   *   systemPrompt: 'You are a research assistant',
+   *   enabled: true
+   * };
+   * const strapiData = this.prepareAgentData(agentData);
+   * // Returns: {
+   * //   name: 'Research Agent',
+   * //   slug: 'research-agent',  // Auto-generated
+   * //   description: 'Agent for research tasks',
+   * //   systemPrompt: 'You are a research assistant',
+   * //   enabled: true
+   * // }
+   *
+   * @example
+   * // Prepare agent with component fields
+   * const agentData = {
+   *   name: 'Code Agent',
+   *   description: 'Agent for code generation',
+   *   systemPrompt: 'You are a coding assistant',
+   *   enabled: true,
+   *   toolConfig: {
+   *     allowedTools: ['bash', 'read', 'write'],
+   *     maxToolCalls: 50
+   *   },
+   *   modelConfig: {
+   *     model: 'opus',
+   *     temperature: 0.7,
+   *     timeout: 600000
+   *   },
+   *   metadata: [
+   *     { key: 'version', value: '2.0' },
+   *     { key: 'author', value: 'team' }
+   *   ],
+   *   mcpConfig: [
+   *     {
+   *       mcpServer: 'mcp-server-1',
+   *       selectedTools: [
+   *         { mcpTool: 'tool-1' }
+   *       ]
+   *     }
+   *   ]
+   * };
+   * const strapiData = this.prepareAgentData(agentData);
+   * // Returns Strapi-formatted data with all component fields
+   * // Component fields passed through as-is for Strapi v5
+   *
+   * @example
+   * // Prepare partial update (only update description and enabled status)
+   * const updateData = {
+   *   description: 'Updated description',
+   *   enabled: false
+   * };
+   * const strapiData = this.prepareAgentData(updateData);
+   * // Returns: {
+   * //   description: 'Updated description',
+   * //   enabled: false
+   * // }
+   * // Only includes provided fields - supports partial updates
+   * // No slug generated since name not provided
+   *
+   * @see transformAgent - Reverse transformation from Strapi to domain model
+   * @see createAgent
+   * @see updateAgent
    */
   private prepareAgentData(agent: Partial<Agent>) {
     const data: any = {
@@ -4376,7 +5290,138 @@ export class StrapiClient {
 
   /**
    * Prepare skill data for Strapi API
-   * Updated for component-based structure (Strapi 5)
+   *
+   * @description Prepares Skill domain model for Strapi v5 API requests (create/update operations).
+   * Reverse transformation of transformSkill - converts application format to Strapi's expected format.
+   * Supports partial updates by only including provided fields.
+   *
+   * **Key Transformations:**
+   * - Only includes fields that are provided (partial updates supported)
+   * - Component fields (trainingHistory, additionalFiles, toolConfig, etc.) passed through as-is
+   * - Direct relation (trainingAgent) passed through as agent documentId
+   * - Omits undefined fields to support partial updates
+   *
+   * **Input (Domain Model):**
+   * ```typescript
+   * {
+   *   name?: string,
+   *   displayName?: string,
+   *   description?: string,
+   *   skillmd?: string,
+   *   experienceScore?: number,
+   *   category?: string,
+   *   isPublic?: boolean,
+   *   version?: string,
+   *   license?: string,
+   *   trainingHistory?: [...],
+   *   additionalFiles?: [...],
+   *   agentSelection?: [...],
+   *   toolConfig?: {...},
+   *   modelConfig?: {...},
+   *   analytics?: {...},
+   *   mcpConfig?: [...],
+   *   tasks?: [...],
+   *   inputFields?: [...],
+   *   trainingAgent?: string
+   * }
+   * ```
+   *
+   * **Output (Strapi Format):**
+   * ```typescript
+   * {
+   *   name?: string,
+   *   displayName?: string,
+   *   description?: string,
+   *   skillmd?: string,
+   *   experienceScore?: number,
+   *   category?: string,
+   *   isPublic?: boolean,
+   *   version?: string,
+   *   license?: string,
+   *   trainingHistory?: [...],
+   *   additionalFiles?: [...],
+   *   agentSelection?: [...],
+   *   toolConfig?: {...},
+   *   modelConfig?: {...},
+   *   analytics?: {...},
+   *   mcpConfig?: [...],
+   *   tasks?: [...],
+   *   inputFields?: [...],
+   *   trainingAgent?: string
+   * }
+   * ```
+   *
+   * @param skill - Partial Skill object (supports partial updates)
+   * @returns Strapi-formatted data object ready for POST/PUT requests
+   *
+   * @example
+   * // Prepare basic skill for creation
+   * const skillData = {
+   *   name: 'git-workflow',
+   *   displayName: 'Git Workflow',
+   *   description: 'Manage git operations',
+   *   skillmd: '# Git Workflow\n\nManage git operations...',
+   *   category: 'development',
+   *   isPublic: true,
+   *   version: '1.0.0'
+   * };
+   * const strapiData = this.prepareSkillData(skillData);
+   * // Returns Strapi-formatted data with all basic fields
+   *
+   * @example
+   * // Prepare skill with component fields
+   * const skillData = {
+   *   name: 'api-testing',
+   *   displayName: 'API Testing',
+   *   description: 'Test REST APIs',
+   *   skillmd: '# API Testing\n\nTest REST APIs...',
+   *   category: 'testing',
+   *   isPublic: true,
+   *   version: '2.0.0',
+   *   license: 'MIT',
+   *   trainingHistory: [
+   *     {
+   *       timestamp: '2024-01-15T10:30:00.000Z',
+   *       agentId: 'agent-1',
+   *       feedback: 'positive',
+   *       experienceGained: 5
+   *     }
+   *   ],
+   *   additionalFiles: [
+   *     {
+   *       file: 'file-1',  // File documentId
+   *       description: 'API test examples'
+   *     }
+   *   ],
+   *   inputFields: [
+   *     { name: 'apiUrl', type: 'text', label: 'API URL', required: true },
+   *     { name: 'method', type: 'select', options: ['GET', 'POST', 'PUT', 'DELETE'] }
+   *   ],
+   *   trainingAgent: 'agent-123'
+   * };
+   * const strapiData = this.prepareSkillData(skillData);
+   * // Returns Strapi-formatted data with all component fields
+   * // Component fields passed through as-is for Strapi v5
+   *
+   * @example
+   * // Prepare partial update (only update experience score and training history)
+   * const updateData = {
+   *   experienceScore: 95,
+   *   trainingHistory: [
+   *     ...existingHistory,
+   *     { timestamp: new Date().toISOString(), agentId: 'agent-1', feedback: 'positive', experienceGained: 3 }
+   *   ]
+   * };
+   * const strapiData = this.prepareSkillData(updateData);
+   * // Returns: {
+   * //   experienceScore: 95,
+   * //   trainingHistory: [...]
+   * // }
+   * // Only includes provided fields - supports partial updates
+   *
+   * @see transformSkill - Reverse transformation from Strapi to domain model
+   * @see createSkill
+   * @see updateSkill
    */
   private prepareSkillData(skill: Partial<Skill>) {
     const data: any = {
@@ -4438,6 +5483,103 @@ export class StrapiClient {
 
   /**
    * Prepare MCP server data for Strapi API
+   *
+   * @description Prepares MCPServer domain model for Strapi v5 API requests (create/update operations).
+   * Reverse transformation of transformMCPServer - converts application format to Strapi's expected format.
+   * Only includes core MCP server configuration fields (no nested tools).
+   *
+   * **Key Transformations:**
+   * - Only includes fields that are provided (partial updates supported)
+   * - Omits `config` object (frontend-specific, not stored in Strapi)
+   * - Omits `mcpTools` relation (managed separately via createMCPTool/bulkSyncMCPTools)
+   * - Omits computed fields (isHealthy, lastHealthCheck, toolsFetchedAt)
+   * - Preserves transport type, command, args, env for stdio/SDK servers
+   *
+   * **Input (Domain Model):**
+   * ```typescript
+   * {
+   *   name?: string,
+   *   command?: string,
+   *   description?: string,
+   *   args?: string[],
+   *   env?: Record<string, string>,
+   *   disabled?: boolean,
+   *   transport?: 'stdio' | 'sse',
+   *   healthCheckUrl?: string,
+   *   startupTimeout?: number,
+   *   restartPolicy?: string
+   * }
+   * ```
+   *
+   * **Output (Strapi Format):**
+   * ```typescript
+   * {
+   *   name?: string,
+   *   command?: string,
+   *   description?: string,
+   *   args?: string[],
+   *   env?: Record<string, string>,
+   *   disabled?: boolean,
+   *   transport?: 'stdio' | 'sse',
+   *   healthCheckUrl?: string,
+   *   startupTimeout?: number,
+   *   restartPolicy?: string
+   * }
+   * ```
+   *
+   * @param mcp - Partial MCPServer object (supports partial updates)
+   * @returns Strapi-formatted data object ready for POST/PUT requests
+   *
+   * @example
+   * // Prepare stdio MCP server for creation
+   * const mcpServerData = {
+   *   name: 'filesystem',
+   *   command: 'npx',
+   *   description: 'File system MCP server',
+   *   args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+   *   env: { DEBUG: '1' },
+   *   disabled: false,
+   *   transport: 'stdio',
+   *   startupTimeout: 30000,
+   *   restartPolicy: 'on-failure'
+   * };
+   * const strapiData = this.prepareMCPServerData(mcpServerData);
+   * // Returns Strapi-formatted data with all fields
+   *
+   * @example
+   * // Prepare MCP server with environment variables
+   * const mcpServerData = {
+   *   name: 'github',
+   *   command: 'npx',
+   *   description: 'GitHub MCP server',
+   *   args: ['-y', '@modelcontextprotocol/server-github'],
+   *   env: {
+   *     GITHUB_TOKEN: '${GITHUB_TOKEN}',  // Environment variable substitution
+   *     GITHUB_REPO: 'owner/repo'
+   *   },
+   *   transport: 'stdio'
+   * };
+   * const strapiData = this.prepareMCPServerData(mcpServerData);
+   * // Returns Strapi-formatted data
+   * // Environment variables will be substituted at runtime by MCPService
+   *
+   * @example
+   * // Prepare partial update (only update disabled status and description)
+   * const updateData = {
+   *   disabled: true,
+   *   description: 'Temporarily disabled for maintenance'
+   * };
+   * const strapiData = this.prepareMCPServerData(updateData);
+   * // Returns: {
+   * //   disabled: true,
+   * //   description: 'Temporarily disabled for maintenance'
+   * // }
+   * // Only includes provided fields - supports partial updates
+   *
+   * @see transformMCPServer - Reverse transformation from Strapi to domain model
+   * @see createMCPServer
+   * @see updateMCPServer
+   * @see bulkSyncMCPTools - Used to sync nested tools separately
    */
   private prepareMCPServerData(mcp: Partial<MCPServer>) {
     return {
@@ -4456,6 +5598,131 @@ export class StrapiClient {
 
   /**
    * Prepare task data for Strapi API
+   *
+   * @description Prepares Task domain model for Strapi v5 API requests (create/update operations).
+   * Reverse transformation of transformTask - converts application format to Strapi's expected format.
+   * Handles Date-to-ISO string conversion and agentId-to-agent relation mapping.
+   *
+   * **Key Transformations:**
+   * - Maps `agentId` (domain model) to `agent` (Strapi relation field)
+   * - Converts Date objects to ISO 8601 strings (startedAt, completedAt)
+   * - Passes through ISO strings unchanged if already strings
+   * - Preserves execution metrics (executionTime, tokensUsed, cost)
+   * - Includes metadata and executionLog for task tracking
+   *
+   * **Input (Domain Model):**
+   * ```typescript
+   * {
+   *   agentId?: string,
+   *   message?: string,
+   *   status?: 'pending' | 'running' | 'completed' | 'failed',
+   *   result?: string,
+   *   error?: string,
+   *   startedAt?: Date | string,
+   *   completedAt?: Date | string,
+   *   executionTime?: number,
+   *   tokensUsed?: number,
+   *   cost?: number,
+   *   metadata?: object,
+   *   executionLog?: Array<object>
+   * }
+   * ```
+   *
+   * **Output (Strapi Format):**
+   * ```typescript
+   * {
+   *   agent?: string,  // Relation field (documentId)
+   *   message?: string,
+   *   status?: 'pending' | 'running' | 'completed' | 'failed',
+   *   result?: string,
+   *   error?: string,
+   *   startedAt?: string,  // ISO 8601 string
+   *   completedAt?: string,  // ISO 8601 string
+   *   executionTime?: number,
+   *   tokensUsed?: number,
+   *   cost?: number,
+   *   metadata?: object,
+   *   executionLog?: Array<object>
+   * }
+   * ```
+   *
+   * @param task - Partial Task object (supports partial updates)
+   * @returns Strapi-formatted data object ready for POST/PUT requests
+   *
+   * @example
+   * // Prepare new task for creation
+   * const taskData = {
+   *   agentId: 'agent-123',
+   *   message: 'Research latest AI trends',
+   *   status: 'pending',
+   *   metadata: {
+   *     name: 'AI Trends Research',
+   *     description: 'Gather info on latest AI developments',
+   *     priority: 'high'
+   *   }
+   * };
+   * const strapiData = this.prepareTaskData(taskData);
+   * // Returns: {
+   * //   agent: 'agent-123',  // Mapped from agentId
+   * //   message: 'Research latest AI trends',
+   * //   status: 'pending',
+   * //   metadata: { name: '...', description: '...', priority: 'high' }
+   * // }
+   *
+   * @example
+   * // Prepare task status update with Date objects
+   * const updateData = {
+   *   status: 'completed',
+   *   result: 'Successfully generated 15 unit tests',
+   *   startedAt: new Date('2024-01-15T10:00:00.000Z'),
+   *   completedAt: new Date('2024-01-15T10:05:30.000Z'),
+   *   executionTime: 330000,  // 5.5 minutes in milliseconds
+   *   tokensUsed: 12500,
+   *   cost: 0.025
+   * };
+   * const strapiData = this.prepareTaskData(updateData);
+   * // Returns: {
+   * //   status: 'completed',
+   * //   result: 'Successfully generated 15 unit tests',
+   * //   startedAt: '2024-01-15T10:00:00.000Z',  // Date converted to ISO string
+   * //   completedAt: '2024-01-15T10:05:30.000Z',  // Date converted to ISO string
+   * //   executionTime: 330000,
+   * //   tokensUsed: 12500,
+   * //   cost: 0.025
+   * // }
+   *
+   * @example
+   * // Prepare task with execution log
+   * const updateData = {
+   *   status: 'running',
+   *   startedAt: new Date(),
+   *   executionLog: [
+   *     { timestamp: new Date().toISOString(), message: 'Task started' },
+   *     { timestamp: new Date().toISOString(), message: 'Analyzing code structure' }
+   *   ]
+   * };
+   * const strapiData = this.prepareTaskData(updateData);
+   * // Returns task data with executionLog for real-time progress tracking
+   *
+   * @example
+   * // Prepare failed task update
+   * const updateData = {
+   *   status: 'failed',
+   *   error: 'Deployment failed: Invalid credentials',
+   *   completedAt: new Date(),
+   *   executionTime: 75000
+   * };
+   * const strapiData = this.prepareTaskData(updateData);
+   * // Returns: {
+   * //   status: 'failed',
+   * //   error: 'Deployment failed: Invalid credentials',
+   * //   completedAt: '2024-01-20T14:01:15.000Z',
+   * //   executionTime: 75000
+   * // }
+   *
+   * @see transformTask - Reverse transformation from Strapi to domain model
+   * @see createTask
+   * @see updateTask
    */
   private prepareTaskData(task: Partial<Task>) {
     return {

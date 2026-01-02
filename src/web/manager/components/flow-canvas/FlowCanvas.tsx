@@ -9,6 +9,7 @@
  * - **Custom Nodes**: Renders Input, Agent, and Output nodes with custom styling
  * - **Drag and Drop**: Supports dropping nodes from the NodePalette onto the canvas
  * - **Node Connections**: Animated edges with smooth bezier curves
+ * - **Connection Validation**: Prevents invalid connections (cycles, self-connections, duplicates)
  * - **Pan & Zoom**: Built-in controls for navigation
  * - **Minimap**: Overview navigation for large flows
  * - **Grid Background**: Alignment grid for visual organization
@@ -40,9 +41,10 @@
  *
  * ## Connection Flow
  * 1. User drags from a source handle to a target handle
- * 2. onConnect callback is triggered
- * 3. New edge is added via FlowCanvasContext.addEdge
- * 4. Edge appears with animated curve
+ * 2. Connection is validated via isValidConnection (prevents cycles, self-connections, duplicates)
+ * 3. If valid, onConnect callback is triggered
+ * 4. New edge is added via FlowCanvasContext.addEdge
+ * 5. Edge appears with animated curve
  *
  * ## Selection Behavior
  * - **Single Select**: Click a node to select it
@@ -115,6 +117,7 @@ import '@xyflow/react/dist/style.css';
 import { nodeTypes } from './nodes';
 import CustomEdge from './CustomEdge';
 import { useFlowCanvas } from '../../contexts/FlowCanvasContext';
+import { createIsValidConnection } from '../../utils/connection-validator';
 import type { ReactFlowNode, ReactFlowEdge } from '../../types/react-flow.types';
 import type { FlowNodeType } from '../../types';
 
@@ -185,6 +188,12 @@ const FlowCanvasInner: React.FC<FlowCanvasProps> = ({
   // Get React Flow instance for coordinate conversion
   const { screenToFlowPosition } = useReactFlow();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+
+  // Create connection validator with current nodes and edges
+  const isValidConnection = React.useMemo(
+    () => createIsValidConnection(nodes, edges),
+    [nodes, edges]
+  );
 
   /**
    * Handle drag over event
@@ -356,6 +365,7 @@ const FlowCanvasInner: React.FC<FlowCanvasProps> = ({
         onDragOver={onDragOver}
         nodeTypes={nodeTypes as any}
         edgeTypes={edgeTypes as any}
+        isValidConnection={isValidConnection}
         fitView
         attributionPosition="bottom-left"
         minZoom={0.1}

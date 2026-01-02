@@ -8,6 +8,7 @@ import type {
   InputNode,
   AgentNode,
   OutputNode,
+  FlowSchedule,
 } from '../types';
 import * as flowApi from '../services/flow-api';
 import * as api from '../services/api';
@@ -26,10 +27,13 @@ import {
   ChevronRightIcon,
   PlayIcon,
   CpuChipIcon,
+  ClockIcon,
+  GlobeIcon,
 } from './ui/Icons';
 import InputNodeConfig from './flow/InputNodeConfig';
 import AgentNodeConfig from './flow/AgentNodeConfig';
 import OutputNodeConfig from './flow/OutputNodeConfig';
+import FlowScheduleConfig, { createDefaultSchedule } from './flow/FlowScheduleConfig';
 
 // Props interface
 interface FlowEditorPageProps {
@@ -131,12 +135,17 @@ const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ flowId, onClose, onSave
   const [agentNodes, setAgentNodes] = useState<AgentNode[]>([createDefaultAgentNode()]);
   const [outputNode, setOutputNode] = useState<OutputNode>(createDefaultOutputNode());
 
+  // Schedule and Webhook state
+  const [schedule, setSchedule] = useState<FlowSchedule | undefined>(undefined);
+  const [webhookEnabled, setWebhookEnabled] = useState(false);
+  const [webhookSecret, setWebhookSecret] = useState('');
+
   // UI state
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['metadata', 'input', 'agents', 'output'])
+    new Set(['metadata', 'input', 'agents', 'output', 'triggers'])
   );
 
   // Available agents and skills for selection
@@ -189,6 +198,13 @@ const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ flowId, onClose, onSave
         if (agentNodesFiltered.length > 0) setAgentNodes(agentNodesFiltered);
         if (outputNodes.length > 0) setOutputNode(outputNodes[0]);
       }
+
+      // Load schedule and webhook settings
+      if (flow.schedule) {
+        setSchedule(flow.schedule);
+      }
+      setWebhookEnabled(flow.webhookEnabled || false);
+      setWebhookSecret(flow.webhookSecret || '');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load flow');
     } finally {
@@ -290,6 +306,9 @@ const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ flowId, onClose, onSave
         nodes,
         inputSchema,
         outputSchema,
+        schedule,
+        webhookEnabled,
+        webhookSecret: webhookSecret || undefined,
       };
 
       let savedFlow: Flow;
@@ -601,6 +620,81 @@ const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ flowId, onClose, onSave
                 node={outputNode}
                 onChange={(updates) => setOutputNode(prev => ({ ...prev, ...updates }))}
               />
+            </CardContent>
+          )}
+        </Card>
+
+        {/* Schedule & Triggers Section */}
+        <Card className="border-l-4 border-l-orange-500">
+          <SectionHeader
+            id="triggers"
+            title="Schedule & Triggers"
+            description="Configure automated execution and webhook triggers"
+            icon={<ClockIcon className="h-5 w-5" />}
+          />
+          {expandedSections.has('triggers') && (
+            <CardContent className="space-y-6 border-t">
+              {/* Schedule Configuration */}
+              <FlowScheduleConfig
+                schedule={schedule}
+                onChange={setSchedule}
+              />
+
+              {/* Webhook Configuration */}
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg mb-4">
+                  <div>
+                    <label className="block font-medium flex items-center gap-2">
+                      <GlobeIcon className="h-4 w-4" />
+                      Enable Webhook Trigger
+                    </label>
+                    <p className="text-sm text-muted-foreground">
+                      Allow this flow to be triggered via HTTP POST request
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={webhookEnabled}
+                      onChange={(e) => setWebhookEnabled(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                {webhookEnabled && (
+                  <div className="space-y-4 pl-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Webhook Secret
+                        <span className="text-muted-foreground font-normal ml-1">- Optional but recommended</span>
+                      </label>
+                      <Input
+                        type="password"
+                        value={webhookSecret}
+                        onChange={(e) => setWebhookSecret(e.target.value)}
+                        placeholder="Enter a secret token for authentication"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Include this secret in the X-Webhook-Secret header when calling the webhook
+                      </p>
+                    </div>
+
+                    {flowId && (
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h5 className="font-medium text-sm text-blue-800 mb-2">Webhook URL</h5>
+                        <code className="block text-sm bg-white p-2 rounded border border-blue-100 break-all">
+                          POST /api/webhooks/flows/{slug || flowId}
+                        </code>
+                        <p className="text-xs text-blue-600 mt-2">
+                          Send a POST request with JSON body containing your input data
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </CardContent>
           )}
         </Card>

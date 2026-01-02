@@ -1,6 +1,6 @@
 # React Flow Integration - Build Progress
 
-## Status: In Progress - Phase 1
+## Status: In Progress - Phase 2
 
 ## Last Updated: 2026-01-02
 
@@ -17,11 +17,11 @@ Transform the Flows page into a visual drag-and-drop workflow builder similar to
 - [x] 1.3 Create Flow Canvas Context
 
 ### Phase 2: Custom Node Components (5 subtasks)
-- [ ] 2.1 Create Base Node Component
-- [ ] 2.2 Create Input Node Component
-- [ ] 2.3 Create Agent Node Component
-- [ ] 2.4 Create Output Node Component
-- [ ] 2.5 Create Node Registry and Factory
+- [x] 2.1 Create Base Node Component
+- [x] 2.2 Create Input Node Component
+- [x] 2.3 Create Agent Node Component
+- [x] 2.4 Create Output Node Component
+- [x] 2.5 Create Node Registry and Factory
 
 ### Phase 3: Flow Canvas Component (5 subtasks)
 - [ ] 3.1 Create Node Palette Component
@@ -125,3 +125,73 @@ React Flow was selected as the primary library for the following reasons:
 - Changes committed to git (commit: 53fac72)
 
 **Phase 1 Complete!** All infrastructure and foundational components are in place.
+
+#### Subtask 2.1 - Create Base Node Component ✓
+- Created BaseNode component in src/web/manager/components/flow-canvas/nodes/BaseNode.tsx
+- Implemented consistent card-based styling following existing UI patterns
+- Added source and target handles with proper positioning using React Flow Handle components
+- Implemented selection highlight and hover states with node-type-specific colored borders
+- Added node header with icon, title, and status indicator (idle, running, success, error)
+- Conditional delete button rendering on selection
+- Support for three node types with distinct color themes (input=blue, agent=purple, output=green)
+- Comprehensive JSDoc documentation
+- Full TypeScript type safety
+- 413 lines of code
+- Changes committed to git (commit: 4b99739)
+
+#### Subtask 2.2 - Create Input Node Component ✓
+- Created InputNode component in src/web/manager/components/flow-canvas/nodes/InputNode.tsx
+- Displays configured input fields with type-specific icons (11 field types supported)
+- Shows field types (text, number, file, etc.) with appropriate icons
+- Required fields marked with asterisk
+- Validation status indicator (green check if valid, yellow warning if no fields)
+- Blue color theme via BaseNode
+- Field count and required field count display
+- Empty state with helpful message
+- Scrollable field list with max-height and overflow handling
+- 276 lines of code
+- Changes committed to git (commit: a5b864c)
+
+#### Subtask 2.3 - Create Agent Node Component ✓
+- Created AgentNode component in src/web/manager/components/flow-canvas/nodes/AgentNode.tsx
+- Displays agent name, description, and details
+- Shows assigned skills as compact pill badges
+- Preview of prompt template (truncated to 120 chars)
+- Model override indicator with sparkle icon when different from default
+- Purple color theme via BaseNode
+- Validation status indicator (green check if valid, yellow warning if incomplete)
+- Execution settings summary (timeout, retry configuration, max tokens)
+- Scrollable skills list with overflow handling
+- 341 lines of code
+- Changes committed to git (commit: 9793f1c)
+
+#### Subtask 2.4 - Create Output Node Component ✓
+- Created OutputNode component in src/web/manager/components/flow-canvas/nodes/OutputNode.tsx
+- Displays output type (response, file, database, webhook, email) with type-specific icons
+- Shows format type (JSON, markdown, text, HTML, CSV, ZIP) with format-specific icons
+- File path preview when saveToFile is enabled
+- Webhook configuration display showing URL and custom headers count
+- Transform template preview (truncated to 100 chars)
+- Additional options badges for metadata and timestamp inclusion
+- Green color theme via BaseNode
+- Validation status indicator
+- Empty states with helpful warnings
+- 471 lines of code
+- Changes committed to git (commit: dfa1b39)
+
+#### Subtask 2.5 - Create Node Registry and Factory ✓
+- Created node registry in src/web/manager/components/flow-canvas/nodes/index.ts
+- Exported all node components (InputNode, AgentNode, OutputNode, BaseNode)
+- Created nodeTypes registry mapping 'input', 'agent', 'output' to their components
+- Implemented createNode factory function with default positions and configurable data
+- Added generateNodeId utility for creating unique node IDs with type prefix and timestamp
+- Defined default node configurations for each type
+- Created node templates for common use cases (textInput, fileInput, basicAgent, jsonOutput, fileOutput)
+- Added getDefaultNodeData utility function with type overloads
+- Implemented isValidNode validation function
+- Comprehensive JSDoc documentation following codebase patterns
+- Full TypeScript type safety with proper type assertions
+- 509 lines of code
+- Changes committed to git (commit: 292cb08)
+
+**Phase 2 Complete!** All custom node components and registry are implemented.

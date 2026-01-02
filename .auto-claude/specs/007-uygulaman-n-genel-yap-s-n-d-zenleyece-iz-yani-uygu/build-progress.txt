@@ -10,20 +10,20 @@ Implementing a workflow/flow system that allows users to:
 
 ## Phases Overview
 
-### Phase 1: Core Flow Infrastructure (In Progress)
-- [x] 1.1 Create Flow Content Type Schema ✓
-- [ ] 1.2 Create Flow Node Components
-- [ ] 1.3 Create FlowExecution Content Type
-- [ ] 1.4 Implement Flow API Controllers
-- [ ] 1.5 Implement FlowExecution API
+### Phase 1: Core Flow Infrastructure (Completed)
+- [x] 1.1 Create Flow Content Type Schema
+- [x] 1.2 Create Flow Node Components
+- [x] 1.3 Create FlowExecution Content Type
+- [x] 1.4 Implement Flow API Controllers
+- [x] 1.5 Implement FlowExecution API
 
-### Phase 2: Flow Execution Engine (Pending)
-- [ ] 2.1 Create Flow Types
-- [ ] 2.2 Create Flow Execution Service
-- [ ] 2.3 Implement Node Handlers
-- [ ] 2.4 Integrate with Claude SDK Service
-- [ ] 2.5 Add Express Routes for Flow Execution
-- [ ] 2.6 Update Strapi Client for Flows
+### Phase 2: Flow Execution Engine (Completed)
+- [x] 2.1 Create Flow Types
+- [x] 2.2 Create Flow Execution Service
+- [x] 2.3 Implement Node Handlers
+- [x] 2.4 Integrate with Claude SDK Service
+- [x] 2.5 Add Express Routes for Flow Execution
+- [x] 2.6 Update Strapi Client for Flows
 
 ### Phase 3: Frontend Flow Builder (Pending)
 - [ ] 3.1 Add Flow Types to Frontend
@@ -57,6 +57,16 @@ Implementing a workflow/flow system that allows users to:
   - Fields: name, slug, description, nodes (JSON), status, inputSchema, outputSchema, isActive
   - Added version, category, and metadata fields for extensibility
   - Committed as d35cc9c
+- **1.2-1.5**: Completed remaining Phase 1 subtasks (Node components, FlowExecution content type, APIs)
+- **2.1-2.5**: Completed Phase 2 subtasks (Types, Execution service, Node handlers, SDK integration, Routes)
+- **2.6 Completed**: Enhanced Strapi client with comprehensive flow-related methods
+  - Added proper TypeScript types for Flow, FlowExecution, and related types
+  - Added convenience methods: getFlowBySlug, getActiveFlows, getFlowsByCategory, getFlowsByStatus
+  - Added duplicateFlow method
+  - Added execution methods: getRecentFlowExecutions, getFlowExecutionsByStatus
+  - Added statistics methods: getFlowStats, getGlobalFlowStats
+  - Added cleanupOldFlowExecutions for maintenance
+  - All methods properly typed with flow-types.ts
 
 ## Architecture Decisions
 
@@ -68,5 +78,8 @@ Implementing a workflow/flow system that allows users to:
 
 ## Key Files
 - claude-sdk-service.ts - Agent execution
-- strapi-client.ts - Database operations
+- strapi-client.ts - Database operations (enhanced with flow methods)
+- flow-types.ts - TypeScript types for flow domain
+- flow-execution-service.ts - Flow orchestration
+- flow.routes.ts - REST API with SSE
 - ManagerApp.tsx - Frontend routing

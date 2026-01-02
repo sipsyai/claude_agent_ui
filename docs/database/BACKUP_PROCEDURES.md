@@ -275,13 +275,24 @@ docker-compose up -d postgres
 
 For production environments, set up automated daily backups using cron.
 
-#### Step 1: Create Cron-Compatible Script
+#### Step 1: Use Production Cron Script
 
-The project includes a production-ready cron script (to be created in subtask 5.3):
+The project includes a production-ready cron script with comprehensive features:
 
 ```bash
 scripts/backup-postgres-cron.sh
 ```
+
+**Features**:
+- ✅ Comprehensive logging with log rotation
+- ✅ Email/webhook notifications for success/failure
+- ✅ Backup verification (size and integrity checks)
+- ✅ Automatic cleanup of old backups
+- ✅ Graceful error handling with meaningful exit codes
+- ✅ Disk space monitoring
+- ✅ Absolute path support for cron compatibility
+
+📖 **See [CRON_BACKUP_SETUP.md](./CRON_BACKUP_SETUP.md) for complete setup guide**
 
 #### Step 2: Install Cron Job
 
@@ -292,15 +303,26 @@ Add to your crontab:
 crontab -e
 
 # Add daily backup at 2:00 AM
-0 2 * * * cd /path/to/claude_agent_ui && bash ./scripts/backup-postgres-cron.sh >> ./logs/backup-cron.log 2>&1
+0 2 * * * cd /path/to/claude_agent_ui && bash ./scripts/backup-postgres-cron.sh
 
 # Or hourly backups for critical systems
-0 * * * * cd /path/to/claude_agent_ui && bash ./scripts/backup-postgres-cron.sh >> ./logs/backup-cron.log 2>&1
+0 * * * * cd /path/to/claude_agent_ui && bash ./scripts/backup-postgres-cron.sh
 ```
 
-**Important**: Use absolute paths in cron jobs.
+**Important**:
+- Use absolute paths in cron jobs (replace `/path/to/claude_agent_ui`)
+- Logging is handled by the script (no need for `>> ./logs/backup-cron.log 2>&1`)
 
-#### Step 3: Verify Cron Setup
+#### Step 3: Configure Notifications (Optional)
+
+Enable email notifications by setting in `.env`:
+
+```bash
+BACKUP_NOTIFY_EMAIL=admin@example.com
+BACKUP_RETENTION=7
+```
+
+#### Step 4: Verify Cron Setup
 
 ```bash
 # List cron jobs
@@ -311,6 +333,9 @@ tail -f ./logs/backup-cron.log
 
 # Manually test the cron script
 bash ./scripts/backup-postgres-cron.sh
+
+# Verify backup was created
+ls -lh ./database/backups/
 ```
 
 ### Cron Schedule Examples
@@ -983,6 +1008,7 @@ fi
 
 ## Related Documentation
 
+- 📖 [Cron Backup Setup Guide](./CRON_BACKUP_SETUP.md) - Production automated backup setup
 - 📖 [PostgreSQL Restore Procedures](./RESTORE_PROCEDURES.md) - Restore and recovery procedures
 - 📖 [PostgreSQL Rollback Procedures](./POSTGRES_ROLLBACK_PROCEDURES.md) - Migration rollback
 - 📖 [Health Check Endpoints](./HEALTH_CHECK_ENDPOINTS.md) - Database health monitoring

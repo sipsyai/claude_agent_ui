@@ -1376,6 +1376,7 @@ docker-compose logs backend | tail -50
 ## Related Documentation
 
 - 📖 [PostgreSQL Backup Procedures](./BACKUP_PROCEDURES.md) - Backup procedures and scheduling
+- 📖 [Cron Backup Setup Guide](./CRON_BACKUP_SETUP.md) - Production automated backup setup
 - 📖 [PostgreSQL Rollback Procedures](./POSTGRES_ROLLBACK_PROCEDURES.md) - Migration rollback procedures
 - 📖 [Health Check Endpoints](./HEALTH_CHECK_ENDPOINTS.md) - Database health monitoring
 - 📖 [Connection Pool Verification](./CONNECTION_POOL_VERIFICATION.md) - Pool configuration details

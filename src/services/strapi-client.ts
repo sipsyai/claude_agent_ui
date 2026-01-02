@@ -264,8 +264,101 @@ export class StrapiClient {
   // ============= HEALTH CHECK =============
 
   /**
-   * Check if Strapi API is accessible
-   * @returns Promise<boolean> - true if healthy, false otherwise
+   * Check if Strapi API is accessible and responding
+   *
+   * @description
+   * Performs a health check by making a request to the Strapi API root endpoint.
+   * Use this method to verify API connectivity before performing operations, especially
+   * during application startup or when debugging connection issues.
+   *
+   * **Use Cases:**
+   * - Application startup validation
+   * - Periodic monitoring of Strapi availability
+   * - Pre-flight checks before critical operations
+   * - Debugging connection issues (CORS, network, authentication)
+   *
+   * **What This Checks:**
+   * - Network connectivity to Strapi server
+   * - Strapi server is running and responding
+   * - API token authentication is valid (if configured)
+   * - No CORS issues (for browser environments)
+   *
+   * @returns {Promise<boolean>} `true` if Strapi API is accessible and healthy, `false` if check fails
+   *
+   * @example
+   * // Basic health check
+   * const isHealthy = await strapiClient.healthCheck();
+   *
+   * if (isHealthy) {
+   *   console.log('Strapi API is healthy');
+   * } else {
+   *   console.error('Strapi API is unavailable');
+   * }
+   *
+   * @example
+   * // Application startup validation
+   * async function initializeApp() {
+   *   console.log('Checking Strapi connection...');
+   *
+   *   const isHealthy = await strapiClient.healthCheck();
+   *
+   *   if (!isHealthy) {
+   *     console.error('ERROR: Cannot connect to Strapi API');
+   *     console.error(`STRAPI_URL: ${process.env.STRAPI_URL || 'http://localhost:1337'}`);
+   *     console.error('Please ensure Strapi is running and STRAPI_URL is correct');
+   *     process.exit(1);
+   *   }
+   *
+   *   console.log('Strapi connection successful');
+   *   // Continue with app initialization
+   * }
+   *
+   * @example
+   * // Retry logic with health check
+   * async function connectWithRetry(maxRetries = 3) {
+   *   for (let i = 0; i < maxRetries; i++) {
+   *     const isHealthy = await strapiClient.healthCheck();
+   *
+   *     if (isHealthy) {
+   *       console.log('Connected to Strapi');
+   *       return true;
+   *     }
+   *
+   *     console.warn(`Connection attempt ${i + 1}/${maxRetries} failed`);
+   *
+   *     if (i < maxRetries - 1) {
+   *       await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s
+   *     }
+   *   }
+   *
+   *   console.error('Failed to connect to Strapi after retries');
+   *   return false;
+   * }
+   *
+   * @example
+   * // Periodic health monitoring
+   * setInterval(async () => {
+   *   const isHealthy = await strapiClient.healthCheck();
+   *
+   *   if (!isHealthy) {
+   *     console.error('[Monitor] Strapi API is down!');
+   *     // Send alert, update status indicator, etc.
+   *   }
+   * }, 60000); // Check every minute
+   *
+   * @example
+   * // Pre-flight check before critical operation
+   * async function syncAllData() {
+   *   // Check API health before starting sync
+   *   if (!await strapiClient.healthCheck()) {
+   *     throw new Error('Cannot sync: Strapi API is unavailable');
+   *   }
+   *
+   *   // Proceed with sync
+   *   const agents = await strapiClient.getAllAgents();
+   *   const skills = await strapiClient.getAllSkills();
+   *   // ... sync logic
+   * }
    */
   async healthCheck(): Promise<boolean> {
     try {
@@ -3284,9 +3377,109 @@ export class StrapiClient {
 
   /**
    * Upload a file to Strapi Media Library
-   * @param file - File to upload (Buffer or Blob)
-   * @param filename - Original filename
-   * @returns Strapi media object with file ID and URL
+   *
+   * @description
+   * Uploads a file to Strapi's Media Library. The uploaded file is stored in Strapi's
+   * configured storage provider (local filesystem, S3, Cloudinary, etc.) and can be
+   * referenced in other content types via file relations. Common use cases include
+   * uploading skill attachments, agent documentation, or training materials.
+   *
+   * **Supported File Types:**
+   * - Images: .jpg, .jpeg, .png, .gif, .svg, .webp
+   * - Documents: .pdf, .doc, .docx, .txt, .md
+   * - Archives: .zip, .tar, .gz
+   * - Code: .js, .ts, .py, .java, .cpp, etc.
+   * - Any other file type (MIME type auto-detected)
+   *
+   * **File Size Limits:**
+   * - Default Strapi limit: 200MB (configurable in Strapi)
+   * - Large files may require adjusting Strapi's `strapi::body` middleware configuration
+   *
+   * @param {Buffer | Blob} file - File to upload (Buffer for Node.js, Blob for browsers)
+   * @param {string} filename - Original filename with extension (e.g., 'document.pdf')
+   *
+   * @returns {Promise<Object>} Strapi media object with file metadata
+   * @returns {number} returns.id - Numeric file ID (legacy)
+   * @returns {string} returns.documentId - UUID document ID (Strapi v5)
+   * @returns {string} returns.name - Stored filename
+   * @returns {string} returns.url - Public URL to access the file
+   * @returns {string} returns.mime - MIME type (e.g., 'application/pdf', 'image/png')
+   * @returns {number} returns.size - File size in bytes
+   *
+   * @throws {Error} If file upload fails
+   *
+   * @example
+   * // Upload a text file from Buffer
+   * import fs from 'fs/promises';
+   *
+   * const fileBuffer = await fs.readFile('./example.txt');
+   * const uploadedFile = await strapiClient.uploadFile(fileBuffer, 'example.txt');
+   *
+   * console.log('File uploaded:', uploadedFile.url);
+   * console.log('File ID:', uploadedFile.documentId);
+   *
+   * @example
+   * // Upload an image and attach to a skill
+   * const imageBuffer = await fs.readFile('./diagram.png');
+   * const uploadedImage = await strapiClient.uploadFile(imageBuffer, 'diagram.png');
+   *
+   * // Create skill with image attachment
+   * const skill = await strapiClient.createSkill({
+   *   name: 'image-processing',
+   *   displayName: 'Image Processing',
+   *   description: 'Process and analyze images',
+   *   additionalFiles: [
+   *     {
+   *       name: 'Architecture Diagram',
+   *       description: 'System architecture',
+   *       file: uploadedImage.documentId // Reference uploaded file
+   *     }
+   *   ]
+   * });
+   *
+   * @example
+   * // Upload PDF documentation
+   * const pdfBuffer = await fs.readFile('./user-guide.pdf');
+   * const uploadedPdf = await strapiClient.uploadFile(pdfBuffer, 'user-guide.pdf');
+   *
+   * console.log(`PDF uploaded: ${uploadedPdf.name}`);
+   * console.log(`Size: ${(uploadedPdf.size / 1024).toFixed(2)} KB`);
+   * console.log(`MIME: ${uploadedPdf.mime}`);
+   * console.log(`URL: ${uploadedPdf.url}`);
+   *
+   * @example
+   * // Upload multiple files sequentially
+   * const files = ['file1.txt', 'file2.txt', 'file3.txt'];
+   * const uploadedFiles = [];
+   *
+   * for (const filename of files) {
+   *   const buffer = await fs.readFile(`./uploads/${filename}`);
+   *   const uploaded = await strapiClient.uploadFile(buffer, filename);
+   *   uploadedFiles.push(uploaded);
+   *   console.log(`Uploaded: ${filename} -> ${uploaded.documentId}`);
+   * }
+   *
+   * @example
+   * // Error handling for file upload
+   * try {
+   *   const buffer = await fs.readFile('./large-file.zip');
+   *   const uploaded = await strapiClient.uploadFile(buffer, 'large-file.zip');
+   *   console.log('Upload successful');
+   * } catch (error) {
+   *   console.error('Upload failed:', error.message);
+   *   // Handle error (file too large, invalid type, network error, etc.)
+   * }
+   *
+   * @example
+   * // Upload file and use URL directly
+   * const logoBuffer = await fs.readFile('./logo.png');
+   * const uploadedLogo = await strapiClient.uploadFile(logoBuffer, 'logo.png');
+   *
+   * // Use the URL in your application
+   * const fullUrl = `${process.env.STRAPI_URL}${uploadedLogo.url}`;
+   * console.log(`Logo available at: ${fullUrl}`);
+   *
+   * @see {@link deleteFile} - Delete uploaded files
    */
   async uploadFile(file: Buffer | Blob, filename: string): Promise<{
     id: number;
@@ -3325,7 +3518,93 @@ export class StrapiClient {
 
   /**
    * Delete a file from Strapi Media Library
-   * @param fileId - File ID to delete
+   *
+   * @description
+   * Permanently deletes a file from Strapi's Media Library and its configured storage
+   * provider. This operation cannot be undone. Ensure the file is not referenced by any
+   * content types before deletion, as this will break file relations.
+   *
+   * **Important Notes:**
+   * - File is permanently deleted from storage (local/S3/Cloudinary/etc.)
+   * - Any content referencing this file will have broken file relations
+   * - Strapi does not prevent deletion of files in use
+   * - Consider verifying file references before deletion
+   *
+   * @param {string} fileId - File document ID (UUID format from Strapi v5) or numeric ID (legacy)
+   *
+   * @returns {Promise<void>}
+   *
+   * @throws {Error} If file deletion fails or file not found
+   *
+   * @example
+   * // Basic file deletion
+   * await strapiClient.deleteFile('file-uuid-123');
+   * console.log('File deleted successfully');
+   *
+   * @example
+   * // Delete file after uploading a replacement
+   * const oldFileId = 'old-file-uuid';
+   *
+   * // Upload new version
+   * const newBuffer = await fs.readFile('./updated-document.pdf');
+   * const newFile = await strapiClient.uploadFile(newBuffer, 'updated-document.pdf');
+   *
+   * // Update skill to reference new file
+   * await strapiClient.updateSkill('skill-uuid', {
+   *   additionalFiles: [
+   *     { name: 'Documentation', file: newFile.documentId }
+   *   ]
+   * });
+   *
+   * // Now safe to delete old file
+   * await strapiClient.deleteFile(oldFileId);
+   *
+   * @example
+   * // Error handling for file deletion
+   * try {
+   *   await strapiClient.deleteFile('file-uuid-123');
+   *   console.log('File deleted');
+   * } catch (error) {
+   *   console.error('Failed to delete file:', error.message);
+   *   // Handle error (file not found, permission denied, etc.)
+   * }
+   *
+   * @example
+   * // Delete multiple files (cleanup unused attachments)
+   * const fileIdsToDelete = [
+   *   'file-uuid-1',
+   *   'file-uuid-2',
+   *   'file-uuid-3'
+   * ];
+   *
+   * for (const fileId of fileIdsToDelete) {
+   *   try {
+   *     await strapiClient.deleteFile(fileId);
+   *     console.log(`Deleted: ${fileId}`);
+   *   } catch (error) {
+   *     console.error(`Failed to delete ${fileId}:`, error.message);
+   *   }
+   * }
+   *
+   * @example
+   * // Safe deletion workflow - verify no references first
+   * // Note: This is a conceptual example - actual implementation depends on your data model
+   * const fileId = 'file-uuid-123';
+   *
+   * // Check if any skills reference this file
+   * const skills = await strapiClient.getAllSkills();
+   * const isReferenced = skills.some(skill =>
+   *   skill.additionalFiles?.some(f => f.file === fileId)
+   * );
+   *
+   * if (!isReferenced) {
+   *   await strapiClient.deleteFile(fileId);
+   *   console.log('File safely deleted (no references found)');
+   * } else {
+   *   console.warn('File is still referenced - cannot delete');
+   * }
+   *
+   * @see {@link uploadFile} - Upload files to Media Library
    */
   async deleteFile(fileId: string): Promise<void> {
     await this.client.delete(`/upload/files/${fileId}`);
@@ -3334,7 +3613,92 @@ export class StrapiClient {
   // ============= TASKS =============
 
   /**
-   * Get all tasks with optional filtering
+   * Get all tasks with optional filtering, sorting, and pagination
+   *
+   * @description
+   * Retrieves all tasks from Strapi with support for filtering by status, assigned agent,
+   * priority, and other fields. Tasks represent work items, automation jobs, or scheduled
+   * operations assigned to agents. Results are cached with 5-minute TTL for improved performance.
+   *
+   * **Common Task Fields:**
+   * - `title`: Task title/name
+   * - `description`: Task description
+   * - `status`: Task status (pending, in_progress, completed, failed, etc.)
+   * - `priority`: Priority level (low, medium, high, urgent)
+   * - `dueDate`: Optional due date
+   * - `agent`: Assigned agent (relation)
+   * - `result`: Task execution result/output
+   * - `metadata`: Custom task metadata
+   *
+   * @param {Object} [options] - Query options for filtering, sorting, and pagination
+   * @param {Record<string, any>} [options.filters] - Strapi v5 filters object (supports $eq, $ne, $in, $containsi, $and, $or, etc.)
+   * @param {string[]} [options.sort] - Sort order array (e.g., ['dueDate:asc', 'priority:desc'])
+   * @param {Object} [options.pagination] - Pagination configuration
+   * @param {number} [options.pagination.page] - Page number (1-indexed)
+   * @param {number} [options.pagination.pageSize] - Number of items per page
+   *
+   * @returns {Promise<Task[]>} Array of Task objects
+   *
+   * @example
+   * // Basic usage - get all tasks
+   * const tasks = await strapiClient.getAllTasks();
+   * console.log(`Found ${tasks.length} tasks`);
+   *
+   * @example
+   * // Filter by status - get pending tasks only
+   * const pendingTasks = await strapiClient.getAllTasks({
+   *   filters: { status: { $eq: 'pending' } }
+   * });
+   *
+   * @example
+   * // Filter by multiple statuses using $in operator
+   * const activeTasks = await strapiClient.getAllTasks({
+   *   filters: {
+   *     status: { $in: ['pending', 'in_progress'] }
+   *   }
+   * });
+   *
+   * @example
+   * // Filter by assigned agent
+   * const agentTasks = await strapiClient.getAllTasks({
+   *   filters: {
+   *     agent: { documentId: { $eq: 'agent-uuid-123' } }
+   *   }
+   * });
+   *
+   * @example
+   * // Sort by priority and due date
+   * const sortedTasks = await strapiClient.getAllTasks({
+   *   sort: ['priority:desc', 'dueDate:asc'],
+   *   filters: { status: { $ne: 'completed' } }
+   * });
+   *
+   * @example
+   * // Pagination - get first page of high-priority tasks
+   * const highPriorityTasks = await strapiClient.getAllTasks({
+   *   filters: { priority: { $eq: 'high' } },
+   *   pagination: { page: 1, pageSize: 20 },
+   *   sort: ['createdAt:desc']
+   * });
+   *
+   * @example
+   * // Search tasks by title (case-insensitive)
+   * const searchResults = await strapiClient.getAllTasks({
+   *   filters: {
+   *     title: { $containsi: 'backup' }
+   *   }
+   * });
+   *
+   * @example
+   * // Get overdue tasks (dueDate in the past and not completed)
+   * const overdueTasks = await strapiClient.getAllTasks({
+   *   filters: {
+   *     $and: [
+   *       { dueDate: { $lt: new Date().toISOString() } },
+   *       { status: { $ne: 'completed' } }
+   *     ]
+   *   }
+   * });
    */
   async getAllTasks(options?: {
     filters?: Record<string, any>;
@@ -3360,7 +3724,65 @@ export class StrapiClient {
   }
 
   /**
-   * Get a single task by ID
+   * Get a single task by ID with populated agent relation
+   *
+   * @description
+   * Retrieves a single task by its unique document ID with the assigned agent relation
+   * automatically populated. Use this method to get detailed task information including
+   * the full agent configuration.
+   *
+   * **Auto-populated Relations:**
+   * - `agent`: Assigned agent with full configuration
+   *
+   * @param {string} id - Task document ID (UUID format)
+   *
+   * @returns {Promise<Task>} Task object with populated agent relation
+   *
+   * @throws {Error} If task with the specified ID is not found
+   *
+   * @example
+   * // Basic usage - get task by ID
+   * const task = await strapiClient.getTask('task-uuid-123');
+   * console.log(`Task: ${task.title}`);
+   * console.log(`Status: ${task.status}`);
+   * console.log(`Assigned to: ${task.agent?.name}`);
+   *
+   * @example
+   * // Get task and check status
+   * try {
+   *   const task = await strapiClient.getTask('task-uuid-123');
+   *
+   *   if (task.status === 'completed') {
+   *     console.log('Task completed successfully');
+   *     console.log('Result:', task.result);
+   *   } else if (task.status === 'failed') {
+   *     console.error('Task failed:', task.result);
+   *   }
+   * } catch (error) {
+   *   console.error('Task not found');
+   * }
+   *
+   * @example
+   * // Get task and display detailed information
+   * const task = await strapiClient.getTask('task-uuid-123');
+   *
+   * console.log('Task Details:');
+   * console.log(`  Title: ${task.title}`);
+   * console.log(`  Status: ${task.status}`);
+   * console.log(`  Priority: ${task.priority}`);
+   * console.log(`  Due: ${task.dueDate || 'No due date'}`);
+   * console.log(`  Agent: ${task.agent?.name || 'Unassigned'}`);
+   * console.log(`  Created: ${task.createdAt}`);
+   * console.log(`  Updated: ${task.updatedAt}`);
+   *
+   * @example
+   * // Error handling for non-existent task
+   * try {
+   *   const task = await strapiClient.getTask('invalid-id');
+   * } catch (error) {
+   *   console.error('Failed to retrieve task:', error.message);
+   *   // Handle error (show error message to user, etc.)
+   * }
    */
   async getTask(id: string): Promise<Task> {
     const cacheKey = `task:${id}`;
@@ -3388,6 +3810,104 @@ export class StrapiClient {
 
   /**
    * Create a new task
+   *
+   * @description
+   * Creates a new task in Strapi. Tasks can be assigned to agents for execution and can
+   * include metadata, priority levels, and due dates. The task status defaults to 'pending'
+   * if not specified.
+   *
+   * **Cache Behavior:**
+   * - Invalidates all task list caches to ensure fresh data on next fetch
+   * - New task is not immediately cached (cached on first retrieval)
+   *
+   * @param {CreateTaskDTO} taskData - Task data to create
+   * @param {string} taskData.title - Task title/name (required)
+   * @param {string} [taskData.description] - Task description
+   * @param {string} [taskData.status] - Task status (pending, in_progress, completed, failed, etc.)
+   * @param {string} [taskData.priority] - Priority level (low, medium, high, urgent)
+   * @param {string} [taskData.dueDate] - Due date (ISO 8601 format)
+   * @param {string} [taskData.agent] - Assigned agent ID (UUID)
+   * @param {any} [taskData.metadata] - Custom task metadata
+   *
+   * @returns {Promise<Task>} Created task object
+   *
+   * @throws {Error} If task creation fails
+   *
+   * @example
+   * // Basic task creation
+   * const task = await strapiClient.createTask({
+   *   title: 'Process customer data',
+   *   description: 'Extract and validate customer information from CSV',
+   *   status: 'pending'
+   * });
+   * console.log(`Created task: ${task.id}`);
+   *
+   * @example
+   * // Create task with agent assignment
+   * const task = await strapiClient.createTask({
+   *   title: 'Generate monthly report',
+   *   description: 'Compile sales metrics and generate PDF report',
+   *   status: 'pending',
+   *   priority: 'high',
+   *   agent: 'agent-uuid-123' // Assign to specific agent
+   * });
+   *
+   * @example
+   * // Create task with due date and priority
+   * const tomorrow = new Date();
+   * tomorrow.setDate(tomorrow.getDate() + 1);
+   *
+   * const task = await strapiClient.createTask({
+   *   title: 'Backup database',
+   *   description: 'Perform full database backup to S3',
+   *   status: 'pending',
+   *   priority: 'urgent',
+   *   dueDate: tomorrow.toISOString(),
+   *   agent: 'backup-agent-uuid'
+   * });
+   *
+   * @example
+   * // Create task with custom metadata
+   * const task = await strapiClient.createTask({
+   *   title: 'Send email notifications',
+   *   description: 'Send weekly digest emails to subscribers',
+   *   status: 'pending',
+   *   priority: 'medium',
+   *   metadata: {
+   *     emailCount: 1500,
+   *     template: 'weekly-digest',
+   *     sendTime: '2024-01-15T09:00:00Z'
+   *   }
+   * });
+   *
+   * @example
+   * // Create task and immediately start execution
+   * const task = await strapiClient.createTask({
+   *   title: 'Index search documents',
+   *   description: 'Update Elasticsearch index with new documents',
+   *   status: 'in_progress', // Start immediately
+   *   priority: 'high',
+   *   agent: 'indexer-agent-uuid'
+   * });
+   *
+   * // Poll task status
+   * const checkStatus = async () => {
+   *   const updated = await strapiClient.getTask(task.id);
+   *   console.log(`Status: ${updated.status}`);
+   * };
+   *
+   * @example
+   * // Error handling for task creation
+   * try {
+   *   const task = await strapiClient.createTask({
+   *     title: 'Important task',
+   *     description: 'Critical operation',
+   *     agent: 'invalid-agent-id' // Invalid agent reference
+   *   });
+   * } catch (error) {
+   *   console.error('Failed to create task:', error.message);
+   *   // Handle error (show validation message, retry, etc.)
+   * }
    */
   async createTask(taskData: CreateTaskDTO): Promise<Task> {
     const { data } = await this.client.post<StrapiData<any>>(
@@ -3407,6 +3927,110 @@ export class StrapiClient {
 
   /**
    * Update an existing task
+   *
+   * @description
+   * Updates an existing task with partial data. Only provided fields are updated; omitted
+   * fields remain unchanged. Common use cases include updating task status, adding results,
+   * changing priority, or reassigning to a different agent.
+   *
+   * **Partial Update Semantics:**
+   * - Only fields present in `taskData` are updated
+   * - Omitted fields retain their current values
+   * - Pass `null` explicitly to clear a field value
+   *
+   * **Cache Behavior:**
+   * - Invalidates all task list caches
+   * - Invalidates the specific task cache entry
+   * - Updated task is returned but not immediately re-cached
+   *
+   * @param {string} id - Task document ID to update
+   * @param {UpdateTaskDTO} taskData - Partial task data to update
+   * @param {string} [taskData.title] - Update task title
+   * @param {string} [taskData.description] - Update task description
+   * @param {string} [taskData.status] - Update task status
+   * @param {string} [taskData.priority] - Update priority level
+   * @param {string} [taskData.dueDate] - Update due date
+   * @param {string} [taskData.agent] - Reassign to different agent
+   * @param {any} [taskData.result] - Set task execution result
+   * @param {any} [taskData.metadata] - Update task metadata
+   *
+   * @returns {Promise<Task>} Updated task object
+   *
+   * @throws {Error} If task update fails or task not found
+   *
+   * @example
+   * // Update task status
+   * const task = await strapiClient.updateTask('task-uuid-123', {
+   *   status: 'completed'
+   * });
+   * console.log(`Task status updated to: ${task.status}`);
+   *
+   * @example
+   * // Update task status and add result
+   * const task = await strapiClient.updateTask('task-uuid-123', {
+   *   status: 'completed',
+   *   result: {
+   *     processedRecords: 1500,
+   *     duration: '5.2s',
+   *     success: true
+   *   }
+   * });
+   *
+   * @example
+   * // Mark task as failed with error information
+   * const task = await strapiClient.updateTask('task-uuid-123', {
+   *   status: 'failed',
+   *   result: {
+   *     error: 'Database connection timeout',
+   *     retryCount: 3,
+   *     lastAttempt: new Date().toISOString()
+   *   }
+   * });
+   *
+   * @example
+   * // Change task priority
+   * const task = await strapiClient.updateTask('task-uuid-123', {
+   *   priority: 'urgent'
+   * });
+   *
+   * @example
+   * // Reassign task to different agent
+   * const task = await strapiClient.updateTask('task-uuid-123', {
+   *   agent: 'new-agent-uuid',
+   *   status: 'pending' // Reset status when reassigning
+   * });
+   *
+   * @example
+   * // Update multiple fields at once
+   * const task = await strapiClient.updateTask('task-uuid-123', {
+   *   status: 'in_progress',
+   *   priority: 'high',
+   *   metadata: {
+   *     startedAt: new Date().toISOString(),
+   *     assignedWorker: 'worker-3'
+   *   }
+   * });
+   *
+   * @example
+   * // Extend due date
+   * const nextWeek = new Date();
+   * nextWeek.setDate(nextWeek.getDate() + 7);
+   *
+   * const task = await strapiClient.updateTask('task-uuid-123', {
+   *   dueDate: nextWeek.toISOString()
+   * });
+   *
+   * @example
+   * // Error handling for task update
+   * try {
+   *   const task = await strapiClient.updateTask('task-uuid-123', {
+   *     status: 'completed',
+   *     result: { success: true }
+   *   });
+   * } catch (error) {
+   *   console.error('Failed to update task:', error.message);
+   *   // Handle error (task not found, validation error, etc.)
+   * }
    */
   async updateTask(id: string, taskData: UpdateTaskDTO): Promise<Task> {
     const { data } = await this.client.put<StrapiData<any>>(
@@ -3428,6 +4052,83 @@ export class StrapiClient {
 
   /**
    * Delete a task
+   *
+   * @description
+   * Permanently deletes a task from Strapi. This operation cannot be undone. Consider
+   * updating the task status to 'cancelled' or 'archived' instead if you need to preserve
+   * task history.
+   *
+   * **Cache Behavior:**
+   * - Invalidates all task list caches
+   * - Removes the specific task cache entry
+   *
+   * **Best Practices:**
+   * - Verify task can be safely deleted before calling (no critical dependencies)
+   * - Consider soft-delete approach (status = 'deleted') for audit trail
+   * - Ensure task is not currently being executed by an agent
+   *
+   * @param {string} id - Task document ID to delete
+   *
+   * @returns {Promise<void>}
+   *
+   * @throws {Error} If task deletion fails or task not found
+   *
+   * @example
+   * // Basic task deletion
+   * await strapiClient.deleteTask('task-uuid-123');
+   * console.log('Task deleted successfully');
+   *
+   * @example
+   * // Delete task with confirmation check
+   * const task = await strapiClient.getTask('task-uuid-123');
+   *
+   * if (task.status === 'completed' || task.status === 'cancelled') {
+   *   await strapiClient.deleteTask(task.id);
+   *   console.log('Task deleted successfully');
+   * } else {
+   *   console.warn('Cannot delete active task');
+   * }
+   *
+   * @example
+   * // Error handling for task deletion
+   * try {
+   *   await strapiClient.deleteTask('task-uuid-123');
+   *   console.log('Task deleted');
+   * } catch (error) {
+   *   console.error('Failed to delete task:', error.message);
+   *   // Handle error (task not found, permission denied, etc.)
+   * }
+   *
+   * @example
+   * // Soft delete alternative - preserve task history
+   * // Instead of permanently deleting, update status to 'deleted'
+   * const task = await strapiClient.updateTask('task-uuid-123', {
+   *   status: 'deleted',
+   *   metadata: {
+   *     deletedAt: new Date().toISOString(),
+   *     deletedBy: 'user-123'
+   *   }
+   * });
+   * // Task is hidden from normal queries but preserved in database
+   *
+   * @example
+   * // Bulk delete completed tasks older than 30 days
+   * const thirtyDaysAgo = new Date();
+   * thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+   *
+   * const oldTasks = await strapiClient.getAllTasks({
+   *   filters: {
+   *     $and: [
+   *       { status: { $eq: 'completed' } },
+   *       { updatedAt: { $lt: thirtyDaysAgo.toISOString() } }
+   *     ]
+   *   }
+   * });
+   *
+   * for (const task of oldTasks) {
+   *   await strapiClient.deleteTask(task.id);
+   * }
+   * console.log(`Deleted ${oldTasks.length} old tasks`);
    */
   async deleteTask(id: string): Promise<void> {
     await this.client.delete(`/tasks/${id}`);
@@ -3830,6 +4531,92 @@ export class StrapiClient {
 
   /**
    * Clear all cache entries
+   *
+   * @description
+   * Clears all entries from the LRU cache, forcing fresh API requests on next data access.
+   * Use this method when you need to ensure data freshness after external changes to Strapi
+   * data (e.g., manual edits in Strapi Admin Panel, bulk imports, database migrations).
+   *
+   * **Cache Configuration:**
+   * - TTL: 5 minutes (300,000ms)
+   * - Max Size: 100 entries
+   * - Eviction: LRU (Least Recently Used)
+   *
+   * **When to Clear Cache:**
+   * - After bulk data operations outside this client
+   * - When debugging stale data issues
+   * - After importing/migrating data to Strapi
+   * - Manual refresh triggered by user action
+   * - Testing scenarios requiring fresh data
+   *
+   * **Note:**
+   * - Cache is automatically invalidated on mutations (create/update/delete)
+   * - Individual cache entries auto-expire after 5 minutes
+   * - Clearing cache forces all subsequent requests to hit the API
+   *
+   * @returns {void}
+   *
+   * @example
+   * // Basic cache clear
+   * strapiClient.clearCache();
+   * console.log('Cache cleared - next requests will fetch fresh data');
+   *
+   * @example
+   * // Clear cache after external data modification
+   * // (e.g., after manual edits in Strapi Admin Panel)
+   * async function refreshData() {
+   *   strapiClient.clearCache();
+   *
+   *   // Subsequent requests fetch fresh data from API
+   *   const agents = await strapiClient.getAllAgents();
+   *   const skills = await strapiClient.getAllSkills();
+   *
+   *   console.log('Data refreshed from Strapi');
+   * }
+   *
+   * @example
+   * // User-triggered refresh in UI
+   * app.post('/api/refresh', (req, res) => {
+   *   strapiClient.clearCache();
+   *   res.json({ message: 'Cache cleared successfully' });
+   * });
+   *
+   * @example
+   * // Clear cache before testing
+   * describe('Strapi Client Tests', () => {
+   *   beforeEach(() => {
+   *     // Ensure tests start with clean cache
+   *     strapiClient.clearCache();
+   *   });
+   *
+   *   it('should fetch fresh data from API', async () => {
+   *     const agents = await strapiClient.getAllAgents();
+   *     expect(agents).toBeDefined();
+   *   });
+   * });
+   *
+   * @example
+   * // Periodic cache refresh for long-running processes
+   * setInterval(() => {
+   *   strapiClient.clearCache();
+   *   console.log('[Cache] Periodic cache cleared');
+   * }, 1000 * 60 * 15); // Clear every 15 minutes
+   *
+   * @example
+   * // Clear cache after bulk import
+   * async function importAgents(agentsData) {
+   *   // Bulk import agents via direct API calls
+   *   for (const agentData of agentsData) {
+   *     await strapiClient.createAgent(agentData);
+   *   }
+   *
+   *   // Clear cache to ensure fresh data
+   *   strapiClient.clearCache();
+   *
+   *   console.log('Import complete, cache cleared');
+   * }
+   *
+   * @see {@link getCacheStats} - Get cache statistics
    */
   clearCache() {
     const size = this.cache.size;
@@ -3839,6 +4626,117 @@ export class StrapiClient {
 
   /**
    * Get current cache statistics
+   *
+   * @description
+   * Returns current cache statistics including the number of entries, maximum capacity,
+   * and TTL configuration. Use this for monitoring cache utilization, debugging performance
+   * issues, or implementing cache health dashboards.
+   *
+   * **Returned Statistics:**
+   * - `size`: Current number of cached entries
+   * - `max`: Maximum cache capacity (100 entries)
+   * - `ttl`: Time-to-live in milliseconds (300,000ms = 5 minutes)
+   *
+   * **Cache Behavior:**
+   * - When `size` reaches `max`, least recently used entries are evicted
+   * - Each entry expires after `ttl` milliseconds
+   * - TTL is refreshed on cache hits (updateAgeOnGet: true)
+   *
+   * @returns {Object} Cache statistics object
+   * @returns {number} returns.size - Current number of entries in cache
+   * @returns {number} returns.max - Maximum cache capacity
+   * @returns {number} returns.ttl - Time-to-live in milliseconds
+   *
+   * @example
+   * // Basic usage - get cache stats
+   * const stats = strapiClient.getCacheStats();
+   *
+   * console.log('Cache Statistics:');
+   * console.log(`  Entries: ${stats.size}/${stats.max}`);
+   * console.log(`  TTL: ${stats.ttl / 1000}s`);
+   *
+   * @example
+   * // Check cache utilization
+   * const stats = strapiClient.getCacheStats();
+   * const utilizationPercent = (stats.size / stats.max) * 100;
+   *
+   * console.log(`Cache utilization: ${utilizationPercent.toFixed(1)}%`);
+   *
+   * if (utilizationPercent > 80) {
+   *   console.warn('Cache is nearly full - consider increasing max size');
+   * }
+   *
+   * @example
+   * // Display cache stats in monitoring dashboard
+   * app.get('/api/cache/stats', (req, res) => {
+   *   const stats = strapiClient.getCacheStats();
+   *
+   *   res.json({
+   *     cache: {
+   *       size: stats.size,
+   *       max: stats.max,
+   *       utilization: `${((stats.size / stats.max) * 100).toFixed(1)}%`,
+   *       ttl: `${stats.ttl / 1000}s`,
+   *       ttlMinutes: stats.ttl / 60000
+   *     }
+   *   });
+   * });
+   *
+   * @example
+   * // Monitor cache growth over time
+   * const monitorCache = () => {
+   *   const stats = strapiClient.getCacheStats();
+   *   const timestamp = new Date().toISOString();
+   *
+   *   console.log(`[${timestamp}] Cache: ${stats.size}/${stats.max} entries`);
+   * };
+   *
+   * // Log stats every 30 seconds
+   * setInterval(monitorCache, 30000);
+   *
+   * @example
+   * // Warn if cache is empty (potential configuration issue)
+   * const stats = strapiClient.getCacheStats();
+   *
+   * if (stats.size === 0) {
+   *   console.warn('Cache is empty - no data has been cached yet');
+   *   console.warn('This is normal on startup but unusual during operation');
+   * }
+   *
+   * @example
+   * // Debug cache effectiveness
+   * async function debugCacheEffectiveness() {
+   *   // Clear cache and get initial stats
+   *   strapiClient.clearCache();
+   *   let stats = strapiClient.getCacheStats();
+   *   console.log(`Initial cache size: ${stats.size}`);
+   *
+   *   // Make some API calls
+   *   await strapiClient.getAllAgents();
+   *   await strapiClient.getAllSkills();
+   *   await strapiClient.getAllMCPServers();
+   *
+   *   // Check cache growth
+   *   stats = strapiClient.getCacheStats();
+   *   console.log(`Cache size after API calls: ${stats.size}`);
+   *   console.log(`Cache is working: ${stats.size > 0 ? 'YES' : 'NO'}`);
+   * }
+   *
+   * @example
+   * // Format stats for logging
+   * const stats = strapiClient.getCacheStats();
+   *
+   * const formatted = {
+   *   entries: `${stats.size}/${stats.max}`,
+   *   utilizationPercent: ((stats.size / stats.max) * 100).toFixed(1),
+   *   ttlSeconds: stats.ttl / 1000,
+   *   ttlMinutes: stats.ttl / 60000,
+   *   expiryTime: new Date(Date.now() + stats.ttl).toISOString()
+   * };
+   *
+   * console.log('Cache Stats:', formatted);
+   *
+   * @see {@link clearCache} - Clear all cache entries
    */
   getCacheStats() {
     return {

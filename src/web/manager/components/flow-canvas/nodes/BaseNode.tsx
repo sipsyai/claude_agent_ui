@@ -192,6 +192,9 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
   minHeight,
   onClick,
 }) => {
+  // Track hover state for enhanced handle visibility
+  const [isHovered, setIsHovered] = React.useState(false);
+
   // Color theme mapping for different node types
   const nodeTypeColors = {
     input: {
@@ -232,6 +235,8 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
         minHeight: minHeight ? `${minHeight}px` : undefined,
       }}
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Target Handle - Incoming Connections */}
       {showTargetHandle && (
@@ -239,8 +244,14 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
           type="target"
           position={Position.Top}
           id="target"
-          className={`!w-3 !h-3 !border-2 !border-background ${colors.handle} transition-all hover:!w-4 hover:!h-4 !z-[100]`}
+          className={`
+            !border-2 !border-background ${colors.handle}
+            transition-all duration-200 !z-[100]
+            ${isHovered || selected ? '!w-4 !h-4 !opacity-100' : '!w-3 !h-3 !opacity-70'}
+            hover:!w-5 hover:!h-5 hover:!opacity-100 hover:!scale-110
+          `}
           style={{ top: -6 }}
+          title="Drag to connect from another node"
         />
       )}
 
@@ -312,8 +323,14 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
           type="source"
           position={Position.Bottom}
           id="source"
-          className={`!w-3 !h-3 !border-2 !border-background ${colors.handle} transition-all hover:!w-4 hover:!h-4 !z-[100]`}
+          className={`
+            !border-2 !border-background ${colors.handle}
+            transition-all duration-200 !z-[100]
+            ${isHovered || selected ? '!w-4 !h-4 !opacity-100' : '!w-3 !h-3 !opacity-70'}
+            hover:!w-5 hover:!h-5 hover:!opacity-100 hover:!scale-110
+          `}
           style={{ bottom: -6 }}
+          title="Drag to connect to another node"
         />
       )}
     </div>

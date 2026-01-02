@@ -40,18 +40,22 @@ coverage/
 # Temporary files
 tmp/
 temp/
+.tmp/
 *.tmp
 
 # Claude-specific
 .cui/
 
-# Database files
+# Database files - SQLite
 *.db
 *.sqlite
 *.sqlite3
 *.db-shm
 *.db-wal
 *.db-journal
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite-journal
 
 # Database data directories
 database/dev-data/

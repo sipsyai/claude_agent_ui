@@ -17,8 +17,42 @@ import {
 } from '../utils/env-substitution.js';
 
 /**
- * Internal MCP Server type for .mcp.json handling
- * Includes config property for backward compatibility
+ * Internal MCP Server type for .mcp.json configuration handling
+ *
+ * @description
+ * Represents an MCP server configuration as stored in and retrieved from the
+ * .mcp.json file. This interface extends the basic MCPServerConfig with additional
+ * metadata needed for runtime server management.
+ *
+ * The interface maintains backward compatibility with legacy .claude/mcp.json files
+ * while supporting the SDK-aligned .mcp.json format at the project root.
+ *
+ * @property {string} id - Unique identifier for the MCP server (typically the server name)
+ * @property {string} name - Human-readable name of the MCP server
+ * @property {'stdio' | 'sdk' | 'sse' | 'http'} type - Transport type for MCP communication
+ *   - 'stdio': Standard I/O transport (spawns external process)
+ *   - 'sdk': In-process SDK server (registered JavaScript/TypeScript instance)
+ *   - 'sse': Server-Sent Events transport (not yet implemented)
+ *   - 'http': HTTP transport (not yet implemented)
+ * @property {MCPServerConfig} config - Complete server configuration including command, args, env
+ * @property {boolean} [disabled] - Whether the server is disabled (excluded from active use)
+ *
+ * @example
+ * ```typescript
+ * const server: MCPServerInternal = {
+ *   id: 'filesystem',
+ *   name: 'filesystem',
+ *   type: 'stdio',
+ *   config: {
+ *     command: 'npx',
+ *     args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+ *     env: { DEBUG: 'true' }
+ *   },
+ *   disabled: false
+ * };
+ * ```
+ *
+ * @see {@link https://docs.anthropic.com/en/api/agent-sdk/mcp | Anthropic MCP Documentation}
  */
 interface MCPServerInternal {
   id: string;
@@ -29,11 +63,120 @@ interface MCPServerInternal {
 }
 
 /**
- * Service for managing MCP server configurations (SDK-aligned)
- * @see https://docs.anthropic.com/en/api/agent-sdk/mcp
+ * MCPService - Service for managing Model Context Protocol (MCP) server configurations
+ *
+ * @description
+ * Manages MCP server configurations in SDK-aligned format, providing CRUD operations,
+ * configuration file management, server testing, and bidirectional synchronization.
+ * This service bridges the gap between the application's MCP server management needs
+ * and Anthropic's Claude Agent SDK MCP integration requirements.
+ *
+ * Key responsibilities:
+ * - Read/write .mcp.json configuration files at project root (SDK-aligned location)
+ * - Auto-migrate legacy .claude/mcp.json configs to new .mcp.json format
+ * - Manage MCP server lifecycle (add, update, delete, toggle enabled/disabled)
+ * - Test MCP server connectivity and tool availability
+ * - Support both stdio (external process) and SDK (in-process) transport types
+ * - Register and manage in-process SDK MCP server instances
+ * - Fetch available tools from MCP servers via JSON-RPC protocol
+ * - Handle environment variable substitution in server configurations
+ * - Provide bidirectional sync with Strapi database (syncToMcpJson/syncFromMcpJson)
+ * - Support bulk operations (bulk delete, import/export configs)
+ *
+ * Configuration Format:
+ * The service manages .mcp.json files in the format expected by Claude Agent SDK:
+ * ```json
+ * {
+ *   "mcpServers": {
+ *     "server-name": {
+ *       "command": "npx",
+ *       "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path"],
+ *       "env": { "DEBUG": "true" },
+ *       "disabled": false
+ *     }
+ *   }
+ * }
+ * ```
+ *
+ * Transport Types:
+ * - stdio: Spawns external MCP server process, communicates via JSON-RPC over stdin/stdout
+ * - sdk: Manages in-process JavaScript/TypeScript MCP server instances
+ * - sse/http: Reserved for future implementation
+ *
+ * Architecture:
+ * - Uses internal Map to track registered SDK server instances
+ * - Automatically migrates legacy configs from .claude/mcp.json to .mcp.json
+ * - Applies environment variable substitution (${ENV_VAR} syntax) on config read
+ * - Integrates with Claude Agent SDK's MCP server configuration format
+ * - Provides both file-based and programmatic server management
+ *
+ * @example
+ * ```typescript
+ * // Initialize the service
+ * const mcpService = new MCPService();
+ *
+ * // Add a new stdio MCP server
+ * const filesystemServer = await mcpService.addMCPServer(
+ *   'filesystem',
+ *   {
+ *     command: 'npx',
+ *     args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+ *     env: { DEBUG: 'true' }
+ *   },
+ *   '/path/to/project'
+ * );
+ *
+ * // Test server connectivity
+ * const testResult = await mcpService.testMCPServer('filesystem', '/path/to/project');
+ * console.log(testResult.success ? 'Server OK' : testResult.error);
+ *
+ * // List available tools
+ * const toolsResult = await mcpService.listMCPServerTools('filesystem', '/path/to/project');
+ * console.log('Available tools:', toolsResult.tools);
+ *
+ * // Register an in-process SDK server
+ * import { MyMCPServer } from './my-mcp-server.js';
+ * const sdkServer = new MyMCPServer();
+ * mcpService.registerSdkServer('my-sdk-server', sdkServer);
+ *
+ * // Add SDK server to config
+ * await mcpService.addMCPServer(
+ *   'my-sdk-server',
+ *   { type: 'sdk', name: 'my-sdk-server' },
+ *   '/path/to/project'
+ * );
+ *
+ * // Toggle server enabled/disabled
+ * const toggleResult = await mcpService.toggleMCPServer('filesystem', '/path/to/project');
+ * console.log(`Server now ${toggleResult.disabled ? 'disabled' : 'enabled'}`);
+ *
+ * // Get all configured servers
+ * const servers = await mcpService.getMCPServers('/path/to/project');
+ * console.log(`Found ${servers.length} MCP servers`);
+ *
+ * // Sync servers to .mcp.json (from Strapi format)
+ * await mcpService.syncToMcpJson([
+ *   {
+ *     name: 'github',
+ *     command: 'npx',
+ *     args: ['-y', '@modelcontextprotocol/server-github'],
+ *     env: { GITHUB_TOKEN: '${GITHUB_TOKEN}' }
+ *   }
+ * ], '/path/to/project');
+ *
+ * // Export configuration for backup
+ * const config = await mcpService.exportMCPConfig('/path/to/project');
+ * await fs.writeFile('backup.json', JSON.stringify(config, null, 2));
+ * ```
+ *
+ * @see {@link https://docs.anthropic.com/en/api/agent-sdk/mcp | Anthropic MCP Documentation}
+ * @see {@link https://modelcontextprotocol.io | Model Context Protocol Specification}
  */
 export class MCPService {
+  /** Logger instance for debugging and operational logging */
   private logger: Logger;
+
+  /** Registry of in-process SDK MCP server instances, keyed by server name */
   private sdkServers: Map<string, any> = new Map();
 
   constructor() {

@@ -34,7 +34,12 @@
       "description": "Created comprehensive TypeScript types for the Flow Execution Engine. Includes: Flow (workflow definition), FlowNode types (InputNode, AgentNode, OutputNode with discriminated union), FlowExecution (execution tracking), FlowExecutionContext (runtime context), NodeExecution (individual node state), FlowExecutionResult (final results), SSE update types for real-time streaming, and utility types/type guards. Types align with Strapi schemas in backend/src/api/flow/ and backend/src/components/flow/.",
       "category": "types",
       "discovered_at": "2026-01-02T09:18:00.750596+00:00"
+    },
+    "src/services/flow-execution-service.ts": {
+      "description": "Created FlowExecutionService - main flow runner that orchestrates node execution, manages state, and handles errors. Uses EventEmitter for SSE updates, supports node handler registration for extensibility, implements retry logic for agent nodes, and integrates with Strapi for execution persistence. Singleton pattern with flowExecutionService export.",
+      "category": "service",
+      "discovered_at": "2026-01-02T09:22:47.306617+00:00"
     }
   },
-  "last_updated": "2026-01-02T09:18:00.750607+00:00"
+  "last_updated": "2026-01-02T09:22:47.306636+00:00"
 }

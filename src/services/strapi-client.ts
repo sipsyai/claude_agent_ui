@@ -1261,6 +1261,324 @@ export class StrapiClient {
     };
   }
 
+  // ============= FLOWS =============
+
+  /**
+   * Get all flows with optional filtering
+   */
+  async getAllFlows(options?: {
+    filters?: Record<string, any>;
+    sort?: string[];
+    pagination?: { page: number; pageSize: number };
+  }): Promise<any[]> {
+    const cacheKey = `flows:all:${JSON.stringify(options)}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const params = this.buildQueryParams({
+      ...options,
+      populate: ['nodes'],
+    });
+    const { data } = await this.client.get<StrapiResponse<StrapiAttributes<any>[]>>(
+      '/flows',
+      { params }
+    );
+
+    const flows = data.data.map((item: StrapiAttributes<any>) => this.transformFlow(item));
+    this.cache.set(cacheKey, flows);
+
+    return flows;
+  }
+
+  /**
+   * Get a single flow by ID with populated relations
+   */
+  async getFlow(id: string): Promise<any> {
+    const cacheKey = `flow:${id}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const { data } = await this.client.get<StrapiData<any>>(
+      `/flows/${id}`,
+      {
+        params: { populate: '*' },
+      }
+    );
+
+    if (!data.data) {
+      throw new Error(`Flow with ID ${id} not found`);
+    }
+
+    const flow = this.transformFlow(data.data);
+    this.cache.set(cacheKey, flow);
+
+    return flow;
+  }
+
+  /**
+   * Create a new flow
+   */
+  async createFlow(flowData: any): Promise<any> {
+    const { data } = await this.client.post<StrapiData<any>>(
+      '/flows',
+      { data: flowData }
+    );
+
+    if (!data.data) {
+      throw new Error('Failed to create flow');
+    }
+
+    this.invalidateCache('flows');
+    return this.transformFlow(data.data);
+  }
+
+  /**
+   * Update an existing flow
+   */
+  async updateFlow(id: string, flowData: any): Promise<any> {
+    const { data } = await this.client.put<StrapiData<any>>(
+      `/flows/${id}`,
+      { data: flowData }
+    );
+
+    if (!data.data) {
+      throw new Error(`Failed to update flow with ID ${id}`);
+    }
+
+    this.invalidateCache('flows');
+    this.cache.delete(`flow:${id}`);
+
+    return this.transformFlow(data.data);
+  }
+
+  /**
+   * Delete a flow
+   */
+  async deleteFlow(id: string): Promise<void> {
+    await this.client.delete(`/flows/${id}`);
+    this.invalidateCache('flows');
+    this.cache.delete(`flow:${id}`);
+  }
+
+  /**
+   * Transform Strapi flow response to Flow domain model
+   */
+  private transformFlow(strapiData: StrapiAttributes<any>): any {
+    const attrs = this.extractAttributes(strapiData);
+
+    return {
+      id: strapiData.documentId,
+      name: attrs.name,
+      slug: attrs.slug,
+      description: attrs.description,
+      nodes: attrs.nodes || [],
+      status: attrs.status || 'draft',
+      inputSchema: attrs.inputSchema || { properties: {}, required: [] },
+      outputSchema: attrs.outputSchema || { properties: {} },
+      isActive: attrs.isActive ?? false,
+      version: attrs.version || '1.0.0',
+      category: attrs.category || 'custom',
+      metadata: attrs.metadata,
+      createdAt: new Date(attrs.createdAt),
+      updatedAt: new Date(attrs.updatedAt),
+    };
+  }
+
+  // ============= FLOW EXECUTIONS =============
+
+  /**
+   * Get all flow executions with optional filtering
+   */
+  async getAllFlowExecutions(options?: {
+    filters?: Record<string, any>;
+    sort?: string[];
+    pagination?: { page: number; pageSize: number };
+  }): Promise<any[]> {
+    const params = this.buildQueryParams({
+      ...options,
+      populate: ['flow'],
+    });
+    const { data } = await this.client.get<StrapiResponse<StrapiAttributes<any>[]>>(
+      '/flow-executions',
+      { params }
+    );
+
+    return data.data.map((item: StrapiAttributes<any>) => this.transformFlowExecution(item));
+  }
+
+  /**
+   * Get a single flow execution by ID
+   */
+  async getFlowExecution(id: string): Promise<any> {
+    const { data } = await this.client.get<StrapiData<any>>(
+      `/flow-executions/${id}`,
+      {
+        params: {
+          populate: {
+            flow: true,
+          },
+        },
+      }
+    );
+
+    if (!data.data) {
+      throw new Error(`Flow execution with ID ${id} not found`);
+    }
+
+    return this.transformFlowExecution(data.data);
+  }
+
+  /**
+   * Create a new flow execution record
+   */
+  async createFlowExecution(executionData: {
+    flowId: string;
+    status: string;
+    input?: Record<string, any>;
+    triggeredBy: string;
+    triggerData?: Record<string, any>;
+    startedAt?: Date;
+    logs?: any[];
+    nodeExecutions?: any[];
+    tokensUsed?: number;
+    cost?: number;
+    retryCount?: number;
+  }): Promise<any> {
+    const { data } = await this.client.post<StrapiData<any>>(
+      '/flow-executions',
+      {
+        data: {
+          flow: executionData.flowId,
+          status: executionData.status,
+          input: executionData.input,
+          triggeredBy: executionData.triggeredBy,
+          triggerData: executionData.triggerData,
+          startedAt: executionData.startedAt?.toISOString(),
+          logs: executionData.logs || [],
+          nodeExecutions: executionData.nodeExecutions || [],
+          tokensUsed: executionData.tokensUsed || 0,
+          cost: executionData.cost || 0,
+          retryCount: executionData.retryCount || 0,
+        },
+      }
+    );
+
+    if (!data.data) {
+      throw new Error('Failed to create flow execution');
+    }
+
+    return this.transformFlowExecution(data.data);
+  }
+
+  /**
+   * Update a flow execution record
+   */
+  async updateFlowExecution(id: string, executionData: {
+    status?: string;
+    output?: Record<string, any>;
+    logs?: any[];
+    error?: string;
+    errorDetails?: Record<string, any>;
+    completedAt?: Date;
+    executionTime?: number;
+    nodeExecutions?: any[];
+    currentNodeId?: string;
+    tokensUsed?: number;
+    cost?: number;
+  }): Promise<any> {
+    const updateData: Record<string, any> = {};
+
+    if (executionData.status !== undefined) updateData.status = executionData.status;
+    if (executionData.output !== undefined) updateData.output = executionData.output;
+    if (executionData.logs !== undefined) updateData.logs = executionData.logs;
+    if (executionData.error !== undefined) updateData.error = executionData.error;
+    if (executionData.errorDetails !== undefined) updateData.errorDetails = executionData.errorDetails;
+    if (executionData.completedAt !== undefined) updateData.completedAt = executionData.completedAt.toISOString();
+    if (executionData.executionTime !== undefined) updateData.executionTime = executionData.executionTime;
+    if (executionData.nodeExecutions !== undefined) updateData.nodeExecutions = executionData.nodeExecutions;
+    if (executionData.currentNodeId !== undefined) updateData.currentNodeId = executionData.currentNodeId;
+    if (executionData.tokensUsed !== undefined) updateData.tokensUsed = executionData.tokensUsed;
+    if (executionData.cost !== undefined) updateData.cost = executionData.cost;
+
+    const { data } = await this.client.put<StrapiData<any>>(
+      `/flow-executions/${id}`,
+      { data: updateData }
+    );
+
+    if (!data.data) {
+      throw new Error(`Failed to update flow execution with ID ${id}`);
+    }
+
+    return this.transformFlowExecution(data.data);
+  }
+
+  /**
+   * Delete a flow execution record
+   */
+  async deleteFlowExecution(id: string): Promise<void> {
+    await this.client.delete(`/flow-executions/${id}`);
+  }
+
+  /**
+   * Get flow executions by flow ID
+   */
+  async getFlowExecutionsByFlowId(flowId: string, options?: {
+    sort?: string[];
+    pagination?: { page: number; pageSize: number };
+  }): Promise<any[]> {
+    return this.getAllFlowExecutions({
+      ...options,
+      filters: { flow: { documentId: flowId } },
+    });
+  }
+
+  /**
+   * Get running flow executions
+   */
+  async getRunningFlowExecutions(): Promise<any[]> {
+    return this.getAllFlowExecutions({
+      filters: { status: 'running' },
+      sort: ['startedAt:desc'],
+    });
+  }
+
+  /**
+   * Transform Strapi flow execution response to FlowExecution domain model
+   */
+  private transformFlowExecution(strapiData: StrapiAttributes<any>): any {
+    const attrs = this.extractAttributes(strapiData);
+
+    return {
+      id: strapiData.documentId,
+      flowId: attrs.flow?.documentId || attrs.flow,
+      flow: attrs.flow?.documentId ? this.transformFlow(attrs.flow) : undefined,
+      status: attrs.status || 'pending',
+      input: attrs.input,
+      output: attrs.output,
+      logs: attrs.logs || [],
+      error: attrs.error,
+      errorDetails: attrs.errorDetails,
+      startedAt: attrs.startedAt ? new Date(attrs.startedAt) : undefined,
+      completedAt: attrs.completedAt ? new Date(attrs.completedAt) : undefined,
+      executionTime: attrs.executionTime,
+      nodeExecutions: attrs.nodeExecutions || [],
+      currentNodeId: attrs.currentNodeId,
+      tokensUsed: attrs.tokensUsed || 0,
+      cost: attrs.cost || 0,
+      triggeredBy: attrs.triggeredBy || 'manual',
+      triggerData: attrs.triggerData,
+      retryCount: attrs.retryCount || 0,
+      parentExecutionId: attrs.parentExecutionId,
+      metadata: attrs.metadata,
+      createdAt: new Date(attrs.createdAt),
+      updatedAt: new Date(attrs.updatedAt),
+    };
+  }
+
   // ============= ERROR HANDLING =============
 
   /**

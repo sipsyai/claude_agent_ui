@@ -426,7 +426,136 @@ export class ChatService extends EventEmitter {
   }
 
   /**
-   * Get chat session by documentId
+   * Get chat session by documentId with populated relations
+   *
+   * @description
+   * Retrieves a single chat session from Strapi CMS with full population of related
+   * entities including skills, agent configuration, model config, tool config, and
+   * MCP server configurations. This method is used internally by sendMessage() to
+   * load session configuration before starting a conversation.
+   *
+   * **Deep Population Strategy:**
+   * The method uses Strapi v5's deep population syntax to eagerly load nested
+   * relations in a single query, avoiding N+1 query problems. It populates:
+   * - Skills with their toolConfig and mcpConfig
+   * - Agent with toolConfig, modelConfig, and mcpConfig
+   * - MCP server details and selected tools within mcpConfig
+   * - Nested mcpTool details within selectedTools
+   *
+   * **Use Cases:**
+   * - Load session configuration before sending messages
+   * - Display session details in UI (title, agent, skills)
+   * - Resume conversations with existing session context
+   * - Inspect session configuration for debugging
+   * - Validate session state before operations
+   *
+   * **Populated Relations:**
+   * - `skills`: Array of Skill objects with toolConfig and mcpConfig
+   * - `agent`: Agent object with systemPrompt, toolConfig, modelConfig, mcpConfig
+   * - `agent.mcpConfig[]`: MCP server configurations with selected tools
+   * - `agent.mcpConfig[].selectedTools[]`: Selected MCP tools for each server
+   *
+   * **Permission Mode Handling:**
+   * The method transforms Strapi's permissionMode and planMode fields into a
+   * unified permissionMode ('default' | 'bypass' | 'auto' | 'plan'). If planMode
+   * is true, permissionMode is set to 'plan' for client compatibility.
+   *
+   * @param {string} sessionDocId - The documentId of the chat session to retrieve
+   *
+   * @returns {Promise<ChatSession>} The chat session with populated relations
+   *
+   * @throws {Error} If the session is not found or Strapi request fails
+   *
+   * @example
+   * ```typescript
+   * // Basic session retrieval
+   * import { chatService } from './chat-service';
+   *
+   * const session = await chatService.getChatSession('session-doc-id-123');
+   *
+   * console.log(`Session: ${session.title}`);
+   * console.log(`Agent: ${session.agent?.name}`);
+   * console.log(`Skills: ${session.skills?.map(s => s.name).join(', ')}`);
+   * // Output:
+   * // Session: Code Review Chat
+   * // Agent: Code Review Agent
+   * // Skills: JavaScript Expert, Testing Helper
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Inspect session configuration
+   * import { chatService } from './chat-service';
+   *
+   * const session = await chatService.getChatSession('session-doc-id-123');
+   *
+   * console.log('Model:', session.agent?.modelConfig?.model);
+   * console.log('Allowed tools:', session.agent?.toolConfig?.allowedTools);
+   * console.log('Permission mode:', session.permissionMode);
+   * console.log('MCP servers:', session.agent?.mcpConfig?.map(c => c.mcpServer?.name));
+   * // Output:
+   * // Model: claude-sonnet-4-5
+   * // Allowed tools: ['Read', 'Write', 'Bash', 'Grep', 'Glob', 'Edit']
+   * // Permission mode: default
+   * // MCP servers: ['filesystem', 'database']
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Check session status before sending message
+   * import { chatService } from './chat-service';
+   *
+   * const session = await chatService.getChatSession('session-doc-id-123');
+   *
+   * if (session.status === 'archived') {
+   *   console.log('Cannot send message to archived session');
+   * } else {
+   *   console.log('Session is active, ready to send message');
+   *   // Proceed with sendMessage()
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle session not found error
+   * import { chatService } from './chat-service';
+   *
+   * try {
+   *   const session = await chatService.getChatSession('invalid-session-id');
+   * } catch (error) {
+   *   console.error('Session not found:', error);
+   *   // Error: Chat session invalid-session-id not found
+   *   // Handle error - redirect to session list or show error message
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Use in sendMessage workflow
+   * import { chatService } from './chat-service';
+   *
+   * async function sendChatMessage(sessionDocId: string, text: string) {
+   *   // Load session first to validate it exists
+   *   const session = await chatService.getChatSession(sessionDocId);
+   *
+   *   console.log(`Sending to: ${session.title}`);
+   *   console.log(`Using agent: ${session.agent?.name || 'none'}`);
+   *
+   *   // Stream message
+   *   for await (const event of chatService.sendMessage(
+   *     sessionDocId,
+   *     text,
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     // Handle events...
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link getAllChatSessions} - Get all sessions
+   * @see {@link createChatSession} - Create a new session
+   * @see {@link sendMessage} - Uses this method to load session config
    */
   async getChatSession(sessionDocId: string): Promise<ChatSession> {
     try {
@@ -474,7 +603,183 @@ export class ChatService extends EventEmitter {
   }
 
   /**
-   * Get all chat sessions
+   * Get all chat sessions sorted by creation date (newest first)
+   *
+   * @description
+   * Retrieves all chat sessions from Strapi CMS with populated agent and skill
+   * relations, sorted by creation date in descending order (newest first).
+   * This method is used to display the session list in the UI and supports
+   * session management operations.
+   *
+   * **Population Strategy:**
+   * Unlike getChatSession(), this method uses lighter population to improve
+   * query performance when fetching multiple sessions. It populates:
+   * - Skills (basic info only - name, documentId)
+   * - Agent with full config (toolConfig, modelConfig, mcpConfig)
+   * - MCP server details within agent's mcpConfig
+   *
+   * **Sorting:**
+   * Sessions are sorted by createdAt in descending order, ensuring the most
+   * recent conversations appear first in the list. This matches typical chat
+   * application UX patterns.
+   *
+   * **Use Cases:**
+   * - Display session list in chat UI sidebar
+   * - Browse conversation history
+   * - Session management dashboard
+   * - Search and filter sessions
+   * - Export conversation data
+   * - Analytics and reporting
+   *
+   * **Performance Considerations:**
+   * For applications with many sessions (>100), consider implementing:
+   * - Pagination with Strapi's pagination params
+   * - Filtering by status (active vs archived)
+   * - Search by title or content
+   * - Virtual scrolling in UI
+   *
+   * **Session Status Values:**
+   * - `active`: Currently active conversation
+   * - `archived`: Archived for historical reference
+   *
+   * @returns {Promise<ChatSession[]>} Array of chat sessions sorted by newest first
+   *
+   * @throws {Error} If the Strapi request fails
+   *
+   * @example
+   * ```typescript
+   * // Basic usage - get all sessions
+   * import { chatService } from './chat-service';
+   *
+   * const sessions = await chatService.getAllChatSessions();
+   *
+   * console.log(`Total sessions: ${sessions.length}`);
+   * sessions.forEach(session => {
+   *   console.log(`- ${session.title} (${session.status})`);
+   * });
+   * // Output:
+   * // Total sessions: 5
+   * // - Code Review Chat (active)
+   * // - Bug Fix Session (active)
+   * // - Documentation Update (archived)
+   * // - API Integration (active)
+   * // - Refactoring Project (archived)
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Filter active sessions only
+   * import { chatService } from './chat-service';
+   *
+   * const allSessions = await chatService.getAllChatSessions();
+   * const activeSessions = allSessions.filter(s => s.status === 'active');
+   *
+   * console.log(`Active sessions: ${activeSessions.length}/${allSessions.length}`);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Display session list with agent info
+   * import { chatService } from './chat-service';
+   *
+   * const sessions = await chatService.getAllChatSessions();
+   *
+   * sessions.forEach(session => {
+   *   const agentName = session.agent?.name || 'No agent';
+   *   const skillCount = session.skills?.length || 0;
+   *   const date = new Date(session.createdAt).toLocaleDateString();
+   *
+   *   console.log(`${session.title}`);
+   *   console.log(`  Agent: ${agentName}`);
+   *   console.log(`  Skills: ${skillCount}`);
+   *   console.log(`  Created: ${date}`);
+   *   console.log('---');
+   * });
+   * // Output:
+   * // Code Review Chat
+   * //   Agent: Code Reviewer
+   * //   Skills: 2
+   * //   Created: 1/2/2026
+   * // ---
+   * // Bug Fix Session
+   * //   Agent: Debugging Expert
+   * //   Skills: 3
+   * //   Created: 1/1/2026
+   * // ---
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Search sessions by title
+   * import { chatService } from './chat-service';
+   *
+   * async function searchSessions(query: string) {
+   *   const allSessions = await chatService.getAllChatSessions();
+   *   const matches = allSessions.filter(session =>
+   *     session.title.toLowerCase().includes(query.toLowerCase())
+   *   );
+   *
+   *   console.log(`Found ${matches.length} sessions matching "${query}"`);
+   *   return matches;
+   * }
+   *
+   * const results = await searchSessions('code review');
+   * // => Found 3 sessions matching "code review"
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Group sessions by date
+   * import { chatService } from './chat-service';
+   *
+   * const sessions = await chatService.getAllChatSessions();
+   *
+   * const today = new Date().toDateString();
+   * const todaySessions = sessions.filter(s =>
+   *   new Date(s.createdAt).toDateString() === today
+   * );
+   *
+   * console.log(`Today's sessions: ${todaySessions.length}`);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Export session list for reporting
+   * import { chatService } from './chat-service';
+   * import fs from 'fs';
+   *
+   * const sessions = await chatService.getAllChatSessions();
+   *
+   * const report = sessions.map(s => ({
+   *   title: s.title,
+   *   status: s.status,
+   *   agent: s.agent?.name || 'None',
+   *   skills: s.skills?.map(sk => sk.name).join(', ') || 'None',
+   *   created: s.createdAt,
+   * }));
+   *
+   * fs.writeFileSync('sessions-report.json', JSON.stringify(report, null, 2));
+   * console.log('Report exported');
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle empty session list
+   * import { chatService } from './chat-service';
+   *
+   * const sessions = await chatService.getAllChatSessions();
+   *
+   * if (sessions.length === 0) {
+   *   console.log('No sessions found. Create your first chat!');
+   * } else {
+   *   console.log(`You have ${sessions.length} conversation(s)`);
+   * }
+   * ```
+   *
+   * @see {@link getChatSession} - Get a specific session
+   * @see {@link createChatSession} - Create a new session
+   * @see {@link archiveChatSession} - Archive a session
+   * @see {@link deleteChatSession} - Delete a session permanently
    */
   async getAllChatSessions(): Promise<ChatSession[]> {
     try {
@@ -507,7 +812,212 @@ export class ChatService extends EventEmitter {
   }
 
   /**
-   * Get messages for a chat session
+   * Get all messages for a chat session sorted by timestamp
+   *
+   * @description
+   * Retrieves all chat messages (user, assistant, system) for a specific chat
+   * session from Strapi CMS, sorted by timestamp in ascending order (chronological).
+   * This method is used to display the conversation history in the chat UI and
+   * supports message replay and export functionality.
+   *
+   * **Message Loading Strategy:**
+   * The method retrieves messages through the session's populated messages relation
+   * rather than querying the chat-messages collection directly. This approach:
+   * - Avoids Strapi v5 issues with filtering on relations
+   * - Ensures consistent message ordering by timestamp
+   * - Returns empty array if session doesn't exist (graceful degradation)
+   * - Automatically filters messages for the specific session
+   *
+   * **Message Types:**
+   * - `user`: Messages sent by the user (with optional attachments)
+   * - `assistant`: Responses from Claude AI (with tool uses, cost, usage metadata)
+   * - `system`: System notifications or status messages
+   *
+   * **Message Metadata:**
+   * Each message may include metadata:
+   * - User messages: Typically minimal or empty metadata
+   * - Assistant messages: toolUses[], cost (USD), usage (token counts)
+   * - System messages: Initialization or status information
+   *
+   * **Attachment Handling:**
+   * Messages may have file attachments (images, PDFs, text files) referenced
+   * by Strapi upload IDs. The attachment objects include name, URL, MIME type,
+   * and file size for display and download.
+   *
+   * **Use Cases:**
+   * - Display conversation history in chat UI
+   * - Export chat transcript
+   * - Search message content
+   * - Calculate conversation cost (sum assistant message costs)
+   * - Analyze tool usage patterns
+   * - Replay conversations for debugging
+   *
+   * @param {string} sessionDocId - The documentId of the chat session
+   *
+   * @returns {Promise<ChatMessage[]>} Array of messages sorted by timestamp (oldest first)
+   *
+   * @throws {Error} If the Strapi request fails (but returns empty array if session not found)
+   *
+   * @example
+   * ```typescript
+   * // Basic usage - get all messages
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   *
+   * console.log(`Total messages: ${messages.length}`);
+   * messages.forEach(msg => {
+   *   console.log(`[${msg.role}] ${msg.content.substring(0, 50)}...`);
+   * });
+   * // Output:
+   * // Total messages: 6
+   * // [user] Review the authentication code in src/auth.ts...
+   * // [assistant] I'll analyze the authentication code. Let me...
+   * // [user] Can you also check for security vulnerabilities?...
+   * // [assistant] I found 3 security issues: ...
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Display conversation with timestamps
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   *
+   * messages.forEach(msg => {
+   *   const time = new Date(msg.timestamp).toLocaleTimeString();
+   *   const role = msg.role.toUpperCase();
+   *   console.log(`[${time}] ${role}:`);
+   *   console.log(msg.content);
+   *   console.log('---');
+   * });
+   * // Output:
+   * // [2:30:15 PM] USER:
+   * // Review the code
+   * // ---
+   * // [2:30:22 PM] ASSISTANT:
+   * // I'll review the code for you...
+   * // ---
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Calculate total conversation cost
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   *
+   * const totalCost = messages
+   *   .filter(msg => msg.role === 'assistant')
+   *   .reduce((sum, msg) => sum + (msg.metadata?.cost || 0), 0);
+   *
+   * console.log(`Total cost: $${totalCost.toFixed(4)}`);
+   * // => Total cost: $0.0125
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Export conversation transcript
+   * import { chatService } from './chat-service';
+   * import fs from 'fs';
+   *
+   * const session = await chatService.getChatSession('session-doc-id-123');
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   *
+   * const transcript = {
+   *   session: {
+   *     title: session.title,
+   *     agent: session.agent?.name,
+   *     created: session.createdAt,
+   *   },
+   *   messages: messages.map(msg => ({
+   *     timestamp: msg.timestamp,
+   *     role: msg.role,
+   *     content: msg.content,
+   *     attachments: msg.attachments?.map(a => a.name),
+   *     cost: msg.metadata?.cost,
+   *   })),
+   * };
+   *
+   * fs.writeFileSync('transcript.json', JSON.stringify(transcript, null, 2));
+   * console.log('Transcript exported');
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Analyze tool usage in conversation
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   *
+   * const toolUses = messages
+   *   .filter(msg => msg.role === 'assistant')
+   *   .flatMap(msg => msg.metadata?.toolUses || []);
+   *
+   * const toolCounts = toolUses.reduce((acc, tool) => {
+   *   acc[tool.name] = (acc[tool.name] || 0) + 1;
+   *   return acc;
+   * }, {} as Record<string, number>);
+   *
+   * console.log('Tool usage:');
+   * Object.entries(toolCounts).forEach(([tool, count]) => {
+   *   console.log(`  ${tool}: ${count}`);
+   * });
+   * // Output:
+   * // Tool usage:
+   * //   Read: 5
+   * //   Grep: 2
+   * //   Write: 3
+   * //   Bash: 1
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Get messages with attachments only
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   * const messagesWithAttachments = messages.filter(msg =>
+   *   msg.attachments && msg.attachments.length > 0
+   * );
+   *
+   * console.log(`Messages with attachments: ${messagesWithAttachments.length}`);
+   * messagesWithAttachments.forEach(msg => {
+   *   console.log(`- ${msg.role}: ${msg.attachments?.map(a => a.name).join(', ')}`);
+   * });
+   * // Output:
+   * // Messages with attachments: 2
+   * // - user: diagram.png
+   * // - user: report.pdf, config.json
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle empty message list
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   *
+   * if (messages.length === 0) {
+   *   console.log('No messages yet. Start the conversation!');
+   * } else {
+   *   console.log(`${messages.length} messages in conversation`);
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle session not found gracefully
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('invalid-session-id');
+   * // Returns empty array instead of throwing error
+   * console.log(messages.length); // => 0
+   * ```
+   *
+   * @see {@link getChatSession} - Get the parent session
+   * @see {@link sendMessage} - Send a new message to the session
+   * @see {@link saveChatMessage} - Internal method used to save messages
    */
   async getChatMessages(sessionDocId: string): Promise<ChatMessage[]> {
     try {
@@ -1837,7 +2347,200 @@ Your plan should include:
   }
 
   /**
-   * Delete a chat session
+   * Permanently delete a chat session and all its messages
+   *
+   * @description
+   * Permanently deletes a chat session from Strapi CMS along with all associated
+   * messages and chat log files. This operation is irreversible and should be used
+   * with caution. For non-destructive session management, consider using
+   * archiveChatSession() instead.
+   *
+   * **Deletion Workflow:**
+   * 1. Fetch all messages for the session via getChatMessages()
+   * 2. Delete each message individually from Strapi chat-messages collection
+   * 3. Delete the session from Strapi chat-sessions collection
+   * 4. Delete the associated chat log file from filesystem
+   * 5. Log successful deletion
+   *
+   * **Cascade Delete:**
+   * The method manually implements cascade deletion for messages because Strapi
+   * v5 doesn't automatically cascade delete related entities. This ensures no
+   * orphaned message records remain in the database.
+   *
+   * **File Cleanup:**
+   * The method calls chatLogService.deleteChatLog() to remove the filesystem
+   * log file created during the session. This prevents accumulation of unused
+   * log files and maintains filesystem hygiene.
+   *
+   * **Use Cases:**
+   * - User requests permanent deletion of conversation
+   * - Cleanup of test or temporary sessions
+   * - GDPR/privacy compliance (data deletion requests)
+   * - Freeing up database storage
+   * - Removing sensitive conversation data
+   *
+   * **Alternatives:**
+   * - **Archive**: Use archiveChatSession() for soft delete (preserves data)
+   * - **Export first**: Export conversation before deletion for backup
+   * - **Status filter**: Filter archived sessions in UI instead of deleting
+   *
+   * **Important Notes:**
+   * - This operation is IRREVERSIBLE - all conversation data is permanently lost
+   * - Attachments uploaded to Strapi are NOT automatically deleted (orphaned files)
+   * - Consider implementing user confirmation dialog in UI before calling
+   * - For production, consider implementing soft delete pattern instead
+   *
+   * @param {string} sessionDocId - The documentId of the chat session to delete
+   *
+   * @returns {Promise<void>} Resolves when deletion is complete
+   *
+   * @throws {Error} If the Strapi request fails or session/messages cannot be deleted
+   *
+   * @example
+   * ```typescript
+   * // Basic session deletion
+   * import { chatService } from './chat-service';
+   *
+   * await chatService.deleteChatSession('session-doc-id-123');
+   * console.log('Session deleted permanently');
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Delete with user confirmation
+   * import { chatService } from './chat-service';
+   *
+   * async function deleteWithConfirmation(sessionDocId: string) {
+   *   const session = await chatService.getChatSession(sessionDocId);
+   *
+   *   const confirmed = confirm(
+   *     `Permanently delete "${session.title}"? This cannot be undone.`
+   *   );
+   *
+   *   if (confirmed) {
+   *     await chatService.deleteChatSession(sessionDocId);
+   *     console.log('Session deleted');
+   *   } else {
+   *     console.log('Deletion cancelled');
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Export before deletion (backup)
+   * import { chatService } from './chat-service';
+   * import fs from 'fs';
+   *
+   * async function exportAndDelete(sessionDocId: string) {
+   *   // Export conversation first
+   *   const session = await chatService.getChatSession(sessionDocId);
+   *   const messages = await chatService.getChatMessages(sessionDocId);
+   *
+   *   const backup = {
+   *     session,
+   *     messages,
+   *     exportedAt: new Date().toISOString(),
+   *   };
+   *
+   *   fs.writeFileSync(
+   *     `backup-${sessionDocId}.json`,
+   *     JSON.stringify(backup, null, 2)
+   *   );
+   *
+   *   // Now safe to delete
+   *   await chatService.deleteChatSession(sessionDocId);
+   *   console.log('Session backed up and deleted');
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Bulk delete old sessions
+   * import { chatService } from './chat-service';
+   *
+   * async function deleteOldSessions(daysOld: number) {
+   *   const allSessions = await chatService.getAllChatSessions();
+   *   const cutoffDate = new Date();
+   *   cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+   *
+   *   const oldSessions = allSessions.filter(session =>
+   *     new Date(session.createdAt) < cutoffDate
+   *   );
+   *
+   *   console.log(`Deleting ${oldSessions.length} sessions older than ${daysOld} days`);
+   *
+   *   for (const session of oldSessions) {
+   *     await chatService.deleteChatSession(session.documentId);
+   *     console.log(`Deleted: ${session.title}`);
+   *   }
+   * }
+   *
+   * await deleteOldSessions(90); // Delete sessions older than 90 days
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle deletion errors gracefully
+   * import { chatService } from './chat-service';
+   *
+   * async function safeDelete(sessionDocId: string) {
+   *   try {
+   *     await chatService.deleteChatSession(sessionDocId);
+   *     return { success: true, message: 'Session deleted' };
+   *   } catch (error) {
+   *     console.error('Failed to delete session:', error);
+   *     return {
+   *       success: false,
+   *       message: 'Deletion failed. Session may not exist.',
+   *     };
+   *   }
+   * }
+   *
+   * const result = await safeDelete('session-doc-id-123');
+   * console.log(result.message);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Delete test sessions (cleanup after tests)
+   * import { chatService } from './chat-service';
+   *
+   * async function cleanupTestSessions() {
+   *   const sessions = await chatService.getAllChatSessions();
+   *   const testSessions = sessions.filter(s =>
+   *     s.title.startsWith('[TEST]')
+   *   );
+   *
+   *   console.log(`Cleaning up ${testSessions.length} test sessions`);
+   *
+   *   await Promise.all(
+   *     testSessions.map(s => chatService.deleteChatSession(s.documentId))
+   *   );
+   *
+   *   console.log('Test cleanup complete');
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Archive instead of delete (safer alternative)
+   * import { chatService } from './chat-service';
+   *
+   * async function archiveInsteadOfDelete(sessionDocId: string) {
+   *   // Archive preserves data but hides from active list
+   *   await chatService.archiveChatSession(sessionDocId);
+   *   console.log('Session archived (data preserved)');
+   *
+   *   // Later, can still retrieve if needed
+   *   const session = await chatService.getChatSession(sessionDocId);
+   *   console.log('Status:', session.status); // => 'archived'
+   * }
+   * ```
+   *
+   * @see {@link archiveChatSession} - Soft delete alternative (preserves data)
+   * @see {@link getAllChatSessions} - Get sessions for bulk operations
+   * @see {@link getChatMessages} - Get messages before deletion
    */
   async deleteChatSession(sessionDocId: string): Promise<void> {
     try {
@@ -1861,7 +2564,231 @@ Your plan should include:
   }
 
   /**
-   * Archive a chat session
+   * Archive a chat session (soft delete)
+   *
+   * @description
+   * Archives a chat session by updating its status to 'archived' in Strapi CMS
+   * and the associated chat log file. This is a non-destructive operation that
+   * preserves all conversation data while hiding the session from active lists.
+   * Archived sessions can still be accessed, retrieved, and restored if needed.
+   *
+   * **Soft Delete Pattern:**
+   * Archiving implements a soft delete pattern where data is marked as inactive
+   * rather than permanently deleted. Benefits include:
+   * - Data preservation for historical reference
+   * - Ability to restore sessions if needed
+   * - Safer alternative to permanent deletion
+   * - Compliance with data retention policies
+   * - Audit trail of past conversations
+   *
+   * **Update Workflow:**
+   * 1. Update session status to 'archived' in Strapi via PUT request
+   * 2. Update status in filesystem chat log via chatLogService
+   * 3. Return updated session object with new status
+   *
+   * **Status Values:**
+   * - `active`: Session is currently active and appears in default lists
+   * - `archived`: Session is archived and hidden from default views
+   *
+   * **Use Cases:**
+   * - Hide completed or old conversations from active list
+   * - Clean up UI without losing conversation history
+   * - Implement "delete" functionality with data preservation
+   * - Organize conversations by status (active vs historical)
+   * - Comply with data retention policies
+   * - Support conversation search across all time
+   *
+   * **Restoration:**
+   * To restore an archived session, update its status back to 'active' via
+   * Strapi API or implement an unarchive method. The session and all messages
+   * remain intact and can be resumed immediately.
+   *
+   * **UI Integration:**
+   * - Show archived sessions in separate "Archived" view
+   * - Filter archived sessions from main session list
+   * - Display archive status badge in session UI
+   * - Provide "Unarchive" action for archived sessions
+   *
+   * @param {string} sessionDocId - The documentId of the chat session to archive
+   *
+   * @returns {Promise<ChatSession>} The updated session with status='archived'
+   *
+   * @throws {Error} If the Strapi request fails or session is not found
+   *
+   * @example
+   * ```typescript
+   * // Basic session archiving
+   * import { chatService } from './chat-service';
+   *
+   * const archivedSession = await chatService.archiveChatSession('session-doc-id-123');
+   *
+   * console.log(`Archived: ${archivedSession.title}`);
+   * console.log(`Status: ${archivedSession.status}`);
+   * // Output:
+   * // Archived: Code Review Chat
+   * // Status: archived
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Archive with user confirmation
+   * import { chatService } from './chat-service';
+   *
+   * async function archiveWithConfirmation(sessionDocId: string) {
+   *   const session = await chatService.getChatSession(sessionDocId);
+   *
+   *   const confirmed = confirm(
+   *     `Archive "${session.title}"? You can restore it later.`
+   *   );
+   *
+   *   if (confirmed) {
+   *     const archived = await chatService.archiveChatSession(sessionDocId);
+   *     console.log('Session archived');
+   *     return archived;
+   *   } else {
+   *     console.log('Archive cancelled');
+   *     return session;
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Filter archived sessions from active list
+   * import { chatService } from './chat-service';
+   *
+   * const allSessions = await chatService.getAllChatSessions();
+   *
+   * const activeSessions = allSessions.filter(s => s.status === 'active');
+   * const archivedSessions = allSessions.filter(s => s.status === 'archived');
+   *
+   * console.log(`Active: ${activeSessions.length}`);
+   * console.log(`Archived: ${archivedSessions.length}`);
+   * // Output:
+   * // Active: 5
+   * // Archived: 12
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Archive old sessions automatically
+   * import { chatService } from './chat-service';
+   *
+   * async function archiveOldSessions(daysOld: number) {
+   *   const allSessions = await chatService.getAllChatSessions();
+   *   const cutoffDate = new Date();
+   *   cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+   *
+   *   const oldSessions = allSessions.filter(session =>
+   *     session.status === 'active' &&
+   *     new Date(session.createdAt) < cutoffDate
+   *   );
+   *
+   *   console.log(`Archiving ${oldSessions.length} sessions older than ${daysOld} days`);
+   *
+   *   for (const session of oldSessions) {
+   *     await chatService.archiveChatSession(session.documentId);
+   *     console.log(`Archived: ${session.title}`);
+   *   }
+   * }
+   *
+   * await archiveOldSessions(30); // Archive sessions older than 30 days
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Restore archived session (manual implementation)
+   * import { chatService } from './chat-service';
+   * import axios from 'axios';
+   *
+   * async function restoreSession(sessionDocId: string) {
+   *   const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:1337';
+   *   const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
+   *
+   *   await axios.put(
+   *     `${STRAPI_URL}/api/chat-sessions/${sessionDocId}`,
+   *     { data: { status: 'active' } },
+   *     { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` } }
+   *   );
+   *
+   *   console.log('Session restored to active status');
+   *   return await chatService.getChatSession(sessionDocId);
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Bulk archive by filter criteria
+   * import { chatService } from './chat-service';
+   *
+   * async function archiveByTitle(titlePattern: string) {
+   *   const allSessions = await chatService.getAllChatSessions();
+   *   const matchingSessions = allSessions.filter(s =>
+   *     s.status === 'active' &&
+   *     s.title.toLowerCase().includes(titlePattern.toLowerCase())
+   *   );
+   *
+   *   console.log(`Archiving ${matchingSessions.length} sessions matching "${titlePattern}"`);
+   *
+   *   const results = await Promise.all(
+   *     matchingSessions.map(s => chatService.archiveChatSession(s.documentId))
+   *   );
+   *
+   *   console.log('Bulk archive complete');
+   *   return results;
+   * }
+   *
+   * await archiveByTitle('test'); // Archive all sessions with 'test' in title
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Archive session after completion
+   * import { chatService } from './chat-service';
+   *
+   * async function completeAndArchiveSession(sessionDocId: string) {
+   *   // Send final message
+   *   for await (const event of chatService.sendMessage(
+   *     sessionDocId,
+   *     'Thank you! This conversation is complete.',
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     if (event.type === 'done') {
+   *       console.log('Final message sent, archiving session...');
+   *     }
+   *   }
+   *
+   *   // Archive the completed session
+   *   const archived = await chatService.archiveChatSession(sessionDocId);
+   *   console.log(`Session "${archived.title}" archived`);
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Show archived sessions in UI
+   * import { chatService } from './chat-service';
+   *
+   * async function displayArchivedSessions() {
+   *   const allSessions = await chatService.getAllChatSessions();
+   *   const archived = allSessions.filter(s => s.status === 'archived');
+   *
+   *   console.log('=== Archived Sessions ===');
+   *   archived.forEach(session => {
+   *     const date = new Date(session.createdAt).toLocaleDateString();
+   *     console.log(`- ${session.title} (${date})`);
+   *   });
+   *
+   *   if (archived.length === 0) {
+   *     console.log('No archived sessions');
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link deleteChatSession} - Permanent deletion alternative
+   * @see {@link getAllChatSessions} - Get all sessions including archived
+   * @see {@link getChatSession} - Retrieve archived session details
    */
   async archiveChatSession(sessionDocId: string): Promise<ChatSession> {
     try {
@@ -2157,8 +3084,258 @@ Your plan should include:
   }
 
   /**
-   * Get list of active stream IDs
-   * Useful for debugging or monitoring active conversations
+   * Get list of active stream IDs for monitoring and debugging
+   *
+   * @description
+   * Returns an array of all currently active stream IDs from the activeStreams Map.
+   * Each stream ID represents an ongoing message stream (sendMessage call) that is
+   * actively processing SDK responses. This method is useful for monitoring active
+   * conversations, debugging stream lifecycle issues, and implementing shutdown cleanup.
+   *
+   * **Active Stream Lifecycle:**
+   * A stream is considered active from the moment it's added to activeStreams Map
+   * (after creating SDK Query) until it's removed (completion, error, or cancellation).
+   * The lifecycle stages are:
+   * 1. Stream created - added to activeStreams Map with unique UUID
+   * 2. Stream ID yielded - 'stream_id' event sent to client
+   * 3. Stream processing - SDK messages streaming
+   * 4. Stream cleanup - removed from activeStreams Map (done/error/cancelled)
+   *
+   * **Use Cases:**
+   * - Monitor how many conversations are actively streaming
+   * - Debug stream lifecycle issues and memory leaks
+   * - Implement graceful shutdown (cancel all active streams)
+   * - Display "active conversations" count in UI
+   * - Rate limiting based on concurrent streams
+   * - Health check endpoint for monitoring
+   * - Prevent duplicate streams for same session
+   *
+   * **Monitoring Patterns:**
+   * - Poll periodically to track active stream count
+   * - Log stream count before/after operations
+   * - Alert if stream count exceeds threshold
+   * - Track average stream duration
+   * - Detect stuck or orphaned streams
+   *
+   * **Cleanup Patterns:**
+   * - Cancel all active streams on application shutdown
+   * - Cancel streams for specific session when replacing with new message
+   * - Timeout logic for streams exceeding duration threshold
+   * - Emergency abort for runaway streams
+   *
+   * **Map Synchronization:**
+   * This method reads from the activeStreams Map, which is synchronized with
+   * activeAbortControllers Map. Both Maps are updated atomically in sendMessage()
+   * to ensure consistency between stream IDs and abort controllers.
+   *
+   * @returns {string[]} Array of active stream IDs (UUIDs)
+   *
+   * @example
+   * ```typescript
+   * // Basic usage - get active stream count
+   * import { chatService } from './chat-service';
+   *
+   * const activeStreamIds = chatService.getActiveStreamIds();
+   * console.log(`Active streams: ${activeStreamIds.length}`);
+   * // Output:
+   * // Active streams: 3
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Monitor active streams periodically
+   * import { chatService } from './chat-service';
+   *
+   * setInterval(() => {
+   *   const activeStreams = chatService.getActiveStreamIds();
+   *   console.log(`[${new Date().toISOString()}] Active streams: ${activeStreams.length}`);
+   *
+   *   if (activeStreams.length > 10) {
+   *     console.warn('High number of concurrent streams detected!');
+   *   }
+   * }, 5000); // Check every 5 seconds
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Cancel all active streams (shutdown cleanup)
+   * import { chatService } from './chat-service';
+   *
+   * async function shutdown() {
+   *   const activeStreamIds = chatService.getActiveStreamIds();
+   *
+   *   if (activeStreamIds.length > 0) {
+   *     console.log(`Cancelling ${activeStreamIds.length} active streams...`);
+   *
+   *     for (const streamId of activeStreamIds) {
+   *       chatService.cancelMessage(streamId);
+   *     }
+   *
+   *     console.log('All streams cancelled');
+   *   }
+   *
+   *   process.exit(0);
+   * }
+   *
+   * process.on('SIGTERM', shutdown);
+   * process.on('SIGINT', shutdown);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Display active streams in admin UI
+   * import { chatService } from './chat-service';
+   *
+   * async function getActiveStreamInfo() {
+   *   const streamIds = chatService.getActiveStreamIds();
+   *
+   *   return {
+   *     count: streamIds.length,
+   *     streamIds: streamIds,
+   *     timestamp: new Date().toISOString(),
+   *   };
+   * }
+   *
+   * const info = await getActiveStreamInfo();
+   * console.log(JSON.stringify(info, null, 2));
+   * // Output:
+   * // {
+   * //   "count": 2,
+   * //   "streamIds": [
+   * //     "550e8400-e29b-41d4-a716-446655440000",
+   * //     "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+   * //   ],
+   * //   "timestamp": "2026-01-02T12:00:00.000Z"
+   * // }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Rate limiting based on active streams
+   * import { chatService } from './chat-service';
+   *
+   * async function sendMessageWithRateLimit(
+   *   sessionDocId: string,
+   *   message: string,
+   *   maxConcurrent: number = 5
+   * ) {
+   *   const activeStreams = chatService.getActiveStreamIds();
+   *
+   *   if (activeStreams.length >= maxConcurrent) {
+   *     throw new Error(
+   *       `Rate limit exceeded: ${activeStreams.length}/${maxConcurrent} streams active`
+   *     );
+   *   }
+   *
+   *   // Proceed with sending message
+   *   for await (const event of chatService.sendMessage(
+   *     sessionDocId,
+   *     message,
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     // Handle events...
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Health check endpoint
+   * import { chatService } from './chat-service';
+   * import express from 'express';
+   *
+   * const app = express();
+   *
+   * app.get('/health', (req, res) => {
+   *   const activeStreams = chatService.getActiveStreamIds();
+   *
+   *   res.json({
+   *     status: 'healthy',
+   *     activeStreams: activeStreams.length,
+   *     timestamp: new Date().toISOString(),
+   *   });
+   * });
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Prevent duplicate streams for same session
+   * import { chatService } from './chat-service';
+   *
+   * const sessionStreamMap = new Map<string, string>(); // sessionDocId -> streamId
+   *
+   * async function sendMessageNoDuplicate(
+   *   sessionDocId: string,
+   *   message: string
+   * ) {
+   *   // Cancel existing stream for this session if active
+   *   const existingStreamId = sessionStreamMap.get(sessionDocId);
+   *   if (existingStreamId) {
+   *     const activeStreamIds = chatService.getActiveStreamIds();
+   *     if (activeStreamIds.includes(existingStreamId)) {
+   *       console.log('Cancelling existing stream for session');
+   *       chatService.cancelMessage(existingStreamId);
+   *     }
+   *   }
+   *
+   *   // Start new stream
+   *   for await (const event of chatService.sendMessage(
+   *     sessionDocId,
+   *     message,
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     if (event.type === 'stream_id') {
+   *       sessionStreamMap.set(sessionDocId, event.streamId);
+   *     }
+   *     if (event.type === 'done' || event.type === 'error' || event.type === 'cancelled') {
+   *       sessionStreamMap.delete(sessionDocId);
+   *     }
+   *     // Handle other events...
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Detect stuck streams (timeout monitoring)
+   * import { chatService } from './chat-service';
+   *
+   * const streamStartTimes = new Map<string, number>();
+   * const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+   *
+   * // Track stream start times
+   * async function monitorStreams() {
+   *   const activeStreamIds = chatService.getActiveStreamIds();
+   *   const now = Date.now();
+   *
+   *   for (const streamId of activeStreamIds) {
+   *     if (!streamStartTimes.has(streamId)) {
+   *       streamStartTimes.set(streamId, now);
+   *     } else {
+   *       const elapsed = now - streamStartTimes.get(streamId)!;
+   *       if (elapsed > TIMEOUT_MS) {
+   *         console.warn(`Stream ${streamId} exceeded timeout (${elapsed}ms), cancelling`);
+   *         chatService.cancelMessage(streamId);
+   *         streamStartTimes.delete(streamId);
+   *       }
+   *     }
+   *   }
+   *
+   *   // Cleanup finished streams
+   *   for (const [streamId] of streamStartTimes) {
+   *     if (!activeStreamIds.includes(streamId)) {
+   *       streamStartTimes.delete(streamId);
+   *     }
+   *   }
+   * }
+   *
+   * setInterval(monitorStreams, 10000); // Check every 10 seconds
+   * ```
+   *
+   * @see {@link cancelMessage} - Cancel a specific stream by ID
+   * @see {@link sendMessage} - Creates streams tracked by this method
    */
   getActiveStreamIds(): string[] {
     return Array.from(this.activeStreams.keys());

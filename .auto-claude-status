@@ -3,23 +3,23 @@
   "spec": "004-document-frontend-react-components-and-hooks",
   "state": "building",
   "subtasks": {
-    "completed": 5,
+    "completed": 14,
     "total": 53,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "UI Primitive Components Documentation",
-    "id": 1,
-    "total": 11
+    "current": "Custom Hooks Documentation",
+    "id": 3,
+    "total": 4
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 7,
+    "number": 16,
     "started_at": "2026-01-02T09:53:01.754527"
   },
-  "last_update": "2026-01-02T10:06:25.748898"
+  "last_update": "2026-01-02T10:25:46.209686"
 }

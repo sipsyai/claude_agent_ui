@@ -150,15 +150,51 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
     });
   }, [flows, loadRecentExecutions]);
 
-  // Auto-refresh every 30 seconds
+  // Auto-refresh with exponential backoff
   useEffect(() => {
     if (!autoRefreshEnabled) return;
 
-    const interval = setInterval(() => {
-      loadFlows();
-    }, 30000);
+    let intervalId: NodeJS.Timeout | null = null;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    const POLLING_INTERVAL = 30000; // 30 seconds - normal polling interval when healthy
+    const BASE_DELAY = 5000; // 5 seconds - base for exponential backoff
+    const MAX_DELAY = 30000; // 30 seconds - max delay for exponential backoff
 
-    return () => clearInterval(interval);
+    const scheduleNextPoll = (delayMs: number) => {
+      if (intervalId) clearTimeout(intervalId);
+      intervalId = setTimeout(poll, delayMs);
+    };
+
+    const poll = async () => {
+      try {
+        await loadFlows();
+        retryCount = 0; // Reset on success
+        // Continue polling at normal interval after success
+        scheduleNextPoll(POLLING_INTERVAL);
+      } catch (error) {
+        retryCount++;
+        if (retryCount >= MAX_RETRIES) {
+          // Stop polling after max retries
+          if (intervalId) clearTimeout(intervalId);
+          return;
+        }
+        // Calculate exponential backoff delay for next attempt
+        const nextDelay = Math.min(
+          BASE_DELAY * Math.pow(2, retryCount - 1),
+          MAX_DELAY
+        );
+        scheduleNextPoll(nextDelay);
+      }
+    };
+
+    // Initial poll
+    poll();
+
+    // Cleanup function
+    return () => {
+      if (intervalId) clearTimeout(intervalId);
+    };
   }, [autoRefreshEnabled, loadFlows]);
 
   // Handle flow execution - open modal
@@ -385,8 +421,17 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
 
       {/* Error Display */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
-          {error}
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
+          <span className="text-red-700">{error}</span>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => loadFlows()}
+            className="ml-4 flex items-center gap-2"
+          >
+            <RefreshIcon className="h-4 w-4" />
+            Retry
+          </Button>
         </div>
       )}
 

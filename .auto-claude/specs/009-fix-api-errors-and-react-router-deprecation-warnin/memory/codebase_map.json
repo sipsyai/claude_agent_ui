@@ -1,0 +1,10 @@
+{
+  "discovered_files": {
+    "./src/web/manager/components/FlowsPage.tsx": {
+      "description": "Implemented exponential backoff polling mechanism for API calls. Uses dynamic setTimeout-based polling instead of fixed setInterval. On success, resets retry count and polls every 30 seconds. On error, increases delay exponentially: 5s \u2192 10s \u2192 20s. Stops after 3 failed attempts. Properly cleans up timeout in useEffect cleanup function to prevent memory leaks.",
+      "category": "polling-strategy",
+      "discovered_at": "2026-01-02T16:16:41.890368+00:00"
+    }
+  },
+  "last_updated": "2026-01-02T16:16:41.890377+00:00"
+}

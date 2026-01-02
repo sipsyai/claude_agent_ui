@@ -1,0 +1,165 @@
+{
+  "subtasks": {
+    "subtask-1-1": {
+      "attempts": [
+        {
+          "session": 1,
+          "timestamp": "2026-01-02T18:48:50.995597",
+          "approach": "Implemented: Add v7_startTransition and v7_relativeSplatPath future flags to BrowserRouter in src/web/main.tsx",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-2-1": {
+      "attempts": [
+        {
+          "session": 2,
+          "timestamp": "2026-01-02T18:51:57.103002",
+          "approach": "Implemented: Investigate backend authorization middleware for /api/flows endpoints",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-2-2": {
+      "attempts": [
+        {
+          "session": 3,
+          "timestamp": "2026-01-02T18:53:55.873184",
+          "approach": "Implemented: Fix authorization middleware configuration or token validation to allow /api/flows access",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-2-3": {
+      "attempts": [
+        {
+          "session": 4,
+          "timestamp": "2026-01-02T18:55:20.246115",
+          "approach": "Implemented: Verify frontend is correctly passing auth token to backend API calls",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-3-1": {
+      "attempts": [
+        {
+          "session": 5,
+          "timestamp": "2026-01-02T18:56:41.936670",
+          "approach": "Implemented: Implement GET /api/flows/executions/recent endpoint in backend",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-4-1": {
+      "attempts": [
+        {
+          "session": 6,
+          "timestamp": "2026-01-02T18:58:27.160701",
+          "approach": "Implemented: Add logging and error handling to /api/flows/stats/global endpoint",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-4-2": {
+      "attempts": [
+        {
+          "session": 7,
+          "timestamp": "2026-01-02T19:05:55.936971",
+          "approach": "Implemented: Fix root cause of 500 error (query logic, null checks, aggregation)",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-5-1": {
+      "attempts": [
+        {
+          "session": 8,
+          "timestamp": "2026-01-02T19:09:19.466257",
+          "approach": "Implemented: Add error handling to DashboardPage.tsx API calls",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-5-2": {
+      "attempts": [
+        {
+          "session": 9,
+          "timestamp": "2026-01-02T19:12:31.208241",
+          "approach": "Implemented: Add error handling to FlowsPage.tsx API calls",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-5-3": {
+      "attempts": [
+        {
+          "session": 10,
+          "timestamp": "2026-01-02T19:13:30.683754",
+          "approach": "Implemented: Verify API error handling in flow-api.ts",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-6-1": {
+      "attempts": [
+        {
+          "session": 11,
+          "timestamp": "2026-01-02T19:17:01.021253",
+          "approach": "Implemented: Replace fixed-interval polling with exponential backoff in FlowsPage.tsx",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-7-1": {
+      "attempts": [
+        {
+          "session": 12,
+          "timestamp": "2026-01-02T19:20:51.162296",
+          "approach": "Implemented: Verify all API endpoints return 200 OK responses",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-7-2": {
+      "attempts": [
+        {
+          "session": 13,
+          "timestamp": "2026-01-02T19:23:43.863606",
+          "approach": "Implemented: Verify Dashboard page loads successfully without errors",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    }
+  },
+  "stuck_subtasks": [],
+  "metadata": {
+    "created_at": "2026-01-02T18:48:01.857123",
+    "last_updated": "2026-01-02T19:23:43.863617"
+  }
+}

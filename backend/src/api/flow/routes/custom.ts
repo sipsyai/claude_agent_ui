@@ -150,5 +150,29 @@ export default {
         middlewares: [],
       },
     },
+
+    // Get recent executions
+    {
+      method: 'GET',
+      path: '/flows/executions/recent',
+      handler: 'flow.findRecentExecutions',
+      config: {
+        auth: false,
+        policies: [],
+        middlewares: [],
+      },
+    },
+
+    // Get global flow statistics
+    {
+      method: 'GET',
+      path: '/flows/stats/global',
+      handler: 'flow.getGlobalStats',
+      config: {
+        auth: false,
+        policies: [],
+        middlewares: [],
+      },
+    },
   ],
 };

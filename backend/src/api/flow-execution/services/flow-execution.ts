@@ -321,7 +321,11 @@ export default factories.createCoreService('api::flow-execution.flow-execution',
       : 0;
 
     const totalTokensUsed = executions.reduce((sum, e) => sum + (e.tokensUsed || 0), 0);
-    const totalCost = executions.reduce((sum, e) => sum + parseFloat(e.cost || 0), 0);
+    const totalCost = executions.reduce((sum, e) => {
+      const cost = e.cost || 0;
+      const costNumber = typeof cost === 'string' ? parseFloat(cost) : cost;
+      return sum + (isNaN(costNumber) ? 0 : costNumber);
+    }, 0);
 
     return {
       total,
@@ -345,6 +349,7 @@ export default factories.createCoreService('api::flow-execution.flow-execution',
   async getGlobalStats() {
     const executions = await strapi.entityService.findMany('api::flow-execution.flow-execution', {
       sort: { createdAt: 'desc' },
+      populate: ['flow'],
     }) as any[];
 
     const total = executions.length;
@@ -360,7 +365,11 @@ export default factories.createCoreService('api::flow-execution.flow-execution',
       : 0;
 
     const totalTokensUsed = executions.reduce((sum, e) => sum + (e.tokensUsed || 0), 0);
-    const totalCost = executions.reduce((sum, e) => sum + parseFloat(e.cost || 0), 0);
+    const totalCost = executions.reduce((sum, e) => {
+      const cost = e.cost || 0;
+      const costNumber = typeof cost === 'string' ? parseFloat(cost) : cost;
+      return sum + (isNaN(costNumber) ? 0 : costNumber);
+    }, 0);
 
     // Count executions by trigger type
     const byTrigger = {
@@ -370,13 +379,22 @@ export default factories.createCoreService('api::flow-execution.flow-execution',
       api: executions.filter(e => e.triggeredBy === 'api').length,
     };
 
-    // Get unique flow count
-    const uniqueFlowIds = new Set(executions.map(e => e.flow?.id).filter(Boolean));
+    // Get unique flow count - handle both populated objects and foreign key IDs
+    const uniqueFlowIds = new Set(executions
+      .map(e => {
+        if (!e.flow) return null;
+        // If flow is an object with an id property, use that
+        if (typeof e.flow === 'object' && e.flow.id) return e.flow.id;
+        // If flow is just a number (the ID), use it directly
+        if (typeof e.flow === 'number') return e.flow;
+        return null;
+      })
+      .filter(Boolean));
 
     // Get today's executions
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayExecutions = executions.filter(e => new Date(e.createdAt) >= today);
+    const todayExecutions = executions.filter(e => e.createdAt && new Date(e.createdAt) >= today);
 
     return {
       total,

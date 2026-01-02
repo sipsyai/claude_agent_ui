@@ -1220,6 +1220,30 @@ export class StrapiClient {
   }
 
   /**
+   * Get global flow statistics
+   */
+  async getGlobalFlowStats(): Promise<GlobalFlowStats> {
+    const cacheKey = 'flow-stats:global';
+    const cached = this.cache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const { data } = await this.client.get<StrapiData<any>>(
+      '/flows/stats/global'
+    );
+
+    if (!data.data) {
+      throw new Error('Failed to fetch global flow statistics');
+    }
+
+    const stats = data.data;
+    this.cache.set(cacheKey, stats);
+
+    return stats;
+  }
+
+  /**
    * Get a single flow execution
    */
   async getFlowExecution(flowId: string, executionId: string): Promise<FlowExecution> {

@@ -1,3 +1,285 @@
+/**
+ * @file ManagerApp.tsx
+ * @description Main application component that manages routing, setup workflow, and dashboard navigation.
+ * This is the root component of the Claude Agent Manager UI, handling the complete application lifecycle
+ * from initial setup through project validation to the main dashboard interface.
+ *
+ * ## Features
+ * - **Two-Phase Workflow**: Setup phase for project initialization, dashboard phase for management
+ * - **Multi-Step Setup**: Home → Landing (directory selection) → Validation → Dashboard
+ * - **Routing Configuration**: Client-side routing between 8 different dashboard views
+ * - **Directory Management**: Persistent directory selection via localStorage with change capability
+ * - **Project Validation**: Automated validation of Claude Code CLI, SDK, and project structure
+ * - **Resource Discovery**: Automatic parsing and loading of agents, commands, and skills
+ * - **State Management**: Centralized state for view navigation, directory, and discovered resources
+ * - **Error Handling**: Comprehensive error handling with retry capability for validation failures
+ *
+ * ## Application Lifecycle
+ * The app follows a sequential lifecycle from initialization through to active management:
+ *
+ * ### 1. Initialization (Mount)
+ * - **Load Saved Directory**: Check localStorage for 'claude-agent-manager-dir' key
+ * - **Restore State**: If directory found, populate directoryName state
+ * - **Default View**: Start in 'setup' view with 'home' step
+ * - **No Auto-Navigation**: User must explicitly start the workflow
+ *
+ * ### 2. Setup Phase (view='setup')
+ * The setup phase consists of three steps:
+ *
+ * #### Step 1: Home (setupStep='home')
+ * - **Display**: HomePage component with welcome message and "Get Started" button
+ * - **User Action**: Click "Get Started" to proceed
+ * - **Transition**: `handleGetStarted()` → setupStep='landing'
+ *
+ * #### Step 2: Landing (setupStep='landing')
+ * - **Display**: LandingPage component with directory selection interface
+ * - **Directory Selection**: User enters directory path (text input)
+ * - **State Updates**: `handleDirectoryChange(path)` saves to state and localStorage
+ * - **Validation**: Next button enabled only when directoryHandle is set
+ * - **User Actions**:
+ *   - Back button → return to home step, clear directory
+ *   - Next button → proceed to validation step
+ * - **Transition**: `handleNextFromLanding()` → setupStep='validating'
+ *
+ * #### Step 3: Validating (setupStep='validating')
+ * - **Display**: ValidationPage component showing 6 validation steps with status
+ * - **Automatic Execution**: `startValidation()` called automatically on mount
+ * - **Validation Steps**:
+ *   1. CLI check: Verify Claude Code CLI exists
+ *   2. SDK check: Verify Claude SDK installation
+ *   3. Folder check: Look for .claude folder in directory
+ *   4. Agents parsing: Parse and validate agent configurations
+ *   5. Commands parsing: Parse slash commands
+ *   6. Skills parsing: Parse skill definitions
+ * - **API Calls**:
+ *   - `api.validateProject(directory)` → validation results
+ *   - `api.analyzeProject(directory)` → discovered resources (if all validation passes)
+ * - **Success Path**: All steps pass → load resources → transition to dashboard
+ * - **Failure Path**: Any step fails → show error message with retry button
+ * - **Transition**: All success → view='dashboard', managerView=Dashboard
+ *
+ * ### 3. Dashboard Phase (view='dashboard')
+ * Once validation succeeds, the app enters the main dashboard interface:
+ *
+ * - **Layout**: Full Layout component with Sidebar navigation
+ * - **Active View**: Controlled by managerView state (ManagerView enum)
+ * - **Navigation**: Sidebar onNavigate callback updates managerView
+ * - **Page Rendering**: `renderDashboardContent()` renders page based on managerView
+ * - **Directory Display**: Sidebar shows selected directory with "Change Directory" button
+ * - **Change Directory**: Returns to setup phase (landing step) with directory preserved
+ *
+ * ## Routing Configuration
+ * Client-side routing is managed through the ManagerView enum and state-based rendering:
+ *
+ * ### View Routes (ManagerView enum)
+ * 1. **Dashboard** (ManagerView.Dashboard)
+ *    - Component: DashboardPage
+ *    - Purpose: Overview metrics and quick actions
+ *    - Container: Full layout with container
+ *
+ * 2. **Chat** (ManagerView.Chat)
+ *    - Component: ChatPage
+ *    - Purpose: Interactive chat sessions with agents and skills
+ *    - Container: Full layout WITHOUT container (noContainer=true for full-width)
+ *
+ * 3. **Agents** (ManagerView.Agents)
+ *    - Component: AgentsPage
+ *    - Purpose: Agent listing, creation, editing, execution
+ *    - Props: agents array, directory, onAgentCreated callback
+ *    - Container: Full layout with container
+ *
+ * 4. **Commands** (ManagerView.Commands)
+ *    - Component: CommandsPage
+ *    - Purpose: Slash command listing and execution
+ *    - Props: commands array
+ *    - Container: Full layout with container
+ *
+ * 5. **Skills** (ManagerView.Skills)
+ *    - Component: SkillsPage
+ *    - Purpose: Skill management, creation, training
+ *    - Props: skills array, onRefresh callback
+ *    - Container: Full layout with container
+ *
+ * 6. **MCPServers** (ManagerView.MCPServers)
+ *    - Component: MCPServersPage
+ *    - Purpose: MCP server configuration and tool management
+ *    - Props: directory
+ *    - Container: Full layout with container
+ *
+ * 7. **Tasks** (ManagerView.Tasks)
+ *    - Component: TasksPage
+ *    - Purpose: Task execution history and status
+ *    - Container: Full layout with container
+ *
+ * 8. **Settings** (ManagerView.Settings)
+ *    - Component: SettingsPage
+ *    - Purpose: Application settings and preferences
+ *    - Props: directoryName, onDirectoryChange callback
+ *    - Container: Full layout with container
+ *
+ * ### Route Switching
+ * - **Trigger**: Sidebar navigation item click
+ * - **Handler**: `setManagerView(newView)` called by sidebar onNavigate
+ * - **Re-Render**: App re-renders, renderDashboardContent() returns new page component
+ * - **Layout Persistence**: Layout and Sidebar remain mounted, only main content changes
+ * - **No Page Reload**: Pure client-side routing with React state
+ *
+ * ## Directory Management
+ * Directory selection is central to the app, enabling project-specific resource management:
+ *
+ * ### Directory Selection Flow
+ * 1. **User Input**: Enter path in LandingPage text input
+ * 2. **Handle Change**: `handleDirectoryChange(path)` invoked
+ * 3. **State Updates**:
+ *    - `setDirectoryName(path)` → updates UI with selected path
+ *    - `setDirectoryHandle({})` → marks directory as selected (enables Next button)
+ *    - `localStorage.setItem('claude-agent-manager-dir', path)` → persists selection
+ * 4. **Propagation**: Directory passed as prop to all resource-dependent components
+ *
+ * ### Directory Persistence
+ * - **Storage Key**: 'claude-agent-manager-dir'
+ * - **Storage Type**: localStorage (persists across sessions)
+ * - **Load Timing**: useEffect on mount (runs once)
+ * - **Restoration**: If found, populates directoryName state
+ * - **Clear Trigger**: "Back to Home" button in LandingPage
+ *
+ * ### Directory Usage
+ * Directory is passed to components that need project context:
+ * - **API Calls**: validateProject(directory), analyzeProject(directory), getAgents(directory), getSkills(directory)
+ * - **Component Props**: AgentsPage, MCPServersPage, SettingsPage, AgentCreatorChatPanel, SkillCreatorChatPanel
+ * - **Sidebar Display**: Shows current directory name with truncation
+ *
+ * ### Change Directory Flow
+ * 1. **Trigger**: Click "Change Directory" button in Sidebar
+ * 2. **Handler**: `handleChangeDirectory()` called
+ * 3. **State Changes**:
+ *    - `setView('setup')` → return to setup phase
+ *    - `setSetupStep('landing')` → go directly to directory selection
+ *    - `setDirectoryHandle(null)` → clear selection flag
+ *    - Keep directoryName → user sees last selection in input
+ * 4. **User Flow**: User can enter new path → re-validate → return to dashboard
+ *
+ * ## State Management
+ * The app manages multiple categories of state for coordinating the complex workflow:
+ *
+ * ### View Navigation State
+ * - **view**: 'setup' | 'dashboard' - Top-level phase toggle
+ * - **setupStep**: 'home' | 'landing' | 'validating' - Setup sub-steps
+ * - **managerView**: ManagerView enum - Dashboard page routing
+ *
+ * ### Directory State
+ * - **directoryHandle**: object | null - Selection flag for enabling Next button
+ * - **directoryName**: string | undefined - Selected directory path for display and API calls
+ *
+ * ### Validation State
+ * - **validationSteps**: ValidationStep[] - Array of 6 validation steps with status/error
+ * - Each step: `{ id, label, status: 'pending'|'loading'|'success'|'error', error? }`
+ *
+ * ### Resource Discovery State
+ * - **discoveredAgents**: api.Agent[] - Parsed agents from .claude/agents/
+ * - **discoveredCommands**: api.SlashCommand[] - Parsed commands from .claude/commands/
+ * - **discoveredSkills**: api.Skill[] - Parsed skills from .claude/skills/
+ * - **isLoading**: boolean - Loading flag for initial data fetch
+ *
+ * ### Modal State
+ * - **selectedAgent**: Agent | null - Agent for AgentConfigModal (currently unused in main flow)
+ *
+ * ### State Updates
+ * State is updated through handler functions:
+ * - **Navigation**: `setView()`, `setSetupStep()`, `setManagerView()`
+ * - **Directory**: `handleDirectoryChange()`, `handleChangeDirectory()`
+ * - **Validation**: `startValidation()` with step-by-step updates
+ * - **Resources**: `handleAgentCreated()`, `handleSkillCreated()` for refreshing lists
+ *
+ * ## Theme Handling
+ * The application uses a consistent dark theme throughout:
+ *
+ * ### Setup Phase Styling
+ * - **Container**: `min-h-screen flex flex-col items-center justify-center p-4`
+ * - **Centering**: Full viewport height with centered content
+ * - **Padding**: p-4 for mobile-friendly spacing
+ * - **Background**: Inherits from global styles (dark theme)
+ *
+ * ### Dashboard Phase Styling
+ * - **Layout Component**: Provides consistent structure with Sidebar
+ * - **Theme**: Dark theme with Tailwind CSS variables (bg-background, text-foreground, etc.)
+ * - **Container Mode**: Most pages use container, Chat uses full-width (noContainer=true)
+ * - **Responsive**: Layout handles mobile/tablet/desktop breakpoints
+ *
+ * ### Color Scheme
+ * - **Primary**: Blue accent for active states and primary actions
+ * - **Secondary**: Gray variants for secondary UI elements
+ * - **Background**: Dark gray (bg-background)
+ * - **Foreground**: Light gray text (text-foreground)
+ * - **Muted**: Dimmed text for less important content (text-muted-foreground)
+ * - **Error**: Red for validation failures and errors
+ * - **Success**: Green for successful validation steps
+ *
+ * ## Error Handling
+ * The app provides comprehensive error handling with user feedback:
+ *
+ * ### Validation Errors
+ * - **Catch Block**: `try/catch` around validation API calls
+ * - **Error Display**: Updates all validation steps to 'error' status
+ * - **Error Message**: "Failed to connect to API" shown in ValidationPage
+ * - **Retry Button**: User can click retry to re-run `startValidation()`
+ * - **Console Logging**: Errors logged to console for debugging
+ *
+ * ### Resource Reload Errors
+ * - **Agent Reload**: `handleAgentCreated()` catches and logs errors
+ * - **Skill Reload**: `handleSkillCreated()` catches and logs errors
+ * - **Silent Failure**: Errors don't block UI, only logged to console
+ * - **User Impact**: Resource lists may be stale if reload fails
+ *
+ * ### API Error Handling
+ * - **Connection Failures**: Generic "Failed to connect to API" message
+ * - **Validation Step Failures**: Individual step errors shown with specific messages
+ * - **No Network Retry**: User must manually retry validation
+ *
+ * @example
+ * // Basic usage - render as root app component
+ * import ManagerApp from './ManagerApp';
+ *
+ * function Root() {
+ *   return <ManagerApp />;
+ * }
+ *
+ * @example
+ * // Understanding the setup flow
+ * // 1. User lands on HomePage
+ * // 2. Clicks "Get Started" → LandingPage appears
+ * // 3. Enters directory path "/Users/alice/my-project"
+ * // 4. Clicks "Next" → ValidationPage appears
+ * // 5. Validation runs automatically:
+ * //    - CLI check ✓
+ * //    - SDK check ✓
+ * //    - Folder check ✓
+ * //    - Parse agents ✓ (found 3 agents)
+ * //    - Parse commands ✓ (found 5 commands)
+ * //    - Parse skills ✓ (found 2 skills)
+ * // 6. All pass → Dashboard loads with discovered resources
+ * // 7. Sidebar shows "/Users/alice/my-project" with navigation menu
+ *
+ * @example
+ * // Understanding dashboard navigation
+ * // User clicks "Agents" in Sidebar
+ * // → setManagerView(ManagerView.Agents) called
+ * // → App re-renders
+ * // → renderDashboardContent() returns <AgentsPage agents={discoveredAgents} ... />
+ * // → Layout persists, main content swaps to AgentsPage
+ * // → User sees list of 3 discovered agents
+ *
+ * @example
+ * // Understanding directory change flow
+ * // User in Dashboard, clicks "Change Directory" in Sidebar
+ * // → handleChangeDirectory() called
+ * // → setView('setup'), setSetupStep('landing')
+ * // → App re-renders to LandingPage with last directory shown
+ * // → User enters new path "/Users/alice/other-project"
+ * // → Clicks "Next" → validation runs for new directory
+ * // → Dashboard loads with new project's resources
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import HomePage from './components/HomePage';
 import LandingPage from './components/LandingPage';
@@ -16,8 +298,28 @@ import SettingsPage from './components/SettingsPage';
 import * as api from './services/api';
 import ChatPage from './components/ChatPage';
 
+/**
+ * Setup step type for the three-step onboarding workflow.
+ *
+ * @typedef {'home' | 'landing' | 'validating'} SetupStep
+ * - **home**: Welcome screen with "Get Started" button
+ * - **landing**: Directory selection interface
+ * - **validating**: Project validation with progress indicators
+ */
 type SetupStep = 'home' | 'landing' | 'validating';
 
+/**
+ * Main application component for Claude Agent Manager.
+ *
+ * Manages the complete application lifecycle including:
+ * - Initial setup and directory selection
+ * - Project validation and resource discovery
+ * - Dashboard routing and navigation
+ * - State management for all discovered resources
+ *
+ * This is a stateful component with no props, managing all state internally.
+ * It serves as the root component and handles routing between setup and dashboard phases.
+ */
 const App: React.FC = () => {
   const [view, setView] = useState<'setup' | 'dashboard'>('setup');
   const [setupStep, setSetupStep] = useState<SetupStep>('home');
@@ -33,7 +335,12 @@ const App: React.FC = () => {
   const [managerView, setManagerView] = useState<ManagerView>(ManagerView.Dashboard);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Load saved directory from localStorage on mount
+  /**
+   * Load saved directory from localStorage on component mount.
+   * Runs once on initialization to restore the user's last selected directory.
+   *
+   * @internal
+   */
   useEffect(() => {
     const savedDirName = localStorage.getItem('claude-agent-manager-dir');
     if (savedDirName) {
@@ -41,8 +348,21 @@ const App: React.FC = () => {
     }
   }, []);
 
+  /**
+   * Handle "Get Started" button click from HomePage.
+   * Transitions from home step to landing (directory selection) step.
+   *
+   * @internal
+   */
   const handleGetStarted = () => setSetupStep('landing');
 
+  /**
+   * Handle directory path change from LandingPage input.
+   * Updates state and persists to localStorage for restoration on next session.
+   *
+   * @internal
+   * @param {string} path - The selected directory path
+   */
   const handleDirectoryChange = (path: string) => {
     if (path) {
       setDirectoryName(path);
@@ -51,6 +371,22 @@ const App: React.FC = () => {
     }
   };
 
+  /**
+   * Start project validation workflow.
+   * Calls API to validate project structure and parse resources.
+   * Updates validation steps with real-time progress and results.
+   *
+   * **Validation Workflow:**
+   * 1. Initialize 6 validation steps with 'pending' status
+   * 2. Set all steps to 'loading' status
+   * 3. Call `api.validateProject(directory)` for validation
+   * 4. Update each step based on API results (success/error)
+   * 5. If all successful, call `api.analyzeProject(directory)` to load resources
+   * 6. Transition to dashboard view with loaded agents, commands, skills
+   * 7. On error, mark all steps as 'error' with message
+   *
+   * @internal
+   */
   const startValidation = useCallback(async () => {
     setSetupStep('validating');
     const steps: ValidationStep[] = [
@@ -114,6 +450,13 @@ const App: React.FC = () => {
     }
   }, [directoryName]);
 
+  /**
+   * Handle "Change Directory" button click from Sidebar.
+   * Returns to setup phase (landing step) while preserving the current directory name
+   * in the input field, allowing user to edit or enter a new directory.
+   *
+   * @internal
+   */
   const handleChangeDirectory = () => {
     setView('setup');
     setSetupStep('landing');
@@ -121,8 +464,21 @@ const App: React.FC = () => {
     // Keep directoryName so user sees their last choice
   };
 
+  /**
+   * Handle "Next" button click from LandingPage.
+   * Only proceeds if directoryHandle is set (directory selected).
+   * Calls startValidation() to begin the validation workflow.
+   *
+   * @internal
+   */
   const handleNextFromLanding = () => directoryHandle && startValidation();
 
+  /**
+   * Handle "Back" button click from LandingPage.
+   * Returns to home step and clears all directory-related state and localStorage.
+   *
+   * @internal
+   */
   const handleBackToHome = () => {
     setSetupStep('home');
     setDirectoryHandle(null);
@@ -130,6 +486,13 @@ const App: React.FC = () => {
     localStorage.removeItem('claude-agent-manager-dir');
   };
 
+  /**
+   * Handle agent creation completion callback.
+   * Reloads the agents list from the API to include the newly created agent.
+   * Called by AgentsPage when an agent is successfully created.
+   *
+   * @internal
+   */
   const handleAgentCreated = async () => {
     // Reload agents list
     if (directoryName) {
@@ -142,6 +505,13 @@ const App: React.FC = () => {
     }
   };
 
+  /**
+   * Handle skill creation completion callback.
+   * Reloads the skills list from the API to include the newly created skill.
+   * Called by SkillsPage when a skill is successfully created.
+   *
+   * @internal
+   */
   const handleSkillCreated = async () => {
     // Reload skills list
     if (directoryName) {
@@ -154,6 +524,13 @@ const App: React.FC = () => {
     }
   };
 
+  /**
+   * Render setup phase content based on current setupStep.
+   * Returns the appropriate page component for each step in the onboarding flow.
+   *
+   * @internal
+   * @returns {JSX.Element} The setup page component to render
+   */
   const renderSetupContent = () => {
     switch (setupStep) {
       case 'home':
@@ -175,6 +552,14 @@ const App: React.FC = () => {
     }
   };
 
+  /**
+   * Render dashboard content based on current managerView.
+   * Returns the appropriate page component for the selected dashboard view.
+   * Each page receives relevant props including discovered resources and callbacks.
+   *
+   * @internal
+   * @returns {JSX.Element} The dashboard page component to render
+   */
   const renderDashboardContent = () => {
     switch(managerView) {
       case ManagerView.Dashboard:
@@ -227,5 +612,7 @@ const App: React.FC = () => {
     </Layout>
   );
 };
+
+App.displayName = 'ManagerApp';
 
 export default App;

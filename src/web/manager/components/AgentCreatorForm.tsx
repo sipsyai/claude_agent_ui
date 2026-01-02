@@ -1,3 +1,236 @@
+/**
+ * @file AgentCreatorForm.tsx
+ * @description Comprehensive form component for creating and editing agents with multi-stage
+ * configuration including tools, skills, MCP integration, input fields, and output schema.
+ *
+ * ## Features
+ * - Create new agents or edit existing ones (dual-mode component)
+ * - Required field validation (name, description, system prompt)
+ * - Multi-tab tool selection (allowed/disallowed Claude built-in tools)
+ * - MCP server tool integration via MCPToolsSelector
+ * - Skill binding via SkillSelector
+ * - Model selection (sonnet, opus, haiku)
+ * - Dynamic input field builder with 5 field types
+ * - JSON schema output configuration
+ * - Real-time configuration preview
+ * - Form state management with auto-reset
+ * - Success/error feedback with auto-close
+ *
+ * ## Form Fields
+ * The component provides comprehensive configuration through multiple sections:
+ *
+ * ### Core Configuration (Required)
+ * 1. **Agent Name** - Unique identifier (converted to kebab-case)
+ *    - Required field with red asterisk indicator
+ *    - Disabled in edit mode (name cannot be changed)
+ *    - Auto-converted to kebab-case (e.g., "SQL Optimizer" → "sql-optimizer")
+ *
+ * 2. **Description** - When to use this agent
+ *    - Required field with red asterisk indicator
+ *    - Recommended to start with "Use for..." or "Use when..."
+ *    - 2-row textarea for brief explanation
+ *
+ * 3. **System Prompt** - Agent's role, expertise, and behavior
+ *    - Required field with red asterisk indicator
+ *    - 12-row textarea with monospace font
+ *    - Defines agent responsibilities, workflow, and output format
+ *    - Placeholder shows comprehensive example structure
+ *
+ * ### Tool Configuration (Optional)
+ * 4. **Claude Built-in Tools** - Multi-tab selector for built-in tools
+ *    - **Allowed Tools Tab**: Whitelist specific tools (leave empty for all)
+ *    - **Disallowed Tools Tab**: Blacklist specific tools (leave empty for none)
+ *    - Checkbox list with tool name and description
+ *    - Active tab count badge display
+ *    - Mutually exclusive with disallowed tools (same tool can't be both)
+ *
+ * 5. **MCP Server Tools** - Integration with Model Context Protocol servers
+ *    - Uses MCPToolsSelector component for server-specific tool selection
+ *    - Supports multiple servers with independent tool selection
+ *    - Leave empty to allow all MCP tools
+ *
+ * 6. **Skills** - Specialized capabilities and domain knowledge
+ *    - Uses SkillSelector component for multi-select skill binding
+ *    - Skills provide pre-built functionality to agents
+ *    - Leave empty for no skill binding
+ *
+ * ### Execution Configuration (Optional)
+ * 7. **Model** - Claude model selection
+ *    - Options: Default (inherit), Sonnet (balanced), Opus (highest quality), Haiku (fast)
+ *    - Defaults to inherit from main agent configuration
+ *
+ * 8. **Input Fields** - Dynamic form builder for agent execution
+ *    - Add/remove custom input fields
+ *    - Each field has: name, label, type, placeholder, options (for dropdown), required flag
+ *    - 5 supported types: text, textarea, dropdown, checkbox, number
+ *    - Users fill these fields when executing the agent
+ *    - Empty fields filtered out before submission
+ *
+ * 9. **Output Schema** - JSON schema for expected output format
+ *    - Optional JSON schema definition
+ *    - 8-row textarea with monospace font
+ *    - Validated as valid JSON before submission
+ *    - Placeholder shows example schema structure
+ *
+ * ### Configuration Preview
+ * Real-time preview section shows selected configuration:
+ * - **Skills**: Green badges with count
+ * - **Built-in Tools**: Blue badges with count
+ * - **MCP Tools**: Indigo badges grouped by server with total count
+ * - Only visible when at least one tool/skill is selected
+ *
+ * ## Validation
+ * The component implements multi-level validation:
+ *
+ * ### Required Field Validation
+ * - **Agent Name**: Cannot be empty, checked on submit
+ * - **Description**: Cannot be empty, checked on submit
+ * - **System Prompt**: Cannot be empty, checked on submit
+ * - Submit button disabled when any required field is empty
+ *
+ * ### JSON Schema Validation
+ * - **Output Schema**: Must be valid JSON if provided (optional field)
+ * - Parse error shows message: "Output schema must be valid JSON"
+ * - Validation runs before submission
+ *
+ * ### Input Field Validation
+ * - Fields must have: name, type, and label to be included
+ * - Empty fields automatically filtered out before submission
+ * - Dropdown fields require options (comma-separated)
+ *
+ * ## Agent Creation Workflow
+ * The component handles both creation and editing with a unified workflow:
+ *
+ * ### Create Mode (editAgent = undefined)
+ * 1. User opens modal (isOpen = true)
+ * 2. Form loads with empty fields
+ * 3. Available tools fetched from API
+ * 4. User fills required fields (name, description, system prompt)
+ * 5. User optionally selects tools, skills, model, input fields, output schema
+ * 6. User clicks "Create Agent"
+ * 7. Validation runs (required fields, JSON schema)
+ * 8. If valid, API call to createAgent with all configuration
+ * 9. Success message displayed for 1.5 seconds
+ * 10. Form resets and modal closes
+ * 11. onSuccess callback invoked
+ *
+ * ### Edit Mode (editAgent provided)
+ * 1. User opens modal with existing agent
+ * 2. Form populates with agent data:
+ *    - Core fields (name, description, system prompt)
+ *    - Tool configuration (allowed/disallowed, MCP, skills)
+ *    - Model selection
+ *    - Input fields and output schema (if supported)
+ * 3. Agent name field disabled (cannot change name)
+ * 4. User modifies configuration
+ * 5. User clicks "Update Agent"
+ * 6. Validation runs (required fields, JSON schema)
+ * 7. If valid, API call to updateAgent with modified configuration
+ * 8. Success message displayed for 1.5 seconds
+ * 9. Form resets and modal closes
+ * 10. onSuccess callback invoked
+ *
+ * ### Data Transformation
+ * The component transforms between Strapi component structure and form state:
+ * - **Tools**: Extracts allowedTools and disallowedTools from toolConfig
+ * - **MCP Tools**: Converts mcpConfig component array to Record<string, string[]>
+ * - **Skills**: Converts skillSelection component array to string[]
+ * - **Model**: Maps ClaudeModel to form model type (sonnet/opus/haiku)
+ *
+ * ## Modal Behavior
+ * - **Open State**: Controlled by isOpen prop
+ * - **Close Actions**: Close button (X icon) or Cancel button
+ * - **Auto-close**: Automatically closes 1.5 seconds after successful create/update
+ * - **Form Reset**: All fields reset to initial values on close
+ * - **Backdrop**: Semi-transparent black overlay with click-outside disabled
+ * - **Responsive**: Max width 3xl (768px), max height 90vh with scrolling
+ *
+ * ## Styling Behavior
+ * The component uses Tailwind CSS for comprehensive styling:
+ * - **Modal**: Fixed overlay with centered dialog, z-50 layering
+ * - **Header**: Title, subtitle, close button with border-bottom
+ * - **Form**: Scrollable body with space-y-4 field spacing
+ * - **Required Indicators**: Red asterisk (*) with text-red-500
+ * - **Tool Tabs**: Active tab has border-primary and text-primary
+ * - **Success Message**: bg-green-500/10 with green-500 text and border
+ * - **Error Message**: bg-red-500/10 with red-500 text and border
+ * - **Preview Section**: border-2 border-primary/20 with bg-primary/5
+ * - **Badge Colors**: Skills (green), Built-in Tools (blue), MCP Tools (indigo)
+ * - **Footer**: Border-top with right-aligned action buttons
+ * - **Disabled State**: opacity-50 on all disabled inputs
+ *
+ * @example
+ * // Create new agent
+ * const [showForm, setShowForm] = useState(false);
+ * const [directory, setDirectory] = useState('/home/user/project');
+ *
+ * <AgentCreatorForm
+ *   isOpen={showForm}
+ *   onClose={() => setShowForm(false)}
+ *   onSuccess={() => {
+ *     console.log('Agent created successfully');
+ *     // Refresh agent list, navigate to agents page, etc.
+ *   }}
+ *   directory={directory}
+ * />
+ *
+ * @example
+ * // Edit existing agent
+ * const [editingAgent, setEditingAgent] = useState<Agent | undefined>(undefined);
+ * const agent = {
+ *   id: 123,
+ *   name: "sql-optimizer",
+ *   description: "Use for SQL query optimization and performance analysis",
+ *   systemPrompt: "You are an expert SQL optimizer...",
+ *   toolConfig: {
+ *     allowedTools: ["bash_20241022", "text_editor_20241022"]
+ *   },
+ *   modelConfig: { model: "claude-sonnet-4-20250514" }
+ * };
+ *
+ * <AgentCreatorForm
+ *   isOpen={!!editingAgent}
+ *   onClose={() => setEditingAgent(undefined)}
+ *   onSuccess={() => {
+ *     console.log('Agent updated successfully');
+ *     setEditingAgent(undefined);
+ *   }}
+ *   directory={directory}
+ *   editAgent={editingAgent}
+ * />
+ *
+ * @example
+ * // Understanding input fields
+ * // When creating an agent with custom input fields:
+ * // 1. Click "+ Add Field" button
+ * // 2. Fill in field configuration:
+ * //    - Field Name: "url" (programmatic identifier)
+ * //    - Label: "Website URL" (user-facing label)
+ * //    - Type: "text" (text, textarea, dropdown, checkbox, number)
+ * //    - Placeholder: "https://example.com" (optional hint)
+ * //    - Required: checked (enforce user input)
+ * // 3. For dropdown type, add options: "Basic, Detailed, Comprehensive"
+ * // 4. Click "Remove" to delete unwanted fields
+ * // 5. When agent is executed, users will fill these fields in AgentConfigModal
+ *
+ * @example
+ * // Understanding tool configuration
+ * // The form provides three tool selection mechanisms:
+ * // 1. Claude Built-in Tools (Allowed): Whitelist specific tools
+ * //    - Select "bash_20241022" and "text_editor_20241022"
+ * //    - Agent can ONLY use these two tools
+ * // 2. Claude Built-in Tools (Disallowed): Blacklist specific tools
+ * //    - Select "computer_20241022"
+ * //    - Agent can use ALL tools EXCEPT computer_20241022
+ * // 3. MCP Server Tools: Select tools from external servers
+ * //    - Select "github/create-issue" from GitHub MCP server
+ * //    - Select "jira/create-ticket" from Jira MCP server
+ * //    - Agent can use these MCP tools in addition to built-in tools
+ * // 4. Skills: Bind pre-built skills to agent
+ * //    - Select "code-review" and "test-generation" skills
+ * //    - Agent inherits capabilities from these skills
+ */
+
 import React, { useState, useEffect } from 'react';
 import * as api from '../services/api';
 import type { Agent } from '../../../types/agent.types';
@@ -7,6 +240,15 @@ import { XCircleIcon, CpuChipIcon, PuzzlePieceIcon, ServerIcon } from './ui/Icon
 import MCPToolsSelector from './MCPToolsSelector';
 import SkillSelector from './SkillSelector';
 
+/**
+ * Props for the AgentCreatorForm component.
+ *
+ * @property {boolean} isOpen - Controls modal visibility (true = visible, false = hidden)
+ * @property {() => void} onClose - Callback invoked when modal should close (X button or Cancel button clicked)
+ * @property {() => void} onSuccess - Callback invoked after successful agent creation/update (before auto-close)
+ * @property {string} [directory] - Optional directory path for agent creation/update (used in API calls)
+ * @property {Agent} [editAgent] - Optional agent object to edit; if provided, form enters edit mode with pre-populated fields
+ */
 interface AgentCreatorFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -104,6 +346,15 @@ const AgentCreatorForm: React.FC<AgentCreatorFormProps> = ({
     }
   }, [isOpen, editAgent]);
 
+  /**
+   * Toggles a Claude built-in tool in the allowed tools list.
+   * @internal
+   *
+   * If tool is currently selected, removes it from the list.
+   * If tool is not selected, adds it to the list.
+   *
+   * @param {string} toolName - Name of the tool to toggle (e.g., "bash_20241022")
+   */
   const handleToolToggle = (toolName: string) => {
     setSelectedTools((prev) =>
       prev.includes(toolName)
@@ -112,6 +363,27 @@ const AgentCreatorForm: React.FC<AgentCreatorFormProps> = ({
     );
   };
 
+  /**
+   * Handles form submission for agent creation or update.
+   * @internal
+   *
+   * Workflow:
+   * 1. Prevents default form submission
+   * 2. Validates required fields (name, description, system prompt)
+   * 3. Validates output schema as valid JSON (if provided)
+   * 4. Filters out empty input fields
+   * 5. Calls createAgent or updateAgent API based on mode
+   * 6. Shows success message for 1.5 seconds
+   * 7. Resets form and closes modal
+   * 8. Invokes onSuccess callback
+   *
+   * Error handling:
+   * - Required field missing: Shows error message, prevents submission
+   * - Invalid JSON schema: Shows error message, prevents submission
+   * - API error: Shows error message from API or generic message
+   *
+   * @param {React.FormEvent} e - Form submission event
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -760,5 +1032,7 @@ Always provide:
     </div>
   );
 };
+
+AgentCreatorForm.displayName = 'AgentCreatorForm';
 
 export default AgentCreatorForm;

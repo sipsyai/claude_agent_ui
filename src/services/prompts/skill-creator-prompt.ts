@@ -1,9 +1,117 @@
 /**
- * System prompt for the interactive Skill Creator
- * This prompt guides Claude through a quick conversation to gather
- * skill requirements and create the skill file using the Claude Agent SDK format.
+ * Skill Creator System Prompt Template
+ *
+ * @description
+ * Streamlined system prompt that guides Claude through a fast, focused consultation
+ * process to create Claude Agent SDK skills. Unlike agents, skills are specialized
+ * capabilities that Claude autonomously invokes when relevant based on semantic matching.
+ * This prompt emphasizes speed and clarity, with a two-phase conversation flow designed
+ * to create skills in 2-3 messages.
+ *
+ * Skills vs Agents:
+ * - **Skills**: Autonomously activated by semantic matching, passive capabilities
+ * - **Agents**: Explicitly invoked by users, active conversation participants
+ *
+ * Template Structure:
+ * - **Phase 1: Understanding the Skill** - Quick 1-2 questions about purpose and use case
+ * - **Phase 2: Tools and Creation** - Suggest tools, confirm, and immediately create the file
+ *
+ * Key Features:
+ * - Fast consultation (2-3 messages max before file creation)
+ * - Enforces "Use when..." description format (critical for semantic matching)
+ * - Proper SKILL.md directory structure (.claude/skills/{name}/SKILL.md)
+ * - YAML frontmatter with allowed-tools and mcp-tools arrays
+ * - Tool selection best practices for common skill patterns
+ * - Edge case handling (conflicts, unclear requirements)
+ *
+ * Skill File Format:
+ * The template guides creation of SKILL.md files with YAML frontmatter:
+ * ```markdown
+ * ---
+ * name: skill-name
+ * description: Use when [clear trigger condition]
+ * allowed-tools:
+ *   - Read
+ *   - Write
+ * mcp-tools:
+ *   - tool-name
+ * ---
+ *
+ * # Skill Title
+ *
+ * Brief skill instructions and examples.
+ * ```
+ *
+ * Critical Requirements:
+ * 1. **Directory Structure**: Must be .claude/skills/{name}/SKILL.md (not just SKILL.md)
+ * 2. **Description Format**: MUST start with "Use when..." for semantic matching
+ * 3. **YAML Arrays**: Tools must be in proper YAML array format (dash-prefixed items)
+ *
+ * Variable Substitution:
+ * This prompt is a static template string with no runtime variable substitution.
+ * The prompt itself instructs Claude to substitute values like {skill-name} and
+ * {name} when generating SKILL.md files for users.
+ *
+ * @example
+ * ```typescript
+ * import { SKILL_CREATOR_SYSTEM_PROMPT } from './prompts/skill-creator-prompt.js';
+ *
+ * // Use as system prompt for skill creator conversations
+ * const response = await anthropic.messages.create({
+ *   model: 'claude-sonnet-4-5',
+ *   system: SKILL_CREATOR_SYSTEM_PROMPT,
+ *   messages: [
+ *     { role: 'user', content: 'I need a skill for PDF processing' }
+ *   ]
+ * });
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Example conversation flow guided by this prompt:
+ *
+ * // User: "I need a skill for PDF processing"
+ * //
+ * // Claude (guided by this prompt):
+ * // "Hi! I'll help you create a new Skill. What capability would you like
+ * //  to add? Tell me what this skill should do and when it should be used."
+ * //
+ * // User: "Extract text and analyze PDF documents"
+ * //
+ * // Claude:
+ * // "For this skill, I'm thinking it needs these tools: Read, Write, Bash.
+ * //  Does that sound right?"
+ * //
+ * // After confirmation, creates:
+ * // .claude/skills/pdf-processor/SKILL.md
+ * // with description: "Use when the user needs to process PDF documents,
+ * //                    extract text, or convert PDFs to other formats"
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Common skill patterns suggested by this prompt:
+ *
+ * // Read-only analyzer skill
+ * // allowed-tools: [Read, Grep, Glob]
+ * // description: "Use when analyzing code for security vulnerabilities..."
+ *
+ * // File manipulation skill
+ * // allowed-tools: [Read, Write, Edit]
+ * // description: "Use when converting data formats or generating files..."
+ *
+ * // Command execution skill
+ * // allowed-tools: [Read, Write, Bash]
+ * // description: "Use when running build processes or executing tools..."
+ *
+ * // Research skill
+ * // allowed-tools: [Read, WebFetch, WebSearch]
+ * // description: "Use when fetching API documentation or researching libraries..."
+ * ```
+ *
+ * @see {@link https://docs.anthropic.com/en/api/agent-sdk|Claude Agent SDK Documentation}
+ * @since 1.0.0
  */
-
 export const SKILL_CREATOR_SYSTEM_PROMPT = `You are an expert Claude Skill architect helping users create Agent Skills. Your goal is to have a quick, focused conversation to understand their needs and create a well-designed skill file.
 
 ## Your Role

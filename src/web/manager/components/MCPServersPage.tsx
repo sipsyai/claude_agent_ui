@@ -1,3 +1,382 @@
+/**
+ * MCPServersPage - Model Context Protocol Server Management
+ *
+ * A comprehensive page component for managing Model Context Protocol (MCP) servers in the Claude Manager UI.
+ * Provides server listing, configuration, testing, tool synchronization, and import/export functionality.
+ * MCP servers extend Claude's capabilities by exposing tools through a standardized protocol.
+ *
+ * ## Features
+ *
+ * - **Server Listing**: Grid-based display of all configured MCP servers with status and metadata
+ * - **CRUD Operations**: Create, Read, Update, Delete MCP server configurations
+ * - **Quick Add Mode**: CLI-style command parsing for rapid server setup
+ * - **Server Testing**: Test MCP server connectivity and tool availability
+ * - **Tool Synchronization**: Load and sync tools from MCP servers to Strapi backend
+ * - **Bulk Operations**: Multi-select servers and bulk delete functionality
+ * - **Import/Export**: Export/import .mcp.json configuration with merge or overwrite modes
+ * - **Enable/Disable**: Toggle server enabled/disabled state without deletion
+ * - **Toast Notifications**: User feedback for all operations (success/error messages)
+ * - **Directory Integration**: Automatic server loading based on selected directory
+ *
+ * ## Server Listing
+ *
+ * Displays MCP servers in a responsive grid layout (1 column mobile, 2 columns tablet, 3 columns desktop).
+ * Each server card shows:
+ *
+ * - **Header**: Server name, disabled badge (if disabled), tool count badge
+ * - **Command Display**: Truncated command preview
+ * - **Description**: Optional server description (line-clamp-2)
+ * - **Tools Section**: Collapsible list of tools with format `mcp__{server}__{tool}` and descriptions
+ * - **Selection Checkbox**: For bulk operations (positioned top-left)
+ * - **Action Buttons** (5 icons):
+ *   * Enable/Disable (CheckCircleIcon, green when disabled, gray when enabled)
+ *   * Sync Tools (ServerIcon, blue, syncs tools to Strapi)
+ *   * Test (PlayCircleIcon, green, tests server connectivity)
+ *   * Edit (PencilIcon, secondary color)
+ *   * Delete (TrashIcon, destructive color)
+ *
+ * ## CRUD Operations
+ *
+ * ### Create
+ * Two creation modes available via "Add Server" button:
+ *
+ * 1. **Manual Mode** (Default):
+ *    - Form-based input for all server configuration fields
+ *    - Fields: Server Name, Command, Arguments (array), Environment Variables (key-value), Description
+ *    - ArrayEditor for arguments, KeyValueEditor for environment variables
+ *    - Validates and saves via `api.createMCPServer()`
+ *
+ * 2. **Quick Add Mode** (CLI Tab):
+ *    - Paste CLI command: `<name> <command> [args...]`
+ *    - Example: `chrome-devtools npx chrome-devtools-mcp@latest`
+ *    - Parses command via `parseCLICommand()` and pre-fills form
+ *    - Switches to Manual mode with populated fields for review
+ *
+ * ### Read
+ * - Automatic loading on mount via `loadServers()`
+ * - Reloads when `directory` prop changes
+ * - Displays all servers from `.mcp.json` in project root
+ * - Shows count in header ("MCP Servers (N)")
+ *
+ * ### Update (Edit)
+ * - Click Edit button on any server card
+ * - Opens modal with pre-populated form fields
+ * - Extracts stdio config (command, args, env, disabled)
+ * - Saves changes via `api.updateMCPServer()`
+ *
+ * ### Delete
+ * - Single Delete: Click delete icon → confirmation dialog → `api.deleteMCPServer()`
+ * - Bulk Delete: Select multiple servers → "Delete Selected" → confirmation → `api.bulkDeleteMCPServers()`
+ *
+ * ## Quick Add Mode
+ *
+ * CLI-style command parsing for rapid server configuration:
+ *
+ * ### Input Format
+ * - Pattern: `<name> <command> [arg1] [arg2] ...`
+ * - Example: `chrome-devtools npx chrome-devtools-mcp@latest`
+ * - Splits on whitespace: first part = name, second = command, rest = args
+ *
+ * ### Parsing Workflow
+ * 1. User enters CLI command in input field
+ * 2. Clicks "Parse & Fill Form" button (or presses Enter)
+ * 3. `parseCLICommand()` validates format (minimum 2 parts required)
+ * 4. Creates formData object: `{ name, command, args, env: {}, disabled: false }`
+ * 5. Switches to Manual mode with pre-populated fields
+ * 6. User can review/modify before saving
+ *
+ * ### Validation
+ * - Minimum 2 parts required (name + command)
+ * - Shows error toast if format is invalid
+ * - Empty args array if no arguments provided
+ *
+ * ## Server Testing
+ *
+ * Test MCP server connectivity and functionality:
+ *
+ * ### Test Workflow
+ * 1. User clicks Test button on server card
+ * 2. Test modal opens with server name display
+ * 3. API call: `api.testMCPServer(serverId, directory)`
+ * 4. Shows spinner during test execution
+ * 5. Displays result with color-coded feedback:
+ *    - Success: Green background, CheckCircleIcon
+ *    - Failure: Red background, XCircleIcon, error message
+ * 6. User closes modal
+ *
+ * ### Test Result Interface
+ * - `success`: Boolean indicating test outcome
+ * - `message`: Human-readable result message
+ * - `error`: Optional error details on failure
+ *
+ * ## Tool Synchronization
+ *
+ * Load and sync tools from MCP servers to Strapi backend:
+ *
+ * ### Sync Workflow
+ * 1. User clicks Sync Tools button (ServerIcon, blue)
+ * 2. API call: `api.refreshMCPServerTools(serverId, directory)`
+ * 3. Backend discovers tools from MCP server
+ * 4. Creates/updates MCPTool records in Strapi
+ * 5. Returns synced tools array and count
+ * 6. Updates server card with new tool count and list
+ * 7. Shows success toast: "Synced N tool(s) to Strapi"
+ *
+ * ### Tool Display
+ * - Badge shows total tool count
+ * - Collapsible section with arrow indicator (▶/▼)
+ * - Each tool: `mcp__{serverName}__{toolName}` with description
+ * - Displayed in monospace font with primary color
+ *
+ * ## Bulk Operations
+ *
+ * Multi-select functionality for batch server management:
+ *
+ * ### Selection Workflow
+ * 1. User clicks "Select All" checkbox to select/deselect all servers
+ * 2. Or clicks individual server checkboxes
+ * 3. Selected servers tracked in Set (selectedServers state)
+ * 4. Bulk Actions card appears when selectedServers.size > 0
+ *
+ * ### Bulk Actions Card
+ * - Displays count: "N server(s) selected"
+ * - Actions:
+ *   * Clear Selection: Resets selectedServers to empty Set
+ *   * Delete Selected: Opens bulk delete confirmation dialog
+ *
+ * ### Bulk Delete
+ * 1. User clicks "Delete Selected" button
+ * 2. Confirmation dialog shows count to delete
+ * 3. On confirm: `api.bulkDeleteMCPServers(serverIds, directory)`
+ * 4. Shows toast with result (success count, failure count)
+ * 5. Reloads server list
+ * 6. Clears selection
+ *
+ * ## Import/Export Configuration
+ *
+ * Export and import .mcp.json configuration files:
+ *
+ * ### Export Workflow
+ * 1. User clicks "Export" button in header
+ * 2. API call: `api.exportMCPConfig(directory)`
+ * 3. Returns entire .mcp.json configuration
+ * 4. Creates JSON blob and triggers browser download
+ * 5. Downloads as "mcp-config-export.json"
+ * 6. Shows success toast
+ *
+ * ### Import Workflow
+ * 1. User clicks "Import" button → Import modal opens
+ * 2. User selects import mode (dropdown):
+ *    - Merge: Keep existing servers, add new ones (default)
+ *    - Overwrite: Replace all existing servers
+ * 3. User selects JSON file via file input
+ * 4. FileReader reads file content
+ * 5. JSON.parse() parses configuration
+ * 6. API call: `api.importMCPConfig(config, mode, directory)`
+ * 7. Backend processes import based on mode
+ * 8. Reloads server list
+ * 9. Shows success toast with mode
+ * 10. Modal closes
+ *
+ * ### Import Modes
+ * - **merge**: Adds new servers, updates existing by name, preserves others
+ * - **overwrite**: Deletes all existing servers, replaces with imported config
+ *
+ * ## Enable/Disable Toggle
+ *
+ * Toggle server state without deletion:
+ *
+ * ### Toggle Workflow
+ * 1. User clicks Enable/Disable button (CheckCircleIcon)
+ * 2. Icon color: Green when disabled (to enable), Gray when enabled (to disable)
+ * 3. API call: `api.toggleMCPServer(serverId, directory)`
+ * 4. Backend updates server.disabled property in .mcp.json
+ * 5. Returns result with success flag and message
+ * 6. Shows toast with result message
+ * 7. Reloads server list if successful
+ * 8. Disabled servers display with opacity-60 and "Disabled" badge
+ *
+ * ## Toast Notifications
+ *
+ * User feedback for all operations:
+ *
+ * ### Toast Display
+ * - Fixed position: top-right corner (top-4 right-4)
+ * - Auto-dismiss: 5-second timeout (useEffect cleanup)
+ * - Color-coded: Green background for success, Red for error
+ * - Z-index: 50 for overlay visibility
+ * - Shows operation result messages
+ *
+ * ### Toast Types
+ * - **success**: Green background, white text, success messages
+ * - **error**: Red background, white text, error messages
+ *
+ * ## State Management
+ *
+ * The component manages ten categories of state:
+ *
+ * 1. **Server List State** (`servers`, `loading`, `error`):
+ *    - Fetched from API on mount and directory changes
+ *    - Loading spinner during fetch
+ *    - Error display with retry button
+ *
+ * 2. **Selection State** (`selectedServers`):
+ *    - Set of server IDs for bulk operations
+ *    - Updated via checkbox interactions
+ *    - Cleared after bulk operations
+ *
+ * 3. **Modal State** (`isModalOpen`, `modalMode`, `selectedServer`):
+ *    - Controls create/edit/view modal visibility
+ *    - Mode: 'create' | 'edit' | 'view'
+ *    - Tracks server being viewed/edited
+ *
+ * 4. **Quick Add State** (`quickAddMode`, `cliCommand`):
+ *    - Toggle between Manual and Quick Add tabs
+ *    - Stores CLI command string
+ *
+ * 5. **Form State** (`formData`):
+ *    - Server configuration: name, command, args, env, disabled, description
+ *    - Updated via form inputs
+ *    - Reset on modal close
+ *
+ * 6. **Delete State** (`deleteConfirmOpen`, `serverToDelete`):
+ *    - Single server delete confirmation
+ *    - Tracks server pending deletion
+ *
+ * 7. **Bulk Delete State** (`bulkDeleteConfirmOpen`):
+ *    - Bulk delete confirmation dialog
+ *    - Uses selectedServers for server IDs
+ *
+ * 8. **Test State** (`testModalOpen`, `testResult`, `testing`):
+ *    - Test modal visibility
+ *    - Test execution status (loading)
+ *    - Test result object (success, message, error)
+ *
+ * 9. **Import State** (`importModalOpen`, `importMode`, `importing`):
+ *    - Import modal visibility
+ *    - Import mode selection (merge/overwrite)
+ *    - Import execution status (loading)
+ *
+ * 10. **Toast State** (`toast`):
+ *     - Notification message and type
+ *     - Auto-cleared after 5 seconds
+ *
+ * ## Directory Integration
+ *
+ * The component automatically loads servers based on the `directory` prop:
+ *
+ * 1. **Initial Load**: Fetches servers from API on mount
+ * 2. **Directory Changes**: Reloads servers when directory prop changes (useEffect dependency)
+ * 3. **API Integration**: Uses `api.getMCPServers(directory)` for data fetching
+ * 4. **Error Handling**: Sets error state, displays error message with retry button
+ * 5. **Loading States**: Shows spinner during fetch operations
+ *
+ * ## Styling Behavior
+ *
+ * The component uses Tailwind CSS classes for styling:
+ *
+ * - **Container**: `space-y-6` for vertical spacing between sections
+ * - **Header**: `flex items-center justify-between` with title and action buttons
+ * - **Grid Layout**: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`
+ * - **Server Cards**: `hover:border-primary transition-colors` for interactive feedback
+ * - **Disabled Servers**: `opacity-60` for visual indication
+ * - **Selected Servers**: `border-primary bg-primary/5` for selection highlight
+ * - **Badges**: Color-coded (gray for disabled, blue for tools)
+ * - **Toast**: Fixed top-right with green/red backgrounds
+ * - **Modal Tabs**: Active tab with primary background, inactive with secondary
+ * - **Action Buttons**: Color-coded icons (green=test/enable, blue=sync, red=delete, gray=edit)
+ * - **Empty State**: Centered layout with icon, heading, description, and CTA button
+ * - **Loading State**: Centered spinner with primary color
+ * - **Error State**: Centered error message with retry button
+ *
+ * @example
+ * // Basic usage in ManagerApp dashboard phase
+ * import MCPServersPage from './components/MCPServersPage';
+ *
+ * function ManagerApp() {
+ *   const [activeView, setActiveView] = useState<DashboardView>('MCP Servers');
+ *   const [directory, setDirectory] = useState('/path/to/project');
+ *
+ *   return (
+ *     <Layout sidebarProps={{ activeView, onNavigate: setActiveView }}>
+ *       {activeView === 'MCP Servers' && (
+ *         <MCPServersPage directory={directory} />
+ *       )}
+ *     </Layout>
+ *   );
+ * }
+ *
+ * @example
+ * // Understanding server creation workflow (Quick Add mode)
+ * // 1. User clicks "Add Server" button
+ * //    → handleCreate() opens modal in 'create' mode
+ * // 2. User switches to "Quick Add (CLI)" tab
+ * //    → setQuickAddMode(true)
+ * // 3. User enters CLI command: "chrome-devtools npx chrome-devtools-mcp@latest"
+ * //    → Updates cliCommand state
+ * // 4. User presses Enter or clicks "Parse & Fill Form"
+ * //    → parseCLICommand() parses: { name: "chrome-devtools", command: "npx", args: ["chrome-devtools-mcp@latest"] }
+ * //    → setFormData() with parsed values
+ * //    → setQuickAddMode(false) switches to Manual mode
+ * // 5. User reviews pre-filled form, modifies if needed
+ * // 6. User clicks "Create" button
+ * //    → handleSave() calls api.createMCPServer()
+ * //    → Shows success toast
+ * //    → loadServers() refreshes list
+ * //    → Modal closes
+ *
+ * @example
+ * // Understanding server testing workflow
+ * // 1. User clicks Test button (PlayCircleIcon) on server card
+ * //    → handleTest(server) called
+ * //    → setSelectedServer(server), setTestModalOpen(true), setTesting(true)
+ * // 2. Test modal opens showing server name and spinner
+ * //    → api.testMCPServer(serverId, directory) executes
+ * // 3. Test completes (success or failure)
+ * //    → setTestResult({ success, message, error })
+ * //    → setTesting(false)
+ * // 4. Result displays with color-coded background
+ * //    → Success: Green with CheckCircleIcon
+ * //    → Failure: Red with XCircleIcon and error details
+ * // 5. User clicks "Close" button
+ * //    → setTestModalOpen(false)
+ *
+ * @example
+ * // Understanding tool synchronization workflow
+ * // 1. User clicks Sync Tools button (ServerIcon, blue) on server card
+ * //    → handleLoadTools(server) called
+ * // 2. API discovers tools from MCP server
+ * //    → api.refreshMCPServerTools(serverId, directory)
+ * // 3. Backend creates/updates MCPTool records in Strapi
+ * //    → Returns { success, tools, toolsCount }
+ * // 4. Component updates server with synced tools
+ * //    → setServers(prev => prev.map(...)) updates mcpTools array
+ * // 5. Server card updates to show tool count badge and tool list
+ * //    → Badge: "5 tools"
+ * //    → Collapsible section with tool names and descriptions
+ * // 6. Success toast displays
+ * //    → "Synced 5 tool(s) to Strapi"
+ *
+ * @example
+ * // Understanding bulk delete workflow
+ * // 1. User selects multiple servers via checkboxes
+ * //    → handleSelectServer() adds IDs to selectedServers Set
+ * // 2. Bulk Actions card appears
+ * //    → Shows count: "3 server(s) selected"
+ * // 3. User clicks "Delete Selected" button
+ * //    → handleBulkDelete() opens confirmation dialog
+ * // 4. Confirmation dialog shows: "Delete 3 server(s)?"
+ * // 5. User confirms deletion
+ * //    → handleBulkDeleteConfirm() extracts server IDs from Set
+ * //    → api.bulkDeleteMCPServers(serverIds, directory)
+ * // 6. Backend processes deletions, returns result
+ * //    → { message, deleted: 3, failed: 0 }
+ * // 7. Shows toast with result
+ * //    → "Successfully deleted 3 server(s)"
+ * // 8. Reloads server list and clears selection
+ * //    → loadServers(), setSelectedServers(new Set())
+ */
+
 import React, { useState, useEffect } from 'react';
 import * as api from '../services/api';
 import { Card } from './ui/Card';
@@ -12,6 +391,13 @@ import {
   PlayCircleIcon, CheckCircleIcon, XCircleIcon, SpinnerIcon
 } from './ui/Icons';
 
+/**
+ * Props for the MCPServersPage component.
+ *
+ * @property {string} [directory] - Optional directory path for filtering MCP servers (e.g., "/path/to/project").
+ *                                   When provided, loads servers from .mcp.json in that directory's root.
+ *                                   All CRUD operations are scoped to this directory.
+ */
 interface MCPServersPageProps {
   directory?: string;
 }
@@ -74,6 +460,12 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     loadServers();
   }, [directory]);
 
+  /**
+   * Auto-dismiss toast notification after 5 seconds.
+   *
+   * Sets up a timeout to clear the toast state after 5000ms. Cleanup function
+   * clears the timeout if the toast state changes or component unmounts.
+   */
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 5000);
@@ -81,10 +473,30 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     }
   }, [toast]);
 
+  /**
+   * Displays a toast notification with the specified message and type.
+   *
+   * Toast appears in the top-right corner with color-coded background (green for success,
+   * red for error). Auto-dismisses after 5 seconds via useEffect hook.
+   *
+   * @internal
+   * @param {string} message - The notification message to display
+   * @param {'success' | 'error'} type - The notification type determining background color
+   */
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
   };
 
+  /**
+   * Loads MCP servers from the API based on the current directory.
+   *
+   * Fetches servers from the backend API (.mcp.json in directory root) and updates the local state.
+   * Shows loading spinner during fetch and handles errors with error message display.
+   *
+   * @internal
+   * @async
+   * @returns {Promise<void>}
+   */
   const loadServers = async () => {
     try {
       setLoading(true);
@@ -98,6 +510,27 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     }
   };
 
+  /**
+   * Parses a CLI-style command string into server configuration object.
+   *
+   * Expected format: `<name> <command> [args...]`
+   * Example: `chrome-devtools npx chrome-devtools-mcp@latest`
+   *
+   * Splits command on whitespace and extracts:
+   * - First part: Server name
+   * - Second part: Command executable
+   * - Remaining parts: Command arguments (optional)
+   *
+   * @internal
+   * @param {string} command - The CLI command string to parse
+   * @returns {Object|null} Parsed configuration object or null if invalid format
+   * @returns {string} return.name - Server name
+   * @returns {string} return.command - Command executable
+   * @returns {string[]} return.args - Command arguments array
+   * @returns {Record<string, string>} return.env - Empty environment variables object
+   * @returns {boolean} return.disabled - Disabled flag (always false)
+   * @returns {string} return.description - Empty description string
+   */
   const parseCLICommand = (command: string) => {
     // Format: <name> <command> [args...]
     // Example: chrome-devtools npx chrome-devtools-mcp@latest
@@ -115,6 +548,15 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     };
   };
 
+  /**
+   * Handles Quick Add form submission by parsing CLI command and populating form fields.
+   *
+   * Validates CLI command format (minimum 2 parts: name and command), parses into
+   * configuration object, and switches to Manual mode with pre-populated form.
+   * Shows error toast if format is invalid.
+   *
+   * @internal
+   */
   const handleQuickAdd = () => {
     const parsed = parseCLICommand(cliCommand);
     if (!parsed || !parsed.name || !parsed.command) {
@@ -132,6 +574,14 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     setQuickAddMode(false);
   };
 
+  /**
+   * Opens the create server modal with empty form fields.
+   *
+   * Resets all form state (formData, quickAddMode, cliCommand), sets modal mode to 'create',
+   * and opens the modal dialog.
+   *
+   * @internal
+   */
   const handleCreate = () => {
     setModalMode('create');
     setQuickAddMode(false);
@@ -147,6 +597,15 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     setIsModalOpen(true);
   };
 
+  /**
+   * Opens the edit server modal with pre-populated form fields.
+   *
+   * Extracts server configuration from stdio config (command, args, env, disabled),
+   * sets modal mode to 'edit', and opens the modal dialog with populated form.
+   *
+   * @internal
+   * @param {api.MCPServer} server - The server to edit
+   */
   const handleEdit = (server: api.MCPServer) => {
     setModalMode('edit');
     setSelectedServer(server);
@@ -164,6 +623,15 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     setIsModalOpen(true);
   };
 
+  /**
+   * Opens the view server modal with read-only form fields.
+   *
+   * Similar to handleEdit but sets modal mode to 'view', which disables all form inputs.
+   * Used for displaying server details without allowing edits.
+   *
+   * @internal
+   * @param {api.MCPServer} server - The server to view
+   */
   const handleView = (server: api.MCPServer) => {
     setModalMode('view');
     setSelectedServer(server);
@@ -181,6 +649,16 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     setIsModalOpen(true);
   };
 
+  /**
+   * Saves server configuration (create or update) via API.
+   *
+   * Converts formData to MCPStdioServerConfig and calls appropriate API method based on
+   * modal mode ('create' or 'edit'). Shows success toast, reloads server list, and closes
+   * modal on success. Shows error toast on failure.
+   *
+   * @internal
+   * @async
+   */
   const handleSave = async () => {
     try {
       // Convert formData to MCPServerConfig
@@ -208,11 +686,29 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     }
   };
 
+  /**
+   * Opens the delete confirmation dialog for a single server.
+   *
+   * Sets serverToDelete state and opens the confirmation dialog. Actual deletion
+   * occurs in handleDeleteConfirm after user confirmation.
+   *
+   * @internal
+   * @param {api.MCPServer} server - The server to delete
+   */
   const handleDeleteClick = (server: api.MCPServer) => {
     setServerToDelete(server);
     setDeleteConfirmOpen(true);
   };
 
+  /**
+   * Confirms and executes single server deletion.
+   *
+   * Deletes the server via API, shows success toast, reloads server list, and closes
+   * the confirmation dialog. Shows error toast on failure.
+   *
+   * @internal
+   * @async
+   */
   const handleDeleteConfirm = async () => {
     if (!serverToDelete) return;
 
@@ -227,6 +723,17 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     }
   };
 
+  /**
+   * Tests MCP server connectivity and functionality.
+   *
+   * Opens test modal, shows spinner during test execution, and displays color-coded
+   * result (green for success, red for failure with error details). Updates testResult
+   * state with API response.
+   *
+   * @internal
+   * @async
+   * @param {api.MCPServer} server - The server to test
+   */
   const handleTest = async (server: api.MCPServer) => {
     setSelectedServer(server);
     setTesting(true);
@@ -247,6 +754,16 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     }
   };
 
+  /**
+   * Toggles MCP server enabled/disabled state.
+   *
+   * Calls API to toggle server.disabled property in .mcp.json. Shows toast with result
+   * message and reloads server list on success. Disabled servers display with opacity-60.
+   *
+   * @internal
+   * @async
+   * @param {api.MCPServer} server - The server to toggle
+   */
   const handleToggle = async (server: api.MCPServer) => {
     try {
       const result = await api.toggleMCPServer(server.id, directory);
@@ -259,6 +776,17 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     }
   };
 
+  /**
+   * Loads and synchronizes tools from MCP server to Strapi backend.
+   *
+   * Calls API to discover tools from MCP server, creates/updates MCPTool records in Strapi,
+   * and updates server card with synced tool list and count. Shows success toast with
+   * tool count.
+   *
+   * @internal
+   * @async
+   * @param {api.MCPServer} server - The server to load tools from
+   */
   const handleLoadTools = async (server: api.MCPServer) => {
     try {
       const result = await api.refreshMCPServerTools(server.id, directory);
@@ -278,6 +806,15 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     }
   };
 
+  /**
+   * Exports MCP configuration to JSON file.
+   *
+   * Fetches entire .mcp.json configuration from API, creates JSON blob, and triggers
+   * browser download as "mcp-config-export.json". Shows success toast on completion.
+   *
+   * @internal
+   * @async
+   */
   const handleExport = async () => {
     try {
       const config = await api.exportMCPConfig(directory);
@@ -295,10 +832,28 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     }
   };
 
+  /**
+   * Opens the import configuration modal.
+   *
+   * Sets importModalOpen to true, allowing user to select import mode (merge/overwrite)
+   * and JSON file for import.
+   *
+   * @internal
+   */
   const handleImport = () => {
     setImportModalOpen(true);
   };
 
+  /**
+   * Handles file selection for configuration import.
+   *
+   * Reads selected JSON file via FileReader, parses configuration, and calls API to
+   * import with selected mode (merge or overwrite). Shows success toast with mode,
+   * reloads server list, and closes modal. Shows error toast on parse or API failure.
+   *
+   * @internal
+   * @param {React.ChangeEvent<HTMLInputElement>} event - File input change event
+   */
   const handleImportFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -323,6 +878,14 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     reader.readAsText(file);
   };
 
+  /**
+   * Toggles selection of all servers.
+   *
+   * If all servers are selected, clears selection. Otherwise, selects all servers by
+   * adding all server IDs to selectedServers Set.
+   *
+   * @internal
+   */
   const handleSelectAll = () => {
     if (selectedServers.size === servers.length) {
       setSelectedServers(new Set());
@@ -331,6 +894,15 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     }
   };
 
+  /**
+   * Toggles selection of a single server.
+   *
+   * If server is already selected, removes from Set. Otherwise, adds to Set.
+   * Triggers Bulk Actions card to appear/disappear based on selection count.
+   *
+   * @internal
+   * @param {api.MCPServer} server - The server to toggle selection for
+   */
   const handleSelectServer = (server: api.MCPServer) => {
     const newSelected = new Set(selectedServers);
     if (newSelected.has(server.id)) {
@@ -341,10 +913,28 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
     setSelectedServers(newSelected);
   };
 
+  /**
+   * Opens the bulk delete confirmation dialog.
+   *
+   * Sets bulkDeleteConfirmOpen to true, showing confirmation for deleting all
+   * selected servers.
+   *
+   * @internal
+   */
   const handleBulkDelete = () => {
     setBulkDeleteConfirmOpen(true);
   };
 
+  /**
+   * Confirms and executes bulk server deletion.
+   *
+   * Filters servers by selectedServers Set, extracts server IDs, and calls API to
+   * delete all selected servers. Shows toast with result (success count, failure count),
+   * reloads server list, clears selection, and closes confirmation dialog.
+   *
+   * @internal
+   * @async
+   */
   const handleBulkDeleteConfirm = async () => {
     const serversToDelete = servers.filter(s => selectedServers.has(s.id));
     const serverIds = serversToDelete.map(s => s.id);
@@ -773,7 +1363,34 @@ const MCPServersPage: React.FC<MCPServersPageProps> = ({ directory }) => {
   );
 };
 
-// Server Card Component
+/**
+ * ServerCard - MCP Server Display Card
+ *
+ * Individual server card component displaying MCP server information, tools, and action buttons.
+ * Supports selection for bulk operations, collapsible tool list, and five action buttons
+ * (enable/disable, sync tools, test, edit, delete).
+ *
+ * ## Features
+ *
+ * - **Server Display**: Name, command, description, status badges (disabled, tool count)
+ * - **Selection**: Checkbox for bulk operations
+ * - **Tools Display**: Collapsible section with tool list (format: `mcp__{server}__{tool}`)
+ * - **Action Buttons**: 5 icon buttons with hover effects and tooltips
+ * - **Status Indicators**: Disabled badge, tool count badge, opacity-60 when disabled
+ * - **Interactive**: Click card to view details, click checkbox for selection
+ *
+ * ## Props
+ *
+ * @property {api.MCPServer} server - The MCP server object to display
+ * @property {boolean} isSelected - Selection state for bulk operations (highlights card border)
+ * @property {() => void} onSelect - Callback for checkbox selection toggle
+ * @property {() => void} onView - Callback for card click to view server details
+ * @property {() => void} onEdit - Callback for edit button click
+ * @property {() => void} onDelete - Callback for delete button click
+ * @property {() => void} onTest - Callback for test button click
+ * @property {() => void} onToggle - Callback for enable/disable toggle button
+ * @property {() => void} onLoadTools - Callback for sync tools button click
+ */
 interface ServerCardProps {
   server: api.MCPServer;
   isSelected: boolean;
@@ -786,6 +1403,16 @@ interface ServerCardProps {
   onLoadTools: () => void;
 }
 
+/**
+ * ServerCard component renders an individual MCP server card.
+ *
+ * Displays server information (name, command, description, tools) with interactive
+ * elements (checkbox, action buttons, collapsible tool list). Card appearance changes
+ * based on selection state (border highlight) and disabled state (opacity-60).
+ *
+ * @param {ServerCardProps} props - Component props
+ * @returns {JSX.Element} Rendered server card
+ */
 const ServerCard: React.FC<ServerCardProps> = ({
   server,
   isSelected,
@@ -904,5 +1531,8 @@ const ServerCard: React.FC<ServerCardProps> = ({
     </Card>
   );
 };
+
+ServerCard.displayName = 'ServerCard';
+MCPServersPage.displayName = 'MCPServersPage';
 
 export default MCPServersPage;

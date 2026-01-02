@@ -1,9 +1,91 @@
 /**
- * System prompt for the interactive Agent Creator
- * This prompt guides Claude through an interactive conversation to gather
- * agent requirements and create the agent file using the Claude Agent SDK format.
+ * Agent Creator System Prompt Template
+ *
+ * @description
+ * Comprehensive system prompt that guides Claude through an interactive consultation
+ * process to design and create new Claude Agent SDK agents. This prompt defines a
+ * structured four-phase conversation flow that gathers requirements, suggests technical
+ * configurations, summarizes the design, and creates properly formatted agent files.
+ *
+ * The prompt is designed to make agent creation accessible to users with varying levels
+ * of technical expertise by using natural conversation rather than form-like questioning,
+ * while ensuring all necessary technical details are captured.
+ *
+ * Template Structure:
+ * - **Phase 1: Understanding the Purpose** - Gather the agent's main purpose and use cases
+ * - **Phase 2: Technical Requirements** - Determine tools, MCP connections, skills, inputs, and model
+ * - **Phase 3: Design Summary** - Present a clear summary for user confirmation
+ * - **Phase 4: Agent Creation** - Generate the .claude/agents/{name}.md file
+ *
+ * Key Features:
+ * - Natural, conversational flow that doesn't feel like a questionnaire
+ * - Intelligent tool suggestion based on agent purpose
+ * - Proper handling of agent frontmatter (YAML) and system prompt content
+ * - Best practices for description writing (critical for agent activation)
+ * - Edge case handling (name conflicts, unclear requirements)
+ * - Template includes 40+ available tools and 3 Claude models
+ *
+ * Agent File Format:
+ * The template guides creation of markdown files with YAML frontmatter:
+ * ```markdown
+ * ---
+ * name: agent-name
+ * description: When to use this agent
+ * tools: Tool1,Tool2,Tool3
+ * model: sonnet
+ * mcp_tools:
+ *   tool-name:
+ *     transport: stdio
+ *     command: /path/to/command
+ * input_fields:
+ *   - name: field-name
+ *     type: text
+ *     label: Field Label
+ * ---
+ *
+ * System prompt defining the agent's role and capabilities.
+ * ```
+ *
+ * Variable Substitution:
+ * This prompt is a static template string with no runtime variable substitution.
+ * The prompt itself instructs Claude to substitute values like {name}, {model},
+ * and {description} when generating agent files for users.
+ *
+ * @example
+ * ```typescript
+ * import { AGENT_CREATOR_SYSTEM_PROMPT } from './prompts/agent-creator-prompt.js';
+ *
+ * // Use as system prompt for agent creator conversations
+ * const response = await anthropic.messages.create({
+ *   model: 'claude-sonnet-4-5',
+ *   system: AGENT_CREATOR_SYSTEM_PROMPT,
+ *   messages: [
+ *     { role: 'user', content: 'I want to create a code review agent' }
+ *   ]
+ * });
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Example conversation flow guided by this prompt:
+ *
+ * // User: "I want to create a code review agent"
+ * //
+ * // Claude (guided by this prompt):
+ * // "Hi! I'll help you create a custom agent. What would you like this
+ * //  agent to do? Tell me about its main purpose..."
+ * //
+ * // After gathering requirements, Claude will suggest:
+ * // "Based on what you described, it sounds like this agent will need to
+ * //  read files and search code. I'm thinking of giving it these tools:
+ * //  Read, Grep, Glob. Does that sound right?"
+ * //
+ * // Then create: .claude/agents/code-reviewer.md
+ * ```
+ *
+ * @see {@link https://docs.anthropic.com/en/api/agent-sdk|Claude Agent SDK Documentation}
+ * @since 1.0.0
  */
-
 export const AGENT_CREATOR_SYSTEM_PROMPT = `You are an expert Claude Agent architect conducting an interactive consultation to design and create a new agent. Your goal is to have a natural, conversational interaction with the user to gather all necessary information, then create a well-designed agent file.
 
 ## Your Role

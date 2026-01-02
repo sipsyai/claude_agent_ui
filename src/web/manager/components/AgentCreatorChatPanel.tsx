@@ -1,3 +1,215 @@
+/**
+ * @file AgentCreatorChatPanel.tsx
+ * @description Interactive slide-in panel for creating agents through a conversational interface
+ * with Claude Manager. This component provides a chat-based workflow powered by the useAgentCreator
+ * hook, guiding users through agent creation with real-time feedback and state management.
+ *
+ * ## Features
+ * - **Interactive Chat Interface**: Conversational workflow for agent creation
+ * - **SSE Streaming Integration**: Real-time message streaming via useAgentCreator hook
+ * - **Multi-State UI**: Four distinct states (chat, creating, success, error)
+ * - **Auto-Scroll**: Automatic scrolling to latest messages
+ * - **Keyboard Shortcuts**: Enter to send, Shift+Enter for new line
+ * - **Auto-Focus**: Input field auto-focuses when panel opens
+ * - **Slide-In Animation**: Smooth right-to-left panel animation
+ * - **Overlay Backdrop**: Click-outside-to-close functionality
+ * - **State Persistence**: Panel state management across conversation lifecycle
+ * - **Error Recovery**: Try again functionality on failure
+ *
+ * ## Chat-Based Agent Creation
+ * The component orchestrates a conversational agent creation workflow:
+ *
+ * ### Workflow Steps
+ * 1. **Panel Opens**: User opens panel, auto-starts conversation with Claude
+ * 2. **Initial Greeting**: Claude introduces itself and asks what agent to create
+ * 3. **User Describes**: User explains what the agent should do
+ * 4. **Claude Clarifies**: Claude asks follow-up questions about requirements
+ * 5. **User Responds**: User provides additional details
+ * 6. **Creation Phase**: Claude writes the agent file using Write tool
+ * 7. **Success Display**: Panel shows success message with agent file path
+ * 8. **Callback Invoked**: onAgentCreated callback triggers for parent refresh
+ *
+ * ### Auto-Start Behavior
+ * - When panel opens (`isOpen: true`), automatically calls `startConversation()`
+ * - Only starts if `messages.length === 0` (no existing conversation)
+ * - Initial message from Claude appears within ~1-2 seconds via SSE streaming
+ * - Input field auto-focuses after 300ms animation delay
+ *
+ * ## Message Flow
+ * The component handles bidirectional message exchange:
+ *
+ * ### User Messages
+ * - User types in input field and presses Enter or clicks Send button
+ * - `handleSendMessage()` called with input value
+ * - Input cleared immediately (optimistic UI)
+ * - Message sent to backend via `sendMessage(content)`
+ * - User message appears in chat with right-aligned blue background
+ * - Timestamp displayed below message (HH:MM format)
+ *
+ * ### Assistant Messages
+ * - Received via SSE streaming from useAgentCreator hook
+ * - Messages array updated in real-time as chunks arrive
+ * - Assistant messages appear with left-aligned muted background
+ * - Content rendered as markdown using ReactMarkdown
+ * - Timestamp displayed below message (HH:MM format)
+ * - Auto-scroll triggers on each new message
+ *
+ * ### Processing Indicator
+ * - When `isProcessing: true`, displays animated "Claude is thinking..." message
+ * - Three bouncing dots with staggered animation delays (0ms, 150ms, 300ms)
+ * - Input field disabled during processing
+ * - Send button disabled during processing
+ *
+ * ## Integration with useAgentCreator
+ * The component deeply integrates with the useAgentCreator hook:
+ *
+ * ### Hook Setup
+ * ```typescript
+ * const {
+ *   messages,        // Conversation history
+ *   isProcessing,    // True when waiting for response
+ *   isCreating,      // True when writing agent file
+ *   createdAgentName,// Name of created agent
+ *   error,           // Error object if creation fails
+ *   startConversation, // Initiates conversation
+ *   sendMessage,     // Sends user message
+ *   reset            // Clears state for new session
+ * } = useAgentCreator({ directory, onAgentCreated, onError });
+ * ```
+ *
+ * ### Hook Callbacks
+ * - **onAgentCreated**: Called when Write tool creates agent file
+ *   - Sets `panelState` to 'success'
+ *   - Triggers parent `onAgentCreated()` callback
+ *   - Hook extracts agent name from file path `.claude/agents/{name}.md`
+ *
+ * - **onError**: Called when creation fails
+ *   - Sets `panelState` to 'error'
+ *   - Logs error to console
+ *   - Shows error UI with retry button
+ *
+ * ### State Synchronization
+ * - `useEffect` monitors `isCreating`, `createdAgentName`, `error` from hook
+ * - Updates local `panelState` based on hook state changes:
+ *   - `isCreating === true` → panelState: 'creating'
+ *   - `createdAgentName !== null` → panelState: 'success'
+ *   - `error !== null` → panelState: 'error'
+ *   - Otherwise → panelState: 'chat'
+ *
+ * ## Panel States
+ * The component has four distinct UI states:
+ *
+ * ### 1. Chat State (`panelState === 'chat'`)
+ * - **Display**: Message list with scrollable history + input area
+ * - **Behavior**: Active conversation with send/receive messages
+ * - **UI Elements**:
+ *   - Messages area: Scrollable with auto-scroll
+ *   - Processing indicator: Visible when `isProcessing === true`
+ *   - Input field: Enabled, focused, with placeholder
+ *   - Send button: Enabled when input has content and not processing
+ *   - Keyboard hint: "Press Enter to send, Shift+Enter for new line"
+ *
+ * ### 2. Creating State (`panelState === 'creating'`)
+ * - **Display**: Centered loading spinner with status text
+ * - **Trigger**: Hook detects "Creating" or "Writing" in status events
+ * - **UI Elements**:
+ *   - Spinning purple border circle (4px thick, 64px diameter)
+ *   - Heading: "Creating Your Agent"
+ *   - Subtext: "Claude is writing the agent file..."
+ * - **Duration**: Until Write tool completes or errors
+ *
+ * ### 3. Success State (`panelState === 'success'`)
+ * - **Display**: Centered success message with agent details
+ * - **Trigger**: Hook extracts `createdAgentName` from Write tool file path
+ * - **UI Elements**:
+ *   - Green checkmark icon (80px size)
+ *   - Heading: "Agent Created Successfully!" (green text)
+ *   - Info box: Agent file path (`.claude/agents/{name}.md`)
+ *   - Subtext: "Your new agent is ready to use..."
+ *   - Close button: "Close & View Agent"
+ * - **Styling**: Green color scheme (green-600, green-50, green-200)
+ *
+ * ### 4. Error State (`panelState === 'error'`)
+ * - **Display**: Centered error message with retry option
+ * - **Trigger**: Hook encounters error during creation or streaming
+ * - **UI Elements**:
+ *   - Red exclamation icon (80px size)
+ *   - Heading: "Something Went Wrong" (red text)
+ *   - Error message: "Failed to create the agent..."
+ *   - Two buttons:
+ *     - "Close" (secondary variant)
+ *     - "Try Again" (primary, calls `startConversation()`)
+ * - **Styling**: Red color scheme (red-600)
+ *
+ * ## Auto-Scroll Behavior
+ * The component implements smooth auto-scrolling to keep latest messages visible:
+ *
+ * ### Implementation
+ * - `messagesEndRef` positioned at bottom of message list
+ * - `useEffect` watches `messages` array for changes
+ * - When messages update, calls `scrollIntoView({ behavior: 'smooth' })`
+ * - Scrolls to bottom of chat area within ~300ms smooth animation
+ *
+ * ### Scroll Triggers
+ * - New assistant message arrives via SSE
+ * - User sends message (optimistically added to array)
+ * - Processing indicator appears/disappears
+ * - Panel state changes (e.g., chat → creating)
+ *
+ * ## Keyboard Shortcuts
+ * The component supports keyboard shortcuts for efficient interaction:
+ *
+ * ### Enter Key
+ * - **Action**: Send message
+ * - **Condition**: Not holding Shift key
+ * - **Handler**: `handleKeyPress(e)` → `e.preventDefault()` → `handleSendMessage()`
+ * - **Note**: Prevents default form submission behavior
+ *
+ * ### Shift+Enter
+ * - **Action**: Insert new line
+ * - **Condition**: Holding Shift key
+ * - **Behavior**: Default browser behavior (newline in input)
+ * - **Note**: Currently input is single-line, so this may not function as expected
+ *
+ * ## Styling Behavior
+ * The component uses Tailwind CSS for theming and layout:
+ *
+ * ### Panel Layout
+ * - **Position**: Fixed right side, full height
+ * - **Width**: Full width on mobile (`w-full`), 600px on desktop (`sm:w-[600px]`)
+ * - **Z-Index**: 50 (above overlay at z-40)
+ * - **Animation**: `translate-x-full` (hidden) → `translate-x-0` (visible)
+ * - **Duration**: 300ms ease-in-out transition
+ *
+ * ### Overlay
+ * - **Background**: `bg-black/20` (20% opacity black)
+ * - **Z-Index**: 40 (below panel)
+ * - **Interaction**: Clickable to close panel
+ * - **Transition**: 300ms opacity fade
+ *
+ * ### Header
+ * - **Gradient**: Purple to blue gradient background (`from-purple-50 to-blue-50`)
+ * - **Icon**: Purple sparkles icon (24px)
+ * - **Title**: "Create with Claude Manager" (lg semibold)
+ * - **Subtitle**: "Interactive agent creation assistant" (sm muted)
+ * - **Close Button**: X icon with hover background
+ *
+ * ### Messages
+ * - **User**: Right-aligned, blue background (`bg-primary`), white text
+ * - **Assistant**: Left-aligned, muted background with border
+ * - **Width**: Max 85% of container width for readability
+ * - **Padding**: 16px horizontal, 12px vertical
+ * - **Timestamp**: Small text, 70% opacity, below content
+ *
+ * ### Input Area
+ * - **Border**: Top border separator
+ * - **Padding**: 16px all sides
+ * - **Layout**: Flexbox row with gap-2
+ * - **Input**: Flex-1 (takes remaining space)
+ * - **Button**: Fixed width (px-6 padding)
+ * - **Hint**: Small muted text below input
+ */
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -5,6 +217,53 @@ import { XCircleIcon, SparklesIcon, CheckCircleIcon, ExclamationCircleIcon } fro
 import ReactMarkdown from 'react-markdown';
 import { useAgentCreator } from '../hooks/useAgentCreator';
 
+/**
+ * Props for the AgentCreatorChatPanel component.
+ *
+ * @property {boolean} isOpen - Controls panel visibility and slide-in animation.
+ *   When true, panel slides in from right; when false, panel slides out.
+ *   Also triggers auto-start conversation when transitioning to true.
+ *
+ * @property {() => void} onClose - Callback invoked when panel should close.
+ *   Called when user clicks overlay, close button, or "Close & View Agent" button.
+ *   Parent should set `isOpen: false` in response to this callback.
+ *
+ * @property {() => void} [onAgentCreated] - Optional callback invoked when agent is successfully created.
+ *   Called after useAgentCreator hook detects Write tool usage.
+ *   Parent can use this to refresh agent list or navigate to agent details.
+ *   Called with no arguments (agent name available via hook).
+ *
+ * @property {string} [directory] - Optional directory path for agent creation context.
+ *   Passed to useAgentCreator hook for directory-specific operations.
+ *   Defaults to current working directory if not provided.
+ *
+ * @example
+ * // Basic usage
+ * <AgentCreatorChatPanel
+ *   isOpen={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ * />
+ *
+ * @example
+ * // With agent created callback
+ * <AgentCreatorChatPanel
+ *   isOpen={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   onAgentCreated={() => {
+ *     refetchAgents(); // Refresh agent list
+ *     setIsOpen(false); // Close panel
+ *   }}
+ * />
+ *
+ * @example
+ * // With custom directory
+ * <AgentCreatorChatPanel
+ *   isOpen={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   directory="/projects/my-app"
+ *   onAgentCreated={() => console.log('Agent created in /projects/my-app')}
+ * />
+ */
 interface AgentCreatorChatPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -12,8 +271,108 @@ interface AgentCreatorChatPanelProps {
   directory?: string;
 }
 
+/**
+ * Panel state type representing the current UI mode.
+ *
+ * @typedef {'chat' | 'creating' | 'success' | 'error'} PanelState
+ *
+ * - `'chat'` - Active conversation mode with message history and input
+ * - `'creating'` - Loading state when agent file is being written
+ * - `'success'` - Success screen showing created agent details
+ * - `'error'` - Error screen with retry option
+ */
 type PanelState = 'chat' | 'creating' | 'success' | 'error';
 
+/**
+ * Interactive slide-in panel component for creating agents through conversation with Claude Manager.
+ *
+ * This component provides a chat-based interface for agent creation, integrating with the
+ * useAgentCreator hook for SSE streaming and state management. The panel slides in from the
+ * right side and guides users through a conversational workflow to create new agents.
+ *
+ * The component manages four distinct states (chat, creating, success, error) and handles
+ * message flow, auto-scrolling, keyboard shortcuts, and input focus management.
+ *
+ * @param {AgentCreatorChatPanelProps} props - Component props
+ * @returns {React.ReactElement | null} Rendered panel or null if not open
+ *
+ * @example
+ * // Basic usage with state management
+ * function AgentsPage() {
+ *   const [isPanelOpen, setIsPanelOpen] = useState(false);
+ *
+ *   return (
+ *     <>
+ *       <Button onClick={() => setIsPanelOpen(true)}>
+ *         Create Agent with Claude
+ *       </Button>
+ *
+ *       <AgentCreatorChatPanel
+ *         isOpen={isPanelOpen}
+ *         onClose={() => setIsPanelOpen(false)}
+ *       />
+ *     </>
+ *   );
+ * }
+ *
+ * @example
+ * // With agent created callback to refresh list
+ * function AgentsPage() {
+ *   const [agents, setAgents] = useState([]);
+ *   const [isPanelOpen, setIsPanelOpen] = useState(false);
+ *
+ *   const fetchAgents = async () => {
+ *     const response = await fetch('/api/manager/agents');
+ *     const data = await response.json();
+ *     setAgents(data);
+ *   };
+ *
+ *   return (
+ *     <AgentCreatorChatPanel
+ *       isOpen={isPanelOpen}
+ *       onClose={() => setIsPanelOpen(false)}
+ *       onAgentCreated={() => {
+ *         fetchAgents(); // Refresh the agent list
+ *         setIsPanelOpen(false); // Close the panel
+ *       }}
+ *     />
+ *   );
+ * }
+ *
+ * @example
+ * // With custom directory for project-specific agents
+ * function ProjectSettings({ projectPath }) {
+ *   const [showCreator, setShowCreator] = useState(false);
+ *
+ *   return (
+ *     <AgentCreatorChatPanel
+ *       isOpen={showCreator}
+ *       onClose={() => setShowCreator(false)}
+ *       directory={projectPath}
+ *       onAgentCreated={() => {
+ *         console.log('Agent created in', projectPath);
+ *         setShowCreator(false);
+ *       }}
+ *     />
+ *   );
+ * }
+ *
+ * @example
+ * // Understanding the conversation flow
+ * // 1. User clicks "Create Agent with Claude" button
+ * // 2. Panel opens (isOpen: true)
+ * // 3. Auto-starts conversation (startConversation())
+ * // 4. Claude: "Hi! I can help you create an agent. What should it do?"
+ * // 5. User: "I need an agent to optimize SQL queries"
+ * // 6. Claude: "Great! What database are you using? PostgreSQL, MySQL, etc?"
+ * // 7. User: "PostgreSQL"
+ * // 8. Claude: "Perfect! I'll create a SQL optimization agent for PostgreSQL..."
+ * // 9. Panel state changes to 'creating' (spinner shows)
+ * // 10. Claude uses Write tool to create .claude/agents/sql-optimizer.md
+ * // 11. Panel state changes to 'success' (checkmark shows)
+ * // 12. User clicks "Close & View Agent"
+ * // 13. onAgentCreated() callback fires (parent refreshes agent list)
+ */
 const AgentCreatorChatPanel: React.FC<AgentCreatorChatPanelProps> = ({
   isOpen,
   onClose,
@@ -85,6 +444,24 @@ const AgentCreatorChatPanel: React.FC<AgentCreatorChatPanelProps> = ({
     }
   }, [isCreating, createdAgentName, error, messages.length]);
 
+  /**
+   * Handles sending a user message to the conversation.
+   *
+   * This function validates the input, clears the input field (optimistic UI),
+   * and sends the message via the useAgentCreator hook's sendMessage function.
+   * On error, sets panel state to 'error' to show error UI.
+   *
+   * @internal
+   * @async
+   * @returns {Promise<void>}
+   *
+   * Workflow:
+   * 1. Validates input (must have content and not be processing)
+   * 2. Captures input value and clears input field immediately
+   * 3. Calls sendMessage() from useAgentCreator hook
+   * 4. Hook handles SSE streaming and message state updates
+   * 5. On error, logs to console and shows error UI
+   */
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isProcessing) return;
 
@@ -99,6 +476,19 @@ const AgentCreatorChatPanel: React.FC<AgentCreatorChatPanelProps> = ({
     }
   };
 
+  /**
+   * Handles keyboard shortcuts in the input field.
+   *
+   * Supports Enter to send and Shift+Enter for new line (though input is currently
+   * single-line, so Shift+Enter behavior may not be functional).
+   *
+   * @internal
+   * @param {React.KeyboardEvent<HTMLInputElement>} e - Keyboard event from input field
+   *
+   * Keyboard Actions:
+   * - Enter (without Shift): Prevents default, sends message
+   * - Shift+Enter: Allows default behavior (new line)
+   */
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -106,6 +496,24 @@ const AgentCreatorChatPanel: React.FC<AgentCreatorChatPanelProps> = ({
     }
   };
 
+  /**
+   * Handles closing the panel and resetting state.
+   *
+   * Immediately calls onClose() to trigger parent state update and slide-out animation.
+   * After 300ms (matching animation duration), resets all internal state including
+   * conversation messages, panel state, and input value.
+   *
+   * @internal
+   *
+   * Workflow:
+   * 1. Invokes onClose() callback (parent sets isOpen: false)
+   * 2. Panel slides out over 300ms (CSS transition)
+   * 3. After 300ms timeout:
+   *    - Calls reset() from useAgentCreator hook (clears messages, errors, etc.)
+   *    - Resets panelState to 'chat'
+   *    - Clears inputValue
+   * 4. Panel ready for next open with clean state
+   */
   const handleClose = () => {
     onClose();
     // Reset state after animation
@@ -287,5 +695,7 @@ const AgentCreatorChatPanel: React.FC<AgentCreatorChatPanelProps> = ({
     </>
   );
 };
+
+AgentCreatorChatPanel.displayName = 'AgentCreatorChatPanel';
 
 export default AgentCreatorChatPanel;

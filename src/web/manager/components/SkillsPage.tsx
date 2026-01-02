@@ -11,12 +11,253 @@ import SkillCreatorChatPanel from './SkillCreatorChatPanel';
 import SkillTrainingChatPanel from './SkillTrainingChatPanel';
 import { CheckCircleIcon, SearchIcon, TrashIcon, XCircleIcon, ServerIcon, SparklesIcon } from './ui/Icons';
 
+/**
+ * SkillsPage - Comprehensive skill management interface
+ *
+ * Page-level component for managing skills with listing, creation, editing, training,
+ * search/filter capabilities, and bulk operations. Provides both form-based and
+ * chat-based creation workflows.
+ *
+ * ## Features
+ *
+ * - Skill listing with responsive grid layout (1/2/3 columns)
+ * - Dual creation modes (form-based and AI-powered chat-based)
+ * - Search and filter capabilities (name, description, usage patterns)
+ * - Bulk operations (multi-select and bulk delete)
+ * - Skill training workflow with interactive chat panel
+ * - Auto-refresh with configurable interval (30 seconds)
+ * - Usage analytics and experience score tracking
+ *
+ * ## Skill Listing
+ *
+ * Skills are displayed in a responsive grid with rich information cards showing:
+ *
+ * - **Header**: Skill name with emoji icon, usage count badge (if > 0)
+ * - **Description**: Two-line truncated description with line-clamp-2
+ * - **Experience Progress**: Visual progress bar showing skill experience score (0-100)
+ * - **Quick Stats**:
+ *   - Usage Status: CheckCircleIcon (green) if used, XCircleIcon (gray) if unused
+ *   - Tools Count: Number of allowed tools configured for the skill
+ * - **Agent Usage**: First 3 agents using this skill with overflow indicator (+N more)
+ * - **Allowed Tools**: First 4 tools with overflow indicator (+N)
+ * - **MCP Servers**: First 2 MCP server configurations with nested tool display
+ * - **File Info**: Skill markdown filename (e.g., "skill-name.md")
+ * - **Action Buttons**: View Details and Edit buttons in card footer
+ * - **Click to Train**: Entire card is clickable to open training panel
+ *
+ * ## Creation Workflow
+ *
+ * Two creation modes are available:
+ *
+ * 1. **Form-Based Creation**: "Create New Skill" button opens SkillCreationModal
+ *    - Manual configuration with form fields
+ *    - Detailed tool configuration (allowed/disallowed tabs)
+ *    - MCP server tool selection
+ *    - Input fields builder with 7 field types
+ *    - Advanced model configuration override
+ *    - Additional files upload support
+ *
+ * 2. **Chat-Based Creation**: "Create with Claude Manager" button opens SkillCreatorChatPanel
+ *    - AI-powered interactive skill creation
+ *    - Natural language conversation workflow
+ *    - SSE streaming integration
+ *    - Automatic skill file generation and saving
+ *    - Success/error state handling with visual feedback
+ *
+ * ## Search and Filtering
+ *
+ * Advanced search and filtering capabilities:
+ *
+ * - **Search**: Real-time search by skill name or description (case-insensitive, partial matching)
+ *   - SearchIcon displayed in input field (left side)
+ *   - Filters skills as user types
+ *
+ * - **Filter Modes**: Four filter options with dynamic counts:
+ *   - `all`: Show all skills (default)
+ *   - `used`: Skills used in at least one agent (executionCount > 0)
+ *   - `unused`: Skills not used in any agent (executionCount === 0)
+ *   - `high-usage`: Skills used in 3+ agents (executionCount >= 3)
+ *   - Each option shows count in parentheses (e.g., "Used in Agents (5)")
+ *
+ * - **Results Count**: "Showing X of Y skills" display in filter bar
+ *
+ * ## Bulk Operations
+ *
+ * Multi-select functionality for bulk actions:
+ *
+ * - **Checkbox Selection**: Each filtered skill can be selected via checkbox
+ * - **Select All**: Checkbox with indeterminate state support
+ *   - Unchecked: No skills selected
+ *   - Indeterminate: Some skills selected (someSelected state)
+ *   - Checked: All filtered skills selected (allSelected state)
+ *   - Toggle behavior: Select All ↔ Deselect All
+ * - **Bulk Actions Bar**: Appears when skills are selected (blue background)
+ *   - Shows selection count: "N skill(s) selected"
+ *   - Clear Selection button (secondary variant)
+ *   - Delete Selected button (red destructive variant)
+ * - **Bulk Delete Workflow**:
+ *   1. Select skills via checkboxes
+ *   2. Click "Delete Selected" button
+ *   3. Confirmation dialog appears
+ *   4. Skills deleted via DELETE API calls (sequential Promise.all)
+ *   5. Success: Refresh list and clear selection
+ *   6. Error: Alert with error message, check console for details
+ *
+ * ## Skill Training
+ *
+ * Interactive skill training workflow:
+ *
+ * - **Training Trigger**: Click on any skill card to open SkillTrainingChatPanel
+ * - **Training Panel**: Slide-in panel with chat interface
+ *   - Auto-start training conversation
+ *   - Status tracking (idle, analyzing, training, evaluating, updating, completed, error)
+ *   - Score progression display (before → after with visual indicators)
+ *   - Message flow with user and assistant messages
+ *   - Progress bar showing training status
+ * - **Training Completion**:
+ *   - Refresh skills list to show updated experience scores
+ *   - Invoke onRefresh callback for parent component
+ *   - Close panel or retry on error
+ *
+ * ## Auto-Refresh
+ *
+ * Automatic data refresh capability:
+ *
+ * - **Toggle**: Checkbox to enable/disable auto-refresh (enabled by default)
+ * - **Interval**: 30 seconds (30000ms)
+ * - **Mechanism**: setInterval with cleanup on unmount or toggle off
+ * - **API Call**: loadSkillsWithUsage() fetches fresh skill data with usage analytics
+ * - **Use Case**: Keep skill list and usage statistics up-to-date without manual refresh
+ *
+ * ## Directory Integration
+ *
+ * Skills are filtered and loaded based on directory context:
+ *
+ * - **Directory Prop**: Optional directory path for filtering skills
+ * - **API Integration**: getSkills(directory, true) with includeUsage flag
+ * - **Auto-Reload**: useEffect dependency on directory triggers reload when directory changes
+ * - **Scoped Operations**: All create/edit/delete/train operations use directory context
+ *
+ * ## Styling Behavior
+ *
+ * Tailwind CSS classes and responsive design:
+ *
+ * - **Animation**: animate-fade-in on page mount for smooth entry
+ * - **Header**: Centered title with absolute-positioned action buttons (right-8 top-8)
+ * - **Create Buttons**:
+ *   - "Create New Skill": secondary variant, standard styling
+ *   - "Create with Claude Manager": gradient background (purple-600 to blue-600), SparklesIcon
+ * - **Grid Layout**: grid-cols-1 md:grid-cols-2 lg:grid-cols-3 (responsive columns)
+ * - **Skill Cards**:
+ *   - hover:border-primary/80 transition-colors (300ms duration)
+ *   - cursor-pointer for click-to-train interaction
+ *   - group class for coordinated hover effects
+ * - **Color-Coding**:
+ *   - Used skills: Green badges (bg-green-50, text-green-700, border-green-200)
+ *   - Unused skills: Gray icon (text-gray-600)
+ *   - Tools: Blue badges (bg-blue-50, text-blue-700, border-blue-200)
+ *   - MCP Servers: Indigo badges (bg-indigo-50, text-indigo-700, border-indigo-200)
+ *   - Bulk Actions: Blue background (bg-blue-50, border-blue-200)
+ *   - Delete Button: Red background (bg-red-600, hover:bg-red-700)
+ *
+ * @example
+ * // Basic usage in ManagerApp dashboard phase
+ * import ManagerApp from './ManagerApp';
+ *
+ * function App() {
+ *   return <ManagerApp />;
+ * }
+ *
+ * // Inside ManagerApp, when activeView === 'Skills':
+ * <SkillsPage
+ *   skills={skills}
+ *   onRefresh={handleRefreshSkills}
+ *   directory={directory}
+ * />
+ *
+ * @example
+ * // Skill creation workflow (form-based)
+ * // 1. User clicks "Create New Skill" button
+ * // 2. SkillCreationModal opens with empty form
+ * // 3. User fills in:
+ * //    - Core Configuration (name, description, category, version, license, isPublic)
+ * //    - Tool Configuration (allowed/disallowed tools tabs)
+ * //    - MCP Server Tools (hierarchical multi-select)
+ * //    - Input Fields (dynamic field builder with 7 types)
+ * //    - Advanced Settings (model override, temperature, maxTokens)
+ * //    - Additional Files (upload up to 8 file types)
+ * //    - Skill Instructions (markdown textarea)
+ * // 4. Form validation runs (required fields, JSON schema, patterns)
+ * // 5. Submit creates skill via POST /api/manager/skills
+ * // 6. Success: Green banner, auto-close after 1.5s, refresh list
+ * // 7. Error: Red banner with error message
+ *
+ * @example
+ * // Skill creation workflow (chat-based)
+ * // 1. User clicks "Create with Claude Manager" button (gradient purple-to-blue)
+ * // 2. SkillCreatorChatPanel slides in from right
+ * // 3. Auto-start conversation with initial prompt
+ * // 4. User describes skill requirements in natural language
+ * // 5. Assistant asks clarifying questions (tools, behavior, inputs)
+ * // 6. SSE streaming displays real-time messages
+ * // 7. Assistant creates skill file using Write tool
+ * // 8. useSkillCreator detects creation (tool use parsing)
+ * // 9. Panel state changes: chat → creating → success
+ * // 10. Success message: "Skill created successfully!"
+ * // 11. Skills list refreshes to show new skill
+ * // 12. User can close panel or create another skill
+ *
+ * @example
+ * // Search and filter workflow
+ * // 1. User types "api" in search box
+ * // 2. filteredSkills filters to skills matching "api" in name or description
+ * // 3. Results count updates: "Showing 3 of 15 skills"
+ * // 4. User changes filter from "All Skills (15)" to "Used in Agents (8)"
+ * // 5. filteredSkills further filters to skills with executionCount > 0
+ * // 6. Results count updates: "Showing 2 of 15 skills"
+ * // 7. User clears search box
+ * // 8. Results count updates: "Showing 8 of 15 skills"
+ * // 9. User changes filter to "High Usage (3+) (5)"
+ * // 10. Only skills with executionCount >= 3 are shown
+ *
+ * @example
+ * // Bulk delete workflow
+ * // 1. User clicks "Select All" checkbox
+ * // 2. All filtered skills are selected (checkboxes checked)
+ * // 3. selectedSkillIds Set populated with all filtered skill IDs
+ * // 4. Bulk Actions Bar appears: "8 skill(s) selected"
+ * // 5. User clicks "Delete Selected" button (red)
+ * // 6. Confirmation dialog: "Are you sure you want to delete 8 skill(s)?"
+ * // 7. User confirms
+ * // 8. isDeleting state set to true, button shows "Deleting..."
+ * // 9. Sequential DELETE API calls via Promise.all
+ * // 10. Success: selectedSkillIds cleared, list refreshed, banner disappears
+ * // 11. Error: Alert shown, console logs errors, isDeleting set to false
+ */
+
+/**
+ * Props for SkillsPage component
+ *
+ * @property {Skill[]} skills - Array of Skill objects to display (initial skills from parent)
+ * @property {() => void} [onRefresh] - Optional callback invoked after skill creation, edit, delete, or training completion
+ * @property {string} [directory] - Optional directory path for filtering skills (e.g., "/path/to/project")
+ */
 interface SkillsPageProps {
   skills: Skill[];
   onRefresh?: () => void;
   directory?: string;
 }
 
+/**
+ * Filter modes for skill listing
+ *
+ * @typedef {'all' | 'used' | 'unused' | 'high-usage'} FilterMode
+ *
+ * - `all`: Show all skills regardless of usage
+ * - `used`: Show only skills used in at least one agent (executionCount > 0)
+ * - `unused`: Show only skills not used in any agent (executionCount === 0)
+ * - `high-usage`: Show only skills used in 3+ agents (executionCount >= 3)
+ */
 type FilterMode = 'all' | 'used' | 'unused' | 'high-usage';
 
 const SkillsPage: React.FC<SkillsPageProps> = ({ skills: initialSkills, onRefresh, directory }) => {
@@ -33,7 +274,14 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ skills: initialSkills, onRefres
   const [trainingSkill, setTrainingSkill] = useState<Skill | null>(null);
   const [showTrainingPanel, setShowTrainingPanel] = useState(false);
 
-  // Load skills with usage info
+  /**
+   * Load skills with usage analytics
+   *
+   * Fetches skills from the API with includeUsage flag to get execution counts
+   * and experience scores. Updates local skills state with the fetched data.
+   *
+   * @internal
+   */
   const loadSkillsWithUsage = async () => {
     try {
       const skillsWithUsage = await api.getSkills(directory, true);
@@ -59,6 +307,14 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ skills: initialSkills, onRefres
     return () => clearInterval(interval);
   }, [autoRefreshEnabled, directory]);
 
+  /**
+   * Handle skill creation completion
+   *
+   * Callback invoked after a skill is successfully created (via form or chat).
+   * Refreshes the skills list to show the new skill and invokes parent onRefresh callback.
+   *
+   * @internal
+   */
   const handleSkillCreated = () => {
     loadSkillsWithUsage();
     if (onRefresh) {
@@ -66,20 +322,55 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ skills: initialSkills, onRefres
     }
   };
 
+  /**
+   * Handle view details click
+   *
+   * Opens the SkillDetailsModal for the selected skill. Triggered by clicking
+   * "View Details" button in skill card footer.
+   *
+   * @internal
+   * @param {Skill} skill - Skill object to view details for
+   */
   const handleViewDetails = (skill: Skill) => {
     setSelectedSkill(skill);
   };
 
+  /**
+   * Handle edit click
+   *
+   * Opens the SkillCreationModal in edit mode with pre-populated skill data.
+   * Triggered by clicking "Edit" button in skill card footer.
+   *
+   * @internal
+   * @param {Skill} skill - Skill object to edit
+   */
   const handleEditClick = (skill: Skill) => {
     setEditingSkill(skill);
     setIsCreationModalOpen(true);
   };
 
+  /**
+   * Handle skill card click
+   *
+   * Opens the SkillTrainingChatPanel for the selected skill. Triggered by clicking
+   * anywhere on the skill card (except action buttons which have stopPropagation).
+   *
+   * @internal
+   * @param {Skill} skill - Skill object to train
+   */
   const handleSkillClick = (skill: Skill) => {
     setTrainingSkill(skill);
     setShowTrainingPanel(true);
   };
 
+  /**
+   * Handle training completion
+   *
+   * Callback invoked after skill training completes successfully. Refreshes the
+   * skills list to show updated experience scores and invokes parent onRefresh callback.
+   *
+   * @internal
+   */
   const handleTrainingComplete = () => {
     // Refresh skills to show updated experience scores
     loadSkillsWithUsage();
@@ -88,6 +379,15 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ skills: initialSkills, onRefres
     }
   };
 
+  /**
+   * Toggle individual skill selection
+   *
+   * Adds or removes a skill ID from the selectedSkillIds Set. Used for bulk
+   * delete operations. Creates a new Set to trigger React re-render.
+   *
+   * @internal
+   * @param {string} skillId - Skill ID to toggle selection for
+   */
   const toggleSkillSelection = (skillId: string) => {
     const newSet = new Set(selectedSkillIds);
     if (newSet.has(skillId)) {
@@ -98,6 +398,14 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ skills: initialSkills, onRefres
     setSelectedSkillIds(newSet);
   };
 
+  /**
+   * Toggle select all filtered skills
+   *
+   * If all filtered skills are selected, deselects all. Otherwise, selects all
+   * filtered skills. Note: Only operates on currently filtered skills, not all skills.
+   *
+   * @internal
+   */
   const toggleSelectAll = () => {
     if (selectedSkillIds.size === filteredSkills.length) {
       setSelectedSkillIds(new Set());
@@ -106,6 +414,25 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ skills: initialSkills, onRefres
     }
   };
 
+  /**
+   * Handle bulk delete operation
+   *
+   * Deletes all selected skills after user confirmation. Shows confirmation dialog,
+   * then deletes skills sequentially via DELETE API calls. On success, clears selection
+   * and refreshes the list. On error, shows alert with error message.
+   *
+   * Workflow:
+   * 1. Check if any skills are selected (return early if none)
+   * 2. Show confirmation dialog with skill count
+   * 3. If confirmed, set isDeleting to true (shows "Deleting..." in button)
+   * 4. Map selected skill IDs to DELETE API calls
+   * 5. Execute all DELETE calls in parallel with Promise.all
+   * 6. On success: Clear selectedSkillIds, refresh list, invoke onRefresh
+   * 7. On error: Show alert, log errors to console, keep selection intact
+   * 8. Finally: Set isDeleting to false (restore button state)
+   *
+   * @internal
+   */
   const handleBulkDelete = async () => {
     if (selectedSkillIds.size === 0) return;
 
@@ -535,5 +862,7 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ skills: initialSkills, onRefres
     </div>
   );
 };
+
+SkillsPage.displayName = 'SkillsPage';
 
 export default SkillsPage;

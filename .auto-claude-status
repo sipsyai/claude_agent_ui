@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "004-document-frontend-react-components-and-hooks",
+  "state": "building",
+  "subtasks": {
+    "completed": 52,
+    "total": 53,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Page Components and App Documentation",
+    "id": 6,
+    "total": 15
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 1,
+    "started_at": "2026-01-02T14:01:12.609501"
+  },
+  "last_update": "2026-01-02T14:01:12.619635"
+}

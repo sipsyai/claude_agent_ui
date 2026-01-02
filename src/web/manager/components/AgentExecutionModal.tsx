@@ -1,3 +1,189 @@
+/**
+ * @file AgentExecutionModal.tsx
+ * @description Modal component for executing agents with real-time SSE streaming, permission mode selection,
+ * and comprehensive message handling including tool use visualization.
+ *
+ * ## Features
+ * - Interactive agent execution with user prompts
+ * - Real-time SSE event streaming with message updates
+ * - Four permission modes (bypass, acceptEdits, plan, default)
+ * - Tool use tracking with input parameters and results
+ * - Auto-scrolling message list
+ * - Loading and execution states
+ * - Error handling with user-friendly messages
+ *
+ * ## Agent Execution Flow
+ * The component follows this execution lifecycle:
+ * 1. User enters a prompt and selects permission mode
+ * 2. Click Execute button triggers `handleExecute`
+ * 3. SSE stream initiated via `api.executeAgent` with event callback
+ * 4. Events processed in real-time and messages updated incrementally
+ * 5. Tool use blocks tracked separately with unique IDs
+ * 6. Tool results matched back to tool use messages via `toolUseId`
+ * 7. Execution completes with success or error message
+ * 8. User can close modal or execute again
+ *
+ * ## Permission Modes
+ * The component supports four permission modes that control agent behavior:
+ *
+ * - **bypass**: Auto-approve all permissions (fastest execution, least control)
+ *   - Agent can execute all tools without asking
+ *   - Best for trusted environments or non-destructive operations
+ *   - Icon: ⚡
+ *
+ * - **acceptEdits**: Auto-approve file edit operations only
+ *   - Agent can modify files without permission prompts
+ *   - Other tools still require approval
+ *   - Best for code generation/refactoring tasks
+ *
+ * - **plan**: Strategy/planning mode only (no execution)
+ *   - Agent provides a plan without actually executing tools
+ *   - Best for reviewing approach before committing to changes
+ *
+ * - **default**: Ask for permission on each tool use (safest, slowest)
+ *   - Agent prompts user for approval before each tool execution
+ *   - Best for cautious execution or learning agent behavior
+ *
+ * ## Message Handling
+ * The component processes multiple message types from SSE events:
+ *
+ * ### Assistant Messages
+ * - Content blocks parsed from `message.content` array
+ * - Text blocks displayed as assistant messages
+ * - Tool use blocks create separate tool_use messages
+ * - Each tool use tracked with unique ID for result matching
+ *
+ * ### User Messages
+ * - Tool result blocks parsed from `message.content` array
+ * - Results matched back to tool use messages via `toolUseId`
+ * - Updates existing tool_use message with `toolResult` property
+ *
+ * ### Status Messages
+ * - General status updates from agent execution
+ * - System messages converted to status type
+ * - Completion messages with success indicator
+ *
+ * ### Error Messages
+ * - Error events displayed with red styling
+ * - Catches both streaming errors and execution failures
+ *
+ * ### Debug Messages
+ * - Debug information with yellow styling
+ * - Useful for troubleshooting agent behavior
+ *
+ * ### Tool Use Messages
+ * - Special message type for tool executions
+ * - Displays tool name, input parameters, and results
+ * - Collapsible sections for input/output
+ * - Auto-expand short results (<200 chars)
+ * - Loading state while waiting for results
+ *
+ * ## UI States
+ *
+ * ### Empty State
+ * - Shown when no messages and not executing
+ * - Prompts user to enter prompt and click Execute
+ *
+ * ### Loading State
+ * - Shown when `isExecuting === true` and no messages yet
+ * - Animated pulse with "Starting agent execution..." message
+ *
+ * ### Executing State
+ * - Execute button disabled and shows "Running..." text
+ * - Input field disabled to prevent changes during execution
+ * - Messages appear in real-time as events arrive
+ *
+ * ### Completed State
+ * - Execute button re-enabled
+ * - Messages remain visible
+ * - User can execute again or close modal
+ *
+ * ## Styling Behavior
+ * - Modal overlay with dark semi-transparent backdrop (bg-black/50)
+ * - Centered modal dialog with max width 4xl and max height 90vh
+ * - Three-section layout: header, messages (scrollable), footer
+ * - Message styling varies by type:
+ *   - Error: red background/border (bg-red-500/10, border-red-500/20)
+ *   - Debug: yellow background/border (bg-yellow-500/10, border-yellow-500/20)
+ *   - Status: blue background/border (bg-blue-500/10, border-blue-500/20)
+ *   - Tool use: purple background/border (bg-purple-500/10, border-purple-500/20)
+ *   - Assistant: primary background/border (bg-primary/10, border-primary/20)
+ *   - Default: secondary background (bg-secondary)
+ * - Auto-scroll to bottom on new messages with smooth behavior
+ * - Permission mode selector with radio buttons
+ * - Tool use sections with collapsible details elements
+ *
+ * @example
+ * ```tsx
+ * // Basic usage with agent execution
+ * const [isOpen, setIsOpen] = useState(false);
+ * const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+ *
+ * <AgentExecutionModal
+ *   agent={selectedAgent}
+ *   isOpen={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With custom directory for execution
+ * <AgentExecutionModal
+ *   agent={agent}
+ *   isOpen={isOpen}
+ *   onClose={() => {
+ *     setIsOpen(false);
+ *     // Optionally refresh agent list or navigate
+ *   }}
+ *   directory="/custom/workspace"
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Execute agent from list with permission mode state
+ * const handleExecuteAgent = (agent: Agent) => {
+ *   setSelectedAgent(agent);
+ *   setModalOpen(true);
+ * };
+ *
+ * <Button onClick={() => handleExecuteAgent(agent)}>
+ *   Execute Agent
+ * </Button>
+ *
+ * <AgentExecutionModal
+ *   agent={selectedAgent}
+ *   isOpen={modalOpen}
+ *   onClose={() => {
+ *     setModalOpen(false);
+ *     setSelectedAgent(null);
+ *   }}
+ *   directory={currentDirectory}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Understanding tool use message flow
+ * // When agent executes a tool, you'll see:
+ * // 1. Tool use message appears with name and input
+ * // 2. "Waiting for result..." shown below
+ * // 3. Result arrives and updates the same message
+ * // 4. Result is collapsible with auto-expand for short content
+ *
+ * // Tool use message structure:
+ * {
+ *   id: "tool-use-abc123",
+ *   type: "tool_use",
+ *   toolName: "Read",
+ *   toolInput: { file_path: "src/example.ts" },
+ *   toolResult: "file contents here...",
+ *   toolUseId: "abc123"
+ * }
+ * ```
+ */
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { Agent } from '../services/api';
 import * as api from '../services/api';
@@ -6,6 +192,15 @@ import { Input } from './ui/Input';
 import { XCircleIcon, PlayCircleIcon } from './ui/Icons';
 import DynamicField from './DynamicField';
 
+/**
+ * Props for the AgentExecutionModal component.
+ *
+ * @interface AgentExecutionModalProps
+ * @property {Agent} agent - The agent to execute with name, description, and configuration
+ * @property {boolean} isOpen - Controls modal visibility (true = shown, false = hidden)
+ * @property {() => void} onClose - Callback invoked when user closes the modal (X button or Close button)
+ * @property {string} [directory] - Optional working directory for agent execution (defaults to current directory from cookies)
+ */
 interface AgentExecutionModalProps {
   agent: Agent;
   isOpen: boolean;
@@ -13,6 +208,22 @@ interface AgentExecutionModalProps {
   directory?: string;
 }
 
+/**
+ * Internal message structure for agent execution events.
+ *
+ * Messages are created from SSE events and displayed in the message list.
+ * Different message types have different visual styling and content rendering.
+ *
+ * @interface Message
+ * @property {string} id - Unique message identifier (timestamp-based or tool-use-{id})
+ * @property {'status' | 'assistant' | 'user' | 'result' | 'error' | 'debug' | 'tool_use'} type - Message type affecting styling and rendering
+ * @property {string} content - Text content for display (empty for tool_use messages)
+ * @property {Date} timestamp - Message creation time for display
+ * @property {string} [toolName] - Tool name for tool_use messages (e.g., "Read", "Write", "Bash")
+ * @property {any} [toolInput] - Tool input parameters for tool_use messages (JSON object)
+ * @property {any} [toolResult] - Tool execution result (added when result arrives, can be string or object)
+ * @property {string} [toolUseId] - Tool use unique ID for matching results back to tool use messages
+ */
 interface Message {
   id: string;
   type: 'status' | 'assistant' | 'user' | 'result' | 'error' | 'debug' | 'tool_use';
@@ -44,6 +255,43 @@ const AgentExecutionModal: React.FC<AgentExecutionModalProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  /**
+   * Executes the agent with the user's prompt and selected permission mode.
+   *
+   * This function orchestrates the entire agent execution workflow:
+   * 1. Validates prompt is not empty and not already executing
+   * 2. Resets state (isExecuting=true, messages=[])
+   * 3. Calls api.executeAgent with SSE event callback
+   * 4. Processes real-time events as they arrive:
+   *    - Assistant messages with text and tool use blocks
+   *    - User messages with tool result blocks
+   *    - Status, error, debug events
+   * 5. Updates messages state incrementally
+   * 6. Handles completion or error
+   * 7. Resets isExecuting state
+   *
+   * ## Event Processing
+   *
+   * ### Assistant Messages (messageType === 'assistant')
+   * - Content blocks parsed from message.content array
+   * - Text blocks concatenated and added as assistant message
+   * - Tool use blocks added as separate tool_use messages with unique IDs
+   *
+   * ### User Messages (messageType === 'user')
+   * - Tool result blocks parsed from message.content array
+   * - Results matched back to tool_use messages via toolUseId
+   * - Updates existing message with toolResult property
+   *
+   * ### Other Event Types
+   * - status: General status updates
+   * - debug: Debug information
+   * - error: Error messages
+   * - complete: Execution completed successfully
+   *
+   * @internal
+   * @async
+   * @returns {Promise<void>}
+   */
   const handleExecute = async () => {
     // Build prompt from input values if fields exist
     let finalPrompt = userPrompt;
@@ -409,5 +657,7 @@ const AgentExecutionModal: React.FC<AgentExecutionModalProps> = ({
     </div>
   );
 };
+
+AgentExecutionModal.displayName = 'AgentExecutionModal';
 
 export default AgentExecutionModal;

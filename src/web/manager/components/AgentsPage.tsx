@@ -1,3 +1,163 @@
+/**
+ * AgentsPage - Agent Management Dashboard
+ *
+ * A comprehensive page component for managing agents in the Claude Manager UI. Provides agent listing,
+ * creation, editing, execution, and configuration preview functionality.
+ *
+ * ## Features
+ *
+ * - **Agent Listing**: Grid-based display of all available agents with metadata and statistics
+ * - **CRUD Operations**: Create (form or chat), Read (listing), Update (edit), Execute (run agent)
+ * - **Agent Creation Modes**: Dual creation interface (form-based or chat-based with AI assistant)
+ * - **Agent Execution**: Modal-based agent execution with real-time message streaming
+ * - **Configuration Preview**: Visual display of agent skills, tools, MCP servers, and input fields
+ * - **Directory Integration**: Automatic agent loading based on selected directory
+ * - **Real-time Updates**: Automatic agent list refresh after create/edit operations
+ *
+ * ## Agent Listing
+ *
+ * Displays agents in a responsive grid layout (1 column mobile, 2 columns tablet, 3 columns desktop).
+ * Each agent card shows:
+ *
+ * - **Header**: Agent name (with robot emoji), description (2-line clamp), model badge (if configured)
+ * - **Statistics**: Counts for skills, Claude tools, MCP tools, and input fields
+ * - **Skills Section**: First 3 skills with overflow indicator ("+N more")
+ * - **Claude Tools Section**: First 4 allowed tools with overflow indicator
+ * - **MCP Servers Section**: First 2 servers with their tools (first 3 per server)
+ * - **File Info**: Agent file name (e.g., "my-agent.md")
+ * - **Actions**: "Run Agent" button (primary) and "Edit" button (secondary)
+ *
+ * ## CRUD Operations
+ *
+ * ### Create
+ * Two creation modes available via header buttons:
+ *
+ * 1. **Chat-based Creation** (Primary button with gradient):
+ *    - Opens AgentCreatorChatPanel with AI assistant
+ *    - Conversational workflow with SSE streaming
+ *    - Auto-generates agent file on completion
+ *
+ * 2. **Form-based Creation** (Secondary button):
+ *    - Opens AgentCreatorForm with comprehensive configuration fields
+ *    - Manual configuration of all agent settings
+ *    - Validates and saves agent file
+ *
+ * ### Read
+ * - Automatic loading on mount via `loadAgents()`
+ * - Reloads when `directory` or `initialAgents` props change
+ * - Displays all agents from `.claude/agents/` directory
+ * - Shows count in header ("Discovered N agents")
+ *
+ * ### Update (Edit)
+ * - Click "Edit" button on any agent card
+ * - Opens AgentCreatorForm with pre-populated fields
+ * - Saves changes and reloads agent list
+ *
+ * ### Execute
+ * - Click "Run Agent" button on any agent card
+ * - Opens AgentExecutionModal with real-time message streaming
+ * - Supports permission modes and tool execution tracking
+ *
+ * ## Directory Integration
+ *
+ * The component automatically loads agents based on the `directory` prop:
+ *
+ * 1. **Initial Load**: Fetches agents from API on mount
+ * 2. **Directory Changes**: Reloads agents when directory prop changes
+ * 3. **API Integration**: Uses `api.getAgents(directory)` for data fetching
+ * 4. **Error Handling**: Logs errors to console, maintains current state on failure
+ *
+ * ## State Management
+ *
+ * The component manages five categories of state:
+ *
+ * 1. **Agent List State** (`agents`):
+ *    - Initialized from `initialAgents` prop
+ *    - Updated via `loadAgents()` API calls
+ *    - Displayed in responsive grid layout
+ *
+ * 2. **Execution State** (`selectedAgent`):
+ *    - Tracks agent selected for execution
+ *    - Controls AgentExecutionModal visibility
+ *    - Reset to null on modal close
+ *
+ * 3. **Creator Form State** (`showCreatorForm`, `editingAgent`):
+ *    - Controls AgentCreatorForm modal visibility
+ *    - Tracks agent being edited (null for create mode)
+ *    - Reset on form close or successful submission
+ *
+ * 4. **Creator Chat State** (`showCreatorChat`):
+ *    - Controls AgentCreatorChatPanel visibility
+ *    - Slide-in panel for AI-assisted creation
+ *    - Reset to false on panel close
+ *
+ * 5. **Loading State**: Implicit via API calls (no explicit loading spinner)
+ *
+ * ## Styling Behavior
+ *
+ * The component uses Tailwind CSS classes for styling:
+ *
+ * - **Container**: `animate-fade-in` for smooth page entrance
+ * - **Header**: `flex items-center justify-between mb-6` with centered title
+ * - **Title**: Responsive typography (`text-3xl sm:text-4xl font-bold`)
+ * - **Grid Layout**: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`
+ * - **Cards**: `hover:border-primary/80 transition-colors duration-300` for interactive feedback
+ * - **Badges**: Color-coded by type (green=skills, blue=tools, indigo=MCP, purple=model)
+ * - **Empty State**: Centered text with muted color and padding
+ * - **Buttons**: Gradient for primary action (chat creation), secondary for form creation
+ *
+ * @example
+ * // Basic usage in ManagerApp dashboard phase
+ * <AgentsPage
+ *   agents={agents}
+ *   directory="/path/to/project"
+ *   onAgentCreated={handleAgentsReload}
+ * />
+ *
+ * @example
+ * // Understanding agent creation workflow
+ * // 1. User clicks "Create with Claude Manager" button
+ * //    → setShowCreatorChat(true)
+ * //    → AgentCreatorChatPanel opens with AI assistant
+ * //    → User describes agent via chat
+ * //    → AI generates agent file
+ * //    → handleAgentCreated() called
+ * //    → loadAgents() refreshes list
+ * //    → onAgentCreated() callback invoked (if provided)
+ * //
+ * // 2. User clicks "Create New Agent" button
+ * //    → setEditingAgent(null), setShowCreatorForm(true)
+ * //    → AgentCreatorForm opens in create mode
+ * //    → User fills form fields
+ * //    → Form validates and saves
+ * //    → handleAgentCreated() called
+ * //    → loadAgents() refreshes list
+ * //    → onAgentCreated() callback invoked (if provided)
+ *
+ * @example
+ * // Understanding agent edit workflow
+ * // 1. User clicks "Edit" button on agent card
+ * //    → handleEditClick(agent) called
+ * //    → setEditingAgent(agent), setShowCreatorForm(true)
+ * //    → AgentCreatorForm opens with pre-populated fields
+ * //    → User modifies fields
+ * //    → Form validates and saves
+ * //    → handleAgentCreated() called
+ * //    → editingAgent reset to null
+ * //    → loadAgents() refreshes list
+ *
+ * @example
+ * // Understanding agent execution workflow
+ * // 1. User clicks "Run Agent" button on agent card
+ * //    → setSelectedAgent(agent)
+ * //    → AgentExecutionModal opens
+ * //    → User selects permission mode
+ * //    → Agent executes with SSE streaming
+ * //    → Real-time messages displayed
+ * //    → User clicks close
+ * //    → setSelectedAgent(null)
+ */
+
 import React, { useState, useEffect } from 'react';
 import type { Agent } from '../../../types/agent.types';
 import * as api from '../services/api';
@@ -8,6 +168,13 @@ import AgentCreatorForm from './AgentCreatorForm';
 import AgentCreatorChatPanel from './AgentCreatorChatPanel';
 import { CpuChipIcon, PuzzlePieceIcon, ServerIcon, ClipboardListIcon, SparklesIcon } from './ui/Icons';
 
+/**
+ * Props for the AgentsPage component.
+ *
+ * @property {Agent[]} agents - Initial array of agents to display (will be overridden by API fetch)
+ * @property {string} [directory] - Optional directory path for filtering agents (e.g., "/path/to/project")
+ * @property {() => void} [onAgentCreated] - Optional callback invoked after successful agent creation or edit
+ */
 interface AgentsPageProps {
   agents: Agent[];
   directory?: string;
@@ -21,7 +188,16 @@ const AgentsPage: React.FC<AgentsPageProps> = ({ agents: initialAgents, director
   const [showCreatorChat, setShowCreatorChat] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
 
-  // Load agents from Strapi
+  /**
+   * Loads agents from the API based on the current directory.
+   *
+   * Fetches agents from the backend API and updates the local state. If the API call fails,
+   * the error is logged to console and the current agent list is maintained.
+   *
+   * @internal
+   * @async
+   * @returns {Promise<void>}
+   */
   const loadAgents = async () => {
     try {
       const fetchedAgents = await api.getAgents(directory);
@@ -31,11 +207,33 @@ const AgentsPage: React.FC<AgentsPageProps> = ({ agents: initialAgents, director
     }
   };
 
-  // Load agents when component mounts or initialAgents/directory changes
+  /**
+   * Effect hook that loads agents when the component mounts or when dependencies change.
+   *
+   * Triggers agent reload in the following scenarios:
+   * - Component mounts (initial load)
+   * - `directory` prop changes (user selects different directory)
+   * - `initialAgents` prop changes (parent component updates agents)
+   *
+   * @internal
+   */
   useEffect(() => {
     loadAgents();
   }, [initialAgents, directory]);
 
+  /**
+   * Handles successful agent creation or edit.
+   *
+   * This callback is invoked by AgentCreatorForm and AgentCreatorChatPanel after a successful
+   * agent creation or edit operation. It performs the following actions:
+   * 1. Closes the creator form modal
+   * 2. Resets the editing agent state to null
+   * 3. Reloads the agents list from the API
+   * 4. Invokes the parent's onAgentCreated callback (if provided)
+   *
+   * @internal
+   * @returns {void}
+   */
   const handleAgentCreated = () => {
     setShowCreatorForm(false);
     setEditingAgent(null);
@@ -45,6 +243,16 @@ const AgentsPage: React.FC<AgentsPageProps> = ({ agents: initialAgents, director
     }
   };
 
+  /**
+   * Handles click on the "Edit" button for an agent card.
+   *
+   * Sets the agent to be edited and opens the AgentCreatorForm in edit mode.
+   * The form will be pre-populated with the agent's current configuration.
+   *
+   * @internal
+   * @param {Agent} agent - The agent to edit
+   * @returns {void}
+   */
   const handleEditClick = (agent: Agent) => {
     setEditingAgent(agent);
     setShowCreatorForm(true);
@@ -301,5 +509,7 @@ const AgentsPage: React.FC<AgentsPageProps> = ({ agents: initialAgents, director
     </div>
   );
 };
+
+AgentsPage.displayName = 'AgentsPage';
 
 export default AgentsPage;

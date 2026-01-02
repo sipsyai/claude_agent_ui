@@ -14,6 +14,49 @@ import { ConfigService } from './config-service.js';
 
 const logger = createLogger('TrainingAgentSelector');
 
+/**
+ * Training Agent Configuration
+ *
+ * @description
+ * Represents a training agent configuration that can be used to train skills in the system.
+ * Training agents define the system prompt, tool permissions, model configuration, and MCP
+ * server integrations used during skill training sessions.
+ *
+ * Training agents can be sourced from:
+ * - Strapi database (skill-specific or global config)
+ * - Local filesystem (.claude/agents/training-agent.md)
+ *
+ * @interface TrainingAgent
+ *
+ * @property {string} id - Unique identifier for the training agent
+ * @property {string} name - Human-readable name of the training agent
+ * @property {string} [description] - Optional description explaining the agent's purpose and behavior
+ * @property {string} content - The system prompt/instructions that define the agent's behavior
+ * @property {Object} [metadata] - Optional metadata for tool and model configuration
+ * @property {string[]} [metadata.tools] - List of allowed tool names (legacy field)
+ * @property {string[]} [metadata.allowedTools] - List of allowed tool names for the agent
+ * @property {string} [metadata.model] - Claude model to use (e.g., 'claude-sonnet-4-5')
+ * @property {Record<string, string[]>} [metadata.mcpTools] - MCP server tools configuration
+ *   where keys are MCP server names and values are arrays of allowed tool names
+ *
+ * @example
+ * ```typescript
+ * const agent: TrainingAgent = {
+ *   id: 'training-agent',
+ *   name: 'Skill Training Agent',
+ *   description: 'Agent for training new skills',
+ *   content: 'You are a training agent...',
+ *   metadata: {
+ *     allowedTools: ['Read', 'Write', 'Bash'],
+ *     model: 'claude-sonnet-4-5',
+ *     mcpTools: {
+ *       'github': ['search_repositories', 'get_file_contents'],
+ *       'filesystem': ['read_file', 'write_file']
+ *     }
+ *   }
+ * };
+ * ```
+ */
 export interface TrainingAgent {
   id: string;
   name: string;
@@ -30,15 +73,102 @@ export interface TrainingAgent {
 /**
  * Select the appropriate training agent for a skill
  *
- * Priority:
- * 1. Skill's trainingAgentId (override)
- * 2. Global config trainingAgentId
- * 3. Local training-agent.md (fallback)
+ * @description
+ * Selects and retrieves the training agent configuration to use for training a specific skill.
+ * This function implements a three-tier selection strategy with well-defined priority rules,
+ * ensuring that skill-specific overrides take precedence over global configurations, with a
+ * safe fallback to local filesystem-based agents.
  *
- * @param skillId - Skill ID to train
- * @param projectPath - Project directory path
- * @returns Training agent to use
- * @throws Error if no training agent is found
+ * **Selection Priority (Highest to Lowest):**
+ * 1. **Skill-specific override**: If the skill has a `trainingAgent` relation in Strapi, use that agent
+ * 2. **Global config setting**: If ConfigService has a `trainingAgentId` configured, use that agent
+ * 3. **Local fallback**: Use the local `training-agent.md` file from `.claude/agents/` directory
+ *
+ * **Selection Criteria:**
+ * - **Skill Override**: Provides maximum flexibility for skills with specialized training requirements
+ *   - Checked first by fetching the skill from Strapi via strapiClient.getSkill()
+ *   - Reads skill.trainingAgent relation (can be ID string or populated Agent object)
+ *   - If found, fetches the full agent configuration from Strapi
+ *
+ * - **Global Config**: Enables project-wide consistency for training agent selection
+ *   - Checked second by reading ConfigService.getInstance().getConfig().trainingAgentId
+ *   - Allows setting a default training agent in application settings
+ *   - Useful when most skills should use the same training configuration
+ *
+ * - **Local Fallback**: Ensures the system always has a training agent available
+ *   - Checked last as a safety mechanism when no database configuration exists
+ *   - Parses `.claude/agents/training-agent.md` using ClaudeStructureParser
+ *   - Required for offline/local-first workflows or when Strapi is unavailable
+ *
+ * **Agent Transformation:**
+ * When loading from Strapi, the function transforms the database schema to TrainingAgent format:
+ * - Maps agent.systemPrompt → content
+ * - Extracts agent.toolConfig.allowedTools → metadata.allowedTools
+ * - Extracts agent.modelConfig.model → metadata.model
+ * - Transforms agent.mcpConfig to Record<serverName, toolNames[]> → metadata.mcpTools
+ *   - Handles both string IDs and populated relations for mcpServer and mcpTool
+ *   - Groups selected tools by their parent MCP server name
+ *
+ * **Error Handling:**
+ * - Gracefully handles failures when fetching from Strapi (logs warnings, continues to next tier)
+ * - Throws Error if all three selection methods fail to find a valid training agent
+ * - Error message guides users to configure an agent in Settings or create training-agent.md
+ *
+ * @param {string} skillId - The documentId of the skill being trained
+ * @param {string} projectPath - Absolute path to the project directory where .claude/agents/ resides
+ *
+ * @returns {Promise<TrainingAgent>} The selected training agent configuration with all metadata
+ *
+ * @throws {Error} If no training agent can be found through any of the three selection methods.
+ *   The error message instructs users to configure an agent in Settings or ensure
+ *   training-agent.md exists in .claude/agents/
+ *
+ * @example
+ * ```typescript
+ * // Basic usage - select training agent for a skill
+ * import { selectTrainingAgent } from './training-agent-selector';
+ *
+ * const agent = await selectTrainingAgent(
+ *   'skill-abc123',
+ *   '/path/to/project'
+ * );
+ *
+ * console.log(`Using training agent: ${agent.name}`);
+ * console.log(`System prompt length: ${agent.content.length}`);
+ * console.log(`Allowed tools: ${agent.metadata?.allowedTools?.join(', ')}`);
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // With skill-specific override
+ * // Assume skill 'advanced-skill' has trainingAgent set to 'expert-trainer' in Strapi
+ * const agent = await selectTrainingAgent('advanced-skill', '/path/to/project');
+ * // Returns the 'expert-trainer' agent (priority 1)
+ *
+ * // With global config
+ * // Assume no skill override, but ConfigService has trainingAgentId = 'default-trainer'
+ * const agent = await selectTrainingAgent('basic-skill', '/path/to/project');
+ * // Returns the 'default-trainer' agent (priority 2)
+ *
+ * // With local fallback
+ * // Assume no skill override and no global config
+ * const agent = await selectTrainingAgent('local-skill', '/path/to/project');
+ * // Returns agent parsed from .claude/agents/training-agent.md (priority 3)
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Error handling
+ * import { selectTrainingAgent } from './training-agent-selector';
+ *
+ * try {
+ *   const agent = await selectTrainingAgent('skill-123', '/path/to/project');
+ *   // Use agent for training...
+ * } catch (error) {
+ *   console.error('Failed to select training agent:', error.message);
+ *   // Prompt user to configure agent in Settings or create training-agent.md
+ * }
+ * ```
  */
 export async function selectTrainingAgent(
   skillId: string,

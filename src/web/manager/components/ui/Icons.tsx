@@ -1,5 +1,131 @@
+/**
+ * Icon Components Library
+ *
+ * A comprehensive collection of SVG icon components for use throughout the application.
+ * All icons are built with consistent sizing, stroke styling, and support for color customization
+ * through the currentColor mechanism.
+ *
+ * ## Features
+ * - Consistent 24x24px default size with customizable dimensions
+ * - All icons use currentColor for easy color theming
+ * - Stroke-based rendering (2px stroke width) for crisp, scalable display
+ * - Full SVG attribute support via props spreading
+ * - Optimized for accessibility and performance
+ * - Support for className, style, and all standard SVG attributes
+ *
+ * ## Styling Behavior
+ * Icons inherit their color from the CSS `color` property via `stroke="currentColor"`:
+ * - Apply text color classes: `<FolderIcon className="text-blue-500" />`
+ * - Use inline styles: `<PlusIcon style={{ color: 'red' }} />`
+ * - Size customization: `<SearchIcon width={16} height={16} />`
+ * - Custom stroke: `<CheckIcon strokeWidth={3} />`
+ *
+ * ## Available Icons and Their Intended Usage
+ *
+ * ### Navigation & UI
+ * - **ArrowRightIcon**: Forward navigation, next actions, RTL indicators
+ * - **ArrowLeftIcon**: Back navigation, previous actions, LTR indicators
+ * - **ChevronDownIcon**: Dropdown menus, expandable sections, sort indicators
+ * - **ChevronRightIcon**: Nested navigation, sub-menus, RTL expansion
+ * - **XIcon**: Close dialogs, remove tags, dismiss notifications
+ * - **SearchIcon**: Search inputs, search triggers, find functionality
+ *
+ * ### Status & Feedback
+ * - **CheckCircleIcon**: Success states, completed tasks, confirmations
+ * - **XCircleIcon**: Error states, failed operations, cancellations
+ * - **SpinnerIcon**: Loading states, processing indicators (has built-in animation)
+ * - **ExclamationCircleIcon**: Warning states, alerts, important notices
+ * - **InfoIcon**: Information tooltips, help text, details
+ * - **CheckIcon**: Checkboxes, selection indicators, validation success
+ *
+ * ### Actions
+ * - **PlayIcon**: Start actions, media playback, run operations
+ * - **PlayCircleIcon**: Primary play button, video/audio controls
+ * - **PlusIcon**: Add items, create new, expand functionality
+ * - **PencilIcon**: Edit actions, modify content, update records
+ * - **TrashIcon**: Delete actions, remove items, destructive operations
+ * - **RefreshIcon**: Reload data, retry operations, sync actions
+ * - **CopyIcon**: Copy to clipboard, duplicate items, clone functionality
+ * - **SendIcon**: Submit forms, send messages, dispatch actions
+ * - **PaperclipIcon**: Attach files, add attachments, upload documents
+ *
+ * ### Content & Organization
+ * - **FolderIcon**: Directories, file organization, project grouping
+ * - **ArchiveIcon**: Archive items, historical data, storage
+ * - **ClipboardIcon**: Copy operations, clipboard access, paste actions
+ * - **ClipboardListIcon**: Task lists, checklists, to-do items
+ * - **MessageSquareIcon**: Comments, chat, messaging functionality
+ *
+ * ### Settings & Configuration
+ * - **CogIcon**: Settings pages, configuration, preferences
+ * - **SlidersHorizontalIcon**: Filters, adjustments, fine-tuning controls
+ * - **ShieldCheckIcon**: Security settings, permissions, validation
+ *
+ * ### System & Technical
+ * - **ServerIcon**: Server status, backend services, hosting
+ * - **CpuChipIcon**: Processing power, hardware, performance
+ * - **CommandLineIcon**: CLI tools, terminal access, developer features
+ * - **PuzzlePieceIcon**: Extensions, plugins, integrations, skills
+ *
+ * ### Application Specific
+ * - **LayoutGridIcon**: Dashboard view, grid layouts, app modules
+ * - **GlobeIcon**: Public access, web resources, internationalization
+ * - **ClockIcon**: Time tracking, history, scheduling
+ * - **SparklesIcon**: AI features, smart functionality, enhancements
+ *
+ * @example
+ * // Basic usage with text color inheritance
+ * <div className="text-blue-600">
+ *   <FolderIcon />
+ * </div>
+ *
+ * @example
+ * // Custom size and color
+ * <CheckCircleIcon
+ *   width={32}
+ *   height={32}
+ *   className="text-green-500"
+ * />
+ *
+ * @example
+ * // Loading spinner (auto-animated)
+ * <SpinnerIcon className="text-gray-400" />
+ *
+ * @example
+ * // Button with icon
+ * <button className="flex items-center gap-2">
+ *   <PlusIcon width={16} height={16} />
+ *   Add Item
+ * </button>
+ *
+ * @example
+ * // Icon with custom stroke weight
+ * <TrashIcon
+ *   className="text-red-600"
+ *   strokeWidth={2.5}
+ * />
+ *
+ * @example
+ * // Responsive icon sizing
+ * <SearchIcon className="w-4 h-4 sm:w-6 sm:h-6" />
+ */
+
 import React from 'react';
 
+/**
+ * Props for all icon components
+ *
+ * Extends all standard SVG element attributes, allowing full customization of
+ * icon appearance and behavior. Common use cases include width, height, className,
+ * style, strokeWidth, and event handlers.
+ *
+ * @property {number} [width] - Icon width in pixels (default: 24)
+ * @property {number} [height] - Icon height in pixels (default: 24)
+ * @property {string} [className] - CSS classes for styling (use text-* for colors)
+ * @property {React.CSSProperties} [style] - Inline styles
+ * @property {number} [strokeWidth] - SVG stroke width (default: 2)
+ * @property {Function} [onClick] - Click handler
+ */
 type IconProps = React.SVGProps<SVGSVGElement>;
 
 export const FolderIcon = (props: IconProps) => (

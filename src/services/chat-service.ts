@@ -1,11 +1,300 @@
 /**
- * Chat Service - Manages chat sessions and messages
+ * ChatService - Real-time chat service with Claude Agent SDK integration
  *
- * This service handles:
- * - Creating and managing chat sessions
- * - Sending messages with file attachments
- * - Streaming responses from Claude Agent SDK
- * - Storing messages in Strapi
+ * @description
+ * The ChatService manages interactive chat sessions with Claude AI using the Agent SDK,
+ * providing real-time streaming conversations with support for file attachments, MCP servers,
+ * and agent configurations. It extends EventEmitter to broadcast conversation events and
+ * implements advanced stream management with abort controller patterns for cancellable requests.
+ *
+ * **Key Responsibilities:**
+ * - Create and manage chat sessions stored in Strapi CMS
+ * - Stream real-time responses from Claude Agent SDK with AsyncGenerator pattern
+ * - Handle file attachments (images, PDFs, text files) with base64 encoding
+ * - Integrate with agents (system prompts, model config, tool config, MCP servers)
+ * - Manage conversation lifecycle (create, resume, archive, delete)
+ * - Track active streams with cancellation support via AbortController
+ * - Persist messages and SDK events to chat log files
+ * - Sync skills to filesystem before conversation starts
+ * - Transform SDK messages to application's chat message format
+ *
+ * **Architecture:**
+ * - **EventEmitter Pattern**: Extends EventEmitter to broadcast chat events to subscribers
+ * - **Active Streams Management**: Maintains Map of active Query instances indexed by streamId
+ * - **Abort Controller Pattern**: Each stream has an AbortController for graceful cancellation
+ * - **AsyncGenerator Streaming**: sendMessage() yields events as they arrive (user_message_saved,
+ *   stream_id, sdk_message, assistant_message_delta, assistant_message_saved, done, error, cancelled)
+ * - **Message Persistence**: Saves user/assistant messages to Strapi and chat log files
+ * - **Agent Integration**: Supports per-session or per-message agent overrides with full config
+ * - **MCP Server Support**: Loads MCP servers from agent's mcpConfig and .mcp.json files
+ * - **Permission Modes**: Supports default, bypass, auto (acceptEdits), and plan modes
+ * - **File Handling**: Uploads attachments to Strapi, processes images/PDFs/text for SDK
+ *
+ * **EventEmitter Events:**
+ * Currently, ChatService extends EventEmitter but does not emit custom events.
+ * Instead, it uses AsyncGenerator pattern to stream events directly to the caller.
+ * Future versions may add events like 'chat:session:created', 'chat:message:sent', etc.
+ *
+ * **Active Streams Management:**
+ * The service maintains two synchronized Maps for stream lifecycle:
+ * - `activeStreams`: Map<streamId, Query> - Active SDK query instances
+ * - `activeAbortControllers`: Map<streamId, AbortController> - Controllers for cancellation
+ *
+ * When a message is sent:
+ * 1. Generate unique streamId (UUID)
+ * 2. Create AbortController and store in activeAbortControllers
+ * 3. Create SDK Query instance with abortController option
+ * 4. Store Query in activeStreams
+ * 5. Yield stream_id event to client (enables cancellation)
+ * 6. Stream SDK messages via AsyncGenerator
+ * 7. Cleanup: Remove from both Maps when stream completes/errors/cancelled
+ *
+ * **Abort Controller Pattern:**
+ * - Each stream gets a dedicated AbortController instance
+ * - Client receives streamId immediately after message send starts
+ * - Client can call cancelMessage(streamId) to abort the stream
+ * - Cancellation triggers abortController.abort()
+ * - SDK Query respects abort signal and stops processing
+ * - Cleanup happens in finally block (removes from Maps)
+ * - Yields 'cancelled' event with reason and timestamp
+ *
+ * **Message Flow:**
+ * 1. Client calls sendMessage() with text and optional attachments
+ * 2. Service fetches chat session from Strapi with agent/skills config
+ * 3. Syncs skills to filesystem (creates .claude/skills/*.md files)
+ * 4. Uploads attachments to Strapi and saves user message
+ * 5. Yields 'user_message_saved' event
+ * 6. Builds SDK options (model, systemPrompt, permissions, tools, mcpServers)
+ * 7. Creates SDK Query with AsyncGenerator prompt and AbortController
+ * 8. Yields 'stream_id' event (enables cancellation)
+ * 9. Streams SDK messages and yields 'sdk_message' events
+ * 10. Accumulates assistant text from content_block_delta events
+ * 11. Yields 'assistant_message_delta' events for real-time UI updates
+ * 12. Saves complete assistant message to Strapi and chat log
+ * 13. Yields 'assistant_message_saved' event
+ * 14. Yields 'done' event with cost/usage metadata
+ *
+ * @example
+ * ```typescript
+ * // Basic usage - create session and send message
+ * import { chatService } from './chat-service';
+ *
+ * // Create a new chat session
+ * const session = await chatService.createChatSession(
+ *   'Code Review Chat',
+ *   ['skill-doc-id-1', 'skill-doc-id-2'], // Skill documentIds
+ *   'agent-doc-id', // Agent documentId
+ *   undefined, // No custom system prompt
+ *   '/path/to/project',
+ *   'default' // Permission mode
+ * );
+ *
+ * console.log(`Session created: ${session.documentId}`);
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Send message and handle streaming responses
+ * import { chatService } from './chat-service';
+ *
+ * const sessionDocId = 'chat-session-doc-id';
+ * const message = 'Review the authentication code in src/auth.ts';
+ * const attachments = []; // No attachments
+ * const workingDir = '/path/to/project';
+ *
+ * // Stream responses using AsyncGenerator
+ * for await (const event of chatService.sendMessage(
+ *   sessionDocId,
+ *   message,
+ *   attachments,
+ *   workingDir
+ * )) {
+ *   switch (event.type) {
+ *     case 'user_message_saved':
+ *       console.log('User message saved:', event.message);
+ *       break;
+ *     case 'stream_id':
+ *       console.log('Stream ID:', event.streamId);
+ *       // Store streamId for potential cancellation
+ *       break;
+ *     case 'assistant_message_delta':
+ *       // Real-time text streaming
+ *       process.stdout.write(event.delta);
+ *       break;
+ *     case 'assistant_message_saved':
+ *       console.log('\nAssistant message saved:', event.message);
+ *       break;
+ *     case 'done':
+ *       console.log('Conversation complete. Cost:', event.cost);
+ *       break;
+ *     case 'error':
+ *       console.error('Error:', event.error);
+ *       break;
+ *     case 'cancelled':
+ *       console.log('Stream cancelled:', event.reason);
+ *       break;
+ *   }
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Send message with file attachments
+ * import { chatService } from './chat-service';
+ * import fs from 'fs';
+ *
+ * const sessionDocId = 'chat-session-doc-id';
+ * const message = 'Analyze this diagram and suggest improvements';
+ * const imageBuffer = fs.readFileSync('./diagram.png');
+ * const attachments = [{
+ *   name: 'diagram.png',
+ *   mimeType: 'image/png',
+ *   data: imageBuffer.toString('base64')
+ * }];
+ *
+ * for await (const event of chatService.sendMessage(
+ *   sessionDocId,
+ *   message,
+ *   attachments,
+ *   '/path/to/project'
+ * )) {
+ *   if (event.type === 'assistant_message_delta') {
+ *     console.log(event.delta);
+ *   }
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Cancel an active message stream
+ * import { chatService } from './chat-service';
+ *
+ * let currentStreamId: string | null = null;
+ *
+ * // Start streaming in background
+ * (async () => {
+ *   for await (const event of chatService.sendMessage(
+ *     sessionDocId,
+ *     'This is a long running task...',
+ *     [],
+ *     workingDir
+ *   )) {
+ *     if (event.type === 'stream_id') {
+ *       currentStreamId = event.streamId;
+ *     }
+ *     if (event.type === 'cancelled') {
+ *       console.log('Stream was cancelled');
+ *     }
+ *   }
+ * })();
+ *
+ * // Cancel after 5 seconds
+ * setTimeout(() => {
+ *   if (currentStreamId) {
+ *     const cancelled = chatService.cancelMessage(currentStreamId);
+ *     console.log('Cancellation requested:', cancelled);
+ *   }
+ * }, 5000);
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Use plan mode for read-only analysis
+ * import { chatService } from './chat-service';
+ *
+ * const session = await chatService.createChatSession(
+ *   'Plan Mode Chat',
+ *   [], // No skills
+ *   'agent-doc-id',
+ *   undefined,
+ *   '/path/to/project',
+ *   'plan' // Plan mode: read-only tools, requires user approval before changes
+ * );
+ *
+ * for await (const event of chatService.sendMessage(
+ *   session.documentId,
+ *   'Create a plan to add a user authentication system',
+ *   [],
+ *   '/path/to/project',
+ *   'plan' // Override permission mode for this message
+ * )) {
+ *   // Claude will analyze the codebase and present a detailed plan
+ *   // without making any changes (Read, Grep, Glob tools only)
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Agent override - use different agent per message
+ * import { chatService } from './chat-service';
+ *
+ * const session = await chatService.createChatSession(
+ *   'Multi-Agent Chat',
+ *   ['skill-1'],
+ *   'default-agent-id',
+ *   undefined,
+ *   '/path/to/project'
+ * );
+ *
+ * // First message uses default agent
+ * for await (const event of chatService.sendMessage(
+ *   session.documentId,
+ *   'Write a test file',
+ *   [],
+ *   '/path/to/project'
+ * )) { // ... }
+ *
+ * // Second message overrides with specialized agent
+ * for await (const event of chatService.sendMessage(
+ *   session.documentId,
+ *   'Review the code for security issues',
+ *   [],
+ *   '/path/to/project',
+ *   undefined, // Use session permission mode
+ *   'security-agent-id' // Override with security specialist agent
+ * )) { // ... }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Session management
+ * import { chatService } from './chat-service';
+ *
+ * // Get all sessions
+ * const sessions = await chatService.getAllChatSessions();
+ * console.log(`Total sessions: ${sessions.length}`);
+ *
+ * // Get specific session
+ * const session = await chatService.getChatSession('session-doc-id');
+ * console.log(`Session title: ${session.title}`);
+ *
+ * // Get messages for session
+ * const messages = await chatService.getChatMessages('session-doc-id');
+ * console.log(`Message count: ${messages.length}`);
+ *
+ * // Archive old session
+ * await chatService.archiveChatSession('old-session-doc-id');
+ *
+ * // Delete session permanently
+ * await chatService.deleteChatSession('session-doc-id');
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Monitor active streams
+ * import { chatService } from './chat-service';
+ *
+ * // Get list of active stream IDs
+ * const activeStreamIds = chatService.getActiveStreamIds();
+ * console.log(`Active streams: ${activeStreamIds.length}`);
+ *
+ * // Cancel all active streams (e.g., on shutdown)
+ * for (const streamId of activeStreamIds) {
+ *   chatService.cancelMessage(streamId);
+ * }
+ * ```
+ *
+ * @see {@link https://docs.anthropic.com/en/api/agent-sdk|Claude Agent SDK Documentation}
  */
 
 import { EventEmitter } from 'events';
@@ -27,8 +316,24 @@ const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:1337';
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
 
 export class ChatService extends EventEmitter {
+  /**
+   * Logger instance for structured logging
+   */
   private logger: Logger;
+
+  /**
+   * Active SDK query instances indexed by stream ID
+   * Each Query represents an active conversation stream with Claude Agent SDK
+   * Streams are added when sendMessage() creates a query, removed on completion/error/cancellation
+   */
   private activeStreams: Map<string, Query> = new Map();
+
+  /**
+   * Active abort controllers indexed by stream ID
+   * Each AbortController enables graceful cancellation of SDK queries
+   * Client receives streamId and can call cancelMessage(streamId) to abort the stream
+   * Controllers are created in sendMessage() and removed in finally block
+   */
   private activeAbortControllers: Map<string, AbortController> = new Map();
 
   constructor() {
@@ -37,7 +342,22 @@ export class ChatService extends EventEmitter {
   }
 
   /**
-   * Helper method to make Strapi API calls
+   * Helper method to make authenticated Strapi API calls
+   *
+   * @description
+   * Sends HTTP requests to Strapi API with authentication headers and proper configuration.
+   * Handles request method, endpoint routing, request body data, and query parameters.
+   * Uses axios for HTTP communication and automatically includes Bearer token authentication.
+   *
+   * @template T - Expected response data type
+   * @param method - HTTP method (GET, POST, PUT, DELETE, etc.)
+   * @param endpoint - Strapi API endpoint path (e.g., '/chat-sessions', '/chat-messages')
+   * @param data - Optional request body data for POST/PUT requests
+   * @param params - Optional query parameters for the request
+   * @returns Promise resolving to Strapi API response data of type T
+   * @throws {AxiosError} When the HTTP request fails
+   *
+   * @private
    */
   private async strapiRequest<T = any>(method: string, endpoint: string, data?: any, params?: any): Promise<T> {
     const config: any = {
@@ -121,7 +441,136 @@ export class ChatService extends EventEmitter {
   }
 
   /**
-   * Get chat session by documentId
+   * Get chat session by documentId with populated relations
+   *
+   * @description
+   * Retrieves a single chat session from Strapi CMS with full population of related
+   * entities including skills, agent configuration, model config, tool config, and
+   * MCP server configurations. This method is used internally by sendMessage() to
+   * load session configuration before starting a conversation.
+   *
+   * **Deep Population Strategy:**
+   * The method uses Strapi v5's deep population syntax to eagerly load nested
+   * relations in a single query, avoiding N+1 query problems. It populates:
+   * - Skills with their toolConfig and mcpConfig
+   * - Agent with toolConfig, modelConfig, and mcpConfig
+   * - MCP server details and selected tools within mcpConfig
+   * - Nested mcpTool details within selectedTools
+   *
+   * **Use Cases:**
+   * - Load session configuration before sending messages
+   * - Display session details in UI (title, agent, skills)
+   * - Resume conversations with existing session context
+   * - Inspect session configuration for debugging
+   * - Validate session state before operations
+   *
+   * **Populated Relations:**
+   * - `skills`: Array of Skill objects with toolConfig and mcpConfig
+   * - `agent`: Agent object with systemPrompt, toolConfig, modelConfig, mcpConfig
+   * - `agent.mcpConfig[]`: MCP server configurations with selected tools
+   * - `agent.mcpConfig[].selectedTools[]`: Selected MCP tools for each server
+   *
+   * **Permission Mode Handling:**
+   * The method transforms Strapi's permissionMode and planMode fields into a
+   * unified permissionMode ('default' | 'bypass' | 'auto' | 'plan'). If planMode
+   * is true, permissionMode is set to 'plan' for client compatibility.
+   *
+   * @param {string} sessionDocId - The documentId of the chat session to retrieve
+   *
+   * @returns {Promise<ChatSession>} The chat session with populated relations
+   *
+   * @throws {Error} If the session is not found or Strapi request fails
+   *
+   * @example
+   * ```typescript
+   * // Basic session retrieval
+   * import { chatService } from './chat-service';
+   *
+   * const session = await chatService.getChatSession('session-doc-id-123');
+   *
+   * console.log(`Session: ${session.title}`);
+   * console.log(`Agent: ${session.agent?.name}`);
+   * console.log(`Skills: ${session.skills?.map(s => s.name).join(', ')}`);
+   * // Output:
+   * // Session: Code Review Chat
+   * // Agent: Code Review Agent
+   * // Skills: JavaScript Expert, Testing Helper
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Inspect session configuration
+   * import { chatService } from './chat-service';
+   *
+   * const session = await chatService.getChatSession('session-doc-id-123');
+   *
+   * console.log('Model:', session.agent?.modelConfig?.model);
+   * console.log('Allowed tools:', session.agent?.toolConfig?.allowedTools);
+   * console.log('Permission mode:', session.permissionMode);
+   * console.log('MCP servers:', session.agent?.mcpConfig?.map(c => c.mcpServer?.name));
+   * // Output:
+   * // Model: claude-sonnet-4-5
+   * // Allowed tools: ['Read', 'Write', 'Bash', 'Grep', 'Glob', 'Edit']
+   * // Permission mode: default
+   * // MCP servers: ['filesystem', 'database']
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Check session status before sending message
+   * import { chatService } from './chat-service';
+   *
+   * const session = await chatService.getChatSession('session-doc-id-123');
+   *
+   * if (session.status === 'archived') {
+   *   console.log('Cannot send message to archived session');
+   * } else {
+   *   console.log('Session is active, ready to send message');
+   *   // Proceed with sendMessage()
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle session not found error
+   * import { chatService } from './chat-service';
+   *
+   * try {
+   *   const session = await chatService.getChatSession('invalid-session-id');
+   * } catch (error) {
+   *   console.error('Session not found:', error);
+   *   // Error: Chat session invalid-session-id not found
+   *   // Handle error - redirect to session list or show error message
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Use in sendMessage workflow
+   * import { chatService } from './chat-service';
+   *
+   * async function sendChatMessage(sessionDocId: string, text: string) {
+   *   // Load session first to validate it exists
+   *   const session = await chatService.getChatSession(sessionDocId);
+   *
+   *   console.log(`Sending to: ${session.title}`);
+   *   console.log(`Using agent: ${session.agent?.name || 'none'}`);
+   *
+   *   // Stream message
+   *   for await (const event of chatService.sendMessage(
+   *     sessionDocId,
+   *     text,
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     // Handle events...
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link getAllChatSessions} - Get all sessions
+   * @see {@link createChatSession} - Create a new session
+   * @see {@link sendMessage} - Uses this method to load session config
    */
   async getChatSession(sessionDocId: string): Promise<ChatSession> {
     try {
@@ -169,7 +618,183 @@ export class ChatService extends EventEmitter {
   }
 
   /**
-   * Get all chat sessions
+   * Get all chat sessions sorted by creation date (newest first)
+   *
+   * @description
+   * Retrieves all chat sessions from Strapi CMS with populated agent and skill
+   * relations, sorted by creation date in descending order (newest first).
+   * This method is used to display the session list in the UI and supports
+   * session management operations.
+   *
+   * **Population Strategy:**
+   * Unlike getChatSession(), this method uses lighter population to improve
+   * query performance when fetching multiple sessions. It populates:
+   * - Skills (basic info only - name, documentId)
+   * - Agent with full config (toolConfig, modelConfig, mcpConfig)
+   * - MCP server details within agent's mcpConfig
+   *
+   * **Sorting:**
+   * Sessions are sorted by createdAt in descending order, ensuring the most
+   * recent conversations appear first in the list. This matches typical chat
+   * application UX patterns.
+   *
+   * **Use Cases:**
+   * - Display session list in chat UI sidebar
+   * - Browse conversation history
+   * - Session management dashboard
+   * - Search and filter sessions
+   * - Export conversation data
+   * - Analytics and reporting
+   *
+   * **Performance Considerations:**
+   * For applications with many sessions (>100), consider implementing:
+   * - Pagination with Strapi's pagination params
+   * - Filtering by status (active vs archived)
+   * - Search by title or content
+   * - Virtual scrolling in UI
+   *
+   * **Session Status Values:**
+   * - `active`: Currently active conversation
+   * - `archived`: Archived for historical reference
+   *
+   * @returns {Promise<ChatSession[]>} Array of chat sessions sorted by newest first
+   *
+   * @throws {Error} If the Strapi request fails
+   *
+   * @example
+   * ```typescript
+   * // Basic usage - get all sessions
+   * import { chatService } from './chat-service';
+   *
+   * const sessions = await chatService.getAllChatSessions();
+   *
+   * console.log(`Total sessions: ${sessions.length}`);
+   * sessions.forEach(session => {
+   *   console.log(`- ${session.title} (${session.status})`);
+   * });
+   * // Output:
+   * // Total sessions: 5
+   * // - Code Review Chat (active)
+   * // - Bug Fix Session (active)
+   * // - Documentation Update (archived)
+   * // - API Integration (active)
+   * // - Refactoring Project (archived)
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Filter active sessions only
+   * import { chatService } from './chat-service';
+   *
+   * const allSessions = await chatService.getAllChatSessions();
+   * const activeSessions = allSessions.filter(s => s.status === 'active');
+   *
+   * console.log(`Active sessions: ${activeSessions.length}/${allSessions.length}`);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Display session list with agent info
+   * import { chatService } from './chat-service';
+   *
+   * const sessions = await chatService.getAllChatSessions();
+   *
+   * sessions.forEach(session => {
+   *   const agentName = session.agent?.name || 'No agent';
+   *   const skillCount = session.skills?.length || 0;
+   *   const date = new Date(session.createdAt).toLocaleDateString();
+   *
+   *   console.log(`${session.title}`);
+   *   console.log(`  Agent: ${agentName}`);
+   *   console.log(`  Skills: ${skillCount}`);
+   *   console.log(`  Created: ${date}`);
+   *   console.log('---');
+   * });
+   * // Output:
+   * // Code Review Chat
+   * //   Agent: Code Reviewer
+   * //   Skills: 2
+   * //   Created: 1/2/2026
+   * // ---
+   * // Bug Fix Session
+   * //   Agent: Debugging Expert
+   * //   Skills: 3
+   * //   Created: 1/1/2026
+   * // ---
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Search sessions by title
+   * import { chatService } from './chat-service';
+   *
+   * async function searchSessions(query: string) {
+   *   const allSessions = await chatService.getAllChatSessions();
+   *   const matches = allSessions.filter(session =>
+   *     session.title.toLowerCase().includes(query.toLowerCase())
+   *   );
+   *
+   *   console.log(`Found ${matches.length} sessions matching "${query}"`);
+   *   return matches;
+   * }
+   *
+   * const results = await searchSessions('code review');
+   * // => Found 3 sessions matching "code review"
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Group sessions by date
+   * import { chatService } from './chat-service';
+   *
+   * const sessions = await chatService.getAllChatSessions();
+   *
+   * const today = new Date().toDateString();
+   * const todaySessions = sessions.filter(s =>
+   *   new Date(s.createdAt).toDateString() === today
+   * );
+   *
+   * console.log(`Today's sessions: ${todaySessions.length}`);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Export session list for reporting
+   * import { chatService } from './chat-service';
+   * import fs from 'fs';
+   *
+   * const sessions = await chatService.getAllChatSessions();
+   *
+   * const report = sessions.map(s => ({
+   *   title: s.title,
+   *   status: s.status,
+   *   agent: s.agent?.name || 'None',
+   *   skills: s.skills?.map(sk => sk.name).join(', ') || 'None',
+   *   created: s.createdAt,
+   * }));
+   *
+   * fs.writeFileSync('sessions-report.json', JSON.stringify(report, null, 2));
+   * console.log('Report exported');
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle empty session list
+   * import { chatService } from './chat-service';
+   *
+   * const sessions = await chatService.getAllChatSessions();
+   *
+   * if (sessions.length === 0) {
+   *   console.log('No sessions found. Create your first chat!');
+   * } else {
+   *   console.log(`You have ${sessions.length} conversation(s)`);
+   * }
+   * ```
+   *
+   * @see {@link getChatSession} - Get a specific session
+   * @see {@link createChatSession} - Create a new session
+   * @see {@link archiveChatSession} - Archive a session
+   * @see {@link deleteChatSession} - Delete a session permanently
    */
   async getAllChatSessions(): Promise<ChatSession[]> {
     try {
@@ -202,7 +827,212 @@ export class ChatService extends EventEmitter {
   }
 
   /**
-   * Get messages for a chat session
+   * Get all messages for a chat session sorted by timestamp
+   *
+   * @description
+   * Retrieves all chat messages (user, assistant, system) for a specific chat
+   * session from Strapi CMS, sorted by timestamp in ascending order (chronological).
+   * This method is used to display the conversation history in the chat UI and
+   * supports message replay and export functionality.
+   *
+   * **Message Loading Strategy:**
+   * The method retrieves messages through the session's populated messages relation
+   * rather than querying the chat-messages collection directly. This approach:
+   * - Avoids Strapi v5 issues with filtering on relations
+   * - Ensures consistent message ordering by timestamp
+   * - Returns empty array if session doesn't exist (graceful degradation)
+   * - Automatically filters messages for the specific session
+   *
+   * **Message Types:**
+   * - `user`: Messages sent by the user (with optional attachments)
+   * - `assistant`: Responses from Claude AI (with tool uses, cost, usage metadata)
+   * - `system`: System notifications or status messages
+   *
+   * **Message Metadata:**
+   * Each message may include metadata:
+   * - User messages: Typically minimal or empty metadata
+   * - Assistant messages: toolUses[], cost (USD), usage (token counts)
+   * - System messages: Initialization or status information
+   *
+   * **Attachment Handling:**
+   * Messages may have file attachments (images, PDFs, text files) referenced
+   * by Strapi upload IDs. The attachment objects include name, URL, MIME type,
+   * and file size for display and download.
+   *
+   * **Use Cases:**
+   * - Display conversation history in chat UI
+   * - Export chat transcript
+   * - Search message content
+   * - Calculate conversation cost (sum assistant message costs)
+   * - Analyze tool usage patterns
+   * - Replay conversations for debugging
+   *
+   * @param {string} sessionDocId - The documentId of the chat session
+   *
+   * @returns {Promise<ChatMessage[]>} Array of messages sorted by timestamp (oldest first)
+   *
+   * @throws {Error} If the Strapi request fails (but returns empty array if session not found)
+   *
+   * @example
+   * ```typescript
+   * // Basic usage - get all messages
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   *
+   * console.log(`Total messages: ${messages.length}`);
+   * messages.forEach(msg => {
+   *   console.log(`[${msg.role}] ${msg.content.substring(0, 50)}...`);
+   * });
+   * // Output:
+   * // Total messages: 6
+   * // [user] Review the authentication code in src/auth.ts...
+   * // [assistant] I'll analyze the authentication code. Let me...
+   * // [user] Can you also check for security vulnerabilities?...
+   * // [assistant] I found 3 security issues: ...
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Display conversation with timestamps
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   *
+   * messages.forEach(msg => {
+   *   const time = new Date(msg.timestamp).toLocaleTimeString();
+   *   const role = msg.role.toUpperCase();
+   *   console.log(`[${time}] ${role}:`);
+   *   console.log(msg.content);
+   *   console.log('---');
+   * });
+   * // Output:
+   * // [2:30:15 PM] USER:
+   * // Review the code
+   * // ---
+   * // [2:30:22 PM] ASSISTANT:
+   * // I'll review the code for you...
+   * // ---
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Calculate total conversation cost
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   *
+   * const totalCost = messages
+   *   .filter(msg => msg.role === 'assistant')
+   *   .reduce((sum, msg) => sum + (msg.metadata?.cost || 0), 0);
+   *
+   * console.log(`Total cost: $${totalCost.toFixed(4)}`);
+   * // => Total cost: $0.0125
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Export conversation transcript
+   * import { chatService } from './chat-service';
+   * import fs from 'fs';
+   *
+   * const session = await chatService.getChatSession('session-doc-id-123');
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   *
+   * const transcript = {
+   *   session: {
+   *     title: session.title,
+   *     agent: session.agent?.name,
+   *     created: session.createdAt,
+   *   },
+   *   messages: messages.map(msg => ({
+   *     timestamp: msg.timestamp,
+   *     role: msg.role,
+   *     content: msg.content,
+   *     attachments: msg.attachments?.map(a => a.name),
+   *     cost: msg.metadata?.cost,
+   *   })),
+   * };
+   *
+   * fs.writeFileSync('transcript.json', JSON.stringify(transcript, null, 2));
+   * console.log('Transcript exported');
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Analyze tool usage in conversation
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   *
+   * const toolUses = messages
+   *   .filter(msg => msg.role === 'assistant')
+   *   .flatMap(msg => msg.metadata?.toolUses || []);
+   *
+   * const toolCounts = toolUses.reduce((acc, tool) => {
+   *   acc[tool.name] = (acc[tool.name] || 0) + 1;
+   *   return acc;
+   * }, {} as Record<string, number>);
+   *
+   * console.log('Tool usage:');
+   * Object.entries(toolCounts).forEach(([tool, count]) => {
+   *   console.log(`  ${tool}: ${count}`);
+   * });
+   * // Output:
+   * // Tool usage:
+   * //   Read: 5
+   * //   Grep: 2
+   * //   Write: 3
+   * //   Bash: 1
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Get messages with attachments only
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   * const messagesWithAttachments = messages.filter(msg =>
+   *   msg.attachments && msg.attachments.length > 0
+   * );
+   *
+   * console.log(`Messages with attachments: ${messagesWithAttachments.length}`);
+   * messagesWithAttachments.forEach(msg => {
+   *   console.log(`- ${msg.role}: ${msg.attachments?.map(a => a.name).join(', ')}`);
+   * });
+   * // Output:
+   * // Messages with attachments: 2
+   * // - user: diagram.png
+   * // - user: report.pdf, config.json
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle empty message list
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('session-doc-id-123');
+   *
+   * if (messages.length === 0) {
+   *   console.log('No messages yet. Start the conversation!');
+   * } else {
+   *   console.log(`${messages.length} messages in conversation`);
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle session not found gracefully
+   * import { chatService } from './chat-service';
+   *
+   * const messages = await chatService.getChatMessages('invalid-session-id');
+   * // Returns empty array instead of throwing error
+   * console.log(messages.length); // => 0
+   * ```
+   *
+   * @see {@link getChatSession} - Get the parent session
+   * @see {@link sendMessage} - Send a new message to the session
+   * @see {@link saveChatMessage} - Internal method used to save messages
    */
   async getChatMessages(sessionDocId: string): Promise<ChatMessage[]> {
     try {
@@ -232,6 +1062,131 @@ export class ChatService extends EventEmitter {
 
   /**
    * Save a chat message to Strapi
+   *
+   * @description
+   * Persists a chat message (user, assistant, or system) to the Strapi CMS database
+   * with optional file attachments and metadata. This method is called internally by
+   * sendMessage() to save both user messages (before streaming) and assistant messages
+   * (after streaming completes).
+   *
+   * The saved message is associated with a chat session via the session documentId
+   * and includes a timestamp for message ordering. Attachments are referenced by their
+   * Strapi file upload IDs.
+   *
+   * **Key Features:**
+   * - Saves message to Strapi chat-messages collection
+   * - Associates message with chat session via session documentId
+   * - Supports file attachments (images, PDFs, text files) via attachment IDs
+   * - Stores arbitrary metadata (tool uses, cost, usage stats, etc.)
+   * - Auto-generates ISO timestamp for message ordering
+   * - Returns transformed ChatMessage with documentId for future reference
+   *
+   * **Message Metadata Usage:**
+   * - User messages: Typically empty or minimal metadata
+   * - Assistant messages: Includes toolUses[], cost (USD), usage (tokens)
+   * - System messages: May include initialization or status information
+   *
+   * **Database Schema:**
+   * The message is saved to Strapi with the following fields:
+   * - session: documentId of the parent ChatSession
+   * - role: 'user' | 'assistant' | 'system'
+   * - content: Full message text content
+   * - attachments: Array of Strapi file IDs (Many-to-many relation)
+   * - metadata: JSON object with custom data (toolUses, cost, usage, etc.)
+   * - timestamp: ISO 8601 timestamp for message ordering
+   *
+   * @param {string} sessionDocId - The documentId of the parent chat session
+   * @param {'user' | 'assistant' | 'system'} role - Message sender role
+   * @param {string} content - The message text content (may be empty for tool-only messages)
+   * @param {number[]} [attachmentIds] - Optional array of Strapi file upload IDs
+   * @param {any} [metadata] - Optional metadata object (toolUses, cost, usage, etc.)
+   *
+   * @returns {Promise<ChatMessage>} The saved message with documentId and timestamps
+   *
+   * @throws {Error} If the Strapi API request fails or returns invalid data
+   *
+   * @example
+   * ```typescript
+   * // Save user message with image attachment
+   * const buffer = await fs.readFile('./diagram.png');
+   * const uploaded = await strapiClient.uploadFile(buffer, 'diagram.png');
+   *
+   * const userMessage = await this.saveChatMessage(
+   *   'session-doc-id-123',
+   *   'user',
+   *   'Can you analyze this diagram?',
+   *   [uploaded.id], // Attachment IDs
+   *   {} // No metadata
+   * );
+   *
+   * console.log('Saved user message:', userMessage.documentId);
+   * // => Saved user message: msg_xyz789
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Save assistant message with tool uses and cost
+   * const assistantMessage = await this.saveChatMessage(
+   *   'session-doc-id-123',
+   *   'assistant',
+   *   'I analyzed the code and found 3 issues...',
+   *   undefined, // No attachments
+   *   {
+   *     toolUses: [
+   *       { type: 'tool_use', id: 'toolu_1', name: 'Read', input: { file_path: 'src/auth.ts' } },
+   *       { type: 'tool_use', id: 'toolu_2', name: 'Grep', input: { pattern: 'TODO' } }
+   *     ],
+   *     cost: 0.0025, // $0.0025 USD
+   *     usage: {
+   *       input_tokens: 1234,
+   *       output_tokens: 567,
+   *       cache_creation_input_tokens: 0,
+   *       cache_read_input_tokens: 890
+   *     }
+   *   }
+   * );
+   *
+   * console.log('Assistant message cost:', assistantMessage.metadata?.cost);
+   * // => Assistant message cost: 0.0025
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Save system message with initialization metadata
+   * const systemMessage = await this.saveChatMessage(
+   *   'session-doc-id-123',
+   *   'system',
+   *   'Session initialized with claude-sonnet-4-5',
+   *   undefined,
+   *   {
+   *     sessionId: 'sdk_session_abc123',
+   *     model: 'claude-sonnet-4-5',
+   *     tools: ['Read', 'Write', 'Bash', 'Grep'],
+   *     permissionMode: 'default'
+   *   }
+   * );
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle save errors gracefully
+   * try {
+   *   const message = await this.saveChatMessage(
+   *     'invalid-session-id',
+   *     'user',
+   *     'Hello',
+   *     undefined,
+   *     {}
+   *   );
+   * } catch (error) {
+   *   console.error('Failed to save message:', error);
+   *   // Error: Chat session invalid-session-id not found
+   * }
+   * ```
+   *
+   * @private
+   * @see {@link sendMessage} - Uses this method to save user and assistant messages
+   * @see {@link ChatMessage} - The returned message type
    */
   private async saveChatMessage(
     sessionDocId: string,
@@ -264,8 +1219,291 @@ export class ChatService extends EventEmitter {
   }
 
   /**
-   * Send a message and stream response
-   * This is an async generator that yields chat messages as they arrive
+   * Send a message and stream response from Claude Agent SDK
+   *
+   * @description
+   * Core async generator method that sends a user message to Claude AI and streams
+   * the assistant's response in real-time. This method orchestrates the complete
+   * conversation lifecycle including message persistence, skill synchronization,
+   * agent configuration, MCP server setup, SDK query execution, and streaming events.
+   *
+   * **AsyncGenerator Streaming Pattern:**
+   * This method uses AsyncGenerator to yield events as they occur, enabling real-time
+   * UI updates and responsive user experience. The frontend can consume events using
+   * `for await (const event of chatService.sendMessage(...))` pattern.
+   *
+   * **Yielded Event Types:**
+   * 1. **user_message_saved** - User message saved to Strapi (before streaming)
+   * 2. **stream_id** - Unique stream ID for cancellation support
+   * 3. **sdk_message** - Raw SDK message (system, assistant, result, stream_event)
+   * 4. **assistant_message_start** - Assistant message streaming started
+   * 5. **assistant_message_delta** - Real-time text delta from Claude
+   * 6. **assistant_message_saved** - Complete assistant message saved to Strapi
+   * 7. **done** - Conversation complete with cost and usage metadata
+   * 8. **error** - Error occurred during streaming
+   * 9. **cancelled** - Stream was cancelled by user
+   *
+   * **Message Flow:**
+   * 1. Fetch chat session with agent and skill configurations
+   * 2. Sync skills to filesystem (.claude/skills/*.md files)
+   * 3. Upload attachments to Strapi and save user message
+   * 4. Yield 'user_message_saved' event
+   * 5. Build SDK options (model, systemPrompt, permissions, tools, mcpServers)
+   * 6. Create SDK Query with AsyncGenerator prompt and AbortController
+   * 7. Yield 'stream_id' event (enables cancellation via cancelMessage)
+   * 8. Stream SDK messages and yield 'sdk_message' events
+   * 9. Accumulate assistant text from content_block_delta stream events
+   * 10. Yield 'assistant_message_delta' events for real-time UI updates
+   * 11. Save complete assistant message to Strapi and chat log
+   * 12. Yield 'assistant_message_saved' event
+   * 13. Yield 'done' event with cost/usage metadata
+   *
+   * **Agent Override:**
+   * Supports per-message agent override via the agentId parameter. This allows
+   * using different agents within the same chat session (e.g., switching between
+   * a coding agent and a security review agent).
+   *
+   * **Skill Override:**
+   * Supports per-message skill override via the skillIds parameter. This allows
+   * using different skill sets for different messages in the same session.
+   *
+   * **Permission Modes:**
+   * - **default**: User approves tool usage (except safe read-only tools)
+   * - **bypass**: Auto-approve all tools (bypassPermissions)
+   * - **auto**: Auto-approve Write/Edit tools (acceptEdits mode)
+   * - **plan**: Read-only mode with Glob/Read/Grep/Skill tools only
+   *
+   * **Plan Mode:**
+   * When permissionMode is 'plan', the service restricts to read-only tools and
+   * adds plan mode instructions to the system prompt. Claude analyzes the codebase
+   * and presents a detailed implementation plan without making any changes.
+   *
+   * **File Attachment Support:**
+   * - Images: Sent as base64-encoded image blocks (image/png, image/jpeg, etc.)
+   * - PDFs: Sent as document blocks (application/pdf) - SDK processes page by page
+   * - Text: Sent as inline text content with file name header
+   *
+   * **MCP Server Integration:**
+   * Loads MCP servers from agent's mcpConfig (Strapi) and .mcp.json file (project root).
+   * Only includes servers enabled in the agent's mcpConfig. Merges command/args from
+   * .mcp.json with server selection from mcpConfig.
+   *
+   * **Stream Cancellation:**
+   * Each stream has a unique streamId (UUID) yielded in the 'stream_id' event.
+   * The client can call cancelMessage(streamId) to abort the stream gracefully.
+   * The SDK Query respects the abort signal and stops processing immediately.
+   *
+   * @param {string} sessionDocId - The documentId of the chat session
+   * @param {string} message - The user's message text
+   * @param {SendMessageRequest['attachments']} attachments - Optional file attachments (images, PDFs, text files)
+   * @param {string} workingDirectory - Working directory for SDK execution (project root)
+   * @param {'default' | 'bypass' | 'auto' | 'plan'} [permissionMode] - Permission mode override (defaults to session mode)
+   * @param {string} [agentId] - Optional agent override (defaults to session agent)
+   * @param {string[]} [skillIds] - Optional skill override (defaults to session skills)
+   *
+   * @yields {Object} Stream events with different types:
+   *   - `{ type: 'user_message_saved', message: ChatMessage }` - User message persisted
+   *   - `{ type: 'stream_id', streamId: string, timestamp: string }` - Stream ID for cancellation
+   *   - `{ type: 'sdk_message', data: SdkMessage }` - Raw SDK message (system, assistant, result, etc.)
+   *   - `{ type: 'assistant_message_start', messageId: string, timestamp: string }` - Streaming started
+   *   - `{ type: 'assistant_message_delta', delta: string, messageId: string, timestamp: string }` - Text delta
+   *   - `{ type: 'assistant_message_saved', message: ChatMessage }` - Assistant message persisted
+   *   - `{ type: 'done', cost: number, usage: object }` - Conversation complete
+   *   - `{ type: 'error', error: string }` - Error occurred
+   *   - `{ type: 'cancelled', streamId: string, timestamp: string, reason: string }` - Stream cancelled
+   *
+   * @returns {AsyncGenerator<any>} Async generator yielding stream events
+   *
+   * @throws {Error} If chat session is not found or SDK query fails
+   *
+   * @example
+   * ```typescript
+   * // Basic message streaming with event handling
+   * import { chatService } from './chat-service';
+   *
+   * const sessionDocId = 'chat-session-doc-id';
+   * const message = 'Review the authentication code in src/auth.ts';
+   *
+   * for await (const event of chatService.sendMessage(
+   *   sessionDocId,
+   *   message,
+   *   [], // No attachments
+   *   '/path/to/project'
+   * )) {
+   *   switch (event.type) {
+   *     case 'user_message_saved':
+   *       console.log('User message saved:', event.message.documentId);
+   *       break;
+   *     case 'stream_id':
+   *       console.log('Stream ID:', event.streamId);
+   *       // Store for potential cancellation
+   *       currentStreamId = event.streamId;
+   *       break;
+   *     case 'assistant_message_delta':
+   *       // Real-time streaming text
+   *       process.stdout.write(event.delta);
+   *       break;
+   *     case 'assistant_message_saved':
+   *       console.log('\nAssistant response saved');
+   *       break;
+   *     case 'done':
+   *       console.log('Cost: $' + event.cost);
+   *       break;
+   *     case 'error':
+   *       console.error('Error:', event.error);
+   *       break;
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Send message with image attachment
+   * import { chatService } from './chat-service';
+   * import fs from 'fs';
+   *
+   * const imageBuffer = fs.readFileSync('./architecture-diagram.png');
+   * const attachments = [{
+   *   name: 'architecture-diagram.png',
+   *   mimeType: 'image/png',
+   *   data: imageBuffer.toString('base64')
+   * }];
+   *
+   * for await (const event of chatService.sendMessage(
+   *   'session-doc-id',
+   *   'Analyze this architecture diagram and suggest improvements',
+   *   attachments,
+   *   '/path/to/project'
+   * )) {
+   *   if (event.type === 'assistant_message_delta') {
+   *     updateUI(event.delta); // Real-time UI update
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Use plan mode for read-only analysis
+   * import { chatService } from './chat-service';
+   *
+   * for await (const event of chatService.sendMessage(
+   *   'session-doc-id',
+   *   'Create a detailed plan to add user authentication',
+   *   [],
+   *   '/path/to/project',
+   *   'plan' // Read-only mode - no file modifications
+   * )) {
+   *   if (event.type === 'assistant_message_delta') {
+   *     console.log(event.delta); // Claude presents implementation plan
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Override agent per message
+   * import { chatService } from './chat-service';
+   *
+   * // First message uses default agent
+   * for await (const event of chatService.sendMessage(
+   *   'session-doc-id',
+   *   'Write a test file',
+   *   [],
+   *   '/path/to/project'
+   * )) { // ... }
+   *
+   * // Second message overrides with security specialist agent
+   * for await (const event of chatService.sendMessage(
+   *   'session-doc-id',
+   *   'Review this code for security vulnerabilities',
+   *   [],
+   *   '/path/to/project',
+   *   undefined, // Use session permission mode
+   *   'security-agent-id' // Override with security agent
+   * )) { // ... }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Stream cancellation with AbortController
+   * import { chatService } from './chat-service';
+   *
+   * let currentStreamId: string | null = null;
+   *
+   * // Start streaming
+   * const streamPromise = (async () => {
+   *   for await (const event of chatService.sendMessage(
+   *     'session-doc-id',
+   *     'This is a long running task...',
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     if (event.type === 'stream_id') {
+   *       currentStreamId = event.streamId;
+   *     }
+   *     if (event.type === 'cancelled') {
+   *       console.log('Stream cancelled:', event.reason);
+   *     }
+   *   }
+   * })();
+   *
+   * // Cancel after 5 seconds
+   * setTimeout(() => {
+   *   if (currentStreamId) {
+   *     chatService.cancelMessage(currentStreamId);
+   *   }
+   * }, 5000);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Collect SDK messages for debugging
+   * import { chatService } from './chat-service';
+   *
+   * const sdkMessages: any[] = [];
+   *
+   * for await (const event of chatService.sendMessage(
+   *   'session-doc-id',
+   *   'Debug this error',
+   *   [],
+   *   '/path/to/project'
+   * )) {
+   *   if (event.type === 'sdk_message') {
+   *     sdkMessages.push(event.data);
+   *     console.log('SDK event:', event.data.type, event.data.subtype);
+   *   }
+   *   if (event.type === 'done') {
+   *     console.log('Total SDK messages:', sdkMessages.length);
+   *     fs.writeFileSync('sdk-debug.json', JSON.stringify(sdkMessages, null, 2));
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Override skills per message
+   * import { chatService } from './chat-service';
+   *
+   * // Use different skill set for this specific message
+   * for await (const event of chatService.sendMessage(
+   *   'session-doc-id',
+   *   'Generate API documentation',
+   *   [],
+   *   '/path/to/project',
+   *   undefined, // Use session permission mode
+   *   undefined, // Use session agent
+   *   ['documentation-skill-id', 'api-skill-id'] // Override skills
+   * )) {
+   *   if (event.type === 'assistant_message_delta') {
+   *     console.log(event.delta);
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link cancelMessage} - Cancel an active stream
+   * @see {@link buildPromptGenerator} - Builds the AsyncGenerator prompt for SDK
+   * @see {@link saveChatMessage} - Saves messages to Strapi
+   * @see {@link https://docs.anthropic.com/en/api/agent-sdk|Claude Agent SDK Documentation}
    */
   async* sendMessage(
     sessionDocId: string,
@@ -869,7 +2107,206 @@ Your plan should include:
   }
 
   /**
-   * Build async generator for streaming input mode
+   * Build async generator for streaming input mode to Claude Agent SDK
+   *
+   * @description
+   * Creates an AsyncGenerator that yields a single user message with optional file
+   * attachments to the Claude Agent SDK. This generator serves as the prompt input
+   * for the SDK's query() function, which expects an AsyncGenerator to enable
+   * streaming conversation patterns.
+   *
+   * The generator constructs a user message with content blocks based on the message
+   * text and attachment types. It handles three types of attachments:
+   * - **Images**: Sent as base64-encoded image blocks (PNG, JPEG, WebP, GIF)
+   * - **PDFs**: Sent as document blocks - SDK extracts text and images page by page
+   * - **Text files**: Included as inline text content with file name headers
+   *
+   * **AsyncGenerator Pattern:**
+   * The SDK's query() function expects an AsyncGenerator<PromptMessage> as input
+   * to enable streaming conversations where messages can be added dynamically.
+   * This method creates a simple generator that yields a single user message
+   * with all content blocks (text + attachments).
+   *
+   * **Content Block Structure:**
+   * 1. **Text block**: `{ type: 'text', text: message }`
+   * 2. **Image block**: `{ type: 'image', source: { type: 'base64', media_type, data } }`
+   * 3. **Document block**: `{ type: 'document', source: { type: 'base64', media_type, data } }`
+   * 4. **Text file block**: `{ type: 'text', text: '--- File: name ---\n...' }`
+   *
+   * **Supported Image Formats:**
+   * - image/png, image/jpeg, image/jpg, image/webp, image/gif
+   *
+   * **Supported Document Formats:**
+   * - application/pdf (SDK processes page by page, extracts text and images)
+   *
+   * **Text File Handling:**
+   * Text files are decoded from base64 and included as inline text content
+   * with file name headers for context. This allows Claude to reference the
+   * file name when discussing the content.
+   *
+   * @param {string} message - The user's message text
+   * @param {SendMessageRequest['attachments']} [attachments] - Optional file attachments
+   *   Each attachment has: `{ name: string, mimeType: string, data: string (base64) }`
+   *
+   * @yields {Object} A single user message with content blocks:
+   *   `{ type: 'user', message: { role: 'user', content: string | Array<ContentBlock> } }`
+   *
+   * @returns {AsyncGenerator<any>} Async generator yielding user message for SDK
+   *
+   * @example
+   * ```typescript
+   * // Simple text message
+   * const generator = this.buildPromptGenerator('Hello Claude');
+   *
+   * for await (const msg of generator) {
+   *   console.log(msg);
+   * }
+   * // Output:
+   * // {
+   * //   type: 'user',
+   * //   message: {
+   * //     role: 'user',
+   * //     content: 'Hello Claude'
+   * //   }
+   * // }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Message with image attachment
+   * import fs from 'fs';
+   *
+   * const imageBuffer = fs.readFileSync('./diagram.png');
+   * const attachments = [{
+   *   name: 'diagram.png',
+   *   mimeType: 'image/png',
+   *   data: imageBuffer.toString('base64')
+   * }];
+   *
+   * const generator = this.buildPromptGenerator(
+   *   'Analyze this diagram',
+   *   attachments
+   * );
+   *
+   * for await (const msg of generator) {
+   *   console.log(msg);
+   * }
+   * // Output:
+   * // {
+   * //   type: 'user',
+   * //   message: {
+   * //     role: 'user',
+   * //     content: [
+   * //       { type: 'text', text: 'Analyze this diagram' },
+   * //       {
+   * //         type: 'image',
+   * //         source: {
+   * //           type: 'base64',
+   * //           media_type: 'image/png',
+   * //           data: 'iVBORw0KGgoAAAANS...'
+   * //         }
+   * //       }
+   * //     ]
+   * //   }
+   * // }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Message with PDF document
+   * import fs from 'fs';
+   *
+   * const pdfBuffer = fs.readFileSync('./report.pdf');
+   * const attachments = [{
+   *   name: 'report.pdf',
+   *   mimeType: 'application/pdf',
+   *   data: pdfBuffer.toString('base64')
+   * }];
+   *
+   * const generator = this.buildPromptGenerator(
+   *   'Summarize this report',
+   *   attachments
+   * );
+   *
+   * for await (const msg of generator) {
+   *   console.log(msg.message.content[1].type);
+   *   // => 'document'
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Message with text file
+   * import fs from 'fs';
+   *
+   * const textBuffer = fs.readFileSync('./config.json');
+   * const attachments = [{
+   *   name: 'config.json',
+   *   mimeType: 'text/plain',
+   *   data: textBuffer.toString('base64')
+   * }];
+   *
+   * const generator = this.buildPromptGenerator(
+   *   'Review this configuration',
+   *   attachments
+   * );
+   *
+   * for await (const msg of generator) {
+   *   console.log(msg.message.content[1].text);
+   * }
+   * // Output:
+   * // --- File: config.json ---
+   * // {
+   * //   "port": 3000,
+   * //   "host": "localhost"
+   * // }
+   * // --- End of file ---
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Message with multiple attachments
+   * const attachments = [
+   *   { name: 'screenshot.png', mimeType: 'image/png', data: base64Image },
+   *   { name: 'logs.txt', mimeType: 'text/plain', data: base64Text },
+   *   { name: 'report.pdf', mimeType: 'application/pdf', data: base64Pdf }
+   * ];
+   *
+   * const generator = this.buildPromptGenerator(
+   *   'Debug this issue using these files',
+   *   attachments
+   * );
+   *
+   * for await (const msg of generator) {
+   *   console.log('Content blocks:', msg.message.content.length);
+   *   // => Content blocks: 4 (1 text + 1 image + 1 text file + 1 pdf)
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Use with SDK query() function
+   * import { query } from '@anthropic-ai/claude-agent-sdk';
+   *
+   * const promptGenerator = this.buildPromptGenerator('Review the code');
+   *
+   * const queryInstance = query({
+   *   prompt: promptGenerator,
+   *   options: {
+   *     model: 'claude-sonnet-4-5',
+   *     systemPrompt: 'You are a code reviewer',
+   *     cwd: '/path/to/project'
+   *   }
+   * });
+   *
+   * for await (const msg of queryInstance) {
+   *   console.log('SDK message:', msg.type);
+   * }
+   * ```
+   *
+   * @private
+   * @see {@link sendMessage} - Uses this generator to build SDK prompt
+   * @see {@link https://docs.anthropic.com/en/api/agent-sdk|Claude Agent SDK Documentation}
    */
   private async* buildPromptGenerator(
     message: string,
@@ -925,7 +2362,200 @@ Your plan should include:
   }
 
   /**
-   * Delete a chat session
+   * Permanently delete a chat session and all its messages
+   *
+   * @description
+   * Permanently deletes a chat session from Strapi CMS along with all associated
+   * messages and chat log files. This operation is irreversible and should be used
+   * with caution. For non-destructive session management, consider using
+   * archiveChatSession() instead.
+   *
+   * **Deletion Workflow:**
+   * 1. Fetch all messages for the session via getChatMessages()
+   * 2. Delete each message individually from Strapi chat-messages collection
+   * 3. Delete the session from Strapi chat-sessions collection
+   * 4. Delete the associated chat log file from filesystem
+   * 5. Log successful deletion
+   *
+   * **Cascade Delete:**
+   * The method manually implements cascade deletion for messages because Strapi
+   * v5 doesn't automatically cascade delete related entities. This ensures no
+   * orphaned message records remain in the database.
+   *
+   * **File Cleanup:**
+   * The method calls chatLogService.deleteChatLog() to remove the filesystem
+   * log file created during the session. This prevents accumulation of unused
+   * log files and maintains filesystem hygiene.
+   *
+   * **Use Cases:**
+   * - User requests permanent deletion of conversation
+   * - Cleanup of test or temporary sessions
+   * - GDPR/privacy compliance (data deletion requests)
+   * - Freeing up database storage
+   * - Removing sensitive conversation data
+   *
+   * **Alternatives:**
+   * - **Archive**: Use archiveChatSession() for soft delete (preserves data)
+   * - **Export first**: Export conversation before deletion for backup
+   * - **Status filter**: Filter archived sessions in UI instead of deleting
+   *
+   * **Important Notes:**
+   * - This operation is IRREVERSIBLE - all conversation data is permanently lost
+   * - Attachments uploaded to Strapi are NOT automatically deleted (orphaned files)
+   * - Consider implementing user confirmation dialog in UI before calling
+   * - For production, consider implementing soft delete pattern instead
+   *
+   * @param {string} sessionDocId - The documentId of the chat session to delete
+   *
+   * @returns {Promise<void>} Resolves when deletion is complete
+   *
+   * @throws {Error} If the Strapi request fails or session/messages cannot be deleted
+   *
+   * @example
+   * ```typescript
+   * // Basic session deletion
+   * import { chatService } from './chat-service';
+   *
+   * await chatService.deleteChatSession('session-doc-id-123');
+   * console.log('Session deleted permanently');
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Delete with user confirmation
+   * import { chatService } from './chat-service';
+   *
+   * async function deleteWithConfirmation(sessionDocId: string) {
+   *   const session = await chatService.getChatSession(sessionDocId);
+   *
+   *   const confirmed = confirm(
+   *     `Permanently delete "${session.title}"? This cannot be undone.`
+   *   );
+   *
+   *   if (confirmed) {
+   *     await chatService.deleteChatSession(sessionDocId);
+   *     console.log('Session deleted');
+   *   } else {
+   *     console.log('Deletion cancelled');
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Export before deletion (backup)
+   * import { chatService } from './chat-service';
+   * import fs from 'fs';
+   *
+   * async function exportAndDelete(sessionDocId: string) {
+   *   // Export conversation first
+   *   const session = await chatService.getChatSession(sessionDocId);
+   *   const messages = await chatService.getChatMessages(sessionDocId);
+   *
+   *   const backup = {
+   *     session,
+   *     messages,
+   *     exportedAt: new Date().toISOString(),
+   *   };
+   *
+   *   fs.writeFileSync(
+   *     `backup-${sessionDocId}.json`,
+   *     JSON.stringify(backup, null, 2)
+   *   );
+   *
+   *   // Now safe to delete
+   *   await chatService.deleteChatSession(sessionDocId);
+   *   console.log('Session backed up and deleted');
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Bulk delete old sessions
+   * import { chatService } from './chat-service';
+   *
+   * async function deleteOldSessions(daysOld: number) {
+   *   const allSessions = await chatService.getAllChatSessions();
+   *   const cutoffDate = new Date();
+   *   cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+   *
+   *   const oldSessions = allSessions.filter(session =>
+   *     new Date(session.createdAt) < cutoffDate
+   *   );
+   *
+   *   console.log(`Deleting ${oldSessions.length} sessions older than ${daysOld} days`);
+   *
+   *   for (const session of oldSessions) {
+   *     await chatService.deleteChatSession(session.documentId);
+   *     console.log(`Deleted: ${session.title}`);
+   *   }
+   * }
+   *
+   * await deleteOldSessions(90); // Delete sessions older than 90 days
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle deletion errors gracefully
+   * import { chatService } from './chat-service';
+   *
+   * async function safeDelete(sessionDocId: string) {
+   *   try {
+   *     await chatService.deleteChatSession(sessionDocId);
+   *     return { success: true, message: 'Session deleted' };
+   *   } catch (error) {
+   *     console.error('Failed to delete session:', error);
+   *     return {
+   *       success: false,
+   *       message: 'Deletion failed. Session may not exist.',
+   *     };
+   *   }
+   * }
+   *
+   * const result = await safeDelete('session-doc-id-123');
+   * console.log(result.message);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Delete test sessions (cleanup after tests)
+   * import { chatService } from './chat-service';
+   *
+   * async function cleanupTestSessions() {
+   *   const sessions = await chatService.getAllChatSessions();
+   *   const testSessions = sessions.filter(s =>
+   *     s.title.startsWith('[TEST]')
+   *   );
+   *
+   *   console.log(`Cleaning up ${testSessions.length} test sessions`);
+   *
+   *   await Promise.all(
+   *     testSessions.map(s => chatService.deleteChatSession(s.documentId))
+   *   );
+   *
+   *   console.log('Test cleanup complete');
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Archive instead of delete (safer alternative)
+   * import { chatService } from './chat-service';
+   *
+   * async function archiveInsteadOfDelete(sessionDocId: string) {
+   *   // Archive preserves data but hides from active list
+   *   await chatService.archiveChatSession(sessionDocId);
+   *   console.log('Session archived (data preserved)');
+   *
+   *   // Later, can still retrieve if needed
+   *   const session = await chatService.getChatSession(sessionDocId);
+   *   console.log('Status:', session.status); // => 'archived'
+   * }
+   * ```
+   *
+   * @see {@link archiveChatSession} - Soft delete alternative (preserves data)
+   * @see {@link getAllChatSessions} - Get sessions for bulk operations
+   * @see {@link getChatMessages} - Get messages before deletion
    */
   async deleteChatSession(sessionDocId: string): Promise<void> {
     try {
@@ -949,7 +2579,231 @@ Your plan should include:
   }
 
   /**
-   * Archive a chat session
+   * Archive a chat session (soft delete)
+   *
+   * @description
+   * Archives a chat session by updating its status to 'archived' in Strapi CMS
+   * and the associated chat log file. This is a non-destructive operation that
+   * preserves all conversation data while hiding the session from active lists.
+   * Archived sessions can still be accessed, retrieved, and restored if needed.
+   *
+   * **Soft Delete Pattern:**
+   * Archiving implements a soft delete pattern where data is marked as inactive
+   * rather than permanently deleted. Benefits include:
+   * - Data preservation for historical reference
+   * - Ability to restore sessions if needed
+   * - Safer alternative to permanent deletion
+   * - Compliance with data retention policies
+   * - Audit trail of past conversations
+   *
+   * **Update Workflow:**
+   * 1. Update session status to 'archived' in Strapi via PUT request
+   * 2. Update status in filesystem chat log via chatLogService
+   * 3. Return updated session object with new status
+   *
+   * **Status Values:**
+   * - `active`: Session is currently active and appears in default lists
+   * - `archived`: Session is archived and hidden from default views
+   *
+   * **Use Cases:**
+   * - Hide completed or old conversations from active list
+   * - Clean up UI without losing conversation history
+   * - Implement "delete" functionality with data preservation
+   * - Organize conversations by status (active vs historical)
+   * - Comply with data retention policies
+   * - Support conversation search across all time
+   *
+   * **Restoration:**
+   * To restore an archived session, update its status back to 'active' via
+   * Strapi API or implement an unarchive method. The session and all messages
+   * remain intact and can be resumed immediately.
+   *
+   * **UI Integration:**
+   * - Show archived sessions in separate "Archived" view
+   * - Filter archived sessions from main session list
+   * - Display archive status badge in session UI
+   * - Provide "Unarchive" action for archived sessions
+   *
+   * @param {string} sessionDocId - The documentId of the chat session to archive
+   *
+   * @returns {Promise<ChatSession>} The updated session with status='archived'
+   *
+   * @throws {Error} If the Strapi request fails or session is not found
+   *
+   * @example
+   * ```typescript
+   * // Basic session archiving
+   * import { chatService } from './chat-service';
+   *
+   * const archivedSession = await chatService.archiveChatSession('session-doc-id-123');
+   *
+   * console.log(`Archived: ${archivedSession.title}`);
+   * console.log(`Status: ${archivedSession.status}`);
+   * // Output:
+   * // Archived: Code Review Chat
+   * // Status: archived
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Archive with user confirmation
+   * import { chatService } from './chat-service';
+   *
+   * async function archiveWithConfirmation(sessionDocId: string) {
+   *   const session = await chatService.getChatSession(sessionDocId);
+   *
+   *   const confirmed = confirm(
+   *     `Archive "${session.title}"? You can restore it later.`
+   *   );
+   *
+   *   if (confirmed) {
+   *     const archived = await chatService.archiveChatSession(sessionDocId);
+   *     console.log('Session archived');
+   *     return archived;
+   *   } else {
+   *     console.log('Archive cancelled');
+   *     return session;
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Filter archived sessions from active list
+   * import { chatService } from './chat-service';
+   *
+   * const allSessions = await chatService.getAllChatSessions();
+   *
+   * const activeSessions = allSessions.filter(s => s.status === 'active');
+   * const archivedSessions = allSessions.filter(s => s.status === 'archived');
+   *
+   * console.log(`Active: ${activeSessions.length}`);
+   * console.log(`Archived: ${archivedSessions.length}`);
+   * // Output:
+   * // Active: 5
+   * // Archived: 12
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Archive old sessions automatically
+   * import { chatService } from './chat-service';
+   *
+   * async function archiveOldSessions(daysOld: number) {
+   *   const allSessions = await chatService.getAllChatSessions();
+   *   const cutoffDate = new Date();
+   *   cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+   *
+   *   const oldSessions = allSessions.filter(session =>
+   *     session.status === 'active' &&
+   *     new Date(session.createdAt) < cutoffDate
+   *   );
+   *
+   *   console.log(`Archiving ${oldSessions.length} sessions older than ${daysOld} days`);
+   *
+   *   for (const session of oldSessions) {
+   *     await chatService.archiveChatSession(session.documentId);
+   *     console.log(`Archived: ${session.title}`);
+   *   }
+   * }
+   *
+   * await archiveOldSessions(30); // Archive sessions older than 30 days
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Restore archived session (manual implementation)
+   * import { chatService } from './chat-service';
+   * import axios from 'axios';
+   *
+   * async function restoreSession(sessionDocId: string) {
+   *   const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:1337';
+   *   const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
+   *
+   *   await axios.put(
+   *     `${STRAPI_URL}/api/chat-sessions/${sessionDocId}`,
+   *     { data: { status: 'active' } },
+   *     { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` } }
+   *   );
+   *
+   *   console.log('Session restored to active status');
+   *   return await chatService.getChatSession(sessionDocId);
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Bulk archive by filter criteria
+   * import { chatService } from './chat-service';
+   *
+   * async function archiveByTitle(titlePattern: string) {
+   *   const allSessions = await chatService.getAllChatSessions();
+   *   const matchingSessions = allSessions.filter(s =>
+   *     s.status === 'active' &&
+   *     s.title.toLowerCase().includes(titlePattern.toLowerCase())
+   *   );
+   *
+   *   console.log(`Archiving ${matchingSessions.length} sessions matching "${titlePattern}"`);
+   *
+   *   const results = await Promise.all(
+   *     matchingSessions.map(s => chatService.archiveChatSession(s.documentId))
+   *   );
+   *
+   *   console.log('Bulk archive complete');
+   *   return results;
+   * }
+   *
+   * await archiveByTitle('test'); // Archive all sessions with 'test' in title
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Archive session after completion
+   * import { chatService } from './chat-service';
+   *
+   * async function completeAndArchiveSession(sessionDocId: string) {
+   *   // Send final message
+   *   for await (const event of chatService.sendMessage(
+   *     sessionDocId,
+   *     'Thank you! This conversation is complete.',
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     if (event.type === 'done') {
+   *       console.log('Final message sent, archiving session...');
+   *     }
+   *   }
+   *
+   *   // Archive the completed session
+   *   const archived = await chatService.archiveChatSession(sessionDocId);
+   *   console.log(`Session "${archived.title}" archived`);
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Show archived sessions in UI
+   * import { chatService } from './chat-service';
+   *
+   * async function displayArchivedSessions() {
+   *   const allSessions = await chatService.getAllChatSessions();
+   *   const archived = allSessions.filter(s => s.status === 'archived');
+   *
+   *   console.log('=== Archived Sessions ===');
+   *   archived.forEach(session => {
+   *     const date = new Date(session.createdAt).toLocaleDateString();
+   *     console.log(`- ${session.title} (${date})`);
+   *   });
+   *
+   *   if (archived.length === 0) {
+   *     console.log('No archived sessions');
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link deleteChatSession} - Permanent deletion alternative
+   * @see {@link getAllChatSessions} - Get all sessions including archived
+   * @see {@link getChatSession} - Retrieve archived session details
    */
   async archiveChatSession(sessionDocId: string): Promise<ChatSession> {
     try {
@@ -973,8 +2827,255 @@ Your plan should include:
 
   /**
    * Cancel an active message stream
-   * @param streamId - The unique stream ID returned in stream_id event
-   * @returns true if stream was cancelled, false if stream not found
+   *
+   * @description
+   * Gracefully cancels an active message stream using the AbortController pattern.
+   * This method aborts the SDK query execution and triggers cleanup of active stream
+   * resources. The cancelled stream yields a 'cancelled' event to notify the client.
+   *
+   * **Cancellation Flow:**
+   * 1. Client receives 'stream_id' event from sendMessage()
+   * 2. Client calls cancelMessage(streamId) to abort the stream
+   * 3. Service calls abortController.abort() to signal cancellation
+   * 4. SDK Query respects the abort signal and stops processing
+   * 5. Service removes stream from activeStreams and activeAbortControllers Maps
+   * 6. sendMessage() generator yields 'cancelled' event with reason and timestamp
+   * 7. No incomplete assistant message is saved to Strapi (prevents partial data)
+   *
+   * **Use Cases:**
+   * - User manually cancels a long-running request
+   * - Timeout logic for requests exceeding a threshold
+   * - User navigates away from chat UI
+   * - Application shutdown cleanup
+   * - Rate limiting or quota management
+   * - User starts a new message (cancel previous)
+   *
+   * **AbortController Pattern:**
+   * Each stream has a dedicated AbortController instance stored in the
+   * activeAbortControllers Map. The abort signal is passed to the SDK Query
+   * via the options.abortController parameter. When abort() is called,
+   * the SDK immediately stops processing and throws an error that's caught
+   * by sendMessage()'s try/catch block.
+   *
+   * **Cleanup Safety:**
+   * The method performs cleanup even if the stream is already completed or
+   * doesn't exist. This ensures no memory leaks or dangling references in
+   * the activeStreams and activeAbortControllers Maps.
+   *
+   * **Partial Message Handling:**
+   * When a stream is cancelled, any accumulated assistant text is NOT saved
+   * to Strapi. This prevents partial, incomplete, or misleading responses
+   * from being persisted in the chat history.
+   *
+   * @param {string} streamId - The unique stream ID returned in the 'stream_id' event
+   *
+   * @returns {boolean} `true` if stream was found and cancelled successfully,
+   *   `false` if stream was not found (already completed or invalid ID)
+   *
+   * @example
+   * ```typescript
+   * // Basic cancellation flow
+   * import { chatService } from './chat-service';
+   *
+   * let currentStreamId: string | null = null;
+   *
+   * // Start streaming in background
+   * (async () => {
+   *   for await (const event of chatService.sendMessage(
+   *     'session-doc-id',
+   *     'This is a long running task...',
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     if (event.type === 'stream_id') {
+   *       currentStreamId = event.streamId;
+   *       console.log('Stream started:', currentStreamId);
+   *     }
+   *     if (event.type === 'cancelled') {
+   *       console.log('Stream cancelled:', event.reason);
+   *     }
+   *   }
+   * })();
+   *
+   * // Cancel after 5 seconds
+   * setTimeout(() => {
+   *   if (currentStreamId) {
+   *     const cancelled = chatService.cancelMessage(currentStreamId);
+   *     console.log('Cancellation requested:', cancelled);
+   *     // => Cancellation requested: true
+   *   }
+   * }, 5000);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Cancel on user action (button click)
+   * import { chatService } from './chat-service';
+   *
+   * let activeStreamId: string | null = null;
+   *
+   * // UI button handler
+   * function handleCancelClick() {
+   *   if (activeStreamId) {
+   *     const success = chatService.cancelMessage(activeStreamId);
+   *     if (success) {
+   *       showNotification('Request cancelled');
+   *       activeStreamId = null;
+   *     } else {
+   *       showNotification('Request already completed');
+   *     }
+   *   }
+   * }
+   *
+   * // Start streaming and enable cancel button
+   * async function sendMessage(text: string) {
+   *   for await (const event of chatService.sendMessage(
+   *     sessionDocId,
+   *     text,
+   *     [],
+   *     workingDir
+   *   )) {
+   *     if (event.type === 'stream_id') {
+   *       activeStreamId = event.streamId;
+   *       enableCancelButton(); // Enable UI cancel button
+   *     }
+   *     if (event.type === 'done' || event.type === 'cancelled') {
+   *       activeStreamId = null;
+   *       disableCancelButton(); // Disable UI cancel button
+   *     }
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Timeout-based cancellation
+   * import { chatService } from './chat-service';
+   *
+   * async function sendMessageWithTimeout(
+   *   sessionDocId: string,
+   *   message: string,
+   *   timeoutMs: number = 60000
+   * ) {
+   *   let streamId: string | null = null;
+   *   let timeoutHandle: NodeJS.Timeout | null = null;
+   *
+   *   try {
+   *     for await (const event of chatService.sendMessage(
+   *       sessionDocId,
+   *       message,
+   *       [],
+   *       '/path/to/project'
+   *     )) {
+   *       if (event.type === 'stream_id') {
+   *         streamId = event.streamId;
+   *
+   *         // Set timeout to cancel after timeoutMs
+   *         timeoutHandle = setTimeout(() => {
+   *           if (streamId) {
+   *             console.log('Request timeout - cancelling stream');
+   *             chatService.cancelMessage(streamId);
+   *           }
+   *         }, timeoutMs);
+   *       }
+   *
+   *       if (event.type === 'done' || event.type === 'cancelled' || event.type === 'error') {
+   *         // Clear timeout on completion
+   *         if (timeoutHandle) {
+   *           clearTimeout(timeoutHandle);
+   *         }
+   *       }
+   *
+   *       // Handle other events...
+   *     }
+   *   } catch (error) {
+   *     if (timeoutHandle) {
+   *       clearTimeout(timeoutHandle);
+   *     }
+   *     throw error;
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Cancel all active streams (e.g., on shutdown)
+   * import { chatService } from './chat-service';
+   *
+   * function cancelAllActiveStreams() {
+   *   const activeStreamIds = chatService.getActiveStreamIds();
+   *   console.log(`Cancelling ${activeStreamIds.length} active streams`);
+   *
+   *   let cancelledCount = 0;
+   *   for (const streamId of activeStreamIds) {
+   *     const success = chatService.cancelMessage(streamId);
+   *     if (success) {
+   *       cancelledCount++;
+   *     }
+   *   }
+   *
+   *   console.log(`Successfully cancelled ${cancelledCount} streams`);
+   * }
+   *
+   * // Call during application shutdown
+   * process.on('SIGTERM', () => {
+   *   cancelAllActiveStreams();
+   *   process.exit(0);
+   * });
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Cancel and start new message (replace current)
+   * import { chatService } from './chat-service';
+   *
+   * let currentStreamId: string | null = null;
+   *
+   * async function sendNewMessage(sessionDocId: string, message: string) {
+   *   // Cancel current stream if active
+   *   if (currentStreamId) {
+   *     const cancelled = chatService.cancelMessage(currentStreamId);
+   *     if (cancelled) {
+   *       console.log('Cancelled previous request');
+   *     }
+   *     currentStreamId = null;
+   *   }
+   *
+   *   // Start new stream
+   *   for await (const event of chatService.sendMessage(
+   *     sessionDocId,
+   *     message,
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     if (event.type === 'stream_id') {
+   *       currentStreamId = event.streamId;
+   *     }
+   *     if (event.type === 'done' || event.type === 'cancelled' || event.type === 'error') {
+   *       currentStreamId = null;
+   *     }
+   *     // Handle events...
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Check if stream was actually cancelled
+   * import { chatService } from './chat-service';
+   *
+   * const streamId = 'stream-uuid-123';
+   * const wasCancelled = chatService.cancelMessage(streamId);
+   *
+   * if (wasCancelled) {
+   *   console.log('Stream cancelled successfully');
+   * } else {
+   *   console.log('Stream not found - may have already completed');
+   * }
+   * ```
+   *
+   * @see {@link sendMessage} - Yields 'stream_id' event for cancellation
+   * @see {@link getActiveStreamIds} - Get list of active stream IDs
    */
   cancelMessage(streamId: string): boolean {
     this.logger.info('Cancelling message stream', { streamId });
@@ -998,15 +3099,276 @@ Your plan should include:
   }
 
   /**
-   * Get list of active stream IDs
-   * Useful for debugging or monitoring active conversations
+   * Get list of active stream IDs for monitoring and debugging
+   *
+   * @description
+   * Returns an array of all currently active stream IDs from the activeStreams Map.
+   * Each stream ID represents an ongoing message stream (sendMessage call) that is
+   * actively processing SDK responses. This method is useful for monitoring active
+   * conversations, debugging stream lifecycle issues, and implementing shutdown cleanup.
+   *
+   * **Active Stream Lifecycle:**
+   * A stream is considered active from the moment it's added to activeStreams Map
+   * (after creating SDK Query) until it's removed (completion, error, or cancellation).
+   * The lifecycle stages are:
+   * 1. Stream created - added to activeStreams Map with unique UUID
+   * 2. Stream ID yielded - 'stream_id' event sent to client
+   * 3. Stream processing - SDK messages streaming
+   * 4. Stream cleanup - removed from activeStreams Map (done/error/cancelled)
+   *
+   * **Use Cases:**
+   * - Monitor how many conversations are actively streaming
+   * - Debug stream lifecycle issues and memory leaks
+   * - Implement graceful shutdown (cancel all active streams)
+   * - Display "active conversations" count in UI
+   * - Rate limiting based on concurrent streams
+   * - Health check endpoint for monitoring
+   * - Prevent duplicate streams for same session
+   *
+   * **Monitoring Patterns:**
+   * - Poll periodically to track active stream count
+   * - Log stream count before/after operations
+   * - Alert if stream count exceeds threshold
+   * - Track average stream duration
+   * - Detect stuck or orphaned streams
+   *
+   * **Cleanup Patterns:**
+   * - Cancel all active streams on application shutdown
+   * - Cancel streams for specific session when replacing with new message
+   * - Timeout logic for streams exceeding duration threshold
+   * - Emergency abort for runaway streams
+   *
+   * **Map Synchronization:**
+   * This method reads from the activeStreams Map, which is synchronized with
+   * activeAbortControllers Map. Both Maps are updated atomically in sendMessage()
+   * to ensure consistency between stream IDs and abort controllers.
+   *
+   * @returns {string[]} Array of active stream IDs (UUIDs)
+   *
+   * @example
+   * ```typescript
+   * // Basic usage - get active stream count
+   * import { chatService } from './chat-service';
+   *
+   * const activeStreamIds = chatService.getActiveStreamIds();
+   * console.log(`Active streams: ${activeStreamIds.length}`);
+   * // Output:
+   * // Active streams: 3
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Monitor active streams periodically
+   * import { chatService } from './chat-service';
+   *
+   * setInterval(() => {
+   *   const activeStreams = chatService.getActiveStreamIds();
+   *   console.log(`[${new Date().toISOString()}] Active streams: ${activeStreams.length}`);
+   *
+   *   if (activeStreams.length > 10) {
+   *     console.warn('High number of concurrent streams detected!');
+   *   }
+   * }, 5000); // Check every 5 seconds
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Cancel all active streams (shutdown cleanup)
+   * import { chatService } from './chat-service';
+   *
+   * async function shutdown() {
+   *   const activeStreamIds = chatService.getActiveStreamIds();
+   *
+   *   if (activeStreamIds.length > 0) {
+   *     console.log(`Cancelling ${activeStreamIds.length} active streams...`);
+   *
+   *     for (const streamId of activeStreamIds) {
+   *       chatService.cancelMessage(streamId);
+   *     }
+   *
+   *     console.log('All streams cancelled');
+   *   }
+   *
+   *   process.exit(0);
+   * }
+   *
+   * process.on('SIGTERM', shutdown);
+   * process.on('SIGINT', shutdown);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Display active streams in admin UI
+   * import { chatService } from './chat-service';
+   *
+   * async function getActiveStreamInfo() {
+   *   const streamIds = chatService.getActiveStreamIds();
+   *
+   *   return {
+   *     count: streamIds.length,
+   *     streamIds: streamIds,
+   *     timestamp: new Date().toISOString(),
+   *   };
+   * }
+   *
+   * const info = await getActiveStreamInfo();
+   * console.log(JSON.stringify(info, null, 2));
+   * // Output:
+   * // {
+   * //   "count": 2,
+   * //   "streamIds": [
+   * //     "550e8400-e29b-41d4-a716-446655440000",
+   * //     "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+   * //   ],
+   * //   "timestamp": "2026-01-02T12:00:00.000Z"
+   * // }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Rate limiting based on active streams
+   * import { chatService } from './chat-service';
+   *
+   * async function sendMessageWithRateLimit(
+   *   sessionDocId: string,
+   *   message: string,
+   *   maxConcurrent: number = 5
+   * ) {
+   *   const activeStreams = chatService.getActiveStreamIds();
+   *
+   *   if (activeStreams.length >= maxConcurrent) {
+   *     throw new Error(
+   *       `Rate limit exceeded: ${activeStreams.length}/${maxConcurrent} streams active`
+   *     );
+   *   }
+   *
+   *   // Proceed with sending message
+   *   for await (const event of chatService.sendMessage(
+   *     sessionDocId,
+   *     message,
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     // Handle events...
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Health check endpoint
+   * import { chatService } from './chat-service';
+   * import express from 'express';
+   *
+   * const app = express();
+   *
+   * app.get('/health', (req, res) => {
+   *   const activeStreams = chatService.getActiveStreamIds();
+   *
+   *   res.json({
+   *     status: 'healthy',
+   *     activeStreams: activeStreams.length,
+   *     timestamp: new Date().toISOString(),
+   *   });
+   * });
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Prevent duplicate streams for same session
+   * import { chatService } from './chat-service';
+   *
+   * const sessionStreamMap = new Map<string, string>(); // sessionDocId -> streamId
+   *
+   * async function sendMessageNoDuplicate(
+   *   sessionDocId: string,
+   *   message: string
+   * ) {
+   *   // Cancel existing stream for this session if active
+   *   const existingStreamId = sessionStreamMap.get(sessionDocId);
+   *   if (existingStreamId) {
+   *     const activeStreamIds = chatService.getActiveStreamIds();
+   *     if (activeStreamIds.includes(existingStreamId)) {
+   *       console.log('Cancelling existing stream for session');
+   *       chatService.cancelMessage(existingStreamId);
+   *     }
+   *   }
+   *
+   *   // Start new stream
+   *   for await (const event of chatService.sendMessage(
+   *     sessionDocId,
+   *     message,
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     if (event.type === 'stream_id') {
+   *       sessionStreamMap.set(sessionDocId, event.streamId);
+   *     }
+   *     if (event.type === 'done' || event.type === 'error' || event.type === 'cancelled') {
+   *       sessionStreamMap.delete(sessionDocId);
+   *     }
+   *     // Handle other events...
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Detect stuck streams (timeout monitoring)
+   * import { chatService } from './chat-service';
+   *
+   * const streamStartTimes = new Map<string, number>();
+   * const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+   *
+   * // Track stream start times
+   * async function monitorStreams() {
+   *   const activeStreamIds = chatService.getActiveStreamIds();
+   *   const now = Date.now();
+   *
+   *   for (const streamId of activeStreamIds) {
+   *     if (!streamStartTimes.has(streamId)) {
+   *       streamStartTimes.set(streamId, now);
+   *     } else {
+   *       const elapsed = now - streamStartTimes.get(streamId)!;
+   *       if (elapsed > TIMEOUT_MS) {
+   *         console.warn(`Stream ${streamId} exceeded timeout (${elapsed}ms), cancelling`);
+   *         chatService.cancelMessage(streamId);
+   *         streamStartTimes.delete(streamId);
+   *       }
+   *     }
+   *   }
+   *
+   *   // Cleanup finished streams
+   *   for (const [streamId] of streamStartTimes) {
+   *     if (!activeStreamIds.includes(streamId)) {
+   *       streamStartTimes.delete(streamId);
+   *     }
+   *   }
+   * }
+   *
+   * setInterval(monitorStreams, 10000); // Check every 10 seconds
+   * ```
+   *
+   * @see {@link cancelMessage} - Cancel a specific stream by ID
+   * @see {@link sendMessage} - Creates streams tracked by this method
    */
   getActiveStreamIds(): string[] {
     return Array.from(this.activeStreams.keys());
   }
 
   /**
-   * Transform Strapi chat session response
+   * Transform Strapi chat session response into ChatSession format
+   *
+   * @description
+   * Converts Strapi API response data to the application's ChatSession interface.
+   * Handles both Strapi v4 and v5 response formats for backward compatibility.
+   * Processes nested relations including skills array and agent object with their configurations.
+   * Maps planMode boolean to permissionMode 'plan' value for client consumption.
+   *
+   * @param strapiData - Raw Strapi API response containing session data
+   * @returns Normalized ChatSession object with populated skills and agent relations
+   *
+   * @private
    */
   private transformChatSession(strapiData: any): ChatSession {
     const attrs = strapiData.attributes || strapiData;
@@ -1077,7 +3439,18 @@ Your plan should include:
   }
 
   /**
-   * Transform Strapi chat message response
+   * Transform Strapi chat message response into ChatMessage format
+   *
+   * @description
+   * Converts Strapi API response data to the application's ChatMessage interface.
+   * Handles both Strapi v4 and v5 response formats for backward compatibility.
+   * Processes nested attachments relation and extracts file metadata (name, url, mime, size).
+   * Preserves message metadata and timestamp information.
+   *
+   * @param strapiData - Raw Strapi API response containing message data
+   * @returns Normalized ChatMessage object with populated attachments if present
+   *
+   * @private
    */
   private transformChatMessage(strapiData: any): ChatMessage {
     const attrs = strapiData.attributes || strapiData;
@@ -1104,7 +3477,18 @@ Your plan should include:
 
   /**
    * Build MCP servers configuration from agent's mcpConfig
-   * Combines Strapi mcpConfig (which servers/tools to use) with .mcp.json (command/args)
+   *
+   * @description
+   * Constructs MCP (Model Context Protocol) servers configuration by combining agent's server
+   * selection from Strapi with command/args details from .mcp.json file.
+   * The agent's mcpConfig defines which servers/tools to enable, while .mcp.json provides
+   * the actual server command and arguments needed to launch each MCP server process.
+   *
+   * @param mcpConfig - Array of MCP server configurations from agent's Strapi record
+   * @param workingDirectory - Directory path where .mcp.json is located
+   * @returns Promise resolving to MCP servers configuration object, or undefined if no valid servers
+   *
+   * @private
    */
   private async buildMcpServersFromAgentConfig(
     mcpConfig: any[],
@@ -1154,7 +3538,18 @@ Your plan should include:
   }
 
   /**
-   * Load MCP configuration from .mcp.json
+   * Load MCP configuration from .mcp.json file
+   *
+   * @description
+   * Reads and parses the .mcp.json configuration file from the working directory.
+   * This file contains MCP server definitions with their command, arguments, and environment settings.
+   * Returns the mcpServers object which maps server names to their launch configurations.
+   * Gracefully handles missing or invalid .mcp.json files by returning undefined.
+   *
+   * @param workingDirectory - Directory path where .mcp.json should be located
+   * @returns Promise resolving to MCP servers configuration object from .mcp.json, or undefined if not found/invalid
+   *
+   * @private
    */
   private async loadMcpConfig(workingDirectory: string): Promise<Record<string, any> | undefined> {
     try {

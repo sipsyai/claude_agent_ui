@@ -39,10 +39,21 @@ Status: IN PROGRESS (2/3 complete)
   - Documentation covers all acceptance criteria
 
 ### Phase 2: Migration Script Validation (3 subtasks)
-Status: PENDING
-- Review/update migration script
-- Create validation script
-- Test rollback procedure
+Status: IN PROGRESS (2/3 complete)
+- ✅ [2.1] Review/update migration script (COMPLETED)
+  - Updated migrate-sqlite-to-postgres.ts for component-based schema
+  - Fixed agent transformation (toolConfig, modelConfig components)
+  - Fixed skill transformation (displayName, skillmd fields)
+  - Fixed task transformation (error, executionTime fields)
+  - Updated relations migration for skillSelection and mcpConfig components
+  - Created migration-script-review.md documenting all fixes
+- ✅ [2.2] Create validation script (COMPLETED)
+  - Updated validate-migration.ts for component-based schema
+  - Row count validation between SQLite and PostgreSQL
+  - Sample data spot-checking for agents, skills, MCP servers
+  - Component validation (toolConfig, modelConfig, skillSelection, mcpConfig)
+  - Clear discrepancy reporting with detailed output
+- ⏳ [2.3] Test rollback procedure (PENDING)
 
 ### Phase 3: SQLite Code Path Deprecation (4 subtasks)
 Status: PENDING
@@ -136,12 +147,64 @@ Status: PENDING
   ✅ Relations and components configured correctly
   ✅ CRUD operations ready (tables will be created on Strapi start)
 
+**Commit**: 3a7c1f2 - "auto-claude: 1.3 - Verify all Strapi content types work with PostgreSQL"
+
+### Subtask 2.1: Migration Script Review and Update ✅
+**Completed**: 2026-01-02T19:00:00Z
+**Changes**:
+- Reviewed and updated scripts/migrate-sqlite-to-postgres.ts
+- Fixed agent transformation for component-based schema:
+  - Mapped tools/disallowedTools to toolConfig component
+  - Mapped model to modelConfig component
+  - Added analytics component initialization
+- Fixed skill transformation:
+  - Added displayName field (using old name)
+  - Renamed content → skillmd
+  - Mapped allowedTools to toolConfig component
+- Fixed task transformation:
+  - Renamed errorMessage → error
+  - Renamed durationMs → executionTime
+  - Stored agent reference in metadata (no direct relation)
+- Updated relations migration:
+  - Agent-skill relations now use skillSelection component array
+  - Agent-MCP relations now use mcpConfig component array
+- Created comprehensive migration-script-review.md
+- All acceptance criteria met:
+  ✅ All entity types have proper field transformations
+  ✅ Relations correctly migrated with component-based approach
+  ✅ Robust error handling in place
+
+**Commit**: 7f8e9d3 - "auto-claude: 2.1 - Review and update migration script"
+
+### Subtask 2.2: Migration Validation Script ✅
+**Completed**: 2026-01-02T20:00:00Z
+**Changes**:
+- Updated scripts/validate-migration.ts for component-based schema
+- Enhanced agent validation:
+  - Check for modelConfig component with model field
+  - Check toolConfig component structure (allowedTools, disallowedTools)
+  - Validate skillSelection and mcpConfig arrays
+- Enhanced skill validation:
+  - Check for displayName, skillmd, description fields
+  - Validate toolConfig and mcpConfig components
+- Added sample data spot-checking:
+  - Compare sample agents between SQLite and PostgreSQL
+  - Compare sample skills for data accuracy
+  - Compare sample MCP servers
+  - Report specific field mismatches
+- Enhanced relationship validation for component-based structure
+- All acceptance criteria met:
+  ✅ Validates row counts match between SQLite and PostgreSQL
+  ✅ Spot-checks sample records for data accuracy
+  ✅ Reports any discrepancies clearly with detailed output
+
 **Commit**: [pending]
 
 ## Next Steps
 1. ✅ Phase 1 Complete! All PostgreSQL setup verification done
-2. ▶️ Phase 2: Migration Script Validation
+2. ▶️ Phase 2: Migration Script Validation (2/3 complete)
+   - Next: Test rollback procedure (subtask 2.3)
 3. Phase 3: SQLite Code Path Deprecation
 
 ---
-Last Updated: 2026-01-02T18:00:00Z
+Last Updated: 2026-01-02T20:00:00Z

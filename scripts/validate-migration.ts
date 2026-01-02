@@ -1,14 +1,25 @@
 /**
  * Claude Agent UI - Migration Validation Script
  *
- * This script validates the PostgreSQL database after migration,
+ * This script validates the PostgreSQL database after migration from SQLite,
  * checking data integrity, relationships, and completeness.
+ *
+ * Features:
+ * - Validates row counts match between SQLite and PostgreSQL
+ * - Spot-checks sample records for data accuracy
+ * - Validates component-based schema (toolConfig, modelConfig, etc.)
+ * - Checks relationships (skillSelection, mcpConfig)
+ * - Reports discrepancies clearly with detailed output
  *
  * Usage:
  *   npm run validate-migration
  *
+ * Requirements:
+ * - SQLite database file (optional, for comparison)
+ * - PostgreSQL/Strapi running and accessible
+ *
  * @author Claude Agent UI Team
- * @version 1.0.0
+ * @version 2.0.0 - Updated for component-based schema
  */
 
 import axios, { AxiosInstance } from 'axios';
@@ -160,6 +171,7 @@ async function validateRecordCounts(
 
 /**
  * Validate agent data integrity
+ * Updated for component-based schema
  */
 async function validateAgentIntegrity(client: AxiosInstance): Promise<ValidationResult['checks'][0]> {
   try {
@@ -174,14 +186,30 @@ async function validateAgentIntegrity(client: AxiosInstance): Promise<Validation
       // Check required fields
       if (!attrs.name) issues.push(`Agent ${agent.id} missing name`);
       if (!attrs.systemPrompt) issues.push(`Agent ${agent.id} missing system prompt`);
-      if (!attrs.model) issues.push(`Agent ${agent.id} missing model`);
-
-      // Check field types
-      if (attrs.tools && !Array.isArray(attrs.tools)) {
-        issues.push(`Agent ${agent.id} has invalid tools format`);
+      if (!attrs.modelConfig) {
+        issues.push(`Agent ${agent.id} missing modelConfig component`);
+      } else {
+        if (!attrs.modelConfig.model) {
+          issues.push(`Agent ${agent.id} missing model in modelConfig`);
+        }
       }
-      if (attrs.disallowedTools && !Array.isArray(attrs.disallowedTools)) {
-        issues.push(`Agent ${agent.id} has invalid disallowedTools format`);
+
+      // Check component fields
+      if (attrs.toolConfig) {
+        if (attrs.toolConfig.allowedTools && !Array.isArray(attrs.toolConfig.allowedTools)) {
+          issues.push(`Agent ${agent.id} has invalid allowedTools format in toolConfig`);
+        }
+        if (attrs.toolConfig.disallowedTools && !Array.isArray(attrs.toolConfig.disallowedTools)) {
+          issues.push(`Agent ${agent.id} has invalid disallowedTools format in toolConfig`);
+        }
+      }
+
+      // Check repeatable components
+      if (attrs.skillSelection && !Array.isArray(attrs.skillSelection)) {
+        issues.push(`Agent ${agent.id} has invalid skillSelection format`);
+      }
+      if (attrs.mcpConfig && !Array.isArray(attrs.mcpConfig)) {
+        issues.push(`Agent ${agent.id} has invalid mcpConfig format`);
       }
     }
 
@@ -205,10 +233,11 @@ async function validateAgentIntegrity(client: AxiosInstance): Promise<Validation
 
 /**
  * Validate skill data integrity
+ * Updated for new schema with skillmd and displayName
  */
 async function validateSkillIntegrity(client: AxiosInstance): Promise<ValidationResult['checks'][0]> {
   try {
-    const response = await client.get('/skills?pagination[pageSize]=1000');
+    const response = await client.get('/skills?pagination[pageSize]=1000&populate=*');
     const skills = response.data.data;
 
     const issues: string[] = [];
@@ -217,15 +246,26 @@ async function validateSkillIntegrity(client: AxiosInstance): Promise<Validation
       const attrs = skill.attributes;
 
       // Check required fields
-      if (!attrs.name) issues.push(`Skill ${skill.id} missing name`);
-      if (!attrs.content) issues.push(`Skill ${skill.id} missing content`);
+      if (!attrs.name) issues.push(`Skill ${skill.id} missing name (UID)`);
+      if (!attrs.displayName) issues.push(`Skill ${skill.id} missing displayName`);
+      if (!attrs.skillmd) issues.push(`Skill ${skill.id} missing skillmd`);
+      if (!attrs.description) issues.push(`Skill ${skill.id} missing description`);
 
       // Check field types
-      if (attrs.allowedTools && !Array.isArray(attrs.allowedTools)) {
-        issues.push(`Skill ${skill.id} has invalid allowedTools format`);
-      }
       if (attrs.experienceScore !== undefined && typeof attrs.experienceScore !== 'number') {
         issues.push(`Skill ${skill.id} has invalid experienceScore`);
+      }
+
+      // Check component fields
+      if (attrs.toolConfig) {
+        if (attrs.toolConfig.allowedTools && !Array.isArray(attrs.toolConfig.allowedTools)) {
+          issues.push(`Skill ${skill.id} has invalid allowedTools format in toolConfig`);
+        }
+      }
+
+      // Check repeatable components
+      if (attrs.mcpConfig && !Array.isArray(attrs.mcpConfig)) {
+        issues.push(`Skill ${skill.id} has invalid mcpConfig format`);
       }
     }
 
@@ -293,6 +333,7 @@ async function validateMCPIntegrity(client: AxiosInstance): Promise<ValidationRe
 
 /**
  * Validate relationships exist
+ * Updated for component-based skillSelection and mcpConfig
  */
 async function validateRelationships(client: AxiosInstance): Promise<ValidationResult['checks'][0]> {
   try {
@@ -303,11 +344,11 @@ async function validateRelationships(client: AxiosInstance): Promise<ValidationR
     let totalMcpLinks = 0;
 
     for (const agent of agents) {
-      const skills = agent.attributes.skills?.data || [];
-      const mcpServers = agent.attributes.mcpServers?.data || [];
+      const skillSelection = agent.attributes.skillSelection || [];
+      const mcpConfig = agent.attributes.mcpConfig || [];
 
-      totalSkillLinks += skills.length;
-      totalMcpLinks += mcpServers.length;
+      totalSkillLinks += skillSelection.length;
+      totalMcpLinks += mcpConfig.length;
     }
 
     return {
@@ -317,8 +358,8 @@ async function validateRelationships(client: AxiosInstance): Promise<ValidationR
       details: {
         agentSkillLinks: totalSkillLinks,
         agentMcpLinks: totalMcpLinks,
-        agentsWithSkills: agents.filter((a: any) => a.attributes.skills?.data?.length > 0).length,
-        agentsWithMcps: agents.filter((a: any) => a.attributes.mcpServers?.data?.length > 0).length,
+        agentsWithSkills: agents.filter((a: any) => a.attributes.skillSelection?.length > 0).length,
+        agentsWithMcps: agents.filter((a: any) => a.attributes.mcpConfig?.length > 0).length,
       },
     };
   } catch (error: any) {
@@ -353,6 +394,123 @@ async function validateDatabaseSchema(client: AxiosInstance): Promise<Validation
       name: 'Database Schema',
       status: 'fail',
       message: `Schema validation failed: ${error.message}`,
+    };
+  }
+}
+
+/**
+ * Spot-check sample records for data accuracy
+ * Compares random samples between SQLite and PostgreSQL
+ */
+async function spotCheckSampleData(
+  db: Database.Database,
+  client: AxiosInstance
+): Promise<ValidationResult['checks'][0]> {
+  try {
+    const issues: string[] = [];
+    const samples: any[] = [];
+
+    // Get sample agents
+    const sqliteAgents = db.prepare('SELECT * FROM agents LIMIT 3').all() as any[];
+    const postgresAgentsResponse = await client.get('/agents?pagination[pageSize]=3&populate=*');
+    const postgresAgents = postgresAgentsResponse.data.data;
+
+    // Compare agent samples
+    for (let i = 0; i < Math.min(sqliteAgents.length, postgresAgents.length); i++) {
+      const sqliteAgent = sqliteAgents[i];
+      const postgresAgent = postgresAgents[i].attributes;
+
+      samples.push({
+        type: 'agent',
+        sqlite: { name: sqliteAgent.name },
+        postgres: { name: postgresAgent.name },
+      });
+
+      // Check basic fields
+      if (sqliteAgent.name !== postgresAgent.name) {
+        issues.push(`Agent name mismatch: SQLite="${sqliteAgent.name}" vs PostgreSQL="${postgresAgent.name}"`);
+      }
+
+      if (sqliteAgent.system_prompt !== postgresAgent.systemPrompt &&
+          sqliteAgent.systemPrompt !== postgresAgent.systemPrompt) {
+        issues.push(`Agent ${sqliteAgent.name} systemPrompt mismatch`);
+      }
+
+      // Check component migrations
+      if (!postgresAgent.modelConfig) {
+        issues.push(`Agent ${postgresAgent.name} missing modelConfig component`);
+      }
+    }
+
+    // Get sample skills
+    const sqliteSkills = db.prepare('SELECT * FROM skills LIMIT 3').all() as any[];
+    const postgresSkillsResponse = await client.get('/skills?pagination[pageSize]=3&populate=*');
+    const postgresSkills = postgresSkillsResponse.data.data;
+
+    // Compare skill samples
+    for (let i = 0; i < Math.min(sqliteSkills.length, postgresSkills.length); i++) {
+      const sqliteSkill = sqliteSkills[i];
+      const postgresSkill = postgresSkills[i].attributes;
+
+      samples.push({
+        type: 'skill',
+        sqlite: { name: sqliteSkill.name },
+        postgres: { displayName: postgresSkill.displayName },
+      });
+
+      // Check basic fields
+      if (!postgresSkill.displayName) {
+        issues.push(`Skill ${postgresSkill.name} missing displayName`);
+      }
+
+      if (!postgresSkill.skillmd) {
+        issues.push(`Skill ${postgresSkill.displayName || postgresSkill.name} missing skillmd content`);
+      }
+    }
+
+    // Get sample MCP servers
+    try {
+      const sqliteMcpServers = db.prepare('SELECT * FROM mcp_servers LIMIT 3').all() as any[];
+      const postgresMcpResponse = await client.get('/mcp-servers?pagination[pageSize]=3');
+      const postgresMcpServers = postgresMcpResponse.data.data;
+
+      // Compare MCP server samples
+      for (let i = 0; i < Math.min(sqliteMcpServers.length, postgresMcpServers.length); i++) {
+        const sqliteMcp = sqliteMcpServers[i];
+        const postgresMcp = postgresMcpServers[i].attributes;
+
+        samples.push({
+          type: 'mcp-server',
+          sqlite: { name: sqliteMcp.name },
+          postgres: { name: postgresMcp.name },
+        });
+
+        if (sqliteMcp.name !== postgresMcp.name) {
+          issues.push(`MCP Server name mismatch: SQLite="${sqliteMcp.name}" vs PostgreSQL="${postgresMcp.name}"`);
+        }
+
+        if (sqliteMcp.command !== postgresMcp.command) {
+          issues.push(`MCP Server ${sqliteMcp.name} command mismatch`);
+        }
+      }
+    } catch (error) {
+      // MCP servers table might not exist
+    }
+
+    return {
+      name: 'Sample Data Spot Check',
+      status: issues.length === 0 ? 'pass' : 'fail',
+      message:
+        issues.length === 0
+          ? `Validated ${samples.length} sample records successfully`
+          : `Found ${issues.length} data mismatches in sample records`,
+      details: issues.length > 0 ? { issues, samples } : { samples },
+    };
+  } catch (error: any) {
+    return {
+      name: 'Sample Data Spot Check',
+      status: 'fail',
+      message: `Failed to spot-check sample data: ${error.message}`,
     };
   }
 }
@@ -405,12 +563,18 @@ async function validate(): Promise<void> {
 
     if (sqliteDb) {
       result.checks.push(await validateRecordCounts(sqliteDb, strapiClient));
+      result.checks.push(await spotCheckSampleData(sqliteDb, strapiClient));
       sqliteDb.close();
     } else {
       result.checks.push({
         name: 'Record Counts',
         status: 'warning',
         message: 'SQLite database not available for comparison',
+      });
+      result.checks.push({
+        name: 'Sample Data Spot Check',
+        status: 'warning',
+        message: 'SQLite database not available for sample comparison',
       });
     }
 

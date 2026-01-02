@@ -1,0 +1,62 @@
+{
+  "complexity": "simple",
+  "workflow_type": "simple",
+  "confidence": 0.95,
+  "reasoning": "This is a straightforward import/export mismatch bug. Only 2 files are involved (Icons.tsx and FlowsPage.tsx), within a single service. The fix will either add the missing EyeIcon export or correct the import to use an existing icon name. No external dependencies or infrastructure changes required.",
+
+  "analysis": {
+    "scope": {
+      "estimated_files": 2,
+      "estimated_services": 1,
+      "is_cross_cutting": false,
+      "notes": "Localized to Icons.tsx (provider) and FlowsPage.tsx (consumer). May need to verify no other files are affected if icon is renamed."
+    },
+    "integrations": {
+      "external_services": [],
+      "new_dependencies": [],
+      "research_needed": false,
+      "notes": "No external integrations. Icons are internal UI components."
+    },
+    "infrastructure": {
+      "docker_changes": false,
+      "database_changes": false,
+      "config_changes": false,
+      "notes": "Pure frontend code change with no infrastructure impact."
+    },
+    "knowledge": {
+      "patterns_exist": true,
+      "research_required": false,
+      "unfamiliar_tech": [],
+      "notes": "Icons.tsx already exports other icons - just need to follow existing pattern for EyeIcon."
+    },
+    "risk": {
+      "level": "low",
+      "concerns": ["Ensure fix doesn't break other imports from Icons.tsx"],
+      "notes": "Low risk - adding or renaming an icon export is safe. Should verify no other files use the same incorrect import."
+    }
+  },
+
+  "recommended_phases": [
+    "discovery",
+    "quick_spec",
+    "validation"
+  ],
+
+  "flags": {
+    "needs_research": false,
+    "needs_self_critique": false,
+    "needs_infrastructure_setup": false
+  },
+
+  "validation_recommendations": {
+    "risk_level": "low",
+    "skip_validation": false,
+    "minimal_mode": true,
+    "test_types_required": ["unit"],
+    "security_scan_required": false,
+    "staging_deployment_required": false,
+    "reasoning": "Simple export fix with low risk. Minimal validation to verify the import resolves correctly and app compiles. No security implications from adding an icon export."
+  },
+
+  "created_at": "2025-01-02T12:00:00Z"
+}

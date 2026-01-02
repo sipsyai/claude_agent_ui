@@ -1,0 +1,4 @@
+{
+  "task_description": "FlowsPage.tsx:26 Uncaught SyntaxError: The requested module '/manager/components/ui/Icons.tsx' does not provide an export named 'EyeIcon' (at FlowsPage.tsx:26:3)\nBUG",
+  "workflow_type": "feature"
+}

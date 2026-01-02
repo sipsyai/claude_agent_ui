@@ -1,0 +1,3558 @@
+{
+  "project_root": "/Users/ali/Documents/Projects/claude_agent_ui",
+  "project_type": "single",
+  "services": {
+    "main": {
+      "name": "main",
+      "path": "/Users/ali/Documents/Projects/claude_agent_ui",
+      "language": "TypeScript",
+      "framework": "React",
+      "type": "frontend",
+      "package_manager": "npm",
+      "default_port": 3001,
+      "build_tool": "Vite",
+      "styling": "Tailwind CSS",
+      "dev_command": "npm run dev",
+      "key_directories": {
+        "src": {
+          "path": "src",
+          "purpose": "Source code"
+        },
+        "tests": {
+          "path": "tests",
+          "purpose": "Tests"
+        }
+      },
+      "entry_point": "src/server.ts",
+      "dependencies": [
+        "@anthropic-ai/claude-agent-sdk",
+        "@anthropic-ai/sdk",
+        "@assistant-ui/react",
+        "@assistant-ui/react-markdown",
+        "@modelcontextprotocol/sdk",
+        "@musistudio/llms",
+        "@radix-ui/react-checkbox",
+        "@radix-ui/react-dialog",
+        "@radix-ui/react-label",
+        "@radix-ui/react-popover",
+        "@radix-ui/react-select",
+        "@radix-ui/react-slot",
+        "@radix-ui/react-switch",
+        "@radix-ui/react-tabs",
+        "@radix-ui/react-tooltip",
+        "@types/better-sqlite3",
+        "@types/eventsource",
+        "@types/react-syntax-highlighter",
+        "@types/web-push",
+        "axios"
+      ],
+      "dev_dependencies": [
+        "@tailwindcss/typography",
+        "@tailwindcss/vite",
+        "@types/cors",
+        "@types/express",
+        "@types/js-yaml",
+        "@types/multer",
+        "@types/node",
+        "@types/react",
+        "@types/react-dom",
+        "@types/uuid"
+      ],
+      "test_directory": "tests",
+      "environment": {
+        "variables": {
+          "NODE_ENV": {
+            "value": "development",
+            "source": ".env",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "LOG_LEVEL": {
+            "value": "info",
+            "source": ".env",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "ANTHROPIC_API_KEY": {
+            "value": "<REDACTED>",
+            "source": ".env",
+            "type": "string",
+            "sensitive": true,
+            "required": true
+          },
+          "POSTGRES_DB": {
+            "value": "claude_agent_ui",
+            "source": ".env",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "POSTGRES_USER": {
+            "value": "postgres",
+            "source": ".env",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "POSTGRES_PASSWORD": {
+            "value": "<REDACTED>",
+            "source": ".env",
+            "type": "path",
+            "sensitive": true,
+            "required": true
+          },
+          "POSTGRES_PORT": {
+            "value": "5433",
+            "source": ".env",
+            "type": "number",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_HOST": {
+            "value": "localhost",
+            "source": ".env",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_PORT": {
+            "value": "5433",
+            "source": ".env",
+            "type": "number",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_NAME": {
+            "value": "claude_agent_ui",
+            "source": ".env",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_USERNAME": {
+            "value": "postgres",
+            "source": ".env",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_PASSWORD": {
+            "value": "<REDACTED>",
+            "source": ".env",
+            "type": "path",
+            "sensitive": true,
+            "required": true
+          },
+          "DATABASE_SSL": {
+            "value": "false",
+            "source": ".env",
+            "type": "boolean",
+            "sensitive": false,
+            "required": true
+          },
+          "STRAPI_ADMIN_PATH": {
+            "value": "/admin",
+            "source": ".env",
+            "type": "path",
+            "sensitive": false,
+            "required": true
+          },
+          "STRAPI_PORT": {
+            "value": "1337",
+            "source": ".env",
+            "type": "number",
+            "sensitive": false,
+            "required": true
+          },
+          "STRAPI_APP_KEYS": {
+            "value": "<REDACTED>",
+            "source": ".env",
+            "type": "path",
+            "sensitive": true,
+            "required": true
+          },
+          "STRAPI_API_TOKEN_SALT": {
+            "value": "<REDACTED>",
+            "source": ".env",
+            "type": "string",
+            "sensitive": true,
+            "required": true
+          },
+          "STRAPI_ADMIN_JWT_SECRET": {
+            "value": "<REDACTED>",
+            "source": ".env",
+            "type": "path",
+            "sensitive": true,
+            "required": true
+          },
+          "STRAPI_TRANSFER_TOKEN_SALT": {
+            "value": "<REDACTED>",
+            "source": ".env",
+            "type": "string",
+            "sensitive": true,
+            "required": true
+          },
+          "STRAPI_JWT_SECRET": {
+            "value": "<REDACTED>",
+            "source": ".env",
+            "type": "path",
+            "sensitive": true,
+            "required": true
+          },
+          "CORS_ORIGIN": {
+            "value": "http://localhost:5173,http://localhost:3001",
+            "source": ".env",
+            "type": "url",
+            "sensitive": false,
+            "required": true
+          },
+          "MAX_FILE_SIZE": {
+            "value": "52428800",
+            "source": ".env",
+            "type": "number",
+            "sensitive": false,
+            "required": true
+          },
+          "EXPRESS_PORT": {
+            "value": "3001",
+            "source": ".env",
+            "type": "number",
+            "sensitive": false,
+            "required": true
+          },
+          "EXPRESS_HOST": {
+            "value": "0.0.0.0",
+            "source": ".env",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "PORT": {
+            "value": "3001",
+            "source": ".env",
+            "type": "number",
+            "sensitive": false,
+            "required": true
+          },
+          "HOST": {
+            "value": "0.0.0.0",
+            "source": ".env",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "STRAPI_API_URL": {
+            "value": "http://localhost:1337/api",
+            "source": ".env",
+            "type": "url",
+            "sensitive": false,
+            "required": true
+          },
+          "STRAPI_API_TOKEN": {
+            "value": "<REDACTED>",
+            "source": ".env",
+            "type": "string",
+            "sensitive": true,
+            "required": true
+          },
+          "VITE_EXPRESS_URL": {
+            "value": "http://localhost:3001/api",
+            "source": ".env",
+            "type": "url",
+            "sensitive": false,
+            "required": true
+          },
+          "VITE_STRAPI_URL": {
+            "value": "http://localhost:1337/api",
+            "source": ".env",
+            "type": "url",
+            "sensitive": false,
+            "required": true
+          },
+          "VITE_API_URL": {
+            "value": "http://localhost:3001",
+            "source": ".env",
+            "type": "url",
+            "sensitive": false,
+            "required": true
+          },
+          "BUILD_DATE": {
+            "value": "",
+            "source": ".env",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "VCS_REF": {
+            "value": "",
+            "source": ".env",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_POOL_MIN": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_POOL_MAX": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_ACQUIRE_TIMEOUT": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_CREATE_TIMEOUT": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_DESTROY_TIMEOUT": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_IDLE_TIMEOUT": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_REAP_INTERVAL": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_RETRY_INTERVAL": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_DEBUG": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          }
+        },
+        "required_count": 42,
+        "optional_count": 0,
+        "detected_count": 42
+      },
+      "api": {
+        "routes": [
+          {
+            "path": "/health",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/server.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/agents",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/server.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/skills",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/server.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "*",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/server.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/route",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/middleware/error-handler.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id/archive",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id/messages",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id/messages",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:sessionId/messages/:streamId/cancel",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/attachments",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/validate",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/commands",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/analyze",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/commands/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills-usage",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/train",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/training-history",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/train/message",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/history-path",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tools",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/test",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/toggle",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/tools",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/export",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/import",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/bulk-delete",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/create-with-claude/message",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/create-with-claude/message",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/training-agent-config",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/training-agent-config",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/search",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/category/:category",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/:templateId",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/:templateId/create",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/running",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id/cancel",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id/stream",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/executions",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/stats/global",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/stats/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/recent",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/activate",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/deactivate",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/duplicate",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/flow.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/task.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/stats",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/task.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/task.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/task.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/task.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/task.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/hello.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agent/:id",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/execution.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/task/:id",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/execution.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/conversation/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/execution.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/conversation/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/execution.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/train/message",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/tools",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/refresh-tools",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/upload",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/upload/:fileId",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/health",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows/:identifier",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/webhook.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows/:identifier/info",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/webhook.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows/:identifier/test",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/webhook.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/webhook.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/health",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/server.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/agents",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/server.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/skills",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/server.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "*",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/server.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/health",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/server.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/agents",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/server.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/skills",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/server.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "*",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/server.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/route",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/middleware/error-handler.d.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/route",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/middleware/error-handler.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/train/message",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/tools",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/refresh-tools",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/upload",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/upload/:fileId",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/health",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agent/:id",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/execution.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/task/:id",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/execution.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/conversation/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/execution.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/conversation/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/execution.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows/:identifier",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/webhook.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows/:identifier/info",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/webhook.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows/:identifier/test",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/webhook.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/webhook.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/validate",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/commands",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/analyze",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/commands/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills-usage",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/train",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/training-history",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/train/message",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/history-path",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tools",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/test",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/toggle",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/tools",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/export",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/import",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/bulk-delete",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/create-with-claude/message",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/create-with-claude/message",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/training-agent-config",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/training-agent-config",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id/archive",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id/messages",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id/messages",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:sessionId/messages/:streamId/cancel",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/attachments",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/search",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/category/:category",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/:templateId",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/:templateId/create",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/running",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id/cancel",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id/stream",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/executions",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/stats/global",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/stats/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/recent",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/activate",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/deactivate",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/duplicate",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/task.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/stats",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/task.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/task.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/task.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/task.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/task.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/hello.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/route",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/middleware/error-handler.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/train/message",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/tools",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/refresh-tools",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/upload",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/upload/:fileId",
+            "methods": [
+              "DELETE"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/health",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.strapi.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agent/:id",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/execution.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/task/:id",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/execution.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/conversation/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/execution.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/conversation/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": "src/routes/execution.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows/:identifier",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/webhook.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows/:identifier/info",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/webhook.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows/:identifier/test",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/webhook.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/webhook.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/validate",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/commands",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/analyze",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/commands/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills-usage",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/train",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/training-history",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/train/message",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/history-path",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tools",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/test",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/toggle",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/tools",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/export",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/import",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/bulk-delete",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/create-with-claude/message",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/create-with-claude/message",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/training-agent-config",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/training-agent-config",
+            "methods": [
+              "PUT"
+            ],
+            "file": "src/routes/manager.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": "src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id/archive",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id/messages",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id/messages",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:sessionId/messages/:streamId/cancel",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/attachments",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/chat.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/search",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/category/:category",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/:templateId",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/:templateId/create",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/running",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id/cancel",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id/stream",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/executions",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/stats/global",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/stats/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/recent",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/activate",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/deactivate",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/duplicate",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/task.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/stats",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/task.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/task.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/task.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/task.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": "src/routes/task.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/hello.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/config",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/config-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/public-key",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/available",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/stats",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/subscribe",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/unsubscribe",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/subscriptions",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/logs",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/log-stream-buffer.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/logs/clear",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/log-stream-buffer.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/webhooks/skill-updated",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/skill-sync-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/webhooks/skill-deleted",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/skill-sync-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/health",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/chat-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          }
+        ],
+        "total_routes": 349,
+        "methods": [
+          "POST",
+          "GET",
+          "PUT",
+          "DELETE"
+        ],
+        "protected_routes": []
+      },
+      "services": {
+        "databases": [
+          {
+            "type": "sqlite",
+            "client": "better-sqlite3"
+          }
+        ],
+        "monitoring": [
+          {
+            "type": "logging",
+            "client": "pino"
+          }
+        ]
+      },
+      "monitoring": {
+        "health_checks": [
+          "/health",
+          "/health",
+          "/health",
+          "/health",
+          "/health",
+          "/health",
+          "/health"
+        ],
+        "apm_tools": [
+          "logging"
+        ]
+      }
+    }
+  },
+  "infrastructure": {
+    "docker_compose": "docker-compose.yml",
+    "docker_services": [
+      "postgres",
+      "strapi",
+      "express",
+      "frontend"
+    ]
+  },
+  "conventions": {
+    "typescript": true
+  }
+}

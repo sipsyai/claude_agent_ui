@@ -1,0 +1,75 @@
+{
+  "feature": "Fix missing EyeIcon export error",
+  "description": "FlowsPage.tsx:26 Uncaught SyntaxError: The requested module '/manager/components/ui/Icons.tsx' does not provide an export named 'EyeIcon' (at FlowsPage.tsx:26:3)\nBUG",
+  "created_at": "2026-01-02T15:22:57.525Z",
+  "updated_at": "2026-01-02T18:13:49.720Z",
+  "status": "done",
+  "planStatus": "completed",
+  "spec_name": "fix-missing-eyeicon-export",
+  "workflow_type": "simple",
+  "total_phases": 1,
+  "recommended_workers": 1,
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Add Missing EyeIcon",
+      "description": "Add EyeIcon export to Icons.tsx",
+      "depends_on": [],
+      "subtasks": [
+        {
+          "id": "subtask-1-1",
+          "description": "Add EyeIcon component to Icons.tsx following existing icon pattern (SVG, 24x24, stroke-based, currentColor)",
+          "service": "main",
+          "status": "completed",
+          "files_to_create": [],
+          "files_to_modify": [
+            "src/web/manager/components/ui/Icons.tsx"
+          ],
+          "patterns_from": [
+            "src/web/manager/components/ui/Icons.tsx"
+          ],
+          "verification": {
+            "type": "manual",
+            "run": "Load FlowsPage in browser - no import errors, EyeIcon renders"
+          },
+          "notes": "Added EyeIcon component to Icons.tsx following existing icon pattern (SVG, 24x24, stroke-based, currentColor). Component exports correctly and matches the import in FlowsPage.tsx.",
+          "updated_at": "2026-01-02T15:28:33.246224+00:00"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "created_at": "2026-01-02T15:22:57.525Z",
+    "complexity": "simple",
+    "estimated_sessions": 1
+  },
+  "last_updated": "2026-01-02T15:32:49.078012+00:00",
+  "qa_signoff": {
+    "status": "approved",
+    "qa_session": 0,
+    "issues_found": [
+      {
+        "description": "None"
+      }
+    ],
+    "tests_passed": {},
+    "timestamp": "2026-01-02T15:32:49.077998+00:00",
+    "ready_for_qa_revalidation": false
+  },
+  "qa_iteration_history": [
+    {
+      "iteration": 1,
+      "status": "approved",
+      "timestamp": "2026-01-02T15:33:00.367304+00:00",
+      "issues": [],
+      "duration_seconds": 249.14
+    }
+  ],
+  "qa_stats": {
+    "total_iterations": 1,
+    "last_iteration": 1,
+    "last_status": "approved",
+    "issues_by_type": {}
+  },
+  "recoveryNote": "Task recovered from stuck state at 2026-01-02T15:33:14.044Z"
+}

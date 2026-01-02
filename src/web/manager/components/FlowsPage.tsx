@@ -154,8 +154,15 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
   useEffect(() => {
     if (!autoRefreshEnabled) return;
 
-    const interval = setInterval(() => {
-      loadFlows();
+    const interval = setInterval(async () => {
+      try {
+        // Call loadFlows which already has error handling
+        // The function handles errors internally and updates state accordingly
+        await loadFlows();
+      } catch (err) {
+        // Silently catch any unexpected errors from polling to prevent console spam
+        // The loadFlows function already handles errors and updates error state
+      }
     }, 30000);
 
     return () => clearInterval(interval);
@@ -385,8 +392,17 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
 
       {/* Error Display */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
-          {error}
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
+          <span className="text-red-700">{error}</span>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => loadFlows()}
+            className="ml-4 flex items-center gap-2"
+          >
+            <RefreshIcon className="h-4 w-4" />
+            Retry
+          </Button>
         </div>
       )}
 

@@ -3,23 +3,23 @@
   "spec": "006-complete-postgresql-migration",
   "state": "building",
   "subtasks": {
-    "completed": 11,
+    "completed": 13,
     "total": 24,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Connection Pooling Optimization",
+    "current": "Backup & Restore Documentation",
     "id": null,
-    "total": 3
+    "total": 4
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 13,
+    "number": 15,
     "started_at": "2026-01-02T10:06:25.049340"
   },
-  "last_update": "2026-01-02T10:48:34.494355"
+  "last_update": "2026-01-02T10:56:13.217572"
 }

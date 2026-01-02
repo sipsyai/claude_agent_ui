@@ -1,0 +1,101 @@
+# React Flow Integration - Build Progress
+
+## Status: In Progress - Phase 1
+
+## Last Updated: 2026-01-02
+
+---
+
+## Summary
+Transform the Flows page into a visual drag-and-drop workflow builder similar to n8n and Langchain, using React Flow for intuitive node-based workflow design.
+
+## Implementation Plan Overview
+
+### Phase 1: Setup & Infrastructure (3 subtasks)
+- [x] 1.1 Install React Flow Dependencies (@xyflow/react)
+- [ ] 1.2 Create React Flow Types
+- [ ] 1.3 Create Flow Canvas Context
+
+### Phase 2: Custom Node Components (5 subtasks)
+- [ ] 2.1 Create Base Node Component
+- [ ] 2.2 Create Input Node Component
+- [ ] 2.3 Create Agent Node Component
+- [ ] 2.4 Create Output Node Component
+- [ ] 2.5 Create Node Registry and Factory
+
+### Phase 3: Flow Canvas Component (5 subtasks)
+- [ ] 3.1 Create Node Palette Component
+- [ ] 3.2 Create Flow Canvas Component
+- [ ] 3.3 Create Custom Edge Component
+- [ ] 3.4 Create Canvas Toolbar Component
+- [ ] 3.5 Create Node Configuration Panel
+
+### Phase 4: Flow Editor Integration (4 subtasks)
+- [ ] 4.1 Create Flow Data Converter
+- [ ] 4.2 Create Visual Flow Editor Page
+- [ ] 4.3 Update Flow Editor Routing
+- [ ] 4.4 Add Flow Validation
+
+### Phase 5: Polish & Enhancements (5 subtasks)
+- [ ] 5.1 Add Keyboard Shortcuts
+- [ ] 5.2 Add Auto-Layout Algorithm
+- [ ] 5.3 Add Connection Validation
+- [ ] 5.4 Add Flow Preview Mode
+- [ ] 5.5 Add CSS Styling and Theming
+
+---
+
+## Key Technical Decisions
+
+### Library Choice: React Flow (@xyflow/react v12)
+React Flow was selected as the primary library for the following reasons:
+- Mature and well-documented
+- Purpose-built for node-based editors
+- Excellent TypeScript support
+- Built-in features: drag-drop, zooming, panning, mini-map
+- Large community and active maintenance
+- Used by similar tools (n8n uses a custom implementation but React Flow is the standard)
+
+### Alternative Libraries Considered
+- **react-diagrams**: More complex, steeper learning curve
+- **beautiful-dnd**: Not designed for graph editing
+- **rete.js**: Steeper learning curve, more opinionated
+
+### Architecture Decisions
+1. **Custom Node Components**: Extend React Flow's base Node with custom styling
+2. **Reuse Existing Components**: Node configuration panels will reuse InputNodeConfig, AgentNodeConfig, OutputNodeConfig
+3. **Backward Compatibility**: Existing Flow data structure will be preserved through conversion utilities
+4. **No Backend Changes**: The existing backend API already supports the required node structure
+
+---
+
+## Estimated Timeline
+- Total Estimated Hours: 38
+- Target Completion: 2026-01-15
+- Priority: High
+
+---
+
+## Dependencies
+- @xyflow/react (React Flow v12) - Primary
+- dagre (optional) - For auto-layout algorithm
+
+---
+
+## Progress Log
+
+### 2026-01-02
+- Created comprehensive implementation plan with 22 subtasks across 5 phases
+- Analyzed existing codebase structure (FlowsPage, FlowEditorPage, FlowDetailPage)
+- Identified reusable components (node config components)
+- Selected React Flow as the primary library
+- Planning phase complete
+
+#### Subtask 1.1 - Install React Flow Dependencies ✓
+- Successfully installed @xyflow/react v12.10.0
+- Package includes 704 dependencies
+- No dependency conflicts detected
+- No security vulnerabilities found
+- Verified TypeScript compatibility (pre-existing TS errors unrelated to React Flow)
+- Updated package.json with new dependency
+- Changes committed to git (commit: 56c7d9e)

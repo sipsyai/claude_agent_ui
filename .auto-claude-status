@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
+  "spec": "010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a",
   "state": "building",
   "subtasks": {
-    "completed": 23,
-    "total": 27,
+    "completed": 1,
+    "total": 22,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Integration & Polish",
+    "current": "Setup & Infrastructure",
     "id": null,
-    "total": 5
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 16,
-    "started_at": "2026-01-02T15:21:47.333199"
+    "number": 3,
+    "started_at": "2026-01-02T18:56:17.111587"
   },
-  "last_update": "2026-01-02T16:53:10.042108"
+  "last_update": "2026-01-02T19:10:15.911228"
 }

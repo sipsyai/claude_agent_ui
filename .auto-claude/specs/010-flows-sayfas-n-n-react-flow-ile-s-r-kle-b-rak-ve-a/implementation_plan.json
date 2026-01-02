@@ -1,0 +1,489 @@
+{
+  "specId": "010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a",
+  "feature": "Flows sayfasinin react flow ile surukle birak ve aralarinda iliski veri transferleri yapan n8n, langchain benzer bir yapida olmasi",
+  "title": "React Flow Integration - Visual Flow Builder",
+  "description": "Transform the Flows page into a visual drag-and-drop workflow builder similar to n8n and Langchain, using React Flow for intuitive node-based workflow design with data transfer between nodes.",
+  "created_at": "2026-01-02T15:56:10.284Z",
+  "updated_at": "2026-01-02T18:00:00.000Z",
+  "status": "in_progress",
+  "planStatus": "in_progress",
+  "totalPhases": 5,
+  "phases": [
+    {
+      "phaseId": 1,
+      "name": "Setup & Infrastructure",
+      "description": "Install React Flow and set up the foundational infrastructure for the visual flow builder",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Install React Flow Dependencies",
+          "description": "Install @xyflow/react (React Flow v12) and required dependencies for the visual flow builder. React Flow is the most suitable library for this use case as it provides out-of-the-box drag-and-drop, connection handling, and a rich node ecosystem.",
+          "status": "completed",
+          "estimatedHours": 0.5,
+          "acceptanceCriteria": [
+            "@xyflow/react package is installed",
+            "Package.json updated with React Flow dependency",
+            "No dependency conflicts with existing packages"
+          ],
+          "files": [
+            "package.json"
+          ],
+          "notes": "Successfully installed @xyflow/react v12.10.0 with 704 packages. No dependency conflicts or vulnerabilities found. Package.json updated and committed.",
+          "updated_at": "2026-01-02T16:09:30.035970+00:00"
+        },
+        {
+          "id": "1.2",
+          "title": "Create React Flow Types",
+          "description": "Create TypeScript type definitions for React Flow nodes, edges, and custom node data structures that integrate with existing Flow types",
+          "status": "pending",
+          "estimatedHours": 1,
+          "acceptanceCriteria": [
+            "ReactFlowNode type extends base Node type with custom data",
+            "ReactFlowEdge type for connections between nodes",
+            "Custom node data types for Input, Agent, and Output nodes",
+            "Types are compatible with existing Flow types in types.ts"
+          ],
+          "files": [
+            "src/web/manager/types/react-flow.types.ts"
+          ],
+          "notes": "Must ensure seamless conversion between React Flow data and existing Flow types"
+        },
+        {
+          "id": "1.3",
+          "title": "Create Flow Canvas Context",
+          "description": "Create React context for managing flow canvas state including nodes, edges, selected elements, and undo/redo history",
+          "status": "pending",
+          "estimatedHours": 1.5,
+          "acceptanceCriteria": [
+            "FlowCanvasContext provides nodes, edges, and selection state",
+            "Context provides methods for adding, updating, removing nodes",
+            "Context provides methods for adding, updating, removing edges",
+            "Undo/redo functionality is implemented",
+            "Context handles auto-save debouncing"
+          ],
+          "files": [
+            "src/web/manager/contexts/FlowCanvasContext.tsx"
+          ],
+          "notes": "This context will be the central state management for the flow canvas"
+        }
+      ]
+    },
+    {
+      "phaseId": 2,
+      "name": "Custom Node Components",
+      "description": "Create custom React Flow node components for Input, Agent, and Output nodes with consistent styling and interactive handles",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Create Base Node Component",
+          "description": "Create a reusable base node component with common styling, header, handles, and selection state that all custom nodes will extend",
+          "status": "pending",
+          "estimatedHours": 2,
+          "acceptanceCriteria": [
+            "BaseNode component with consistent styling",
+            "Source and target handles with proper positioning",
+            "Selection highlight and hover states",
+            "Node header with icon, title, and status indicator",
+            "Resize handles for adjustable node size",
+            "Delete button on selection"
+          ],
+          "files": [
+            "src/web/manager/components/flow-canvas/nodes/BaseNode.tsx"
+          ],
+          "notes": "Follow the existing UI component patterns from ui/ folder"
+        },
+        {
+          "id": "2.2",
+          "title": "Create Input Node Component",
+          "description": "Create a custom Input node component for React Flow that displays input field configuration with interactive editing",
+          "status": "pending",
+          "estimatedHours": 2,
+          "acceptanceCriteria": [
+            "InputNode displays configured input fields",
+            "Shows field types (text, number, file, etc.) with icons",
+            "Required fields marked with asterisk",
+            "Click opens configuration panel",
+            "Visual indicator for validation status",
+            "Blue color theme for input nodes"
+          ],
+          "files": [
+            "src/web/manager/components/flow-canvas/nodes/InputNode.tsx"
+          ],
+          "notes": "Should integrate with existing InputNodeConfig component"
+        },
+        {
+          "id": "2.3",
+          "title": "Create Agent Node Component",
+          "description": "Create a custom Agent node component for React Flow that displays agent configuration including skills and prompt template",
+          "status": "pending",
+          "estimatedHours": 2.5,
+          "acceptanceCriteria": [
+            "AgentNode displays selected agent name",
+            "Shows assigned skills as badges",
+            "Preview of prompt template (truncated)",
+            "Click opens configuration panel",
+            "Model override indicator if different from default",
+            "Purple color theme for agent nodes"
+          ],
+          "files": [
+            "src/web/manager/components/flow-canvas/nodes/AgentNode.tsx"
+          ],
+          "notes": "Should integrate with existing AgentNodeConfig component"
+        },
+        {
+          "id": "2.4",
+          "title": "Create Output Node Component",
+          "description": "Create a custom Output node component for React Flow that displays output configuration including format and delivery type",
+          "status": "pending",
+          "estimatedHours": 1.5,
+          "acceptanceCriteria": [
+            "OutputNode displays output type (response, file, webhook, etc.)",
+            "Shows format type (JSON, markdown, text, etc.)",
+            "File path preview if save to file is enabled",
+            "Click opens configuration panel",
+            "Green color theme for output nodes"
+          ],
+          "files": [
+            "src/web/manager/components/flow-canvas/nodes/OutputNode.tsx"
+          ],
+          "notes": "Should integrate with existing OutputNodeConfig component"
+        },
+        {
+          "id": "2.5",
+          "title": "Create Node Registry and Factory",
+          "description": "Create a node registry that maps node types to components and a factory function for creating new nodes",
+          "status": "pending",
+          "estimatedHours": 1,
+          "acceptanceCriteria": [
+            "nodeTypes registry for React Flow",
+            "createNode factory function with default positions",
+            "Node ID generation utility",
+            "Default node configurations for each type"
+          ],
+          "files": [
+            "src/web/manager/components/flow-canvas/nodes/index.ts"
+          ],
+          "notes": "Central registry for all custom node types"
+        }
+      ]
+    },
+    {
+      "phaseId": 3,
+      "name": "Flow Canvas Component",
+      "description": "Create the main flow canvas component with React Flow integration, node palette, and connection handling",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Create Node Palette Component",
+          "description": "Create a draggable node palette/sidebar that allows users to drag new nodes onto the canvas",
+          "status": "pending",
+          "estimatedHours": 2,
+          "acceptanceCriteria": [
+            "Node palette displays available node types (Input, Agent, Output)",
+            "Each node type shows icon, name, and description",
+            "Drag and drop from palette to canvas works",
+            "Visual feedback during drag operation",
+            "Categorized by node type with collapsible sections"
+          ],
+          "files": [
+            "src/web/manager/components/flow-canvas/NodePalette.tsx"
+          ],
+          "notes": "Similar to n8n's node sidebar"
+        },
+        {
+          "id": "3.2",
+          "title": "Create Flow Canvas Component",
+          "description": "Create the main FlowCanvas component that integrates React Flow with custom nodes, drag-drop, and connection handling",
+          "status": "pending",
+          "estimatedHours": 3,
+          "acceptanceCriteria": [
+            "React Flow canvas renders with custom nodes",
+            "Drag and drop from palette works",
+            "Node connections with animated edges",
+            "Pan and zoom controls",
+            "Minimap for navigation",
+            "Grid background for alignment",
+            "Selection box for multi-select"
+          ],
+          "files": [
+            "src/web/manager/components/flow-canvas/FlowCanvas.tsx"
+          ],
+          "notes": "Core component for the visual flow builder"
+        },
+        {
+          "id": "3.3",
+          "title": "Create Custom Edge Component",
+          "description": "Create a custom edge component with data transfer visualization and delete button",
+          "status": "pending",
+          "estimatedHours": 1.5,
+          "acceptanceCriteria": [
+            "Custom edge with smooth bezier curve",
+            "Animated data flow visualization",
+            "Delete button on hover",
+            "Label showing data being transferred (optional)",
+            "Color coding based on connection status"
+          ],
+          "files": [
+            "src/web/manager/components/flow-canvas/CustomEdge.tsx"
+          ],
+          "notes": "Should show the data flow direction visually"
+        },
+        {
+          "id": "3.4",
+          "title": "Create Canvas Toolbar Component",
+          "description": "Create a toolbar for the flow canvas with common actions like undo, redo, zoom, fit view, and layout options",
+          "status": "pending",
+          "estimatedHours": 1.5,
+          "acceptanceCriteria": [
+            "Undo/Redo buttons with keyboard shortcuts",
+            "Zoom in/out/reset controls",
+            "Fit view button",
+            "Auto-layout button",
+            "Toggle grid visibility",
+            "Toggle minimap visibility"
+          ],
+          "files": [
+            "src/web/manager/components/flow-canvas/CanvasToolbar.tsx"
+          ],
+          "notes": "Positioned at top or bottom of canvas"
+        },
+        {
+          "id": "3.5",
+          "title": "Create Node Configuration Panel",
+          "description": "Create a slide-out panel for configuring selected nodes, reusing existing node config components",
+          "status": "pending",
+          "estimatedHours": 2,
+          "acceptanceCriteria": [
+            "Panel slides in from right when node is selected",
+            "Renders appropriate config component based on node type",
+            "Changes update node data in real-time",
+            "Close button and click-outside-to-close",
+            "Responsive width (400-500px)"
+          ],
+          "files": [
+            "src/web/manager/components/flow-canvas/NodeConfigPanel.tsx"
+          ],
+          "notes": "Reuses InputNodeConfig, AgentNodeConfig, OutputNodeConfig"
+        }
+      ]
+    },
+    {
+      "phaseId": 4,
+      "name": "Flow Editor Integration",
+      "description": "Integrate the React Flow canvas into the existing Flow Editor page and update data conversion logic",
+      "subtasks": [
+        {
+          "id": "4.1",
+          "title": "Create Flow Data Converter",
+          "description": "Create utility functions to convert between React Flow format and existing Flow format (nodes, edges to/from Flow.nodes)",
+          "status": "pending",
+          "estimatedHours": 2,
+          "acceptanceCriteria": [
+            "flowToReactFlow converts Flow to React Flow nodes/edges",
+            "reactFlowToFlow converts React Flow nodes/edges back to Flow",
+            "Position data is preserved during conversion",
+            "nextNodeId is properly calculated from edges",
+            "All node types are handled correctly"
+          ],
+          "files": [
+            "src/web/manager/utils/flow-converter.ts"
+          ],
+          "notes": "Critical for backward compatibility with existing flows"
+        },
+        {
+          "id": "4.2",
+          "title": "Create Visual Flow Editor Page",
+          "description": "Create a new FlowEditorVisual page that replaces the linear FlowEditorPage with the visual React Flow canvas",
+          "status": "pending",
+          "estimatedHours": 3,
+          "acceptanceCriteria": [
+            "Visual editor with React Flow canvas",
+            "Node palette on the left",
+            "Config panel on the right",
+            "Toolbar at the top",
+            "Save/Cancel buttons",
+            "Flow metadata form (name, description, category)",
+            "Loads existing flow into canvas",
+            "Creates new flow from canvas"
+          ],
+          "files": [
+            "src/web/manager/components/FlowEditorVisual.tsx"
+          ],
+          "notes": "Will eventually replace FlowEditorPage.tsx"
+        },
+        {
+          "id": "4.3",
+          "title": "Update Flow Editor Routing",
+          "description": "Update ManagerApp.tsx to use the new visual flow editor instead of the linear editor",
+          "status": "pending",
+          "estimatedHours": 1,
+          "acceptanceCriteria": [
+            "ManagerApp routes to FlowEditorVisual for creating/editing flows",
+            "Existing flow data loads correctly in visual editor",
+            "Save operation works with visual editor",
+            "Navigation back to flows list works"
+          ],
+          "files": [
+            "src/web/manager/ManagerApp.tsx"
+          ],
+          "notes": "May want to keep linear editor as fallback initially"
+        },
+        {
+          "id": "4.4",
+          "title": "Add Flow Validation",
+          "description": "Add validation logic to ensure flows have proper structure (at least one input, at least one output, valid connections)",
+          "status": "pending",
+          "estimatedHours": 1.5,
+          "acceptanceCriteria": [
+            "Validates flow has at least one input node",
+            "Validates flow has at least one output node",
+            "Validates all nodes are connected",
+            "Shows validation errors on canvas",
+            "Prevents save if validation fails"
+          ],
+          "files": [
+            "src/web/manager/utils/flow-validator.ts"
+          ],
+          "notes": "Display validation errors visually on the canvas"
+        }
+      ]
+    },
+    {
+      "phaseId": 5,
+      "name": "Polish & Enhancements",
+      "description": "Add finishing touches, keyboard shortcuts, and UX improvements",
+      "subtasks": [
+        {
+          "id": "5.1",
+          "title": "Add Keyboard Shortcuts",
+          "description": "Implement keyboard shortcuts for common operations like delete, copy, paste, undo, redo, save",
+          "status": "pending",
+          "estimatedHours": 1.5,
+          "acceptanceCriteria": [
+            "Delete/Backspace removes selected nodes/edges",
+            "Ctrl+Z/Cmd+Z for undo",
+            "Ctrl+Y/Cmd+Shift+Z for redo",
+            "Ctrl+S/Cmd+S for save",
+            "Ctrl+C/Cmd+C for copy",
+            "Ctrl+V/Cmd+V for paste",
+            "Escape to deselect"
+          ],
+          "files": [
+            "src/web/manager/hooks/useFlowKeyboardShortcuts.ts"
+          ],
+          "notes": "Use event listeners that respect input field focus"
+        },
+        {
+          "id": "5.2",
+          "title": "Add Auto-Layout Algorithm",
+          "description": "Implement an auto-layout algorithm to organize nodes in a readable flow structure",
+          "status": "pending",
+          "estimatedHours": 2,
+          "acceptanceCriteria": [
+            "Auto-layout arranges nodes in left-to-right flow",
+            "Nodes are spaced evenly",
+            "No node overlaps after layout",
+            "Triggered by toolbar button or keyboard shortcut",
+            "Animates node positions smoothly"
+          ],
+          "files": [
+            "src/web/manager/utils/auto-layout.ts"
+          ],
+          "notes": "Consider using dagre library for graph layout"
+        },
+        {
+          "id": "5.3",
+          "title": "Add Connection Validation",
+          "description": "Implement connection validation rules to prevent invalid connections (e.g., output to input only, no cycles)",
+          "status": "pending",
+          "estimatedHours": 1.5,
+          "acceptanceCriteria": [
+            "Only allows connections from source to target handles",
+            "Prevents connecting output to output",
+            "Prevents connecting input to input",
+            "Detects and prevents cycles",
+            "Visual feedback for invalid connections"
+          ],
+          "files": [
+            "src/web/manager/utils/connection-validator.ts"
+          ],
+          "notes": "React Flow supports isValidConnection prop"
+        },
+        {
+          "id": "5.4",
+          "title": "Add Flow Preview Mode",
+          "description": "Add a preview mode that shows how data flows through nodes with sample input",
+          "status": "pending",
+          "estimatedHours": 2,
+          "acceptanceCriteria": [
+            "Preview button in toolbar",
+            "Modal to enter sample input",
+            "Visual animation of data flowing through nodes",
+            "Shows expected output at each node",
+            "Can step through execution manually"
+          ],
+          "files": [
+            "src/web/manager/components/flow-canvas/FlowPreview.tsx"
+          ],
+          "notes": "Optional enhancement for better UX"
+        },
+        {
+          "id": "5.5",
+          "title": "Add CSS Styling and Theming",
+          "description": "Create dedicated CSS/styles for the flow canvas that matches the existing dark theme",
+          "status": "pending",
+          "estimatedHours": 1,
+          "acceptanceCriteria": [
+            "React Flow styles customized for dark theme",
+            "Node colors match existing design system",
+            "Smooth animations and transitions",
+            "Responsive layout for different screen sizes",
+            "Consistent with existing UI components"
+          ],
+          "files": [
+            "src/web/manager/styles/flow-canvas.css"
+          ],
+          "notes": "Override React Flow default styles"
+        }
+      ]
+    }
+  ],
+  "qa": {
+    "status": "pending",
+    "signedOff": false,
+    "tests": [
+      "Visual flow builder loads without errors",
+      "Drag and drop nodes from palette works",
+      "Node connections can be created and deleted",
+      "Node configuration panel opens on selection",
+      "Flow saves correctly to backend",
+      "Existing flows load correctly in visual editor",
+      "Undo/Redo functionality works",
+      "Keyboard shortcuts work correctly",
+      "Auto-layout organizes nodes properly",
+      "Flow validation catches invalid flows",
+      "Theme matches existing application design"
+    ],
+    "issues": "",
+    "testsPassed": ""
+  },
+  "metadata": {
+    "createdAt": "2026-01-02T10:00:00Z",
+    "estimatedTotalHours": 38,
+    "targetCompletion": "2026-01-15",
+    "priority": "high",
+    "dependencies": [
+      "@xyflow/react (React Flow v12)",
+      "dagre (optional, for auto-layout)"
+    ],
+    "technicalNotes": [
+      "React Flow v12 (@xyflow/react) is the recommended library - it's mature, well-documented, and specifically designed for node-based editors",
+      "Alternative libraries considered: react-diagrams (more complex), beautiful-dnd (not for graph editing), rete.js (steeper learning curve)",
+      "The existing Flow types in types.ts already support position data (NodePosition), making React Flow integration straightforward",
+      "Existing node config components (InputNodeConfig, AgentNodeConfig, OutputNodeConfig) will be reused in the side panel",
+      "The FlowEditorPage.tsx will be replaced but kept as backup during transition",
+      "Backend API already supports the required node structure - no backend changes needed"
+    ]
+  },
+  "last_updated": "2026-01-02T16:09:30.035991+00:00"
+}

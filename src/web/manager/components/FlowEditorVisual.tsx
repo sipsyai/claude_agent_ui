@@ -17,7 +17,7 @@
  * ## Component Architecture
  * ```
  * FlowEditorVisual
- *   ├── Header (Flow metadata form + Save/Cancel buttons)
+ *   ├── Header (Minimal top bar: Back + Flow name + Save/Cancel)
  *   ├── FlowCanvasProvider (State management for nodes/edges)
  *   │   └── Main Layout (flex container)
  *   │       ├── NodePalette (left sidebar)
@@ -197,7 +197,7 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['metadata', 'triggers'])
+    new Set(['triggers'])
   );
   const [configPanelOpen, setConfigPanelOpen] = useState(false);
   const [showGrid, setShowGrid] = useState(true);
@@ -510,219 +510,113 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* ===================================================================
-          HEADER - Flow Metadata and Actions
+          HEADER - Minimal Top Bar (Flow name + Save/Cancel)
           =================================================================== */}
-      <div className="flex-shrink-0 border-b border-border bg-card">
-        <div className="max-w-full mx-auto px-6 py-4">
-          {/* Header Row */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <Button variant="secondary" onClick={onClose} className="flex items-center gap-2">
-                <ArrowLeftIcon className="h-4 w-4" />
-                Back
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">
-                  {flowId ? 'Edit Flow' : 'Create New Flow'}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Design your workflow visually with drag-and-drop nodes
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="secondary" onClick={onClose} disabled={saving}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={saving || validationResult.hasErrors}
-                className="flex items-center gap-2"
-                title={validationResult.hasErrors ? 'Fix validation errors before saving' : undefined}
-              >
-                {saving ? (
-                  <>
-                    <SpinnerIcon className="h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircleIcon className="h-4 w-4" />
-                    {flowId ? 'Update Flow' : 'Create Flow'}
-                  </>
-                )}
-              </Button>
-            </div>
+      <div className="flex-shrink-0 border-b border-border bg-card" style={{ height: '50px' }}>
+        <div className="h-full flex items-center justify-between px-4 gap-4">
+          {/* Left: Back Button */}
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            className="flex items-center gap-2 flex-shrink-0"
+            size="sm"
+          >
+            <ArrowLeftIcon className="h-4 w-4" />
+            Back
+          </Button>
+
+          {/* Center: Flow Name (Editable) */}
+          <div className="flex-1 max-w-md">
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter flow name..."
+              className="h-9 text-base font-medium"
+            />
           </div>
 
+          {/* Right: Save/Cancel Buttons */}
+          <div className="flex gap-2 flex-shrink-0">
+            <Button
+              variant="secondary"
+              onClick={onClose}
+              disabled={saving}
+              size="sm"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={saving || validationResult.hasErrors}
+              className="flex items-center gap-2"
+              title={validationResult.hasErrors ? 'Fix validation errors before saving' : undefined}
+              size="sm"
+            >
+              {saving ? (
+                <>
+                  <SpinnerIcon className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <CheckCircleIcon className="h-4 w-4" />
+                  Save
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Error/Validation Display - Below Header */}
+      {(error || validationResult.hasErrors || validationResult.hasWarnings) && (
+        <div className="flex-shrink-0 border-b border-border bg-card px-4 py-2">
           {/* Error Display */}
           {error && (
-            <div className="mb-4 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-400">
+            <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-400 text-sm">
               <pre className="whitespace-pre-wrap font-sans">{error}</pre>
             </div>
           )}
 
-          {/* Validation Status Display */}
+          {/* Validation Errors */}
           {validationResult.hasErrors && (
-            <div className="mb-4 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md">
+            <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md">
               <div className="flex items-start gap-2">
-                <span className="text-red-600 dark:text-red-400 text-lg">⚠️</span>
+                <span className="text-red-600 dark:text-red-400">⚠️</span>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-red-700 dark:text-red-400 mb-2">
-                    Flow Validation Errors
+                  <h3 className="font-semibold text-red-700 dark:text-red-400 text-sm mb-1">
+                    Validation Errors
                   </h3>
-                  <ul className="space-y-1 text-sm text-red-600 dark:text-red-400">
+                  <ul className="space-y-1 text-xs text-red-600 dark:text-red-400">
                     {validationResult.errors.map((error, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="mt-1">•</span>
-                        <span>{error.message}</span>
-                      </li>
+                      <li key={index}>• {error.message}</li>
                     ))}
                   </ul>
-                  <p className="text-xs text-red-500 dark:text-red-500 mt-2">
-                    Please fix these errors before saving the flow.
-                  </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Validation Warnings Display */}
+          {/* Validation Warnings */}
           {validationResult.hasWarnings && !validationResult.hasErrors && (
-            <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-md">
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-md">
               <div className="flex items-start gap-2">
-                <span className="text-yellow-600 dark:text-yellow-400 text-lg">⚠️</span>
+                <span className="text-yellow-600 dark:text-yellow-400">⚠️</span>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-yellow-700 dark:text-yellow-400 mb-2">
-                    Flow Warnings
+                  <h3 className="font-semibold text-yellow-700 dark:text-yellow-400 text-sm mb-1">
+                    Warnings
                   </h3>
-                  <ul className="space-y-1 text-sm text-yellow-600 dark:text-yellow-400">
+                  <ul className="space-y-1 text-xs text-yellow-600 dark:text-yellow-400">
                     {validationResult.warnings.map((warning, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="mt-1">•</span>
-                        <span>{warning.message}</span>
-                      </li>
+                      <li key={index}>• {warning.message}</li>
                     ))}
                   </ul>
-                  <p className="text-xs text-yellow-500 dark:text-yellow-500 mt-2">
-                    These warnings won't prevent saving, but may affect flow execution.
-                  </p>
                 </div>
               </div>
             </div>
           )}
-
-          {/* Success Status Display */}
-          {!validationResult.hasErrors && !validationResult.hasWarnings && currentNodes.length > 0 && (
-            <div className="mb-4 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md">
-              <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
-                <CheckCircleIcon className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  Flow structure is valid ({currentNodes.length} nodes, {currentEdges.length} connections)
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Metadata Section */}
-          <Card className="mb-0">
-            <SectionHeader
-              id="metadata"
-              title="Flow Metadata"
-              description="Basic information about your flow"
-              icon="📋"
-            />
-            {expandedSections.has('metadata') && (
-              <CardContent className="space-y-4 border-t">
-                {/* Name and Slug */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Name <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="My Workflow"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Slug</label>
-                    <Input
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
-                      placeholder="my-workflow"
-                    />
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Description</label>
-                  <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe what this flow does..."
-                    className="min-h-[80px]"
-                  />
-                </div>
-
-                {/* Category, Status, Version */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Category</label>
-                    <Select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value as FlowCategory)}
-                    >
-                      {CATEGORY_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.emoji} {opt.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Status</label>
-                    <Select
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value as FlowStatus)}
-                    >
-                      {STATUS_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Version</label>
-                    <Input
-                      value={version}
-                      onChange={(e) => setVersion(e.target.value)}
-                      placeholder="1.0.0"
-                    />
-                  </div>
-                </div>
-
-                {/* Active Toggle */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="isActive"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                    className="w-4 h-4 rounded"
-                  />
-                  <label htmlFor="isActive" className="text-sm font-medium">
-                    Flow is active and can be executed
-                  </label>
-                </div>
-              </CardContent>
-            )}
-          </Card>
         </div>
-      </div>
+      )}
 
       {/* ===================================================================
           MAIN CANVAS - Visual Flow Editor

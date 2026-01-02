@@ -90,6 +90,11 @@ import {
   GlobeIcon,
 } from './ui/Icons';
 import { flowToReactFlow, reactFlowToFlow } from '../utils/flow-converter';
+import {
+  validateFlow,
+  formatValidationErrors,
+  type ExtendedFlowValidationResult,
+} from '../utils/flow-validator';
 import type { ReactFlowNode, ReactFlowEdge } from '../types/react-flow.types';
 
 // =============================================================================
@@ -197,6 +202,17 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   const [showMinimap, setShowMinimap] = useState(true);
 
   // =========================================================================
+  // STATE - Validation
+  // =========================================================================
+  const [validationResult, setValidationResult] = useState<ExtendedFlowValidationResult>({
+    isValid: true,
+    errors: [],
+    warnings: [],
+    hasErrors: false,
+    hasWarnings: false,
+  });
+
+  // =========================================================================
   // EFFECTS
   // =========================================================================
 
@@ -275,6 +291,10 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   const handleCanvasChange = useCallback((nodes: ReactFlowNode[], edges: ReactFlowEdge[]) => {
     setCurrentNodes(nodes);
     setCurrentEdges(edges);
+
+    // Run validation on canvas changes
+    const result = validateFlow(nodes, edges);
+    setValidationResult(result);
   }, []);
 
   /**
@@ -314,6 +334,14 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
 
     if (currentNodes.length === 0) {
       setError('Flow must have at least one node');
+      return;
+    }
+
+    // Validate flow structure before saving
+    const validation = validateFlow(currentNodes, currentEdges);
+    if (!validation.isValid) {
+      const errorMessage = formatValidationErrors(validation);
+      setError(`Flow validation failed:\n\n${errorMessage}`);
       return;
     }
 
@@ -483,7 +511,12 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
               <Button variant="secondary" onClick={onClose} disabled={saving}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={saving} className="flex items-center gap-2">
+              <Button
+                onClick={handleSave}
+                disabled={saving || validationResult.hasErrors}
+                className="flex items-center gap-2"
+                title={validationResult.hasErrors ? 'Fix validation errors before saving' : undefined}
+              >
                 {saving ? (
                   <>
                     <SpinnerIcon className="h-4 w-4 animate-spin" />
@@ -502,7 +535,69 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
           {/* Error Display */}
           {error && (
             <div className="mb-4 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-400">
-              {error}
+              <pre className="whitespace-pre-wrap font-sans">{error}</pre>
+            </div>
+          )}
+
+          {/* Validation Status Display */}
+          {validationResult.hasErrors && (
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md">
+              <div className="flex items-start gap-2">
+                <span className="text-red-600 dark:text-red-400 text-lg">⚠️</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-red-700 dark:text-red-400 mb-2">
+                    Flow Validation Errors
+                  </h3>
+                  <ul className="space-y-1 text-sm text-red-600 dark:text-red-400">
+                    {validationResult.errors.map((error, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <span className="mt-1">•</span>
+                        <span>{error.message}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-red-500 dark:text-red-500 mt-2">
+                    Please fix these errors before saving the flow.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Validation Warnings Display */}
+          {validationResult.hasWarnings && !validationResult.hasErrors && (
+            <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-md">
+              <div className="flex items-start gap-2">
+                <span className="text-yellow-600 dark:text-yellow-400 text-lg">⚠️</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-yellow-700 dark:text-yellow-400 mb-2">
+                    Flow Warnings
+                  </h3>
+                  <ul className="space-y-1 text-sm text-yellow-600 dark:text-yellow-400">
+                    {validationResult.warnings.map((warning, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <span className="mt-1">•</span>
+                        <span>{warning.message}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-yellow-500 dark:text-yellow-500 mt-2">
+                    These warnings won't prevent saving, but may affect flow execution.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Success Status Display */}
+          {!validationResult.hasErrors && !validationResult.hasWarnings && currentNodes.length > 0 && (
+            <div className="mb-4 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md">
+              <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                <CheckCircleIcon className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  Flow structure is valid ({currentNodes.length} nodes, {currentEdges.length} connections)
+                </span>
+              </div>
             </div>
           )}
 

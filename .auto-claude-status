@@ -3,23 +3,23 @@
   "spec": "010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a",
   "state": "building",
   "subtasks": {
-    "completed": 10,
+    "completed": 16,
     "total": 22,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Flow Canvas Component",
+    "current": "Flow Editor Integration",
     "id": null,
-    "total": 5
+    "total": 4
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 12,
+    "number": 18,
     "started_at": "2026-01-02T18:56:17.111587"
   },
-  "last_update": "2026-01-02T19:45:34.137173"
+  "last_update": "2026-01-02T20:11:50.289248"
 }

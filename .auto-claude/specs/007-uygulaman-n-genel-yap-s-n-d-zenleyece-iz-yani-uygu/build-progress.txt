@@ -25,9 +25,9 @@ Implementing a workflow/flow system that allows users to:
 - [x] 2.5 Add Express Routes for Flow Execution
 - [x] 2.6 Update Strapi Client for Flows
 
-### Phase 3: Frontend Flow Builder (Pending)
-- [ ] 3.1 Add Flow Types to Frontend
-- [ ] 3.2 Create Flow API Service
+### Phase 3: Frontend Flow Builder (In Progress)
+- [x] 3.1 Add Flow Types to Frontend
+- [x] 3.2 Create Flow API Service
 - [ ] 3.3 Create Flow List Page
 - [ ] 3.4 Create Flow Editor Page
 - [ ] 3.5 Create Node Configuration Components
@@ -67,6 +67,13 @@ Implementing a workflow/flow system that allows users to:
   - Added statistics methods: getFlowStats, getGlobalFlowStats
   - Added cleanupOldFlowExecutions for maintenance
   - All methods properly typed with flow-types.ts
+- **3.1 Completed**: Added flow types to frontend types.ts (already done in previous session)
+- **3.2 Completed**: Created Flow API Service (src/web/manager/services/flow-api.ts)
+  - Flow CRUD operations: getFlows, getFlow, createFlow, updateFlow, deleteFlow
+  - Flow status management: activateFlow, deactivateFlow, duplicateFlow
+  - Flow execution with SSE: executeFlow, createFlowExecutionStream
+  - Execution monitoring: getFlowExecutions, getRunningExecutions, getExecution, cancelExecution, monitorExecution
+  - Follows existing api.ts and chat-api.ts patterns with auth token handling
 
 ## Architecture Decisions
 
@@ -83,3 +90,4 @@ Implementing a workflow/flow system that allows users to:
 - flow-execution-service.ts - Flow orchestration
 - flow.routes.ts - REST API with SSE
 - ManagerApp.tsx - Frontend routing
+- flow-api.ts - Frontend API client for flow operations

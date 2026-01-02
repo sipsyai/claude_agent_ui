@@ -2,7 +2,7 @@
   "feature": "Workflow/Flow System Implementation",
   "description": "Implement a workflow/flow system for organizing agents and skills into reusable, schedulable processes with input/output handling. This transforms the application from a simple agent manager to a process automation tool where users can define workflows like 'Web Scraper' that take input, run agents with skills, and produce structured outputs.",
   "created_at": "2026-01-02T08:48:42.626Z",
-  "updated_at": "2026-01-02T09:00:00.000Z",
+  "updated_at": "2026-01-02T12:21:45.857Z",
   "status": "in_progress",
   "planStatus": "in_progress",
   "phases": [
@@ -107,45 +107,49 @@
           "id": "2.3",
           "title": "Implement Node Handlers",
           "description": "Create handlers for each node type: InputNodeHandler, AgentNodeHandler, OutputNodeHandler",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "src/services/flow-nodes/input-node-handler.ts",
             "src/services/flow-nodes/agent-node-handler.ts",
             "src/services/flow-nodes/output-node-handler.ts",
             "src/services/flow-nodes/index.ts"
           ],
-          "notes": ""
+          "notes": "Created three flow node handlers in src/services/flow-nodes/:\n\n- InputNodeHandler (input-node-handler.ts): Validates input data against field definitions with type coercion, pattern validation, min/max constraints, required field checks, and custom validation rules. Processes default values and transforms input for downstream nodes.\n\n- AgentNodeHandler (agent-node-handler.ts): Executes Claude agents within flow context. Features prompt template interpolation ({{variable}} syntax), model override selection (node override > agent default), skill loading from Strapi, integration with ClaudeSdkService, token usage tracking, and cost estimation per model.\n\n- OutputNodeHandler (output-node-handler.ts): Formats and delivers flow output. Supports 6 output formats (JSON, markdown, text, HTML, CSV, zip), 5 output types (response, file, database, webhook, email), transform templates, metadata inclusion, timestamp tracking, and webhook delivery with custom headers.\n\nAlso created index.ts with registerAllNodeHandlers() utility, nodeHandlers map, and helper functions. Committed as f3849bb.",
+          "updated_at": "2026-01-02T09:29:32.869307+00:00"
         },
         {
           "id": "2.4",
           "title": "Integrate with Claude SDK Service",
           "description": "Connect agent node handler with existing ClaudeSdkService for agent execution within flows",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "src/services/flow-nodes/agent-node-handler.ts"
           ],
-          "notes": "Leverage existing claude-sdk-service.ts for agent execution"
+          "notes": "Connected AgentNodeHandler with ClaudeSdkService via FlowSdkService for agent execution within flows:\n\n- Created FlowSdkService (src/services/flow-sdk-service.ts): Singleton wrapper around ClaudeSdkService that provides:\n  - Proper initialization with MCP config path for skill/server discovery\n  - Event-based communication for collecting execution results\n  - Working directory configuration support\n  - Timeout handling and cleanup\n\n- Created flow-init.ts (src/services/flow-init.ts): Flow system initialization module that:\n  - Registers all node handlers with FlowExecutionService at startup\n  - Configures FlowSdkService with default working directory\n  - Sets up execution update event listeners for logging\n\n- Updated AgentNodeHandler (src/services/flow-nodes/agent-node-handler.ts):\n  - Integrated with FlowSdkService for SDK-based agent execution\n  - Added working directory support from flow/node metadata\n  - Added skill loading and filesystem sync before execution\n  - Added tool configuration merging from agent and skills\n  - Fixed TypeScript type issues with ToolName arrays\n\n- Updated server.ts: Added flow system initialization at server startup\n\nCommitted as 16d47a7.",
+          "updated_at": "2026-01-02T12:31:13.098463+00:00"
         },
         {
           "id": "2.5",
           "title": "Add Express Routes for Flow Execution",
           "description": "Create REST API endpoints for starting, stopping, and monitoring flow executions with SSE support",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "src/routes/flow.routes.ts",
             "src/server.ts"
           ],
-          "notes": ""
+          "notes": "Created REST API endpoints for flow execution management with SSE support:\n\n**New Files:**\n- src/validators/flow.validators.ts: Zod validation schemas for flows and executions\n- src/routes/flow.routes.ts: Complete REST API with SSE streaming\n\n**Flow CRUD Endpoints:**\n- GET /api/flows - List all flows with filtering/pagination\n- GET /api/flows/:id - Get single flow\n- POST /api/flows - Create new flow\n- PUT /api/flows/:id - Update flow\n- DELETE /api/flows/:id - Delete flow\n\n**Flow Execution Endpoints:**\n- POST /api/flows/:id/execute - Start execution with SSE streaming\n- GET /api/flows/executions/running - List active executions\n- GET /api/flows/executions/:id - Get execution status\n- POST /api/flows/executions/:id/cancel - Cancel execution\n- GET /api/flows/executions/:id/stream - SSE stream for monitoring\n- GET /api/flows/:id/executions - List executions for a flow\n\n**Flow Status Management:**\n- POST /api/flows/:id/activate - Activate a flow\n- POST /api/flows/:id/deactivate - Deactivate a flow\n- POST /api/flows/:id/duplicate - Duplicate a flow\n\n**SSE Features:**\n- FlowSSEStream helper class for SSE connections\n- Keep-alive pings every 30 seconds\n- Real-time execution updates via flowExecutionService events\n- Automatic stream cleanup on client disconnect\n- Terminal state detection for stream closure",
+          "updated_at": "2026-01-02T12:35:50.512616+00:00"
         },
         {
           "id": "2.6",
           "title": "Update Strapi Client for Flows",
           "description": "Add flow-related methods to the Strapi client service",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "src/services/strapi-client.ts"
           ],
-          "notes": ""
+          "notes": "Enhanced strapi-client.ts with comprehensive flow-related methods:\n\n**Flow CRUD (properly typed with Flow type):**\n- getAllFlows - List flows with filtering/sorting/pagination\n- getFlow - Get single flow by ID\n- getFlowBySlug - Get flow by URL-friendly slug\n- getActiveFlows - Get all active flows\n- getFlowsByCategory - Filter by FlowCategory\n- getFlowsByStatus - Filter by FlowStatus\n- createFlow - Create new flow with prepareFlowData\n- updateFlow - Update existing flow\n- deleteFlow - Remove flow\n- duplicateFlow - Clone flow with new name\n\n**FlowExecution CRUD (properly typed with FlowExecution type):**\n- getAllFlowExecutions - List executions with filtering\n- getFlowExecution - Get single execution\n- createFlowExecution - Create execution record (typed params)\n- updateFlowExecution - Update execution state (typed params)\n- deleteFlowExecution - Remove execution\n- getFlowExecutionsByFlowId - Get executions for a flow\n- getRunningFlowExecutions - Get active executions\n- getRecentFlowExecutions - Get N most recent executions\n- getFlowExecutionsByStatus - Filter by FlowExecutionStatus\n\n**Statistics & Maintenance:**\n- getFlowStats(flowId) - Returns FlowStats for a flow\n- getGlobalFlowStats() - Returns GlobalFlowStats aggregate\n- cleanupOldFlowExecutions(days) - Delete old completed/failed/cancelled records\n\n**Internal Methods:**\n- transformFlow - Properly typed transformation to Flow\n- transformFlowExecution - Properly typed transformation to FlowExecution\n- prepareFlowData - Prepare flow data for Strapi API\n\nAll methods properly typed with imports from flow-types.ts:\n- Flow, FlowExecution, FlowExecutionStatus, FlowTriggerType\n- FlowStatus, FlowCategory, FlowStats, GlobalFlowStats\n- FlowNode, FlowInputSchema, FlowOutputSchema\n- NodeExecution, FlowExecutionLog\n\nCommitted as 1a6e21b.",
+          "updated_at": "2026-01-02T12:41:40.285803+00:00"
         }
       ]
     },
@@ -159,21 +163,23 @@
           "id": "3.1",
           "title": "Add Flow Types to Frontend",
           "description": "Define TypeScript types for flows in the frontend",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "src/web/manager/types.ts"
           ],
-          "notes": ""
+          "notes": "Added comprehensive frontend flow types to src/web/manager/types.ts:\n\n**Enums and Type Aliases:**\n- FlowStatus (draft/active/paused/archived)\n- FlowCategory (6 categories)\n- FlowExecutionStatus (pending/running/completed/failed/cancelled)\n- FlowTriggerType, FlowOutputType, FlowOutputFormat, FlowNodeType, InputFieldType\n\n**Node Types:**\n- FlowNodeBase (base interface with nodeId, type, name, position, nextNodeId)\n- InputNode (extends base with inputFields, validationRules)\n- AgentNode (extends base with agentId, promptTemplate, skills, timeout, retry settings)\n- OutputNode (extends base with outputType, format, file options, webhook support)\n- FlowNode (union type)\n\n**Flow & Execution Types:**\n- Flow (main workflow definition with nodes, status, schemas)\n- FlowExecution (execution tracking with logs, nodeExecutions, timing)\n- NodeExecution (individual node state tracking)\n- FlowExecutionUpdate (SSE real-time updates)\n- FlowStats, GlobalFlowStats (statistics interfaces)\n\n**Utilities:**\n- Type guards: isInputNode, isAgentNode, isOutputNode\n- FlowCreateInput, FlowUpdateInput helper types\n- Added 'Flows' to ManagerView enum\n\nTypes use frontend-friendly string types for dates (vs Date objects in backend types). Committed as 91b1fe1.",
+          "updated_at": "2026-01-02T12:44:16.114407+00:00"
         },
         {
           "id": "3.2",
           "title": "Create Flow API Service",
           "description": "Implement frontend API client for flow operations",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "src/web/manager/services/flow-api.ts"
           ],
-          "notes": ""
+          "notes": "Created Flow API Service (src/web/manager/services/flow-api.ts) with comprehensive functionality:\n\n**Flow CRUD Operations:**\n- getFlows() - List flows with filtering, sorting, pagination\n- getFlow() - Get single flow by ID\n- createFlow() - Create new flow\n- updateFlow() - Update existing flow\n- deleteFlow() - Delete a flow\n\n**Flow Status Management:**\n- activateFlow() - Activate a flow (set isActive=true, status='active')\n- deactivateFlow() - Deactivate a flow (set isActive=false, status='paused')\n- duplicateFlow() - Duplicate a flow with optional new name\n\n**Flow Execution (SSE streaming):**\n- executeFlow() - Start flow execution with callback for SSE events\n- createFlowExecutionStream() - Create EventSource-like object for event listeners\n\n**Execution Monitoring:**\n- getFlowExecutions() - Get executions for a specific flow\n- getRunningExecutions() - Get all currently running executions\n- getExecution() - Get single execution by ID\n- cancelExecution() - Cancel a running execution\n- monitorExecution() - SSE stream to monitor specific execution\n\nFollows existing patterns from api.ts and chat-api.ts with auth token handling via cookies.",
+          "updated_at": "2026-01-02T12:48:16.376434+00:00"
         },
         {
           "id": "3.3",
@@ -367,5 +373,5 @@
       "Leverage existing patterns in codebase"
     ]
   },
-  "last_updated": "2026-01-02T09:22:47.268174+00:00"
+  "last_updated": "2026-01-02T12:48:16.376453+00:00"
 }

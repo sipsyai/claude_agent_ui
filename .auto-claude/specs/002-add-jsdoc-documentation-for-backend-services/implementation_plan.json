@@ -135,38 +135,41 @@
           "id": "2.2",
           "title": "Enhance Agent methods documentation",
           "description": "Add @example for getAllAgents, getAgent, createAgent, updateAgent, deleteAgent. Document populate options, filter syntax, and component fields handling.",
-          "status": "in_progress",
+          "status": "completed",
           "file": "src/services/strapi-client.ts",
           "estimated_lines": 50,
-          "notes": "Starting to add comprehensive JSDoc examples for Agent methods (getAllAgents, getAgent, createAgent, updateAgent, deleteAgent) with detailed documentation for populate options, filter syntax, and component fields handling",
-          "updated_at": "2026-01-02T07:22:05.556908+00:00"
+          "notes": "Added comprehensive JSDoc documentation for all 5 Agent methods in strapi-client.ts:\n\n1. getAllAgents - 7 detailed examples covering filtering, sorting, pagination, populate options, and Strapi v5 component support\n2. getAgent - 6 examples demonstrating deep population syntax for nested relations and component access patterns\n3. createAgent - 8 examples covering all component fields and configuration options\n4. updateAgent - 9 examples showing partial update semantics and incremental updates\n5. deleteAgent - 6 examples including safe deletion practices and alternatives\n\nDocumentation includes:\n- Strapi v5 filter operators ($eq, $ne, $in, $containsi, $and, $or, $lt, $gte, etc.)\n- Component field documentation (toolConfig, modelConfig, analytics, metadata, mcpConfig, skillSelection, tasks)\n- Deep population syntax for nested relations (mcpConfig.mcpServer, mcpConfig.selectedTools.mcpTool)\n- Cache behavior and invalidation patterns\n- Error handling examples\n- Best practices and common pitfalls\n\nTotal: ~700 lines of comprehensive JSDoc documentation following established patterns from Phase 1 (ClaudeSdkService, MCPService) and subtask 2.1.\n\nAll examples use realistic use cases demonstrating practical integration patterns for developers.",
+          "updated_at": "2026-01-02T07:24:51.307753+00:00"
         },
         {
           "id": "2.3",
           "title": "Enhance Skill methods documentation",
           "description": "Add @example for getAllSkills, getSkill, getSkillsByIds, createSkill, updateSkill, deleteSkill. Document trainingHistory, additionalFiles, and mcpConfig handling.",
-          "status": "pending",
+          "status": "completed",
           "file": "src/services/strapi-client.ts",
           "estimated_lines": 50,
-          "notes": "Skills have complex component fields"
+          "notes": "Added comprehensive JSDoc documentation for all 6 skill methods in strapi-client.ts:\n\n1. getAllSkills - 10 detailed examples covering filtering, sorting, pagination, and component access (trainingHistory, additionalFiles, mcpConfig)\n2. getSkill - 8 examples demonstrating deep population syntax and component inspection\n3. getSkillsByIds - 6 examples for bulk operations and data aggregation\n4. createSkill - 7 examples covering component initialization, file uploads, and MCP configuration\n5. updateSkill - 10 examples showing partial updates and array replacement patterns\n6. deleteSkill - 6 examples with safe deletion practices and dependency checks\n\nTotal: ~1065 lines of comprehensive JSDoc documentation including:\n- Detailed @description explaining Strapi v5 component-based architecture\n- Complete @param documentation for all parameters\n- @returns tags with type information\n- @throws tags for error conditions\n- Extensive @example tags demonstrating practical usage patterns\n- Documentation of trainingHistory (training records), additionalFiles (file attachments with file relation), and mcpConfig (MCP server configurations with nested relations) handling\n- Strapi v5 deep population syntax for nested component relations\n- Cache behavior and invalidation patterns\n- Best practices, common pitfalls, and workflow examples\n- @see links to related methods\n\nDocumentation follows established patterns from Phase 1 (ClaudeSdkService, MCPService) and subtasks 2.1-2.2 (Agent methods).\n\nAll skill methods now have complete documentation aligned with developer needs and Strapi v5 requirements.",
+          "updated_at": "2026-01-02T07:30:14.828779+00:00"
         },
         {
           "id": "2.4",
           "title": "Enhance MCP Server and Tool methods documentation",
           "description": "Add @example for getAllMCPServers, getMCPServer, createMCPServer, updateMCPServer, deleteMCPServer, getMCPToolsByServerId, createMCPTool, updateMCPTool, deleteMCPTool, bulkSyncMCPTools.",
-          "status": "pending",
+          "status": "completed",
           "file": "src/services/strapi-client.ts",
           "estimated_lines": 60,
-          "notes": "Document tool sync workflow"
+          "notes": "Added comprehensive JSDoc documentation with @example tags for 10 MCP-related methods in strapi-client.ts:\n\nMCP Server methods (5):\n- getAllMCPServers: 6 examples covering filtering, transport types, and population\n- getMCPServer: 4 examples covering retrieval, inspection, and error handling\n- createMCPServer: 5 examples covering stdio/SDK servers, env vars, and tool sync\n- updateMCPServer: 6 examples covering partial updates and multi-field changes\n- deleteMCPServer: 5 examples covering safe deletion and dependency checking\n\nMCP Tool methods (5):\n- getMCPToolsByServerId: 5 examples covering tool listing, filtering, and agent config\n- createMCPTool: 4 examples covering basic/complex schemas and batch creation\n- updateMCPTool: 4 examples covering metadata updates and schema changes\n- deleteMCPTool: 4 examples covering single/bulk deletion and error handling\n- bulkSyncMCPTools: 8 examples covering sync workflow, MCPService integration, and change tracking\n\nEach method now includes:\n- Detailed @description explaining purpose and behavior\n- Comprehensive @param documentation with all parameter details\n- @returns and @throws tags for type information and error conditions\n- Multiple @example tags demonstrating practical usage patterns\n- @see links to related methods for cross-referencing\n\nDocumentation covers:\n- Strapi v5 filter operators and query syntax\n- Transport type differences (stdio vs SDK)\n- Cache behavior and invalidation patterns\n- Tool sync algorithm and 3-way sync workflow\n- Best practices and common pitfalls\n- Error handling examples\n- Integration patterns with MCPService\n- Agent configuration workflows\n\nTotal: ~1,500 lines of comprehensive documentation following established patterns from Phase 1 (ClaudeSdkService, MCPService) and subtasks 2.1-2.3 (Agent, Skill methods).\n\nAll examples use realistic use cases demonstrating practical integration patterns for developers. Documentation aligns with Strapi v5 requirements and MCP protocol specification.",
+          "updated_at": "2026-01-02T07:34:37.119303+00:00"
         },
         {
           "id": "2.5",
           "title": "Enhance Task and utility methods documentation",
           "description": "Add @example for getAllTasks, getTask, createTask, updateTask, deleteTask, uploadFile, deleteFile, healthCheck, clearCache, getCacheStats.",
-          "status": "pending",
+          "status": "completed",
           "file": "src/services/strapi-client.ts",
           "estimated_lines": 40,
-          "notes": "Include file upload patterns"
+          "notes": "Added comprehensive JSDoc @example tags for all 10 task and utility methods in strapi-client.ts:\n\nTask methods (5):\n- getAllTasks: 8 examples covering filtering, sorting, pagination, status filtering, agent filtering, overdue tasks\n- getTask: 4 examples covering basic retrieval, status checking, detailed info display, error handling\n- createTask: 6 examples covering basic creation, agent assignment, due dates, metadata, immediate execution, error handling\n- updateTask: 8 examples covering status updates, results, failures, priority changes, reassignment, multi-field updates\n- deleteTask: 5 examples covering basic deletion, confirmation checks, error handling, soft-delete alternative, bulk deletion\n\nFile methods (2):\n- uploadFile: 6 examples covering Buffer uploads, skill attachments, PDF uploads, multiple files, error handling, URL usage\n- deleteFile: 5 examples covering basic deletion, replacement workflow, error handling, bulk deletion, safe deletion\n\nUtility methods (3):\n- healthCheck: 5 examples covering basic checks, startup validation, retry logic, monitoring, pre-flight checks\n- clearCache: 6 examples covering basic clear, refresh data, user-triggered refresh, testing, periodic refresh, bulk import\n- getCacheStats: 7 examples covering basic stats, utilization checks, monitoring dashboard, growth monitoring, debug effectiveness\n\nEach method now includes detailed @description, @param, @returns, @throws, and multiple @example tags demonstrating practical usage patterns. Documentation follows established patterns from subtasks 2.1-2.4 (Agent, Skill, MCP methods).\n\nTotal: ~900 lines of comprehensive documentation added to strapi-client.ts.\n\nCommitted as: 6902643",
+          "updated_at": "2026-01-02T07:40:04.011542+00:00"
         },
         {
           "id": "2.6",
@@ -517,5 +520,5 @@
       "Phase 8: Specialized Services - Low"
     ]
   },
-  "last_updated": "2026-01-02T07:22:05.556918+00:00"
+  "last_updated": "2026-01-02T07:40:04.011559+00:00"
 }

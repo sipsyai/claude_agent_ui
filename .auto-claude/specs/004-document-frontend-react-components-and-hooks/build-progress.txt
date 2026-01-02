@@ -568,9 +568,44 @@ Add comprehensive JSDoc documentation to 48+ React components and 4 custom hooks
   - Committed changes with git
   - **Phase 6: Page Components and App (3/15 subtasks completed)**
 
+- [x] Subtask 6.4: Documented DashboardPage component
+  - Added comprehensive JSDoc documentation covering dashboard metrics, data fetching, and widget layout
+  - (Details documented in implementation_plan.json notes)
+  - **Phase 6: Page Components and App (4/15 subtasks completed)**
+
+- [x] Subtask 6.5: Documented AgentsPage component
+  - Added comprehensive JSDoc documentation covering agent listing, CRUD operations, and filtering
+  - (Details documented in implementation_plan.json notes)
+  - **Phase 6: Page Components and App (5/15 subtasks completed)**
+
+- [x] Subtask 6.6: Documented AgentsListPage component
+  - Added comprehensive JSDoc documentation covering agent list view, pagination, and action buttons
+  - Component description with features and tabbed interface
+  - Detailed sections on:
+    * Tabbed Interface - Slash commands and skills tabs with count indicators and button variants
+    * Resource Listing - Grid layout with responsive columns (1/2/3 based on viewport)
+    * Tool Configuration Preview - Shows first 3 tools with overflow indicator (+N)
+    * Empty States - User-friendly messages for empty commands/skills tabs
+    * Action Buttons - View Details functionality (currently placeholder)
+    * Pagination - Notes on current implementation (no pagination) and future enhancement suggestions
+    * Styling Behavior - Tailwind CSS classes, hover effects, responsive typography
+  - Props interface documentation with detailed property descriptions:
+    * commands - Array of SlashCommand objects from .claude/commands/ directory
+    * skills - Array of Skill objects from .claude/skills/ directory
+    * onSelectAgent - Callback for "View Details" button (not currently connected)
+  - Four comprehensive usage examples demonstrating:
+    * Basic usage in ManagerApp setup phase (ValidationPage)
+    * Understanding tab navigation workflow (commands ↔ skills switching)
+    * Understanding empty states (scenarios with empty commands or skills arrays)
+    * Understanding tool configuration preview display (first 3 + overflow)
+  - Display name for better debugging experience
+  - Documentation follows established pattern from AgentsPage.tsx and other page components
+  - Committed changes with git
+  - **Phase 6: Page Components and App (6/15 subtasks completed)**
+
 ## Next Steps
 1. ✅ Phase 3: Custom Hooks (COMPLETED)
 2. ✅ Phase 4: Chat Components (COMPLETED)
 3. ✅ Phase 5: Feature Components (COMPLETED - 12/12 subtasks)
-4. 🔄 Phase 6: Page Components and App (IN PROGRESS - 3/15 subtasks completed)
-   - Next: 6.4 - Document DashboardPage component
+4. 🔄 Phase 6: Page Components and App (IN PROGRESS - 6/15 subtasks completed)
+   - Next: 6.7 - Document SkillsPage component

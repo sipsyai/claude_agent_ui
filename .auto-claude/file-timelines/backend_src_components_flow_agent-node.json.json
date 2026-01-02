@@ -1,0 +1,25 @@
+{
+  "file_path": "backend/src/components/flow/agent-node.json",
+  "main_branch_history": [],
+  "task_views": {
+    "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu": {
+      "task_id": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
+      "branch_point": {
+        "commit_hash": "9355e1f79162ecd7611ae3213457e87085b7fe4d",
+        "content": "{\n  \"collectionName\": \"components_flow_agent_nodes\",\n  \"info\": {\n    \"displayName\": \"Agent Node\",\n    \"icon\": \"robot\",\n    \"description\": \"Flow node for executing an agent with configured skills\"\n  },\n  \"options\": {},\n  \"attributes\": {\n    \"nodeId\": {\n      \"type\": \"string\",\n      \"required\": true,\n      \"description\": \"Unique identifier for this node within the flow\"\n    },\n    \"name\": {\n      \"type\": \"string\",\n      \"required\": true,\n      \"default\": \"Agent\",\n      \"description\": \"Display name for this agent node\"\n    },\n    \"description\": {\n      \"type\": \"text\",\n      \"description\": \"Description of what this agent node does\"\n    },\n    \"agent\": {\n      \"type\": \"relation\",\n      \"relation\": \"oneToOne\",\n      \"target\": \"api::agent.agent\",\n      \"required\": true\n    },\n    \"promptTemplate\": {\n      \"type\": \"text\",\n      \"required\": true,\n      \"description\": \"Prompt template for the agent. Use {{variableName}} for input interpolation\"\n    },\n    \"skills\": {\n      \"type\": \"json\",\n      \"default\": [],\n      \"description\": \"Array of skill IDs to enable for this agent execution\"\n    },\n    \"modelOverride\": {\n      \"type\": \"enumeration\",\n      \"enum\": [\"default\", \"haiku\", \"sonnet\", \"sonnet-4\", \"opus\", \"opus-4\"],\n      \"default\": \"default\",\n      \"description\": \"Override the agent's default model for this node\"\n    },\n    \"maxTokens\": {\n      \"type\": \"integer\",\n      \"min\": 1,\n      \"max\": 200000,\n      \"description\": \"Maximum tokens for the agent response\"\n    },\n    \"timeout\": {\n      \"type\": \"integer\",\n      \"default\": 300000,\n      \"min\": 1000,\n      \"description\": \"Timeout in milliseconds for agent execution\"\n    },\n    \"retryOnError\": {\n      \"type\": \"boolean\",\n      \"default\": false,\n      \"description\": \"Whether to retry on error\"\n    },\n    \"maxRetries\": {\n      \"type\": \"integer\",\n      \"default\": 3,\n      \"min\": 1,\n      \"max\": 10,\n      \"description\": \"Maximum number of retries on error\"\n    },\n    \"position\": {\n      \"type\": \"json\",\n      \"default\": { \"x\": 0, \"y\": 100 },\n      \"description\": \"UI position coordinates for the node\"\n    },\n    \"nextNodeId\": {\n      \"type\": \"string\",\n      \"description\": \"ID of the next node in the flow sequence\"\n    },\n    \"metadata\": {\n      \"type\": \"json\",\n      \"default\": {},\n      \"description\": \"Additional metadata for the node\"\n    }\n  }\n}\n",
+        "timestamp": "2026-01-02T15:21:46.864601"
+      },
+      "worktree_state": null,
+      "task_intent": {
+        "title": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
+        "description": "Implement a workflow/flow system for organizing agents and skills into reusable, schedulable processes with input/output handling. This transforms the application from a simple agent manager to a process automation tool where users can define workflows like 'Web Scraper' that take input, run agents with skills, and produce structured outputs.",
+        "from_plan": true
+      },
+      "commits_behind_main": 0,
+      "status": "active",
+      "merged_at": null
+    }
+  },
+  "created_at": "2026-01-02T15:21:47.230595",
+  "last_updated": "2026-01-02T15:21:47.241236"
+}

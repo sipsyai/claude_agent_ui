@@ -1,0 +1,25 @@
+{
+  "file_path": "src/services/flow-nodes/index.ts",
+  "main_branch_history": [],
+  "task_views": {
+    "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu": {
+      "task_id": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
+      "branch_point": {
+        "commit_hash": "9355e1f79162ecd7611ae3213457e87085b7fe4d",
+        "content": "/**\n * Claude Agent UI - Flow Node Handlers\n *\n * This module exports all flow node handlers and provides utilities\n * for registering them with the FlowExecutionService.\n *\n * Node Types:\n * - InputNode: Validates and processes flow input data\n * - AgentNode: Executes Claude agents with configured skills\n * - OutputNode: Formats and delivers flow output\n *\n * Usage:\n * ```typescript\n * import { registerAllNodeHandlers } from './flow-nodes';\n * import { flowExecutionService } from './flow-execution-service';\n *\n * // Register all handlers at app startup\n * registerAllNodeHandlers(flowExecutionService);\n * ```\n *\n * @see src/types/flow-types.ts for node type definitions\n * @see src/services/flow-execution-service.ts for the execution engine\n */\n\n// Export individual handlers\nexport { InputNodeHandler, inputNodeHandler } from './input-node-handler.js';\nexport { AgentNodeHandler, agentNodeHandler } from './agent-node-handler.js';\nexport { OutputNodeHandler, outputNodeHandler } from './output-node-handler.js';\n\n// Import types and singleton instances\nimport { inputNodeHandler } from './input-node-handler.js';\nimport { agentNodeHandler } from './agent-node-handler.js';\nimport { outputNodeHandler } from './output-node-handler.js';\nimport type { FlowExecutionService, NodeHandler } from '../flow-execution-service.js';\n\n/**\n * Map of node type to handler instance\n */\nexport const nodeHandlers: Record<string, NodeHandler> = {\n  input: inputNodeHandler,\n  agent: agentNodeHandler,\n  output: outputNodeHandler,\n};\n\n/**\n * Register all node handlers with a FlowExecutionService instance\n *\n * This should be called during application startup to ensure\n * all node types can be executed by the flow engine.\n *\n * @param service - The FlowExecutionService instance to register handlers with\n */\nexport function registerAllNodeHandlers(service: FlowExecutionService): void {\n  service.registerNodeHandler('input', inputNodeHandler);\n  service.registerNodeHandler('agent', agentNodeHandler);\n  service.registerNodeHandler('output', outputNodeHandler);\n}\n\n/**\n * Register a single node handler\n *\n * Useful for adding custom node handlers without registering all defaults.\n *\n * @param service - The FlowExecutionService instance\n * @param nodeType - The node type string (e.g., 'input', 'agent', 'output')\n * @param handler - The handler instance implementing NodeHandler interface\n */\nexport function registerNodeHandler(\n  service: FlowExecutionService,\n  nodeType: string,\n  handler: NodeHandler\n): void {\n  service.registerNodeHandler(nodeType, handler);\n}\n\n/**\n * Get a handler for a specific node type\n *\n * @param nodeType - The node type to get handler for\n * @returns The handler instance or undefined if not found\n */\nexport function getNodeHandler(nodeType: string): NodeHandler | undefined {\n  return nodeHandlers[nodeType];\n}\n\n/**\n * Check if a handler exists for a node type\n *\n * @param nodeType - The node type to check\n * @returns True if a handler exists for the node type\n */\nexport function hasNodeHandler(nodeType: string): boolean {\n  return nodeType in nodeHandlers;\n}\n\n/**\n * Get all registered node type names\n *\n * @returns Array of registered node type names\n */\nexport function getRegisteredNodeTypes(): string[] {\n  return Object.keys(nodeHandlers);\n}\n",
+        "timestamp": "2026-01-02T15:21:46.864601"
+      },
+      "worktree_state": null,
+      "task_intent": {
+        "title": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
+        "description": "Implement a workflow/flow system for organizing agents and skills into reusable, schedulable processes with input/output handling. This transforms the application from a simple agent manager to a process automation tool where users can define workflows like 'Web Scraper' that take input, run agents with skills, and produce structured outputs.",
+        "from_plan": true
+      },
+      "commits_behind_main": 0,
+      "status": "active",
+      "merged_at": null
+    }
+  },
+  "created_at": "2026-01-02T15:21:47.055347",
+  "last_updated": "2026-01-02T15:21:47.066266"
+}

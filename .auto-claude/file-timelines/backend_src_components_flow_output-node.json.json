@@ -1,0 +1,25 @@
+{
+  "file_path": "backend/src/components/flow/output-node.json",
+  "main_branch_history": [],
+  "task_views": {
+    "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu": {
+      "task_id": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
+      "branch_point": {
+        "commit_hash": "9355e1f79162ecd7611ae3213457e87085b7fe4d",
+        "content": "{\n  \"collectionName\": \"components_flow_output_nodes\",\n  \"info\": {\n    \"displayName\": \"Output Node\",\n    \"icon\": \"logout\",\n    \"description\": \"Flow output node for defining how results are delivered\"\n  },\n  \"options\": {},\n  \"attributes\": {\n    \"nodeId\": {\n      \"type\": \"string\",\n      \"required\": true,\n      \"description\": \"Unique identifier for this node within the flow\"\n    },\n    \"name\": {\n      \"type\": \"string\",\n      \"required\": true,\n      \"default\": \"Output\",\n      \"description\": \"Display name for this output node\"\n    },\n    \"description\": {\n      \"type\": \"text\",\n      \"description\": \"Description of what this output node produces\"\n    },\n    \"outputType\": {\n      \"type\": \"enumeration\",\n      \"enum\": [\"response\", \"file\", \"database\", \"webhook\", \"email\"],\n      \"required\": true,\n      \"default\": \"response\",\n      \"description\": \"How to deliver the output\"\n    },\n    \"format\": {\n      \"type\": \"enumeration\",\n      \"enum\": [\"json\", \"markdown\", \"text\", \"html\", \"csv\", \"zip\"],\n      \"default\": \"json\",\n      \"description\": \"Output format for the result\"\n    },\n    \"saveToFile\": {\n      \"type\": \"boolean\",\n      \"default\": false,\n      \"description\": \"Whether to save output to a file\"\n    },\n    \"filePath\": {\n      \"type\": \"string\",\n      \"description\": \"File path template for saving output. Use {{variableName}} for interpolation\"\n    },\n    \"fileName\": {\n      \"type\": \"string\",\n      \"description\": \"File name template for saving output\"\n    },\n    \"includeMetadata\": {\n      \"type\": \"boolean\",\n      \"default\": true,\n      \"description\": \"Whether to include execution metadata in output\"\n    },\n    \"includeTimestamp\": {\n      \"type\": \"boolean\",\n      \"default\": true,\n      \"description\": \"Whether to include timestamp in output\"\n    },\n    \"transformTemplate\": {\n      \"type\": \"text\",\n      \"description\": \"Optional template for transforming the final output\"\n    },\n    \"webhookUrl\": {\n      \"type\": \"string\",\n      \"description\": \"Webhook URL for outputType=webhook\"\n    },\n    \"webhookHeaders\": {\n      \"type\": \"json\",\n      \"default\": {},\n      \"description\": \"Headers to send with webhook request\"\n    },\n    \"position\": {\n      \"type\": \"json\",\n      \"default\": { \"x\": 0, \"y\": 200 },\n      \"description\": \"UI position coordinates for the node\"\n    },\n    \"metadata\": {\n      \"type\": \"json\",\n      \"default\": {},\n      \"description\": \"Additional metadata for the node\"\n    }\n  }\n}\n",
+        "timestamp": "2026-01-02T15:21:46.864601"
+      },
+      "worktree_state": null,
+      "task_intent": {
+        "title": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
+        "description": "Implement a workflow/flow system for organizing agents and skills into reusable, schedulable processes with input/output handling. This transforms the application from a simple agent manager to a process automation tool where users can define workflows like 'Web Scraper' that take input, run agents with skills, and produce structured outputs.",
+        "from_plan": true
+      },
+      "commits_behind_main": 0,
+      "status": "active",
+      "merged_at": null
+    }
+  },
+  "created_at": "2026-01-02T15:21:47.129610",
+  "last_updated": "2026-01-02T15:21:47.144168"
+}

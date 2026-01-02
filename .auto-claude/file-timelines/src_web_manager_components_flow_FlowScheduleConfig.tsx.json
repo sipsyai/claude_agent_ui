@@ -1,0 +1,25 @@
+{
+  "file_path": "src/web/manager/components/flow/FlowScheduleConfig.tsx",
+  "main_branch_history": [],
+  "task_views": {
+    "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu": {
+      "task_id": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
+      "branch_point": {
+        "commit_hash": "9355e1f79162ecd7611ae3213457e87085b7fe4d",
+        "content": "",
+        "timestamp": "2026-01-02T15:21:46.864601"
+      },
+      "worktree_state": null,
+      "task_intent": {
+        "title": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
+        "description": "Implement a workflow/flow system for organizing agents and skills into reusable, schedulable processes with input/output handling. This transforms the application from a simple agent manager to a process automation tool where users can define workflows like 'Web Scraper' that take input, run agents with skills, and produce structured outputs.",
+        "from_plan": true
+      },
+      "commits_behind_main": 0,
+      "status": "active",
+      "merged_at": null
+    }
+  },
+  "created_at": "2026-01-02T15:21:47.157558",
+  "last_updated": "2026-01-02T15:21:47.168407"
+}

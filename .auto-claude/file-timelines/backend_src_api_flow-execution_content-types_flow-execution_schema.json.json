@@ -1,0 +1,25 @@
+{
+  "file_path": "backend/src/api/flow-execution/content-types/flow-execution/schema.json",
+  "main_branch_history": [],
+  "task_views": {
+    "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu": {
+      "task_id": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
+      "branch_point": {
+        "commit_hash": "9355e1f79162ecd7611ae3213457e87085b7fe4d",
+        "content": "{\n  \"kind\": \"collectionType\",\n  \"collectionName\": \"flow_executions\",\n  \"info\": {\n    \"singularName\": \"flow-execution\",\n    \"pluralName\": \"flow-executions\",\n    \"displayName\": \"Flow Execution\",\n    \"description\": \"Tracks flow execution history with status, logs, timing, and results\"\n  },\n  \"options\": {\n    \"draftAndPublish\": false\n  },\n  \"pluginOptions\": {},\n  \"attributes\": {\n    \"flow\": {\n      \"type\": \"relation\",\n      \"relation\": \"manyToOne\",\n      \"target\": \"api::flow.flow\",\n      \"description\": \"Reference to the flow definition that was executed\"\n    },\n    \"status\": {\n      \"type\": \"enumeration\",\n      \"required\": true,\n      \"default\": \"pending\",\n      \"enum\": [\n        \"pending\",\n        \"running\",\n        \"completed\",\n        \"failed\",\n        \"cancelled\"\n      ]\n    },\n    \"input\": {\n      \"type\": \"json\",\n      \"description\": \"Input data provided to start the flow execution\"\n    },\n    \"output\": {\n      \"type\": \"json\",\n      \"description\": \"Final output data from the flow execution\"\n    },\n    \"logs\": {\n      \"type\": \"json\",\n      \"default\": [],\n      \"description\": \"Array of log entries with timestamp, level, message, and nodeId\"\n    },\n    \"error\": {\n      \"type\": \"text\",\n      \"description\": \"Error message if the execution failed\"\n    },\n    \"errorDetails\": {\n      \"type\": \"json\",\n      \"description\": \"Detailed error information including stack trace and context\"\n    },\n    \"startedAt\": {\n      \"type\": \"datetime\",\n      \"description\": \"When the flow execution started\"\n    },\n    \"completedAt\": {\n      \"type\": \"datetime\",\n      \"description\": \"When the flow execution completed (success or failure)\"\n    },\n    \"executionTime\": {\n      \"type\": \"integer\",\n      \"min\": 0,\n      \"description\": \"Total execution time in milliseconds\"\n    },\n    \"nodeExecutions\": {\n      \"type\": \"json\",\n      \"default\": [],\n      \"description\": \"Array tracking each node's execution state, timing, input, and output\"\n    },\n    \"currentNodeId\": {\n      \"type\": \"string\",\n      \"description\": \"ID of the currently executing node (when status is running)\"\n    },\n    \"tokensUsed\": {\n      \"type\": \"integer\",\n      \"default\": 0,\n      \"min\": 0,\n      \"description\": \"Total tokens consumed during execution\"\n    },\n    \"cost\": {\n      \"type\": \"decimal\",\n      \"default\": 0,\n      \"min\": 0,\n      \"description\": \"Estimated cost of the execution\"\n    },\n    \"triggeredBy\": {\n      \"type\": \"enumeration\",\n      \"default\": \"manual\",\n      \"enum\": [\n        \"manual\",\n        \"schedule\",\n        \"webhook\",\n        \"api\"\n      ],\n      \"description\": \"How the flow execution was triggered\"\n    },\n    \"triggerData\": {\n      \"type\": \"json\",\n      \"description\": \"Additional context about the trigger (e.g., webhook payload, schedule info)\"\n    },\n    \"retryCount\": {\n      \"type\": \"integer\",\n      \"default\": 0,\n      \"min\": 0,\n      \"description\": \"Number of retry attempts made\"\n    },\n    \"parentExecutionId\": {\n      \"type\": \"integer\",\n      \"description\": \"Reference to parent execution if this is a retry\"\n    },\n    \"metadata\": {\n      \"type\": \"json\",\n      \"default\": {},\n      \"description\": \"Additional execution metadata\"\n    }\n  }\n}\n",
+        "timestamp": "2026-01-02T15:21:46.864601"
+      },
+      "worktree_state": null,
+      "task_intent": {
+        "title": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
+        "description": "Implement a workflow/flow system for organizing agents and skills into reusable, schedulable processes with input/output handling. This transforms the application from a simple agent manager to a process automation tool where users can define workflows like 'Web Scraper' that take input, run agents with skills, and produce structured outputs.",
+        "from_plan": true
+      },
+      "commits_behind_main": 0,
+      "status": "active",
+      "merged_at": null
+    }
+  },
+  "created_at": "2026-01-02T15:21:47.144974",
+  "last_updated": "2026-01-02T15:21:47.156982"
+}

@@ -113,9 +113,18 @@ import {
 import '@xyflow/react/dist/style.css';
 
 import { nodeTypes } from './nodes';
+import CustomEdge from './CustomEdge';
 import { useFlowCanvas } from '../../contexts/FlowCanvasContext';
 import type { ReactFlowNode, ReactFlowEdge } from '../../types/react-flow.types';
 import type { FlowNodeType } from '../../types';
+
+/**
+ * Edge types registry for React Flow
+ * Maps edge type names to their component implementations
+ */
+const edgeTypes = {
+  custom: CustomEdge,
+};
 
 /**
  * Props for the FlowCanvas component
@@ -229,14 +238,17 @@ const FlowCanvasInner: React.FC<FlowCanvasProps> = ({
     (connection: Connection) => {
       if (!connection.source || !connection.target) return;
 
-      // Create edge with animated style
+      // Create edge with custom type and data transfer visualization
       addEdge({
         source: connection.source,
         target: connection.target,
         sourceHandle: connection.sourceHandle || undefined,
         targetHandle: connection.targetHandle || undefined,
-        type: 'smoothstep', // Use smooth step edge for better visuals
-        animated: true, // Animate the edge to show data flow
+        type: 'custom', // Use custom edge component with animations
+        data: {
+          isDataTransfer: true,
+          status: 'idle',
+        },
         style: {
           stroke: 'hsl(var(--primary))',
           strokeWidth: 2,
@@ -343,12 +355,17 @@ const FlowCanvasInner: React.FC<FlowCanvasProps> = ({
         onDrop={onDrop}
         onDragOver={onDragOver}
         nodeTypes={nodeTypes as any}
+        edgeTypes={edgeTypes as any}
         fitView
         attributionPosition="bottom-left"
         minZoom={0.1}
         maxZoom={4}
         defaultEdgeOptions={{
-          animated: true,
+          type: 'custom',
+          data: {
+            isDataTransfer: true,
+            status: 'idle',
+          },
           style: {
             stroke: 'hsl(var(--primary))',
             strokeWidth: 2,

@@ -638,6 +638,63 @@ export function monitorExecution(
 }
 
 // =============================================================================
+// FLOW STATISTICS
+// =============================================================================
+
+/**
+ * Get global flow execution statistics
+ */
+export async function getGlobalFlowStats(): Promise<GlobalFlowStats> {
+  const response = await fetch(`${FLOWS_BASE}/stats/global`, createFetchOptions());
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get global flow stats');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get statistics for a specific flow
+ */
+export async function getFlowStats(flowId: string): Promise<FlowStats & { flowName: string }> {
+  const response = await fetch(`${FLOWS_BASE}/stats/${flowId}`, createFetchOptions());
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get flow stats');
+  }
+
+  return response.json();
+}
+
+/**
+ * Recent executions response
+ */
+export interface RecentExecutionsResponse {
+  data: FlowExecution[];
+  count: number;
+}
+
+/**
+ * Get recent flow executions across all flows
+ */
+export async function getRecentExecutions(limit: number = 10): Promise<RecentExecutionsResponse> {
+  const url = new URL(`${FLOWS_BASE}/executions/recent`, window.location.origin);
+  url.searchParams.set('limit', String(limit));
+
+  const response = await fetch(url.toString(), createFetchOptions());
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get recent executions');
+  }
+
+  return response.json();
+}
+
+// =============================================================================
 // CONVENIENCE EXPORTS
 // =============================================================================
 

@@ -241,7 +241,13 @@ const App: React.FC = () => {
 
     switch(managerView) {
       case ManagerView.Dashboard:
-        return <DashboardPage />;
+        return (
+          <DashboardPage
+            onNavigateToFlows={() => setManagerView(ManagerView.Flows)}
+            onNavigateToAgents={() => setManagerView(ManagerView.Agents)}
+            onNavigateToSkills={() => setManagerView(ManagerView.Skills)}
+          />
+        );
       case ManagerView.Chat:
         return <ChatPage />;
       case ManagerView.Agents:
@@ -265,7 +271,13 @@ const App: React.FC = () => {
       case ManagerView.Settings:
         return <SettingsPage directoryName={directoryName} onDirectoryChange={handleDirectoryChange} />;
       default:
-        return <DashboardPage />;
+        return (
+          <DashboardPage
+            onNavigateToFlows={() => setManagerView(ManagerView.Flows)}
+            onNavigateToAgents={() => setManagerView(ManagerView.Agents)}
+            onNavigateToSkills={() => setManagerView(ManagerView.Skills)}
+          />
+        );
     }
   };
 

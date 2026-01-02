@@ -285,12 +285,13 @@
           "id": "4.4",
           "title": "Add Schedule UI to Flow Editor",
           "description": "Add scheduling configuration panel to the flow editor UI",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "src/web/manager/components/flow/FlowScheduleConfig.tsx",
             "src/web/manager/components/FlowEditorPage.tsx"
           ],
-          "notes": ""
+          "notes": "Created FlowScheduleConfig.tsx component (540+ lines) with comprehensive scheduling UI:\n\n**Features Implemented:**\n- Enable/disable schedule toggle with visual switch\n- Three schedule types: one-time, cron expression, interval\n- One-time scheduling: datetime picker with timezone\n- Cron scheduling: preset selection (hourly, daily, weekdays, weekly, monthly) plus custom cron expression input with syntax help\n- Interval scheduling: value + unit (minutes, hours, days, weeks) selection\n- Date range settings: start date, end date, max runs limit\n- Retry configuration: retry on failure toggle, max retries, retry delay\n- Default input values: JSON editor for scheduled execution inputs\n- Schedule status display: next run, last run, run count (read-only)\n- Common timezone presets (UTC, Europe/Istanbul, etc.)\n\n**FlowEditorPage.tsx Updates:**\n- Added Schedule & Triggers section with orange border\n- Added schedule state with FlowSchedule type\n- Added webhook enabled/secret state variables\n- Integrated FlowScheduleConfig component\n- Added webhook configuration UI with secret input\n- Displays webhook URL endpoint for existing flows\n- Schedule and webhook data included in save operation\n- Loads schedule/webhook data when editing existing flows\n\n**flow/index.ts Updates:**\n- Exported FlowScheduleConfig component and createDefaultSchedule utility\n- Exported FlowScheduleConfigProps type\n\nCommitted as fcf004d.",
+          "updated_at": "2026-01-02T13:45:25.139821+00:00"
         }
       ]
     },
@@ -304,11 +305,12 @@
           "id": "5.1",
           "title": "Create Flow Execution History View",
           "description": "Add execution history tab to flow detail page with logs and results",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "src/web/manager/components/FlowHistoryTab.tsx"
           ],
-          "notes": ""
+          "notes": "Created FlowDetailPage component with tabs for Overview and Execution History. Added execution history with detailed logs, node executions, and results. Implemented expandable execution rows with input/output display. Added pagination support. Added EyeIcon and ListIcon. Updated ManagerApp.tsx and FlowsPage.tsx for navigation.",
+          "updated_at": "2026-01-02T13:52:38.294748+00:00"
         },
         {
           "id": "5.2",
@@ -381,5 +383,5 @@
       "Leverage existing patterns in codebase"
     ]
   },
-  "last_updated": "2026-01-02T13:38:49.725740+00:00"
+  "last_updated": "2026-01-02T13:52:38.294756+00:00"
 }

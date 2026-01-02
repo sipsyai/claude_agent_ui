@@ -609,6 +609,61 @@ export function createFlowRoutes(): Router {
     });
   }));
 
+  // ============= FLOW STATISTICS =============
+
+  /**
+   * GET /api/flows/stats/global
+   * Get global flow execution statistics
+   */
+  router.get('/stats/global', asyncHandler(async (req: Request, res: Response) => {
+    logger.debug('Fetching global flow statistics');
+
+    const stats = await strapiClient.getGlobalFlowStats();
+
+    res.json(stats);
+  }));
+
+  /**
+   * GET /api/flows/stats/:id
+   * Get statistics for a specific flow
+   */
+  router.get('/stats/:id', asyncHandler(async (req: Request, res: Response) => {
+    const { id } = flowIdSchema.parse(req.params);
+
+    logger.debug('Fetching flow statistics', { flowId: id });
+
+    // Verify flow exists
+    const flow = await strapiClient.getFlow(id);
+
+    if (!flow) {
+      throw new AppError(404, 'Flow not found');
+    }
+
+    const stats = await strapiClient.getFlowStats(id);
+
+    res.json({
+      ...stats,
+      flowName: flow.name
+    });
+  }));
+
+  /**
+   * GET /api/flows/executions/recent
+   * Get recent flow executions across all flows
+   */
+  router.get('/executions/recent', asyncHandler(async (req: Request, res: Response) => {
+    const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+
+    logger.debug('Fetching recent executions', { limit });
+
+    const executions = await strapiClient.getRecentFlowExecutions(limit);
+
+    res.json({
+      data: executions,
+      count: executions.length
+    });
+  }));
+
   // ============= FLOW STATUS MANAGEMENT =============
 
   /**

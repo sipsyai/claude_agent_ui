@@ -104,7 +104,17 @@
       "description": "Created webhook routes for triggering flows via HTTP. Endpoints: POST /api/webhooks/flows/:identifier (trigger), GET /api/webhooks/flows/:identifier/info (config info), POST /api/webhooks/flows/:identifier/test (test without execution), GET /api/webhooks/flows (list webhook-enabled flows). Supports X-Webhook-Secret or Bearer token auth. Sync mode (waitForCompletion) and async mode with timeout configuration. Registered in server.ts at /api/webhooks path.",
       "category": "api",
       "discovered_at": "2026-01-02T13:38:56.934813+00:00"
+    },
+    "src/web/manager/components/flow/FlowScheduleConfig.tsx": {
+      "description": "Created FlowScheduleConfig component for flow scheduling UI. Supports three schedule types (once, cron, interval), timezone selection, date ranges, retry settings, and default input values. Uses toggle switches for enabled states and provides cron presets for common patterns. Exports createDefaultSchedule() utility function for initializing schedule state.",
+      "category": "component",
+      "discovered_at": "2026-01-02T13:45:32.570620+00:00"
+    },
+    "src/web/manager/components/FlowDetailPage.tsx": {
+      "description": "Created FlowDetailPage component with tabs for Overview (flow info, nodes, schedule/triggers) and Execution History (paginated list with expandable rows showing logs, node executions, input/output, and error details). Uses ExecutionRow subcomponent with collapsible details. Navigation handled via ManagerApp.tsx with viewingFlowId state. FlowsPage updated with View button and clickable titles.",
+      "category": "component",
+      "discovered_at": "2026-01-02T13:52:45.854476+00:00"
     }
   },
-  "last_updated": "2026-01-02T13:38:56.934823+00:00"
+  "last_updated": "2026-01-02T13:52:45.854486+00:00"
 }

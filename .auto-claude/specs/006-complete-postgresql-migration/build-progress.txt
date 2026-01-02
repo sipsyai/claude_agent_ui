@@ -63,10 +63,17 @@ Status: PENDING
 - Update .gitignore
 
 ### Phase 4: Connection Pooling Optimization (3 subtasks)
-Status: PENDING
-- Review pool configuration
-- Add health check endpoint
-- Document pool configuration
+Status: IN PROGRESS (2/3 complete)
+- ✅ [4.1] Review pool configuration (COMPLETED)
+  - Verified pool settings against industry best practices
+  - Documented all pool parameters and their purposes
+  - Created comprehensive verification document
+- ✅ [4.2] Add health check endpoint (COMPLETED)
+  - Created Strapi health check API at /_health
+  - Enhanced Express health endpoint at /health
+  - Validates database connectivity and pool health
+  - Docker health checks configured and verified
+- ⏳ [4.3] Document pool configuration (PENDING)
 
 ### Phase 5: Backup & Restore Documentation (4 subtasks)
 Status: PENDING
@@ -237,11 +244,41 @@ Status: PENDING
 
 **Commit**: 3f7896b - "auto-claude: 2.3 - Verify rollback script can restore from backup if migration fails"
 
+## Current Status: PHASE 4 IN PROGRESS
+
+### Recent Completions
+
+**Subtask 4.2: Database Health Check Endpoint ✅**
+**Completed**: 2026-01-02T19:00:00Z
+**Changes**:
+- Created comprehensive health check endpoints for database monitoring
+- Strapi health check API (backend/src/api/health/):
+  * GET /_health - Primary health check with database connectivity and pool stats
+  * GET /_health/ready - Readiness probe for Kubernetes
+  * GET /_health/live - Liveness probe for Kubernetes
+- Enhanced Express /health endpoint (src/server.ts):
+  * Multi-layer health check: Express → Strapi → Database
+  * 5-second timeout with graceful degradation
+  * Returns 200 OK if healthy, 503 if degraded
+- Created test infrastructure:
+  * scripts/test-health-endpoints.sh - Automated testing
+  * npm run test:health command
+- Created comprehensive documentation:
+  * docs/database/HEALTH_CHECK_ENDPOINTS.md - Complete endpoint guide
+  * docs/database/HEALTH_CHECK_VERIFICATION.md - Implementation verification
+- All acceptance criteria met:
+  ✅ Health endpoint returns database status
+  ✅ Checks connection pool health (numUsed, numFree, numPendingAcquires, etc.)
+  ✅ Docker health check uses these endpoints (verified in docker-compose.yml)
+
+**Commit**: 61c5095 - "auto-claude: 4.2 - Create or verify health check endpoint that valida"
+
 ## Next Steps
-1. ✅ Phase 1 Complete! All PostgreSQL setup verification done
-2. ✅ Phase 2 Complete! Migration Script Validation done (3/3 complete)
-3. ▶️ Phase 3: SQLite Code Path Deprecation
-   - Next: Audit all SQLite references in codebase (subtask 3.1)
+1. ✅ Phase 1 Complete! All PostgreSQL setup verification done (3/3)
+2. ✅ Phase 2 Complete! Migration Script Validation done (3/3)
+3. ✅ Phase 3 Complete! SQLite Code Path Deprecation done (4/4)
+4. ▶️ Phase 4: Connection Pooling Optimization (2/3 complete)
+   - Next: Document pool configuration in .env.example (subtask 4.3)
 
 ---
 Last Updated: 2026-01-02T21:30:00Z

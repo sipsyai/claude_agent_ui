@@ -2219,6 +2219,75 @@ export class StrapiClient {
 
   /**
    * Get all MCP servers with optional filtering
+   *
+   * @description
+   * Retrieves all MCP (Model Context Protocol) servers from Strapi database with
+   * optional filtering and population of related tools. Supports Strapi v5 filter
+   * operators for advanced querying.
+   *
+   * **Filter Operators:**
+   * - `$eq`: Equal to
+   * - `$ne`: Not equal to
+   * - `$in`: In array
+   * - `$notIn`: Not in array
+   * - `$containsi`: Case-insensitive contains
+   * - `$and`, `$or`: Logical operators
+   *
+   * **Population:**
+   * Set `populate: true` to include related `mcpTools` in the response.
+   *
+   * **Cache Behavior:**
+   * Results are cached using options as cache key. Cache is invalidated on any
+   * MCP server create/update/delete operation.
+   *
+   * @param {Object} [options] - Query options
+   * @param {Object} [options.filters] - Strapi v5 filters object
+   * @param {boolean} [options.populate] - If true, populates mcpTools relation
+   * @returns {Promise<MCPServer[]>} Array of MCP servers
+   *
+   * @example
+   * // Get all MCP servers
+   * const allServers = await strapiClient.getAllMCPServers();
+   * console.log(allServers.length); // e.g., 5
+   *
+   * @example
+   * // Get only enabled MCP servers
+   * const enabledServers = await strapiClient.getAllMCPServers({
+   *   filters: { enabled: { $eq: true } }
+   * });
+   *
+   * @example
+   * // Get MCP servers with specific transport type
+   * const stdioServers = await strapiClient.getAllMCPServers({
+   *   filters: { transportType: { $eq: 'stdio' } }
+   * });
+   *
+   * @example
+   * // Get MCP servers with tools populated
+   * const serversWithTools = await strapiClient.getAllMCPServers({
+   *   populate: true
+   * });
+   * serversWithTools.forEach(server => {
+   *   console.log(`${server.name}: ${server.mcpTools?.length || 0} tools`);
+   * });
+   *
+   * @example
+   * // Filter by server name (case-insensitive)
+   * const filesystemServers = await strapiClient.getAllMCPServers({
+   *   filters: { name: { $containsi: 'filesystem' } }
+   * });
+   *
+   * @example
+   * // Get multiple servers by transport type
+   * const sdkOrStdioServers = await strapiClient.getAllMCPServers({
+   *   filters: {
+   *     transportType: { $in: ['stdio', 'sdk'] }
+   *   },
+   *   populate: true
+   * });
+   *
+   * @see {@link getMCPServer} for retrieving a single MCP server by ID
+   * @see {@link createMCPServer} for creating new MCP servers
    */
   async getAllMCPServers(options?: {
     filters?: Record<string, any>;
@@ -2247,6 +2316,56 @@ export class StrapiClient {
 
   /**
    * Get a single MCP server by ID
+   *
+   * @description
+   * Retrieves a single MCP server by its document ID with all relations populated.
+   * Automatically populates the `mcpTools` relation to include all tools associated
+   * with this server.
+   *
+   * **Cache Behavior:**
+   * Individual servers are cached by ID. Cache is invalidated when the server is
+   * updated or deleted.
+   *
+   * **Error Handling:**
+   * Throws an error if the server with the specified ID is not found.
+   *
+   * @param {string} id - MCP server document ID
+   * @returns {Promise<MCPServer>} MCP server with populated tools
+   * @throws {Error} If MCP server with ID not found
+   *
+   * @example
+   * // Get MCP server by ID
+   * const server = await strapiClient.getMCPServer('abc123xyz');
+   * console.log(server.name);          // e.g., 'filesystem'
+   * console.log(server.transportType); // e.g., 'stdio'
+   * console.log(server.mcpTools?.length); // e.g., 15
+   *
+   * @example
+   * // Inspect server configuration
+   * const server = await strapiClient.getMCPServer('abc123xyz');
+   * if (server.transportType === 'stdio') {
+   *   console.log('Command:', server.command);
+   *   console.log('Args:', server.args);
+   *   console.log('Env:', server.env);
+   * }
+   *
+   * @example
+   * // Access populated tools
+   * const server = await strapiClient.getMCPServer('abc123xyz');
+   * const enabledTools = server.mcpTools?.filter(tool => tool.enabled) || [];
+   * console.log(`${enabledTools.length} enabled tools`);
+   *
+   * @example
+   * // Error handling for not found
+   * try {
+   *   const server = await strapiClient.getMCPServer('invalid-id');
+   * } catch (error) {
+   *   console.error('Server not found:', error.message);
+   *   // Error: MCP Server with ID invalid-id not found
+   * }
+   *
+   * @see {@link getAllMCPServers} for retrieving multiple MCP servers
+   * @see {@link updateMCPServer} for updating server configuration
    */
   async getMCPServer(id: string): Promise<MCPServer> {
     const cacheKey = `mcp-server:${id}`;
@@ -2287,6 +2406,95 @@ export class StrapiClient {
 
   /**
    * Create a new MCP server
+   *
+   * @description
+   * Creates a new MCP (Model Context Protocol) server in Strapi database. Supports both
+   * stdio (external process) and SDK (in-process) transport types. After creation, the
+   * server can be configured with tools via `bulkSyncMCPTools`.
+   *
+   * **Transport Types:**
+   * - `stdio`: External process communication via stdin/stdout (requires command, args, env)
+   * - `sdk`: In-process SDK server (requires no additional config)
+   *
+   * **Cache Invalidation:**
+   * Creating a server invalidates all MCP server list caches.
+   *
+   * @param {CreateMCPServerDTO} mcpData - MCP server data to create
+   * @param {string} mcpData.name - Server name (e.g., 'filesystem', 'github')
+   * @param {string} [mcpData.description] - Optional server description
+   * @param {'stdio' | 'sdk'} mcpData.transportType - Transport type
+   * @param {string} [mcpData.command] - Command to execute (stdio only)
+   * @param {string[]} [mcpData.args] - Command arguments (stdio only)
+   * @param {Record<string, string>} [mcpData.env] - Environment variables (stdio only)
+   * @param {boolean} [mcpData.enabled] - Enable/disable server (default: true)
+   * @returns {Promise<MCPServer>} Created MCP server
+   * @throws {Error} If creation fails
+   *
+   * @example
+   * // Create stdio MCP server
+   * const server = await strapiClient.createMCPServer({
+   *   name: 'filesystem',
+   *   description: 'Local filesystem access',
+   *   transportType: 'stdio',
+   *   command: 'npx',
+   *   args: ['-y', '@modelcontextprotocol/server-filesystem', '/Users/me/projects'],
+   *   enabled: true
+   * });
+   * console.log(server.id); // Auto-generated UUID
+   *
+   * @example
+   * // Create stdio server with environment variables
+   * const githubServer = await strapiClient.createMCPServer({
+   *   name: 'github',
+   *   description: 'GitHub repository access',
+   *   transportType: 'stdio',
+   *   command: 'npx',
+   *   args: ['-y', '@modelcontextprotocol/server-github'],
+   *   env: {
+   *     GITHUB_TOKEN: process.env.GITHUB_TOKEN || ''
+   *   },
+   *   enabled: true
+   * });
+   *
+   * @example
+   * // Create SDK MCP server (in-process)
+   * const sdkServer = await strapiClient.createMCPServer({
+   *   name: 'custom-sdk-server',
+   *   description: 'Custom in-process MCP server',
+   *   transportType: 'sdk',
+   *   enabled: true
+   * });
+   *
+   * @example
+   * // Create disabled server for later activation
+   * const server = await strapiClient.createMCPServer({
+   *   name: 'puppeteer',
+   *   description: 'Browser automation (disabled by default)',
+   *   transportType: 'stdio',
+   *   command: 'npx',
+   *   args: ['-y', '@modelcontextprotocol/server-puppeteer'],
+   *   enabled: false // Disabled until needed
+   * });
+   *
+   * @example
+   * // Create server then sync tools
+   * const server = await strapiClient.createMCPServer({
+   *   name: 'filesystem',
+   *   transportType: 'stdio',
+   *   command: 'npx',
+   *   args: ['-y', '@modelcontextprotocol/server-filesystem', process.cwd()]
+   * });
+   *
+   * // Fetch and sync tools from the server
+   * const fetchedTools = [
+   *   { name: 'read_file', description: 'Read file contents' },
+   *   { name: 'write_file', description: 'Write file contents' }
+   * ];
+   * await strapiClient.bulkSyncMCPTools(server.id, fetchedTools);
+   *
+   * @see {@link updateMCPServer} for updating server configuration
+   * @see {@link bulkSyncMCPTools} for syncing server tools
+   * @see {@link deleteMCPServer} for deleting servers
    */
   async createMCPServer(mcpData: CreateMCPServerDTO): Promise<MCPServer> {
     const { data } = await this.client.post<StrapiData<any>>(
@@ -2306,6 +2514,78 @@ export class StrapiClient {
 
   /**
    * Update an existing MCP server
+   *
+   * @description
+   * Updates an existing MCP server using partial update semantics. Only the fields
+   * provided in the update DTO will be modified; omitted fields remain unchanged.
+   *
+   * **Partial Updates:**
+   * You can update individual fields without affecting other fields:
+   * - Update only `enabled` without changing `command` or `args`
+   * - Update only `description` without changing configuration
+   * - Update environment variables without changing command
+   *
+   * **Cache Invalidation:**
+   * Updating invalidates both the specific server cache and all server list caches.
+   *
+   * @param {string} id - MCP server document ID
+   * @param {UpdateMCPServerDTO} mcpData - Partial server data to update
+   * @param {string} [mcpData.name] - Update server name
+   * @param {string} [mcpData.description] - Update description
+   * @param {boolean} [mcpData.enabled] - Update enabled status
+   * @param {string} [mcpData.command] - Update command (stdio only)
+   * @param {string[]} [mcpData.args] - Update arguments (stdio only)
+   * @param {Record<string, string>} [mcpData.env] - Update environment variables (stdio only)
+   * @returns {Promise<MCPServer>} Updated MCP server
+   * @throws {Error} If update fails or server not found
+   *
+   * @example
+   * // Enable/disable MCP server
+   * const server = await strapiClient.updateMCPServer('abc123', {
+   *   enabled: false // Temporarily disable
+   * });
+   * console.log(server.enabled); // false
+   *
+   * @example
+   * // Update server description
+   * const server = await strapiClient.updateMCPServer('abc123', {
+   *   description: 'Updated description with more details'
+   * });
+   *
+   * @example
+   * // Update command arguments
+   * const server = await strapiClient.updateMCPServer('abc123', {
+   *   args: ['-y', '@modelcontextprotocol/server-filesystem', '/new/path']
+   * });
+   *
+   * @example
+   * // Update environment variables
+   * const server = await strapiClient.updateMCPServer('abc123', {
+   *   env: {
+   *     GITHUB_TOKEN: process.env.NEW_GITHUB_TOKEN || '',
+   *     DEBUG: 'true'
+   *   }
+   * });
+   *
+   * @example
+   * // Update multiple fields
+   * const server = await strapiClient.updateMCPServer('abc123', {
+   *   name: 'filesystem-v2',
+   *   description: 'Updated filesystem server',
+   *   enabled: true,
+   *   args: ['-y', '@modelcontextprotocol/server-filesystem', process.cwd()]
+   * });
+   *
+   * @example
+   * // Error handling
+   * try {
+   *   await strapiClient.updateMCPServer('invalid-id', { enabled: false });
+   * } catch (error) {
+   *   console.error('Update failed:', error.message);
+   * }
+   *
+   * @see {@link getMCPServer} for retrieving updated server
+   * @see {@link createMCPServer} for creating servers
    */
   async updateMCPServer(id: string, mcpData: UpdateMCPServerDTO): Promise<MCPServer> {
     const { data } = await this.client.put<StrapiData<any>>(
@@ -2327,6 +2607,78 @@ export class StrapiClient {
 
   /**
    * Delete an MCP server
+   *
+   * @description
+   * Permanently deletes an MCP server from Strapi database. This operation also
+   * cascades to delete all associated MCP tools. Use with caution as this operation
+   * cannot be undone.
+   *
+   * **Cascade Deletion:**
+   * Deleting a server automatically deletes all associated `mcpTools` records.
+   *
+   * **Cache Invalidation:**
+   * Deletion invalidates both the specific server cache and all server list caches.
+   *
+   * **Best Practices:**
+   * - Consider disabling (`enabled: false`) instead of deleting if you might need to restore
+   * - Check for agent/skill dependencies before deletion
+   * - Back up server configuration if needed
+   *
+   * @param {string} id - MCP server document ID to delete
+   * @returns {Promise<void>} Promise that resolves when deletion is complete
+   * @throws {Error} If deletion fails or server not found
+   *
+   * @example
+   * // Delete MCP server
+   * await strapiClient.deleteMCPServer('abc123');
+   * console.log('Server deleted');
+   *
+   * @example
+   * // Safe deletion with confirmation
+   * const serverId = 'abc123';
+   * const server = await strapiClient.getMCPServer(serverId);
+   * console.log(`About to delete: ${server.name}`);
+   * console.log(`This will delete ${server.mcpTools?.length || 0} tools`);
+   *
+   * // Confirm deletion
+   * await strapiClient.deleteMCPServer(serverId);
+   *
+   * @example
+   * // Check for agent dependencies before deletion
+   * const serverId = 'abc123';
+   * const agents = await strapiClient.getAllAgents({
+   *   populate: true,
+   *   filters: {
+   *     mcpConfig: {
+   *       mcpServer: { documentId: serverId }
+   *     }
+   *   }
+   * });
+   *
+   * if (agents.length > 0) {
+   *   console.warn(`Server is used by ${agents.length} agents. Cannot delete.`);
+   * } else {
+   *   await strapiClient.deleteMCPServer(serverId);
+   * }
+   *
+   * @example
+   * // Error handling
+   * try {
+   *   await strapiClient.deleteMCPServer('invalid-id');
+   * } catch (error) {
+   *   console.error('Deletion failed:', error.message);
+   * }
+   *
+   * @example
+   * // Alternative: Disable instead of delete
+   * // If you might want to restore the server later
+   * const server = await strapiClient.updateMCPServer('abc123', {
+   *   enabled: false
+   * });
+   * console.log('Server disabled (can be re-enabled later)');
+   *
+   * @see {@link updateMCPServer} for disabling servers (non-destructive alternative)
+   * @see {@link createMCPServer} for recreating deleted servers
    */
   async deleteMCPServer(id: string): Promise<void> {
     await this.client.delete(`/mcp-servers/${id}`);
@@ -2346,6 +2698,92 @@ export class StrapiClient {
 
   /**
    * Get all tools for an MCP server
+   *
+   * @description
+   * Retrieves all MCP tools associated with a specific MCP server. Tools represent
+   * the capabilities exposed by an MCP server and can be individually enabled/disabled
+   * in agent configurations.
+   *
+   * **Use Cases:**
+   * - List all tools for a server
+   * - Filter enabled/disabled tools
+   * - Display tools in UI for agent configuration
+   * - Validate tool availability before assignment
+   *
+   * **Tool Properties:**
+   * - `name`: Tool identifier (e.g., 'read_file', 'write_file')
+   * - `description`: Human-readable description
+   * - `inputSchema`: JSON Schema for tool parameters
+   * - `enabled`: Tool availability status
+   *
+   * @param {string} serverId - MCP server document ID
+   * @returns {Promise<MCPTool[]>} Array of MCP tools for the server
+   *
+   * @example
+   * // Get all tools for a server
+   * const tools = await strapiClient.getMCPToolsByServerId('abc123');
+   * console.log(`Found ${tools.length} tools`);
+   * tools.forEach(tool => {
+   *   console.log(`- ${tool.name}: ${tool.description}`);
+   * });
+   *
+   * @example
+   * // Filter enabled tools only
+   * const allTools = await strapiClient.getMCPToolsByServerId('abc123');
+   * const enabledTools = allTools.filter(tool => tool.enabled !== false);
+   * console.log(`${enabledTools.length} enabled tools`);
+   *
+   * @example
+   * // Get tools for agent configuration
+   * const mcpServers = await strapiClient.getAllMCPServers();
+   * const filesystemServer = mcpServers.find(s => s.name === 'filesystem');
+   *
+   * if (filesystemServer) {
+   *   const tools = await strapiClient.getMCPToolsByServerId(filesystemServer.id);
+   *   console.log('Available filesystem tools:');
+   *   tools.forEach(tool => {
+   *     console.log(`  ${tool.name}: ${tool.description}`);
+   *   });
+   * }
+   *
+   * @example
+   * // Inspect tool input schemas
+   * const tools = await strapiClient.getMCPToolsByServerId('abc123');
+   * const readFileTool = tools.find(t => t.name === 'read_file');
+   *
+   * if (readFileTool?.inputSchema) {
+   *   console.log('Input schema:', JSON.stringify(readFileTool.inputSchema, null, 2));
+   *   // {
+   *   //   "type": "object",
+   *   //   "properties": {
+   *   //     "path": { "type": "string", "description": "File path to read" }
+   *   //   },
+   *   //   "required": ["path"]
+   *   // }
+   * }
+   *
+   * @example
+   * // Build tool selection for agent
+   * const tools = await strapiClient.getMCPToolsByServerId('abc123');
+   * const selectedToolIds = tools
+   *   .filter(t => ['read_file', 'write_file', 'list_directory'].includes(t.name))
+   *   .map(t => ({ mcpTool: t.id }));
+   *
+   * // Use in agent mcpConfig
+   * await strapiClient.createAgent({
+   *   name: 'File Assistant',
+   *   systemPrompt: 'You help with file operations.',
+   *   mcpConfig: [
+   *     {
+   *       mcpServer: 'abc123',
+   *       selectedTools: selectedToolIds
+   *     }
+   *   ]
+   * });
+   *
+   * @see {@link bulkSyncMCPTools} for syncing tools from MCP server
+   * @see {@link createMCPTool} for manually creating tools
+   * @see {@link updateMCPTool} for updating tool metadata
    */
   async getMCPToolsByServerId(serverId: string): Promise<MCPTool[]> {
     const { data } = await this.client.get<StrapiResponse<StrapiAttributes<any>[]>>(
@@ -2362,6 +2800,89 @@ export class StrapiClient {
 
   /**
    * Create a new MCP tool
+   *
+   * @description
+   * Creates a new MCP tool associated with a specific MCP server. Tools are typically
+   * created via `bulkSyncMCPTools` after fetching from the MCP server, but this method
+   * allows manual tool creation for custom scenarios.
+   *
+   * **Tool Schema:**
+   * The `inputSchema` follows JSON Schema specification to define tool parameters.
+   *
+   * **Common Use Cases:**
+   * - Manual tool creation for testing
+   * - Custom tool definitions not from MCP server
+   * - Placeholder tools before server sync
+   *
+   * @param {string} serverId - MCP server document ID to associate with
+   * @param {Object} toolData - Tool data
+   * @param {string} toolData.name - Unique tool name (e.g., 'read_file')
+   * @param {string} [toolData.description] - Human-readable description
+   * @param {Object} [toolData.inputSchema] - JSON Schema for tool parameters
+   * @returns {Promise<MCPTool>} Created MCP tool
+   * @throws {Error} If creation fails
+   *
+   * @example
+   * // Create basic tool
+   * const tool = await strapiClient.createMCPTool('abc123', {
+   *   name: 'read_file',
+   *   description: 'Read contents of a file'
+   * });
+   * console.log(tool.id); // Auto-generated UUID
+   *
+   * @example
+   * // Create tool with input schema
+   * const tool = await strapiClient.createMCPTool('abc123', {
+   *   name: 'write_file',
+   *   description: 'Write contents to a file',
+   *   inputSchema: {
+   *     type: 'object',
+   *     properties: {
+   *       path: {
+   *         type: 'string',
+   *         description: 'File path to write'
+   *       },
+   *       content: {
+   *         type: 'string',
+   *         description: 'Content to write'
+   *       }
+   *     },
+   *     required: ['path', 'content']
+   *   }
+   * });
+   *
+   * @example
+   * // Create multiple tools
+   * const serverId = 'abc123';
+   * const tools = [
+   *   { name: 'read_file', description: 'Read file' },
+   *   { name: 'write_file', description: 'Write file' },
+   *   { name: 'delete_file', description: 'Delete file' }
+   * ];
+   *
+   * for (const toolData of tools) {
+   *   await strapiClient.createMCPTool(serverId, toolData);
+   * }
+   *
+   * @example
+   * // Create tool with complex schema
+   * const tool = await strapiClient.createMCPTool('abc123', {
+   *   name: 'search_files',
+   *   description: 'Search for files matching criteria',
+   *   inputSchema: {
+   *     type: 'object',
+   *     properties: {
+   *       pattern: { type: 'string', description: 'Search pattern (glob)' },
+   *       path: { type: 'string', description: 'Directory to search' },
+   *       maxResults: { type: 'number', description: 'Max results to return', default: 100 }
+   *     },
+   *     required: ['pattern']
+   *   }
+   * });
+   *
+   * @see {@link bulkSyncMCPTools} for automated tool creation from MCP server
+   * @see {@link updateMCPTool} for updating tool metadata
+   * @see {@link deleteMCPTool} for removing tools
    */
   async createMCPTool(serverId: string, toolData: {
     name: string;
@@ -2387,6 +2908,84 @@ export class StrapiClient {
 
   /**
    * Update an existing MCP tool
+   *
+   * @description
+   * Updates an existing MCP tool using partial update semantics. Typically used
+   * by `bulkSyncMCPTools` to keep tools synchronized with MCP server metadata,
+   * but can also be used for manual updates.
+   *
+   * **Partial Updates:**
+   * Only the fields provided will be updated; omitted fields remain unchanged.
+   *
+   * **Common Updates:**
+   * - Update description for better clarity
+   * - Update inputSchema when tool parameters change
+   * - Update name if tool is renamed (rare)
+   *
+   * @param {string} toolId - MCP tool document ID
+   * @param {Object} toolData - Partial tool data to update
+   * @param {string} [toolData.name] - Update tool name
+   * @param {string} [toolData.description] - Update description
+   * @param {Object} [toolData.inputSchema] - Update input schema
+   * @returns {Promise<MCPTool>} Updated MCP tool
+   * @throws {Error} If update fails or tool not found
+   *
+   * @example
+   * // Update tool description
+   * const tool = await strapiClient.updateMCPTool('tool123', {
+   *   description: 'Read file contents with improved error handling'
+   * });
+   *
+   * @example
+   * // Update tool input schema
+   * const tool = await strapiClient.updateMCPTool('tool123', {
+   *   inputSchema: {
+   *     type: 'object',
+   *     properties: {
+   *       path: {
+   *         type: 'string',
+   *         description: 'Absolute or relative file path'
+   *       },
+   *       encoding: {
+   *         type: 'string',
+   *         description: 'File encoding',
+   *         default: 'utf-8',
+   *         enum: ['utf-8', 'ascii', 'base64']
+   *       }
+   *     },
+   *     required: ['path']
+   *   }
+   * });
+   *
+   * @example
+   * // Update multiple fields
+   * const tool = await strapiClient.updateMCPTool('tool123', {
+   *   name: 'read_file_v2',
+   *   description: 'Read file with encoding support',
+   *   inputSchema: {
+   *     type: 'object',
+   *     properties: {
+   *       path: { type: 'string' },
+   *       encoding: { type: 'string', default: 'utf-8' }
+   *     },
+   *     required: ['path']
+   *   }
+   * });
+   *
+   * @example
+   * // Update tools after server upgrade
+   * const tools = await strapiClient.getMCPToolsByServerId('abc123');
+   * const readTool = tools.find(t => t.name === 'read_file');
+   *
+   * if (readTool) {
+   *   await strapiClient.updateMCPTool(readTool.id, {
+   *     description: 'Updated after server v2.0 upgrade',
+   *     inputSchema: newSchemaFromServer
+   *   });
+   * }
+   *
+   * @see {@link getMCPToolsByServerId} for retrieving tools to update
+   * @see {@link bulkSyncMCPTools} for automated tool updates
    */
   async updateMCPTool(toolId: string, toolData: {
     name?: string;
@@ -2409,6 +3008,62 @@ export class StrapiClient {
 
   /**
    * Delete an MCP tool
+   *
+   * @description
+   * Permanently deletes an MCP tool from Strapi database. This operation is typically
+   * performed by `bulkSyncMCPTools` when a tool no longer exists on the MCP server,
+   * but can also be used for manual cleanup.
+   *
+   * **Warning:**
+   * Deleting a tool may affect agent configurations that reference this tool.
+   * The tool will be removed from any agent's `mcpConfig.selectedTools` arrays.
+   *
+   * **Use Cases:**
+   * - Remove obsolete tools after server update
+   * - Clean up manually created test tools
+   * - Sync tool deletion from MCP server
+   *
+   * @param {string} toolId - MCP tool document ID to delete
+   * @returns {Promise<void>} Promise that resolves when deletion is complete
+   * @throws {Error} If deletion fails or tool not found
+   *
+   * @example
+   * // Delete a single tool
+   * await strapiClient.deleteMCPTool('tool123');
+   * console.log('Tool deleted');
+   *
+   * @example
+   * // Delete obsolete tools
+   * const tools = await strapiClient.getMCPToolsByServerId('abc123');
+   * const obsoleteTools = tools.filter(t => t.name.includes('_deprecated'));
+   *
+   * for (const tool of obsoleteTools) {
+   *   await strapiClient.deleteMCPTool(tool.id);
+   *   console.log(`Deleted obsolete tool: ${tool.name}`);
+   * }
+   *
+   * @example
+   * // Delete all tools for a server before re-sync
+   * const serverId = 'abc123';
+   * const tools = await strapiClient.getMCPToolsByServerId(serverId);
+   *
+   * // Delete all existing tools
+   * await Promise.all(tools.map(t => strapiClient.deleteMCPTool(t.id)));
+   *
+   * // Now sync fresh tools
+   * await strapiClient.bulkSyncMCPTools(serverId, fetchedToolsFromServer);
+   *
+   * @example
+   * // Safe deletion with error handling
+   * try {
+   *   await strapiClient.deleteMCPTool('tool123');
+   *   console.log('Tool deleted successfully');
+   * } catch (error) {
+   *   console.error('Failed to delete tool:', error.message);
+   * }
+   *
+   * @see {@link bulkSyncMCPTools} for automated tool deletion during sync
+   * @see {@link getMCPToolsByServerId} for retrieving tools to delete
    */
   async deleteMCPTool(toolId: string): Promise<void> {
     await this.client.delete(`/mcp-tools/${toolId}`);
@@ -2416,7 +3071,162 @@ export class StrapiClient {
 
   /**
    * Bulk sync MCP tools for a server
-   * Compares fetched tools with existing tools and performs create/update/delete operations
+   *
+   * @description
+   * Synchronizes MCP tools in Strapi database with tools fetched from an MCP server.
+   * This method performs intelligent 3-way sync:
+   * - **Create**: Adds new tools that don't exist in database
+   * - **Update**: Updates existing tools if description or inputSchema changed
+   * - **Delete**: Removes tools from database that no longer exist on server
+   *
+   * **Sync Algorithm:**
+   * 1. Fetch existing tools from database
+   * 2. Compare with fetched tools by name (name is the unique identifier)
+   * 3. Delete tools not in fetched list
+   * 4. Update tools with changed metadata (description, inputSchema)
+   * 5. Create tools that don't exist in database
+   * 6. Update server's `toolsFetchedAt` timestamp
+   *
+   * **Use Cases:**
+   * - Initial tool discovery after creating MCP server
+   * - Periodic sync to update tool metadata
+   * - Tool refresh after server upgrade
+   *
+   * **Cache Invalidation:**
+   * Invalidates MCP server caches after sync completes.
+   *
+   * @param {string} serverId - MCP server document ID
+   * @param {Array} fetchedTools - Tools fetched from MCP server
+   * @param {string} fetchedTools[].name - Tool name (unique identifier)
+   * @param {string} [fetchedTools[].description] - Tool description
+   * @param {Object} [fetchedTools[].inputSchema] - Tool input schema (JSON Schema)
+   * @returns {Promise<MCPServer>} Updated MCP server with tools populated
+   *
+   * @example
+   * // Basic tool sync after server creation
+   * const server = await strapiClient.createMCPServer({
+   *   name: 'filesystem',
+   *   transportType: 'stdio',
+   *   command: 'npx',
+   *   args: ['-y', '@modelcontextprotocol/server-filesystem', process.cwd()]
+   * });
+   *
+   * // Fetch tools from MCP server (pseudo-code)
+   * const fetchedTools = [
+   *   { name: 'read_file', description: 'Read file contents' },
+   *   { name: 'write_file', description: 'Write file contents' },
+   *   { name: 'list_directory', description: 'List directory contents' }
+   * ];
+   *
+   * // Sync tools to database
+   * const updatedServer = await strapiClient.bulkSyncMCPTools(server.id, fetchedTools);
+   * console.log(`Synced ${updatedServer.mcpTools?.length} tools`);
+   *
+   * @example
+   * // Sync with detailed tool schemas
+   * const fetchedTools = [
+   *   {
+   *     name: 'read_file',
+   *     description: 'Read contents of a file',
+   *     inputSchema: {
+   *       type: 'object',
+   *       properties: {
+   *         path: { type: 'string', description: 'File path to read' }
+   *       },
+   *       required: ['path']
+   *     }
+   *   },
+   *   {
+   *     name: 'write_file',
+   *     description: 'Write contents to a file',
+   *     inputSchema: {
+   *       type: 'object',
+   *       properties: {
+   *         path: { type: 'string', description: 'File path to write' },
+   *         content: { type: 'string', description: 'Content to write' }
+   *       },
+   *       required: ['path', 'content']
+   *     }
+   *   }
+   * ];
+   *
+   * await strapiClient.bulkSyncMCPTools('abc123', fetchedTools);
+   *
+   * @example
+   * // Sync workflow with MCPService integration
+   * import { mcpService } from './mcp-service';
+   *
+   * // Get MCP server from database
+   * const server = await strapiClient.getMCPServer('abc123');
+   *
+   * // Fetch tools from MCP server
+   * const fetchedTools = await mcpService.listMCPServerTools(server.id);
+   *
+   * // Sync to database
+   * const updatedServer = await strapiClient.bulkSyncMCPTools(server.id, fetchedTools);
+   * console.log(`Sync complete. ${updatedServer.mcpTools?.length} tools available.`);
+   *
+   * @example
+   * // Periodic sync to keep tools up-to-date
+   * async function syncAllMCPServers() {
+   *   const servers = await strapiClient.getAllMCPServers({
+   *     filters: { enabled: { $eq: true } }
+   *   });
+   *
+   *   for (const server of servers) {
+   *     console.log(`Syncing tools for ${server.name}...`);
+   *     const fetchedTools = await mcpService.listMCPServerTools(server.id);
+   *     await strapiClient.bulkSyncMCPTools(server.id, fetchedTools);
+   *     console.log(`✓ ${server.name} synced`);
+   *   }
+   * }
+   *
+   * @example
+   * // Handle sync errors gracefully
+   * try {
+   *   const fetchedTools = await mcpService.listMCPServerTools('abc123');
+   *   const server = await strapiClient.bulkSyncMCPTools('abc123', fetchedTools);
+   *   console.log(`Synced ${server.mcpTools?.length} tools successfully`);
+   * } catch (error) {
+   *   console.error('Tool sync failed:', error.message);
+   *   // Server tools remain unchanged
+   * }
+   *
+   * @example
+   * // Sync removes obsolete tools
+   * // Before sync: database has ['read_file', 'write_file', 'delete_file']
+   * // After MCP server upgrade: server only has ['read_file', 'write_file']
+   *
+   * const fetchedTools = [
+   *   { name: 'read_file', description: 'Read file' },
+   *   { name: 'write_file', description: 'Write file' }
+   *   // 'delete_file' is missing - will be deleted from database
+   * ];
+   *
+   * await strapiClient.bulkSyncMCPTools('abc123', fetchedTools);
+   * // Database now has only ['read_file', 'write_file']
+   * // 'delete_file' was automatically deleted
+   *
+   * @example
+   * // Check what changed during sync
+   * const beforeTools = await strapiClient.getMCPToolsByServerId('abc123');
+   * console.log(`Before sync: ${beforeTools.length} tools`);
+   *
+   * const fetchedTools = await mcpService.listMCPServerTools('abc123');
+   * await strapiClient.bulkSyncMCPTools('abc123', fetchedTools);
+   *
+   * const afterTools = await strapiClient.getMCPToolsByServerId('abc123');
+   * console.log(`After sync: ${afterTools.length} tools`);
+   *
+   * const added = afterTools.filter(t => !beforeTools.find(b => b.name === t.name));
+   * const removed = beforeTools.filter(t => !afterTools.find(a => a.name === t.name));
+   * console.log(`Added: ${added.map(t => t.name).join(', ')}`);
+   * console.log(`Removed: ${removed.map(t => t.name).join(', ')}`);
+   *
+   * @see {@link getMCPToolsByServerId} for retrieving synced tools
+   * @see {@link createMCPTool} for manual tool creation
+   * @see {@link updateMCPTool} for manual tool updates
+   * @see {@link deleteMCPTool} for manual tool deletion
    */
   async bulkSyncMCPTools(serverId: string, fetchedTools: Array<{
     name: string;

@@ -1,0 +1,20 @@
+{
+  "discovered_files": {
+    "src/web/manager/components/FlowEditorPage.tsx": {
+      "description": "Current linear flow editor with collapsible sections for Input, Agent, and Output nodes. Uses InputNodeConfig, AgentNodeConfig, and OutputNodeConfig components for node configuration. Will be replaced by visual React Flow editor.",
+      "category": "architecture",
+      "discovered_at": "2026-01-02T16:01:39.575050+00:00"
+    },
+    "src/web/manager/types.ts": {
+      "description": "Contains Flow types including FlowNode, InputNode, AgentNode, OutputNode with NodePosition (x, y) coordinates already defined. The existing types are compatible with React Flow integration.",
+      "category": "types",
+      "discovered_at": "2026-01-02T16:01:39.594624+00:00"
+    },
+    "src/web/manager/types/react-flow.types.ts": {
+      "description": "Created comprehensive React Flow type definitions with InputNodeData, AgentNodeData, OutputNodeData, and ReactFlowNode/Edge types. These types extend React Flow's base Node and Edge types with custom data structures that integrate seamlessly with existing Flow types from types.ts. Includes type guards for runtime type checking.",
+      "category": "type-definitions",
+      "discovered_at": "2026-01-02T16:13:05.467042+00:00"
+    }
+  },
+  "last_updated": "2026-01-02T16:13:05.467053+00:00"
+}

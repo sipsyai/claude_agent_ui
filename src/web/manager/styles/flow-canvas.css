@@ -1,0 +1,679 @@
+/**
+ * Flow Canvas Styles
+ *
+ * Custom styles for the React Flow canvas that match the existing dark theme.
+ * These styles override React Flow defaults and provide consistent theming
+ * across all flow canvas components.
+ *
+ * ## Design System Integration
+ * - Background: #0c1222 (--color-background)
+ * - Foreground: #f8fafc (--color-foreground)
+ * - Border: #1e293b (--color-border)
+ * - Primary: #3b82f6 (--color-primary)
+ * - Node Type Colors: Blue (input), Purple (agent), Green (output)
+ *
+ * ## Components Styled
+ * - React Flow container
+ * - Controls (zoom, pan, fit view)
+ * - MiniMap
+ * - Background grid
+ * - Nodes and handles
+ * - Edges and connections
+ * - Selection box
+ * - Attribution
+ */
+
+/* ============================================
+   React Flow Container
+   ============================================ */
+
+.react-flow {
+  background-color: #0c1222;
+}
+
+.react-flow__renderer {
+  background-color: #0c1222;
+}
+
+.react-flow__pane {
+  cursor: grab;
+}
+
+.react-flow__pane.dragging {
+  cursor: grabbing;
+}
+
+/* ============================================
+   React Flow Controls
+   ============================================ */
+
+.react-flow__controls {
+  background: rgba(12, 18, 34, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid #1e293b;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  padding: 0.25rem;
+}
+
+.react-flow__controls-button {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #1e293b;
+  color: #94a3b8;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none;
+}
+
+.react-flow__controls-button:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  transform: scale(1.05);
+}
+
+.react-flow__controls-button:active {
+  transform: scale(0.95);
+}
+
+.react-flow__controls-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Disabled state */
+.react-flow__controls-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ============================================
+   React Flow MiniMap
+   ============================================ */
+
+.react-flow__minimap {
+  background: rgba(12, 18, 34, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid #1e293b;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+.react-flow__minimap-mask {
+  fill: rgba(59, 130, 246, 0.1);
+  stroke: #3b82f6;
+  stroke-width: 2;
+}
+
+.react-flow__minimap-node {
+  fill: #1e293b;
+  stroke: #3b82f6;
+  stroke-width: 1;
+}
+
+/* Node type specific colors in minimap */
+.react-flow__minimap-node[data-node-type="input"] {
+  fill: rgba(59, 130, 246, 0.3);
+  stroke: #3b82f6;
+}
+
+.react-flow__minimap-node[data-node-type="agent"] {
+  fill: rgba(168, 85, 247, 0.3);
+  stroke: #a855f7;
+}
+
+.react-flow__minimap-node[data-node-type="output"] {
+  fill: rgba(34, 197, 94, 0.3);
+  stroke: #22c55e;
+}
+
+/* ============================================
+   React Flow Background
+   ============================================ */
+
+.react-flow__background {
+  background-color: #0c1222;
+}
+
+/* Dots pattern */
+.react-flow__background-pattern.dots circle {
+  fill: #1e293b;
+}
+
+/* Lines pattern */
+.react-flow__background-pattern.lines path {
+  stroke: #1e293b;
+}
+
+/* ============================================
+   React Flow Nodes
+   ============================================ */
+
+/* Base node styling */
+.react-flow__node {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.react-flow__node:hover {
+  z-index: 10 !important;
+}
+
+.react-flow__node.selected {
+  z-index: 20 !important;
+}
+
+.react-flow__node.dragging {
+  opacity: 0.8;
+  cursor: grabbing;
+}
+
+/* Node type specific classes (for custom styling if needed) */
+.react-flow__node-input {
+  /* Custom input node styles can be added here if needed */
+}
+
+.react-flow__node-agent {
+  /* Custom agent node styles can be added here if needed */
+}
+
+.react-flow__node-output {
+  /* Custom output node styles can be added here if needed */
+}
+
+/* ============================================
+   React Flow Handles
+   ============================================ */
+
+.react-flow__handle {
+  width: 12px;
+  height: 12px;
+  background: #3b82f6;
+  border: 2px solid #0c1222;
+  border-radius: 50%;
+  cursor: crosshair;
+  transition: all 0.2s ease;
+}
+
+.react-flow__handle:hover {
+  width: 16px;
+  height: 16px;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+}
+
+.react-flow__handle-connecting {
+  background: #22c55e;
+  animation: pulse-handle 1s ease-in-out infinite;
+}
+
+.react-flow__handle-valid {
+  background: #22c55e;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+}
+
+.react-flow__handle-invalid {
+  background: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+
+/* Handle positions */
+.react-flow__handle-top {
+  top: -6px;
+}
+
+.react-flow__handle-bottom {
+  bottom: -6px;
+}
+
+.react-flow__handle-left {
+  left: -6px;
+}
+
+.react-flow__handle-right {
+  right: -6px;
+}
+
+/* ============================================
+   React Flow Edges
+   ============================================ */
+
+/* Base edge styling */
+.react-flow__edge {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: #3b82f6;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.5));
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #3b82f6;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+}
+
+.react-flow__edge-path {
+  stroke: #94a3b8;
+  stroke-width: 2;
+  fill: none;
+  transition: all 0.2s ease;
+}
+
+/* Edge markers (arrows) */
+.react-flow__arrowhead {
+  fill: #94a3b8;
+  transition: fill 0.2s ease;
+}
+
+.react-flow__edge:hover .react-flow__arrowhead,
+.react-flow__edge.selected .react-flow__arrowhead {
+  fill: #3b82f6;
+}
+
+/* Edge labels */
+.react-flow__edge-text {
+  fill: #f8fafc;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.react-flow__edge-textbg {
+  fill: rgba(12, 18, 34, 0.9);
+  rx: 4;
+  ry: 4;
+}
+
+/* Connection line (while dragging new connection) */
+.react-flow__connection-path {
+  stroke: #3b82f6;
+  stroke-width: 2;
+  fill: none;
+  animation: dash 0.5s linear infinite;
+}
+
+.react-flow__connection {
+  pointer-events: none;
+}
+
+/* ============================================
+   React Flow Selection
+   ============================================ */
+
+/* Selection box (multi-select) */
+.react-flow__selection {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px dashed #3b82f6;
+}
+
+.react-flow__nodesselection-rect {
+  fill: rgba(59, 130, 246, 0.05);
+  stroke: #3b82f6;
+  stroke-width: 1;
+  stroke-dasharray: 5, 5;
+}
+
+/* ============================================
+   React Flow Attribution
+   ============================================ */
+
+.react-flow__attribution {
+  background: rgba(12, 18, 34, 0.6);
+  backdrop-filter: blur(4px);
+  border: 1px solid #1e293b;
+  color: #94a3b8;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin: 4px;
+}
+
+.react-flow__attribution a {
+  color: #3b82f6;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.react-flow__attribution a:hover {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
+/* ============================================
+   React Flow Panel
+   ============================================ */
+
+.react-flow__panel {
+  margin: 8px;
+}
+
+.react-flow__panel.top-left {
+  top: 0;
+  left: 0;
+}
+
+.react-flow__panel.top-center {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.react-flow__panel.top-right {
+  top: 0;
+  right: 0;
+}
+
+.react-flow__panel.bottom-left {
+  bottom: 0;
+  left: 0;
+}
+
+.react-flow__panel.bottom-center {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.react-flow__panel.bottom-right {
+  bottom: 0;
+  right: 0;
+}
+
+/* ============================================
+   Custom Animations
+   ============================================ */
+
+/* Pulse animation for connecting handles */
+@keyframes pulse-handle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+/* Dash animation for connection line */
+@keyframes dash {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: 10;
+  }
+}
+
+/* Glow animation for active edges */
+@keyframes edge-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.8));
+  }
+}
+
+/* Pulse animation for active data transfer */
+@keyframes data-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .react-flow__controls {
+    bottom: 50px;
+    right: 8px;
+  }
+
+  .react-flow__minimap {
+    width: 120px;
+    height: 80px;
+  }
+
+  .react-flow__attribution {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+
+  .react-flow__panel {
+    margin: 4px;
+  }
+
+  /* Hide controls on very small screens */
+  @media (max-width: 480px) {
+    .react-flow__minimap {
+      display: none;
+    }
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .react-flow__minimap {
+    width: 160px;
+    height: 100px;
+  }
+}
+
+/* Desktop (default, no changes needed) */
+@media (min-width: 1025px) {
+  .react-flow__minimap {
+    width: 200px;
+    height: 120px;
+  }
+}
+
+/* ============================================
+   Accessibility
+   ============================================ */
+
+/* Focus states for keyboard navigation */
+.react-flow__node:focus,
+.react-flow__edge:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.react-flow__controls-button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .react-flow__edge-path {
+    stroke-width: 3;
+  }
+
+  .react-flow__handle {
+    border-width: 3px;
+  }
+
+  .react-flow__controls {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__node,
+  .react-flow__edge,
+  .react-flow__edge-path,
+  .react-flow__handle,
+  .react-flow__controls-button {
+    transition: none;
+  }
+
+  .react-flow__handle-connecting,
+  .react-flow__connection-path {
+    animation: none;
+  }
+
+  @keyframes pulse-handle {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes dash {
+    from, to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes edge-glow {
+    0%, 100% {
+      filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.4));
+    }
+  }
+
+  @keyframes data-pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+/* ============================================
+   Dark Theme Enhancements
+   ============================================ */
+
+/* Enhanced shadow for depth in dark theme */
+.react-flow__node {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.react-flow__node.selected,
+.react-flow__node:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* Subtle glow effects for interactive elements */
+.react-flow__controls-button:hover {
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+}
+
+/* ============================================
+   Custom Edge Styles (for CustomEdge component)
+   ============================================ */
+
+/* Active edge with data transfer */
+.react-flow__edge.edge-active .react-flow__edge-path {
+  stroke: #06b6d4;
+  stroke-width: 2.5;
+  animation: edge-glow 2s ease-in-out infinite;
+}
+
+/* Error edge */
+.react-flow__edge.edge-error .react-flow__edge-path {
+  stroke: #ef4444;
+  stroke-width: 2.5;
+  stroke-dasharray: 5, 5;
+}
+
+/* Edge delete button (custom edge component) */
+.edge-delete-button {
+  background: rgba(239, 68, 68, 0.9);
+  border: 1px solid #dc2626;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.react-flow__edge:hover .edge-delete-button,
+.react-flow__edge.selected .edge-delete-button {
+  opacity: 1;
+}
+
+.edge-delete-button:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+/* Edge label container */
+.edge-label-container {
+  background: rgba(12, 18, 34, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #f8fafc;
+  white-space: nowrap;
+  pointer-events: all;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Animated dots for data flow visualization */
+.edge-data-dot {
+  fill: #3b82f6;
+  opacity: 0.8;
+  animation: data-pulse 2s ease-in-out infinite;
+}
+
+.edge-data-dot:nth-child(2) {
+  animation-delay: 0.33s;
+}
+
+.edge-data-dot:nth-child(3) {
+  animation-delay: 0.66s;
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+  .react-flow__controls,
+  .react-flow__minimap,
+  .react-flow__attribution {
+    display: none;
+  }
+
+  .react-flow__edge-path {
+    stroke: #000;
+  }
+
+  .react-flow__node {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+
+  .react-flow__background {
+    display: none;
+  }
+}

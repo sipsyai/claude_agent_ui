@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "009-fix-api-errors-and-react-router-deprecation-warnin",
-  "state": "complete",
+  "spec": "010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a",
+  "state": "building",
   "subtasks": {
-    "completed": 15,
-    "total": 15,
-    "in_progress": 0,
+    "completed": 20,
+    "total": 22,
+    "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Integration & Verification",
+    "current": "Polish & Enhancements",
     "id": null,
-    "total": 4
+    "total": 5
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 13,
-    "started_at": "2026-01-02T18:48:01.857571"
+    "number": 22,
+    "started_at": "2026-01-02T18:56:17.111587"
   },
-  "last_update": "2026-01-02T19:23:46.990481"
+  "last_update": "2026-01-02T20:34:39.342722"
 }

@@ -11,19 +11,24 @@
       "Edit(./**)",
       "Glob(./**)",
       "Grep(./**)",
-      "Read(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/009-fix-api-errors-and-react-router-deprecation-warnin/**)",
-      "Write(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/009-fix-api-errors-and-react-router-deprecation-warnin/**)",
-      "Edit(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/009-fix-api-errors-and-react-router-deprecation-warnin/**)",
-      "Glob(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/009-fix-api-errors-and-react-router-deprecation-warnin/**)",
-      "Grep(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/009-fix-api-errors-and-react-router-deprecation-warnin/**)",
-      "Read(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/009-fix-api-errors-and-react-router-deprecation-warnin/.auto-claude/specs/009-fix-api-errors-and-react-router-deprecation-warnin/**)",
-      "Write(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/009-fix-api-errors-and-react-router-deprecation-warnin/.auto-claude/specs/009-fix-api-errors-and-react-router-deprecation-warnin/**)",
-      "Edit(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/009-fix-api-errors-and-react-router-deprecation-warnin/.auto-claude/specs/009-fix-api-errors-and-react-router-deprecation-warnin/**)",
+      "Read(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a/**)",
+      "Write(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a/**)",
+      "Edit(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a/**)",
+      "Glob(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a/**)",
+      "Grep(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a/**)",
+      "Read(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a/.auto-claude/specs/010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a/**)",
+      "Write(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a/.auto-claude/specs/010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a/**)",
+      "Edit(/Users/ali/Documents/Projects/claude_agent_ui/.worktrees/010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a/.auto-claude/specs/010-flows-sayfas-n-n-react-flow-ile-s-r-kle-b-rak-ve-a/**)",
       "Bash(*)",
       "WebFetch(*)",
       "WebSearch(*)",
       "mcp__context7__resolve-library-id(*)",
-      "mcp__context7__get-library-docs(*)"
+      "mcp__context7__get-library-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
     ]
   }
 }

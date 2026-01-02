@@ -112,8 +112,8 @@
  *    - Container: Full layout with container
  *
  * 8. **Flows** (ManagerView.Flows)
- *    - Component: FlowsPage, FlowEditorPage, FlowDetailPage
- *    - Purpose: Flow creation, editing, and viewing
+ *    - Component: FlowsPage, FlowEditorVisual, FlowDetailPage
+ *    - Purpose: Flow creation, editing, and viewing with visual drag-and-drop editor
  *    - Container: Full layout with container
  *
  * 9. **Settings** (ManagerView.Settings)
@@ -306,7 +306,7 @@ import SkillsPage from './components/SkillsPage';
 import MCPServersPage from './components/MCPServersPage';
 import TasksPage from './components/TasksPage';
 import FlowsPage from './components/FlowsPage';
-import FlowEditorPage from './components/FlowEditorPage';
+import FlowEditorVisual from './components/FlowEditorVisual';
 import FlowDetailPage from './components/FlowDetailPage';
 import SettingsPage from './components/SettingsPage';
 import * as api from './services/api';
@@ -548,7 +548,7 @@ const App: React.FC = () => {
     // Handle flow editor view
     if (managerView === ManagerView.Flows && (isCreatingFlow || editingFlowId)) {
       return (
-        <FlowEditorPage
+        <FlowEditorVisual
           flowId={editingFlowId || undefined}
           onClose={handleCloseFlowEditor}
           onSave={handleFlowSaved}

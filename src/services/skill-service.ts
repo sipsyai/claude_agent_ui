@@ -193,7 +193,92 @@ export interface CreateSkillResponse {
 }
 
 /**
- * Validates skill name format
+ * Validates skill name format against naming rules
+ *
+ * @description
+ * Validates that a skill name conforms to the required naming rules for `.claude/skills/` directory structure.
+ * The name is used as both the directory name and the skill identifier, so it must be filesystem-safe
+ * and URL-friendly.
+ *
+ * **Validation Rules:**
+ * - Required: Must be non-empty after trimming whitespace
+ * - Length: Maximum 64 characters
+ * - Format: Lowercase letters (a-z), numbers (0-9), and hyphens (-) only
+ * - Regex: `/^[a-z0-9-]+$/`
+ *
+ * **Common Issues:**
+ * - Uppercase letters: Use lowercase only (e.g., "PDF-Analyzer" → "pdf-analyzer")
+ * - Spaces: Replace with hyphens (e.g., "web scraper" → "web-scraper")
+ * - Underscores: Replace with hyphens (e.g., "code_review" → "code-review")
+ * - Special characters: Remove or replace (e.g., "skill@v2" → "skill-v2")
+ *
+ * @param name - Skill name to validate
+ * @returns Error message string if validation fails, null if valid
+ *
+ * @private
+ *
+ * @example
+ * // Valid skill names
+ * validateSkillName('pdf-analyzer');  // null (valid)
+ * validateSkillName('web-scraper');   // null (valid)
+ * validateSkillName('skill-v2');      // null (valid)
+ * validateSkillName('code123');       // null (valid)
+ * validateSkillName('a');             // null (valid - single char)
+ *
+ * @example
+ * // Invalid: Empty or whitespace-only
+ * validateSkillName('');          // 'Skill name is required'
+ * validateSkillName('   ');       // 'Skill name is required'
+ * validateSkillName(null as any); // 'Skill name is required'
+ *
+ * @example
+ * // Invalid: Too long (>64 chars)
+ * const longName = 'a'.repeat(65);
+ * validateSkillName(longName);
+ * // Returns: 'Skill name must be 64 characters or less'
+ *
+ * @example
+ * // Invalid: Contains uppercase letters
+ * validateSkillName('PDF-Analyzer');
+ * // Returns: 'Skill name must contain only lowercase letters, numbers, and hyphens'
+ * validateSkillName('WebScraper');
+ * // Returns: 'Skill name must contain only lowercase letters, numbers, and hyphens'
+ *
+ * @example
+ * // Invalid: Contains spaces or special characters
+ * validateSkillName('web scraper');
+ * // Returns: 'Skill name must contain only lowercase letters, numbers, and hyphens'
+ * validateSkillName('code_review');
+ * // Returns: 'Skill name must contain only lowercase letters, numbers, and hyphens'
+ * validateSkillName('skill@v2');
+ * // Returns: 'Skill name must contain only lowercase letters, numbers, and hyphens'
+ * validateSkillName('skill.config');
+ * // Returns: 'Skill name must contain only lowercase letters, numbers, and hyphens'
+ *
+ * @example
+ * // Usage in createSkill validation
+ * const nameError = validateSkillName(request.name);
+ * if (nameError) {
+ *   return { success: false, error: nameError };
+ * }
+ * // Proceed with skill creation...
+ *
+ * @example
+ * // User-friendly validation with suggestions
+ * const name = 'PDF Analyzer';
+ * const error = validateSkillName(name);
+ *
+ * if (error) {
+ *   // Suggest corrected name
+ *   const suggested = name.toLowerCase().replace(/\s+/g, '-');
+ *   console.log(`Invalid name: ${name}`);
+ *   console.log(`Error: ${error}`);
+ *   console.log(`Suggestion: ${suggested}`);
+ *   // Output:
+ *   // Invalid name: PDF Analyzer
+ *   // Error: Skill name must contain only lowercase letters, numbers, and hyphens
+ *   // Suggestion: pdf-analyzer
+ * }
  */
 function validateSkillName(name: string): string | null {
   if (!name || name.trim().length === 0) {
@@ -212,7 +297,120 @@ function validateSkillName(name: string): string | null {
 }
 
 /**
- * Validates skill description
+ * Validates skill description content and format
+ *
+ * @description
+ * Validates that a skill description provides clear guidance on when to use the skill.
+ * The description is displayed to Claude and helps the AI agent decide when to activate
+ * the skill, so it must be descriptive and include usage context.
+ *
+ * **Validation Rules:**
+ * - Required: Must be non-empty after trimming whitespace
+ * - Length: Maximum 1024 characters
+ * - Content: Must include "Use when" phrase (case-insensitive) for usage guidance
+ *
+ * **Best Practices:**
+ * - Start with "Use when you need to..." for clarity
+ * - Be specific about the skill's purpose and use cases
+ * - Include key scenarios or contexts where the skill applies
+ * - Avoid vague descriptions like "A useful skill" or "Does stuff"
+ *
+ * @param description - Skill description to validate
+ * @returns Error message string if validation fails, null if valid
+ *
+ * @private
+ *
+ * @example
+ * // Valid descriptions
+ * validateSkillDescription('Use when you need to analyze PDF documents');
+ * // null (valid)
+ *
+ * validateSkillDescription('Use when you need to scrape websites and extract structured data');
+ * // null (valid)
+ *
+ * validateSkillDescription('Use when reviewing code for security vulnerabilities and best practices');
+ * // null (valid)
+ *
+ * @example
+ * // Valid: Case-insensitive "use when" check
+ * validateSkillDescription('USE WHEN you need to process images');
+ * // null (valid)
+ *
+ * validateSkillDescription('You should use when analyzing logs');
+ * // null (valid - contains "use when")
+ *
+ * validateSkillDescription('This skill is helpful to use when debugging');
+ * // null (valid - contains "use when")
+ *
+ * @example
+ * // Invalid: Empty or whitespace-only
+ * validateSkillDescription('');
+ * // Returns: 'Skill description is required'
+ *
+ * validateSkillDescription('   ');
+ * // Returns: 'Skill description is required'
+ *
+ * validateSkillDescription(null as any);
+ * // Returns: 'Skill description is required'
+ *
+ * @example
+ * // Invalid: Too long (>1024 chars)
+ * const longDesc = 'Use when you need to ' + 'a'.repeat(1020);
+ * validateSkillDescription(longDesc);
+ * // Returns: 'Skill description must be 1024 characters or less'
+ *
+ * @example
+ * // Invalid: Missing "Use when" guidance
+ * validateSkillDescription('A helpful skill for PDF processing');
+ * // Returns: 'Skill description should include "Use when..." to describe when to use this skill'
+ *
+ * validateSkillDescription('Analyzes documents and extracts data');
+ * // Returns: 'Skill description should include "Use when..." to describe when to use this skill'
+ *
+ * validateSkillDescription('This is a web scraper');
+ * // Returns: 'Skill description should include "Use when..." to describe when to use this skill'
+ *
+ * @example
+ * // Usage in createSkill validation
+ * const descError = validateSkillDescription(request.description);
+ * if (descError) {
+ *   return { success: false, error: descError };
+ * }
+ * // Proceed with skill creation...
+ *
+ * @example
+ * // User-friendly validation with suggestions
+ * const description = 'Analyzes PDF documents';
+ * const error = validateSkillDescription(description);
+ *
+ * if (error) {
+ *   // Suggest corrected description
+ *   const suggested = `Use when you need to ${description.toLowerCase()}`;
+ *   console.log(`Invalid description: ${description}`);
+ *   console.log(`Error: ${error}`);
+ *   console.log(`Suggestion: ${suggested}`);
+ *   // Output:
+ *   // Invalid description: Analyzes PDF documents
+ *   // Error: Skill description should include "Use when..." to describe when to use this skill
+ *   // Suggestion: Use when you need to analyzes pdf documents
+ * }
+ *
+ * @example
+ * // Comprehensive validation flow
+ * function validateDescription(desc: string): string {
+ *   const error = validateSkillDescription(desc);
+ *   if (error) {
+ *     throw new Error(`Invalid description: ${error}`);
+ *   }
+ *   return desc;
+ * }
+ *
+ * try {
+ *   validateDescription('Use when analyzing code');
+ *   console.log('Valid description');
+ * } catch (err) {
+ *   console.error(err.message);
+ * }
  */
 function validateSkillDescription(description: string): string | null {
   if (!description || description.trim().length === 0) {
@@ -231,7 +429,193 @@ function validateSkillDescription(description: string): string | null {
 }
 
 /**
- * Creates YAML frontmatter for SKILL.md
+ * Creates YAML frontmatter block for SKILL.md file
+ *
+ * @description
+ * Generates the YAML frontmatter section that appears at the top of SKILL.md files.
+ * The frontmatter contains skill metadata including name, description, allowed tools,
+ * and MCP tool configurations. This metadata is parsed by ClaudeStructureParser and
+ * used by Claude agents to understand skill capabilities and tool permissions.
+ *
+ * **YAML Frontmatter Format:**
+ * ```yaml
+ * ---
+ * name: skill-name
+ * description: Use when you need to...
+ * allowed-tools: Tool1, Tool2, Tool3
+ * mcp_tools:
+ *   server-id-1:
+ *     - tool-name-1
+ *     - tool-name-2
+ *   server-id-2:
+ *     - tool-name-3
+ * ---
+ * ```
+ *
+ * **Field Descriptions:**
+ * - `name`: Skill identifier (matches directory name, lowercase-hyphenated)
+ * - `description`: Usage guidance (must include "Use when" phrase)
+ * - `allowed-tools`: Optional comma-separated list of Claude SDK tool names (Read, Write, Bash, etc.)
+ * - `mcp_tools`: Optional nested structure mapping MCP server IDs to their tool names
+ *
+ * **Important Notes:**
+ * - The frontmatter is wrapped in `---` delimiters (YAML fence)
+ * - allowed-tools is omitted if no tools are specified
+ * - mcp_tools uses nested YAML structure with 2-space indentation
+ * - Server IDs in mcp_tools match MCP server configuration IDs
+ * - Tool names must match those exposed by the MCP server
+ *
+ * @param request - Skill creation request with name, description, and optional tool configurations
+ * @returns YAML frontmatter string with `---` delimiters and newline-separated fields
+ *
+ * @private
+ *
+ * @example
+ * // Basic skill frontmatter (no tools)
+ * const frontmatter = createSkillFrontmatter({
+ *   name: 'pdf-analyzer',
+ *   description: 'Use when you need to analyze PDF documents',
+ *   content: '...'
+ * });
+ *
+ * console.log(frontmatter);
+ * // Output:
+ * // ---
+ * // name: pdf-analyzer
+ * // description: Use when you need to analyze PDF documents
+ * // ---
+ *
+ * @example
+ * // Skill with allowed Claude SDK tools
+ * const frontmatter = createSkillFrontmatter({
+ *   name: 'web-scraper',
+ *   description: 'Use when you need to fetch and parse web pages',
+ *   allowedTools: ['WebFetch', 'Read', 'Write'],
+ *   content: '...'
+ * });
+ *
+ * console.log(frontmatter);
+ * // Output:
+ * // ---
+ * // name: web-scraper
+ * // description: Use when you need to fetch and parse web pages
+ * // allowed-tools: WebFetch, Read, Write
+ * // ---
+ *
+ * @example
+ * // Skill with MCP tools only
+ * const frontmatter = createSkillFrontmatter({
+ *   name: 'browser-automation',
+ *   description: 'Use when you need to automate browser interactions',
+ *   mcpTools: {
+ *     'playwright-server': ['navigate', 'screenshot', 'extract_text'],
+ *     'cheerio-server': ['parse_html', 'select_elements']
+ *   },
+ *   content: '...'
+ * });
+ *
+ * console.log(frontmatter);
+ * // Output:
+ * // ---
+ * // name: browser-automation
+ * // description: Use when you need to automate browser interactions
+ * // mcp_tools:
+ * //   playwright-server:
+ * //     - navigate
+ * //     - screenshot
+ * //     - extract_text
+ * //   cheerio-server:
+ * //     - parse_html
+ * //     - select_elements
+ * // ---
+ *
+ * @example
+ * // Skill with both allowed tools and MCP tools
+ * const frontmatter = createSkillFrontmatter({
+ *   name: 'code-reviewer',
+ *   description: 'Use when you need to review code for quality and best practices',
+ *   allowedTools: ['Read', 'Grep', 'Glob'],
+ *   mcpTools: {
+ *     'eslint-server': ['lint', 'fix'],
+ *     'prettier-server': ['format']
+ *   },
+ *   content: '...'
+ * });
+ *
+ * console.log(frontmatter);
+ * // Output:
+ * // ---
+ * // name: code-reviewer
+ * // description: Use when you need to review code for quality and best practices
+ * // allowed-tools: Read, Grep, Glob
+ * // mcp_tools:
+ * //   eslint-server:
+ * //     - lint
+ * //     - fix
+ * //   prettier-server:
+ * //     - format
+ * // ---
+ *
+ * @example
+ * // Empty tool arrays are filtered out (no output for empty mcpTools server)
+ * const frontmatter = createSkillFrontmatter({
+ *   name: 'data-processor',
+ *   description: 'Use when processing data files',
+ *   allowedTools: [],  // Empty array - not included in output
+ *   mcpTools: {
+ *     'valid-server': ['tool1', 'tool2'],
+ *     'empty-server': []  // Empty array - filtered out
+ *   },
+ *   content: '...'
+ * });
+ *
+ * console.log(frontmatter);
+ * // Output:
+ * // ---
+ * // name: data-processor
+ * // description: Use when processing data files
+ * // mcp_tools:
+ * //   valid-server:
+ * //     - tool1
+ * //     - tool2
+ * // ---
+ *
+ * @example
+ * // Usage in createSkill workflow
+ * const request: CreateSkillRequest = {
+ *   name: 'api-tester',
+ *   description: 'Use when you need to test REST APIs',
+ *   allowedTools: ['WebFetch', 'Read', 'Write'],
+ *   content: 'Steps:\n1. Send request\n2. Validate response\n3. Log results'
+ * };
+ *
+ * const frontmatter = createSkillFrontmatter(request);
+ * const skillContent = `${frontmatter}\n\n${request.content}`;
+ * await fs.writeFile('SKILL.md', skillContent, 'utf-8');
+ *
+ * @example
+ * // Parsing generated frontmatter
+ * import * as yaml from 'js-yaml';
+ *
+ * const frontmatter = createSkillFrontmatter({
+ *   name: 'test-skill',
+ *   description: 'Use when testing',
+ *   allowedTools: ['Read'],
+ *   content: '...'
+ * });
+ *
+ * // Extract YAML content (between --- delimiters)
+ * const lines = frontmatter.split('\n');
+ * const yamlContent = lines.slice(1, -1).join('\n');
+ * const parsed = yaml.load(yamlContent);
+ *
+ * console.log(parsed);
+ * // Output:
+ * // {
+ * //   name: 'test-skill',
+ * //   description: 'Use when testing',
+ * //   'allowed-tools': 'Read'
+ * // }
  */
 function createSkillFrontmatter(request: CreateSkillRequest): string {
   const frontmatter = ['---', `name: ${request.name}`, `description: ${request.description}`];
@@ -509,7 +893,196 @@ export async function createSkill(
 }
 
 /**
- * Creates YAML frontmatter for SKILL.md during update
+ * Creates updated YAML frontmatter block for SKILL.md during skill updates
+ *
+ * @description
+ * Generates a new YAML frontmatter section for updating existing SKILL.md files.
+ * Similar to createSkillFrontmatter but takes the skill name separately since it cannot
+ * be changed during updates (name is derived from the existing skill directory).
+ *
+ * **Key Differences from createSkillFrontmatter:**
+ * - Name parameter is separate (preserves existing skill ID)
+ * - Used exclusively by updateSkill() function
+ * - Replaces all existing frontmatter fields (full replacement, not partial merge)
+ *
+ * **YAML Frontmatter Format:**
+ * ```yaml
+ * ---
+ * name: skill-name
+ * description: Use when you need to...
+ * allowed-tools: Tool1, Tool2, Tool3
+ * mcp_tools:
+ *   server-id-1:
+ *     - tool-name-1
+ *     - tool-name-2
+ * ---
+ * ```
+ *
+ * **Update Semantics:**
+ * - All fields are replaced (not merged) with values from UpdateSkillRequest
+ * - If allowedTools is undefined/empty, the field is omitted from frontmatter
+ * - If mcpTools is undefined/empty, the field is omitted from frontmatter
+ * - This enables removing previously configured tools by omitting them from the update request
+ *
+ * @param name - Skill identifier (preserved from existing skill, cannot be changed)
+ * @param request - Skill update request with description and optional tool configurations
+ * @returns YAML frontmatter string with `---` delimiters and newline-separated fields
+ *
+ * @private
+ *
+ * @example
+ * // Update description only (removes any existing allowed tools and MCP tools)
+ * const frontmatter = updateSkillFrontmatter('pdf-analyzer', {
+ *   description: 'Use when you need to analyze PDF documents for compliance',
+ *   content: 'Updated instructions...'
+ * });
+ *
+ * console.log(frontmatter);
+ * // Output:
+ * // ---
+ * // name: pdf-analyzer
+ * // description: Use when you need to analyze PDF documents for compliance
+ * // ---
+ *
+ * @example
+ * // Update with new allowed tools (replaces existing tools)
+ * const frontmatter = updateSkillFrontmatter('web-scraper', {
+ *   description: 'Use when you need to scrape web data with rate limiting',
+ *   allowedTools: ['WebFetch', 'Read', 'Write', 'Bash'],  // Replaced tool list
+ *   content: 'Updated steps...'
+ * });
+ *
+ * console.log(frontmatter);
+ * // Output:
+ * // ---
+ * // name: web-scraper
+ * // description: Use when you need to scrape web data with rate limiting
+ * // allowed-tools: WebFetch, Read, Write, Bash
+ * // ---
+ *
+ * @example
+ * // Update with modified MCP tools (replaces existing MCP configuration)
+ * const frontmatter = updateSkillFrontmatter('code-reviewer', {
+ *   description: 'Use when you need to review code with custom linting rules',
+ *   allowedTools: ['Read', 'Grep', 'Glob'],
+ *   mcpTools: {
+ *     'eslint-server': ['lint', 'fix'],
+ *     'prettier-server': ['format']
+ *   },
+ *   content: 'Updated review steps...'
+ * });
+ *
+ * console.log(frontmatter);
+ * // Output:
+ * // ---
+ * // name: code-reviewer
+ * // description: Use when you need to review code with custom linting rules
+ * // allowed-tools: Read, Grep, Glob
+ * // mcp_tools:
+ * //   eslint-server:
+ * //     - lint
+ * //     - fix
+ * //   prettier-server:
+ * //     - format
+ * // ---
+ *
+ * @example
+ * // Remove all tools from skill (omit allowedTools and mcpTools)
+ * const frontmatter = updateSkillFrontmatter('browser-automation', {
+ *   description: 'Use when you need basic browser automation',
+ *   // allowedTools: undefined - not included in frontmatter
+ *   // mcpTools: undefined - not included in frontmatter
+ *   content: 'Simplified instructions...'
+ * });
+ *
+ * console.log(frontmatter);
+ * // Output:
+ * // ---
+ * // name: browser-automation
+ * // description: Use when you need basic browser automation
+ * // ---
+ *
+ * @example
+ * // Empty arrays are treated as "remove" (not included in frontmatter)
+ * const frontmatter = updateSkillFrontmatter('data-processor', {
+ *   description: 'Use when processing data files',
+ *   allowedTools: [],  // Empty - field omitted
+ *   mcpTools: {},      // Empty - field omitted
+ *   content: 'Process data...'
+ * });
+ *
+ * console.log(frontmatter);
+ * // Output:
+ * // ---
+ * // name: data-processor
+ * // description: Use when processing data files
+ * // ---
+ *
+ * @example
+ * // Usage in updateSkill workflow
+ * const skillId = 'pdf-analyzer';
+ * const request: UpdateSkillRequest = {
+ *   description: 'Use when you need to analyze PDF documents for compliance',
+ *   allowedTools: ['Read', 'Write'],
+ *   content: 'New instructions:\n1. Check compliance\n2. Extract findings\n3. Generate report'
+ * };
+ *
+ * const frontmatter = updateSkillFrontmatter(skillId, request);
+ * const skillContent = `${frontmatter}\n\n${request.content}`;
+ * const skillMdPath = path.join(projectRoot, '.claude', 'skills', skillId, 'SKILL.md');
+ * await fs.writeFile(skillMdPath, skillContent, 'utf-8');
+ *
+ * @example
+ * // Comparison: Name handling in create vs update
+ * // Create: Name comes from request
+ * const createFrontmatter = createSkillFrontmatter({
+ *   name: 'new-skill',  // Name in request
+ *   description: 'Use when...',
+ *   content: '...'
+ * });
+ *
+ * // Update: Name passed separately (from skillId parameter to updateSkill)
+ * const updateFrontmatter = updateSkillFrontmatter(
+ *   'existing-skill',  // Name preserved from existing directory
+ *   {
+ *     description: 'Use when...',
+ *     content: '...'
+ *     // No 'name' field in UpdateSkillRequest
+ *   }
+ * );
+ *
+ * @example
+ * // Full replacement semantics example
+ * // Original SKILL.md frontmatter:
+ * // ---
+ * // name: web-scraper
+ * // description: Use when you need to scrape websites
+ * // allowed-tools: WebFetch, Read
+ * // mcp_tools:
+ * //   playwright-server:
+ * //     - navigate
+ * // ---
+ *
+ * // Update with new MCP tools (playwright-server is removed, cheerio-server is added)
+ * const frontmatter = updateSkillFrontmatter('web-scraper', {
+ *   description: 'Use when you need to parse HTML',
+ *   allowedTools: ['Read', 'Write'],  // WebFetch removed, Write added
+ *   mcpTools: {
+ *     'cheerio-server': ['parse_html', 'select']  // playwright-server gone
+ *   },
+ *   content: 'Parse HTML...'
+ * });
+ *
+ * // New frontmatter completely replaces old:
+ * // ---
+ * // name: web-scraper
+ * // description: Use when you need to parse HTML
+ * // allowed-tools: Read, Write
+ * // mcp_tools:
+ * //   cheerio-server:
+ * //     - parse_html
+ * //     - select
+ * // ---
  */
 function updateSkillFrontmatter(name: string, request: UpdateSkillRequest): string {
   const frontmatter = ['---', `name: ${name}`, `description: ${request.description}`];

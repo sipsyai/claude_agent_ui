@@ -5,27 +5,190 @@ import * as yaml from 'js-yaml';
 import type { Skill, Agent, TrainingRecord, InputField } from './claude-structure-parser';
 import { ClaudeStructureParser } from './claude-structure-parser.js';
 
+/**
+ * Request payload for creating a new skill in the `.claude/skills/` directory
+ *
+ * @description
+ * Defines the structure for creating a new skill file with YAML frontmatter and markdown content.
+ * Skills are stored as `SKILL.md` files in `.claude/skills/{name}/` with optional `skill.config.json`
+ * for input field definitions.
+ *
+ * @example
+ * // Basic skill creation
+ * const request: CreateSkillRequest = {
+ *   name: 'pdf-analyzer',
+ *   description: 'Use when you need to analyze PDF documents and extract key information',
+ *   content: 'Analyze the PDF document and extract:\n- Main topics\n- Key findings\n- Action items'
+ * };
+ *
+ * @example
+ * // Skill with allowed tools and MCP tools
+ * const request: CreateSkillRequest = {
+ *   name: 'web-scraper',
+ *   description: 'Use when you need to fetch and parse web pages',
+ *   allowedTools: ['WebFetch', 'Read', 'Write'],
+ *   mcpTools: {
+ *     'playwright-server': ['navigate', 'screenshot', 'extract_text'],
+ *     'cheerio-server': ['parse_html', 'select_elements']
+ *   },
+ *   content: 'Steps:\n1. Fetch the URL\n2. Parse HTML\n3. Extract data\n4. Save results'
+ * };
+ *
+ * @example
+ * // Skill with input fields for parameterization
+ * const request: CreateSkillRequest = {
+ *   name: 'code-reviewer',
+ *   description: 'Use when you need to review code for quality and best practices',
+ *   allowedTools: ['Read', 'Grep', 'Glob'],
+ *   inputFields: [
+ *     {
+ *       name: 'language',
+ *       type: 'string',
+ *       description: 'Programming language to review',
+ *       required: true
+ *     },
+ *     {
+ *       name: 'focus_areas',
+ *       type: 'array',
+ *       description: 'Areas to focus on (security, performance, readability)',
+ *       required: false
+ *     }
+ *   ],
+ *   content: 'Review the code for:\n- Security vulnerabilities\n- Performance issues\n- Code style\n- Best practices'
+ * };
+ */
 export interface CreateSkillRequest {
+  /** Skill identifier (lowercase, hyphens, numbers only, max 64 chars) */
   name: string;
+  /** Brief description including "Use when..." guidance (max 1024 chars) */
   description: string;
+  /** Optional array of allowed Claude SDK tool names */
   allowedTools?: string[];
-  mcpTools?: Record<string, string[]>; // { serverId: [toolName1, toolName2, ...] }
-  inputFields?: InputField[]; // Input parameters for skill execution
+  /** Optional MCP tools organized by server ID: { serverId: [toolName1, toolName2] } */
+  mcpTools?: Record<string, string[]>;
+  /** Optional input parameters for skill execution (stored in skill.config.json) */
+  inputFields?: InputField[];
+  /** Skill instructions/content in markdown format */
   content: string;
 }
 
+/**
+ * Request payload for updating an existing skill
+ *
+ * @description
+ * Defines the structure for updating an existing skill's YAML frontmatter and markdown content.
+ * The skill name (ID) cannot be changed; use deleteSkill + createSkill to rename.
+ * Updates replace the entire SKILL.md file and skill.config.json (if inputFields provided).
+ *
+ * @example
+ * // Update skill description and content
+ * const request: UpdateSkillRequest = {
+ *   description: 'Use when you need to analyze PDF documents for compliance',
+ *   content: 'Updated instructions:\n1. Check compliance\n2. Extract findings\n3. Generate report'
+ * };
+ *
+ * @example
+ * // Update skill with new allowed tools
+ * const request: UpdateSkillRequest = {
+ *   description: 'Use when you need to scrape web data with rate limiting',
+ *   allowedTools: ['WebFetch', 'Read', 'Write', 'Bash'],
+ *   content: 'Steps:\n1. Fetch with delays\n2. Parse\n3. Save'
+ * };
+ *
+ * @example
+ * // Update skill with modified MCP tools and input fields
+ * const request: UpdateSkillRequest = {
+ *   description: 'Use when you need to review code with custom rules',
+ *   allowedTools: ['Read', 'Grep', 'Glob'],
+ *   mcpTools: {
+ *     'eslint-server': ['lint', 'fix'],
+ *     'prettier-server': ['format']
+ *   },
+ *   inputFields: [
+ *     {
+ *       name: 'language',
+ *       type: 'string',
+ *       description: 'Programming language',
+ *       required: true
+ *     },
+ *     {
+ *       name: 'severity',
+ *       type: 'string',
+ *       description: 'Minimum severity level (error, warning, info)',
+ *       required: false
+ *     }
+ *   ],
+ *   content: 'Review with custom rules:\n- Run linter\n- Check formatting\n- Report issues'
+ * };
+ */
 export interface UpdateSkillRequest {
+  /** Updated brief description including "Use when..." guidance (max 1024 chars) */
   description: string;
+  /** Optional array of allowed Claude SDK tool names (replaces existing) */
   allowedTools?: string[];
-  mcpTools?: Record<string, string[]>; // { serverId: [toolName1, toolName2, ...] }
-  inputFields?: InputField[]; // Input parameters for skill execution
+  /** Optional MCP tools organized by server ID (replaces existing) */
+  mcpTools?: Record<string, string[]>;
+  /** Optional input parameters (replaces existing skill.config.json or removes if empty) */
+  inputFields?: InputField[];
+  /** Updated skill instructions/content in markdown format */
   content: string;
 }
 
+/**
+ * Response payload for skill creation, update, and deletion operations
+ *
+ * @description
+ * Standard response format for skill management operations.
+ * On success: `success=true` with optional `skill` and `path` data.
+ * On failure: `success=false` with `error` message describing what went wrong.
+ *
+ * @example
+ * // Successful skill creation
+ * const response: CreateSkillResponse = {
+ *   success: true,
+ *   skill: {
+ *     id: 'pdf-analyzer',
+ *     name: 'pdf-analyzer',
+ *     description: 'Use when you need to analyze PDF documents',
+ *     path: '/project/.claude/skills/pdf-analyzer',
+ *     skillMdPath: '/project/.claude/skills/pdf-analyzer/SKILL.md',
+ *     content: 'Analyze the PDF...',
+ *     metadata: {
+ *       allowedTools: ['Read', 'Write']
+ *     }
+ *   },
+ *   path: '/project/.claude/skills/pdf-analyzer/SKILL.md'
+ * };
+ *
+ * @example
+ * // Failed skill creation (validation error)
+ * const response: CreateSkillResponse = {
+ *   success: false,
+ *   error: 'Skill name must contain only lowercase letters, numbers, and hyphens'
+ * };
+ *
+ * @example
+ * // Failed skill creation (already exists)
+ * const response: CreateSkillResponse = {
+ *   success: false,
+ *   error: 'Skill "pdf-analyzer" already exists at /project/.claude/skills/pdf-analyzer'
+ * };
+ *
+ * @example
+ * // Successful skill deletion
+ * const response: CreateSkillResponse = {
+ *   success: true,
+ *   path: '/project/.claude/skills/pdf-analyzer'
+ * };
+ */
 export interface CreateSkillResponse {
+  /** Whether the operation succeeded */
   success: boolean;
+  /** Parsed skill object (on create/update success) */
   skill?: Skill;
+  /** File system path to SKILL.md or skill directory */
   path?: string;
+  /** Error message (on failure) describing what went wrong */
   error?: string;
 }
 
@@ -96,7 +259,170 @@ function createSkillFrontmatter(request: CreateSkillRequest): string {
 }
 
 /**
- * Creates a new skill in the .claude/skills/ directory
+ * Creates a new skill in the `.claude/skills/` directory
+ *
+ * @description
+ * Creates a new skill by generating a directory structure with SKILL.md (containing YAML frontmatter
+ * and markdown content) and optionally skill.config.json (if inputFields are provided). The skill
+ * name serves as both the directory name and the skill identifier.
+ *
+ * **File Structure:**
+ * ```
+ * .claude/skills/{name}/
+ *   ├── SKILL.md           # YAML frontmatter + markdown content
+ *   └── skill.config.json  # Optional: input field definitions
+ * ```
+ *
+ * **SKILL.md Format:**
+ * ```markdown
+ * ---
+ * name: skill-name
+ * description: Use when you need to...
+ * allowed-tools: Read, Write, Grep
+ * mcp_tools:
+ *   server-id:
+ *     - tool-name
+ * ---
+ *
+ * # Skill instructions (markdown content)
+ * ```
+ *
+ * **Validation Rules:**
+ * - Name: Required, 1-64 chars, lowercase letters/numbers/hyphens only, must match /^[a-z0-9-]+$/
+ * - Description: Required, 1-1024 chars, must include "Use when" (case-insensitive)
+ * - Content: Required, non-empty markdown instructions
+ * - Uniqueness: Skill name must not already exist in `.claude/skills/`
+ *
+ * @param request - Skill creation request with name, description, content, and optional metadata
+ * @param projectRoot - Absolute path to project root directory (where .claude/ is located)
+ * @returns Promise resolving to CreateSkillResponse with success status, skill data, and path
+ *
+ * @example
+ * // Basic skill creation
+ * const response = await createSkill(
+ *   {
+ *     name: 'pdf-analyzer',
+ *     description: 'Use when you need to analyze PDF documents and extract key information',
+ *     content: 'Analyze the PDF document and extract:\n- Main topics\n- Key findings\n- Action items'
+ *   },
+ *   '/Users/john/projects/my-app'
+ * );
+ *
+ * if (response.success) {
+ *   console.log('Created skill:', response.skill.name);
+ *   console.log('Location:', response.path);
+ *   // Output:
+ *   // Created skill: pdf-analyzer
+ *   // Location: /Users/john/projects/my-app/.claude/skills/pdf-analyzer/SKILL.md
+ * } else {
+ *   console.error('Error:', response.error);
+ * }
+ *
+ * @example
+ * // Skill with allowed tools and MCP tools
+ * const response = await createSkill(
+ *   {
+ *     name: 'web-scraper',
+ *     description: 'Use when you need to fetch and parse web pages',
+ *     allowedTools: ['WebFetch', 'Read', 'Write'],
+ *     mcpTools: {
+ *       'playwright-server': ['navigate', 'screenshot', 'extract_text'],
+ *       'cheerio-server': ['parse_html', 'select_elements']
+ *     },
+ *     content: 'Steps:\n1. Fetch the URL using WebFetch\n2. Parse HTML\n3. Extract data\n4. Save results'
+ *   },
+ *   process.cwd()
+ * );
+ *
+ * // Generated SKILL.md:
+ * // ---
+ * // name: web-scraper
+ * // description: Use when you need to fetch and parse web pages
+ * // allowed-tools: WebFetch, Read, Write
+ * // mcp_tools:
+ * //   playwright-server:
+ * //     - navigate
+ * //     - screenshot
+ * //     - extract_text
+ * //   cheerio-server:
+ * //     - parse_html
+ * //     - select_elements
+ * // ---
+ * //
+ * // Steps:
+ * // 1. Fetch the URL using WebFetch
+ * // 2. Parse HTML
+ * // 3. Extract data
+ * // 4. Save results
+ *
+ * @example
+ * // Skill with input fields (creates skill.config.json)
+ * const response = await createSkill(
+ *   {
+ *     name: 'code-reviewer',
+ *     description: 'Use when you need to review code for quality and best practices',
+ *     allowedTools: ['Read', 'Grep', 'Glob'],
+ *     inputFields: [
+ *       {
+ *         name: 'language',
+ *         type: 'string',
+ *         description: 'Programming language to review',
+ *         required: true
+ *       },
+ *       {
+ *         name: 'focus_areas',
+ *         type: 'array',
+ *         description: 'Areas to focus on (security, performance, readability)',
+ *         required: false
+ *       }
+ *     ],
+ *     content: 'Review the code for:\n- Security vulnerabilities\n- Performance issues\n- Code style\n- Best practices'
+ *   },
+ *   '/Users/john/projects/my-app'
+ * );
+ *
+ * // Creates two files:
+ * // .claude/skills/code-reviewer/SKILL.md
+ * // .claude/skills/code-reviewer/skill.config.json (contains inputFields)
+ *
+ * @example
+ * // Handling validation errors
+ * const response = await createSkill(
+ *   {
+ *     name: 'Invalid Name!',  // Contains invalid characters
+ *     description: 'This is a skill',  // Missing "Use when"
+ *     content: ''  // Empty content
+ *   },
+ *   process.cwd()
+ * );
+ *
+ * // response.success === false
+ * // response.error === 'Skill name must contain only lowercase letters, numbers, and hyphens'
+ *
+ * @example
+ * // Handling duplicate skill names
+ * // First creation succeeds
+ * await createSkill(
+ *   {
+ *     name: 'pdf-analyzer',
+ *     description: 'Use when analyzing PDFs',
+ *     content: 'Instructions...'
+ *   },
+ *   process.cwd()
+ * );
+ *
+ * // Second creation with same name fails
+ * const response = await createSkill(
+ *   {
+ *     name: 'pdf-analyzer',
+ *     description: 'Use when analyzing PDFs v2',
+ *     content: 'Different instructions...'
+ *   },
+ *   process.cwd()
+ * );
+ *
+ * // response.success === false
+ * // response.error === 'Skill "pdf-analyzer" already exists at /path/.claude/skills/pdf-analyzer'
  */
 export async function createSkill(
   request: CreateSkillRequest,
@@ -175,7 +501,6 @@ export async function createSkill(
       path: skillMdPath,
     };
   } catch (error) {
-    console.error('Error creating skill:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -212,7 +537,159 @@ function updateSkillFrontmatter(name: string, request: UpdateSkillRequest): stri
 }
 
 /**
- * Updates an existing skill in the .claude/skills/ directory
+ * Updates an existing skill in the `.claude/skills/` directory
+ *
+ * @description
+ * Updates an existing skill by replacing its SKILL.md file with new frontmatter and content.
+ * If inputFields are provided, skill.config.json is created/updated; if omitted, the config
+ * file is deleted. The skill name (ID) cannot be changed; use deleteSkill + createSkill to rename.
+ *
+ * **Update Behavior:**
+ * - SKILL.md: Entire file is replaced (frontmatter + content)
+ * - skill.config.json: Created/updated if inputFields provided, deleted if inputFields empty/undefined
+ * - Skill name: Preserved (cannot be changed via update)
+ * - All frontmatter fields: Replaced with new values from request
+ *
+ * **Validation Rules:**
+ * - Description: Required, 1-1024 chars, must include "Use when" (case-insensitive)
+ * - Content: Required, non-empty markdown instructions
+ * - Skill existence: Skill must exist in `.claude/skills/{skillId}/`
+ *
+ * @param skillId - Skill identifier (directory name in .claude/skills/)
+ * @param request - Skill update request with description, content, and optional metadata
+ * @param projectRoot - Absolute path to project root directory (where .claude/ is located)
+ * @returns Promise resolving to CreateSkillResponse with success status, updated skill data, and path
+ *
+ * @example
+ * // Basic skill update (description and content only)
+ * const response = await updateSkill(
+ *   'pdf-analyzer',
+ *   {
+ *     description: 'Use when you need to analyze PDF documents for compliance and regulations',
+ *     content: 'Updated instructions:\n1. Check compliance\n2. Extract findings\n3. Generate report'
+ *   },
+ *   '/Users/john/projects/my-app'
+ * );
+ *
+ * if (response.success) {
+ *   console.log('Updated skill:', response.skill.name);
+ *   console.log('New description:', response.skill.description);
+ * } else {
+ *   console.error('Error:', response.error);
+ * }
+ *
+ * @example
+ * // Update skill with new allowed tools
+ * const response = await updateSkill(
+ *   'web-scraper',
+ *   {
+ *     description: 'Use when you need to scrape web data with rate limiting',
+ *     allowedTools: ['WebFetch', 'Read', 'Write', 'Bash'],  // Added 'Bash'
+ *     content: 'Steps:\n1. Fetch with delays\n2. Parse\n3. Save'
+ *   },
+ *   process.cwd()
+ * );
+ *
+ * // Updated SKILL.md frontmatter now includes 'Bash' in allowed-tools
+ *
+ * @example
+ * // Update skill with modified MCP tools and input fields
+ * const response = await updateSkill(
+ *   'code-reviewer',
+ *   {
+ *     description: 'Use when you need to review code with custom linting rules',
+ *     allowedTools: ['Read', 'Grep', 'Glob'],
+ *     mcpTools: {
+ *       'eslint-server': ['lint', 'fix'],
+ *       'prettier-server': ['format']
+ *     },
+ *     inputFields: [
+ *       {
+ *         name: 'language',
+ *         type: 'string',
+ *         description: 'Programming language',
+ *         required: true
+ *       },
+ *       {
+ *         name: 'severity',
+ *         type: 'string',
+ *         description: 'Minimum severity level (error, warning, info)',
+ *         required: false
+ *       }
+ *     ],
+ *     content: 'Review with custom rules:\n- Run linter\n- Check formatting\n- Report issues'
+ *   },
+ *   process.cwd()
+ * );
+ *
+ * // Updates both SKILL.md and skill.config.json
+ *
+ * @example
+ * // Remove input fields from skill (deletes skill.config.json)
+ * const response = await updateSkill(
+ *   'code-reviewer',
+ *   {
+ *     description: 'Use when you need to review code',
+ *     allowedTools: ['Read', 'Grep', 'Glob'],
+ *     // inputFields omitted or set to undefined
+ *     content: 'Review the code for best practices'
+ *   },
+ *   process.cwd()
+ * );
+ *
+ * // skill.config.json is deleted if it existed
+ *
+ * @example
+ * // Handling validation errors
+ * const response = await updateSkill(
+ *   'pdf-analyzer',
+ *   {
+ *     description: 'This is a skill',  // Missing "Use when"
+ *     content: ''  // Empty content
+ *   },
+ *   process.cwd()
+ * );
+ *
+ * // response.success === false
+ * // response.error === 'Skill description should include "Use when..." to describe when to use this skill'
+ *
+ * @example
+ * // Handling non-existent skill
+ * const response = await updateSkill(
+ *   'nonexistent-skill',
+ *   {
+ *     description: 'Use when needed',
+ *     content: 'Instructions...'
+ *   },
+ *   process.cwd()
+ * );
+ *
+ * // response.success === false
+ * // response.error === 'Skill "nonexistent-skill" does not exist'
+ *
+ * @example
+ * // Complete workflow: Update and verify
+ * const response = await updateSkill(
+ *   'web-scraper',
+ *   {
+ *     description: 'Use when you need to scrape websites with retry logic',
+ *     allowedTools: ['WebFetch', 'Read', 'Write', 'Bash'],
+ *     mcpTools: {
+ *       'playwright-server': ['navigate', 'screenshot', 'extract_text', 'wait_for_selector']
+ *     },
+ *     content: 'Scraping with retries:\n1. Set retry count\n2. Fetch URL\n3. Retry on failure\n4. Parse and save'
+ *   },
+ *   process.cwd()
+ * );
+ *
+ * if (response.success) {
+ *   // Verify the update
+ *   const parser = new ClaudeStructureParser();
+ *   const skills = await parser.parseSkills(process.cwd());
+ *   const updatedSkill = skills.find(s => s.id === 'web-scraper');
+ *   console.log('Allowed tools:', updatedSkill.metadata?.allowedTools);
+ *   console.log('MCP tools:', updatedSkill.metadata?.mcpTools);
+ * }
  */
 export async function updateSkill(
   skillId: string,
@@ -287,7 +764,6 @@ export async function updateSkill(
       path: skillMdPath,
     };
   } catch (error) {
-    console.error('Error updating skill:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -296,7 +772,74 @@ export async function updateSkill(
 }
 
 /**
- * Checks if a skill exists
+ * Checks if a skill exists in the `.claude/skills/` directory
+ *
+ * @description
+ * Verifies whether a skill directory exists at `.claude/skills/{name}/`.
+ * This is a synchronous filesystem check that only validates directory existence,
+ * not SKILL.md validity or content structure.
+ *
+ * **Use Cases:**
+ * - Pre-flight validation before creating a skill (prevent duplicates)
+ * - Validate skill references in agent configurations
+ * - Batch validation of skill dependencies
+ * - Cleanup verification after deletion
+ *
+ * @param name - Skill identifier (directory name in .claude/skills/)
+ * @param projectRoot - Absolute path to project root directory (where .claude/ is located)
+ * @returns Promise resolving to true if skill directory exists, false otherwise
+ *
+ * @example
+ * // Check if skill exists before creation
+ * const exists = await skillExists('pdf-analyzer', process.cwd());
+ * if (exists) {
+ *   console.log('Skill already exists, choose a different name');
+ * } else {
+ *   // Proceed with creation
+ *   await createSkill({ name: 'pdf-analyzer', ... }, process.cwd());
+ * }
+ *
+ * @example
+ * // Validate skill references in agent config
+ * const agentSkills = ['pdf-analyzer', 'web-scraper', 'code-reviewer'];
+ * const validationResults = await Promise.all(
+ *   agentSkills.map(async (skillName) => ({
+ *     skill: skillName,
+ *     exists: await skillExists(skillName, '/Users/john/projects/my-app')
+ *   }))
+ * );
+ *
+ * const missingSkills = validationResults.filter(r => !r.exists);
+ * if (missingSkills.length > 0) {
+ *   console.error('Missing skills:', missingSkills.map(r => r.skill));
+ * }
+ * // Output: Missing skills: ['code-reviewer']
+ *
+ * @example
+ * // Verify deletion completed successfully
+ * await deleteSkill('old-skill', process.cwd());
+ * const stillExists = await skillExists('old-skill', process.cwd());
+ * console.log('Deletion verified:', !stillExists);
+ * // Output: Deletion verified: true
+ *
+ * @example
+ * // Batch validation for UI display
+ * const skillNames = ['skill1', 'skill2', 'skill3'];
+ * const existenceMap = new Map();
+ *
+ * for (const name of skillNames) {
+ *   existenceMap.set(name, await skillExists(name, process.cwd()));
+ * }
+ *
+ * // Display with status indicators
+ * skillNames.forEach(name => {
+ *   const status = existenceMap.get(name) ? '✓' : '✗';
+ *   console.log(`${status} ${name}`);
+ * });
+ * // Output:
+ * // ✓ skill1
+ * // ✗ skill2
+ * // ✓ skill3
  */
 export async function skillExists(name: string, projectRoot: string): Promise<boolean> {
   const skillDir = path.join(projectRoot, '.claude', 'skills', name);
@@ -304,7 +847,131 @@ export async function skillExists(name: string, projectRoot: string): Promise<bo
 }
 
 /**
- * Deletes a skill
+ * Deletes a skill from the `.claude/skills/` directory
+ *
+ * @description
+ * Permanently deletes a skill by removing its entire directory (`.claude/skills/{name}/`),
+ * including SKILL.md, skill.config.json, and any other files within the skill directory.
+ * This operation is irreversible and uses recursive deletion with force flag.
+ *
+ * **Deletion Behavior:**
+ * - Removes entire skill directory and all contents recursively
+ * - Force flag ensures no errors if directory contains unexpected files
+ * - Does NOT update agent configurations that reference this skill
+ * - Does NOT update Strapi database (use SkillSyncService.removeSkill for sync)
+ *
+ * **Important Notes:**
+ * - This is a filesystem-only operation; Strapi sync must be handled separately
+ * - Agent configurations may contain broken references after deletion
+ * - Consider backing up skills before deletion if you may need to restore them
+ * - Use validateSkillReferences() on agents after deletion to find broken references
+ *
+ * @param name - Skill identifier (directory name in .claude/skills/)
+ * @param projectRoot - Absolute path to project root directory (where .claude/ is located)
+ * @returns Promise resolving to CreateSkillResponse with success status and path
+ *
+ * @example
+ * // Basic skill deletion
+ * const response = await deleteSkill('pdf-analyzer', process.cwd());
+ *
+ * if (response.success) {
+ *   console.log('Deleted skill at:', response.path);
+ *   // Output: Deleted skill at: /Users/john/projects/my-app/.claude/skills/pdf-analyzer
+ * } else {
+ *   console.error('Error:', response.error);
+ * }
+ *
+ * @example
+ * // Safe deletion with confirmation and backup
+ * const skillName = 'web-scraper';
+ *
+ * // Step 1: Verify skill exists
+ * const exists = await skillExists(skillName, process.cwd());
+ * if (!exists) {
+ *   console.log('Skill does not exist');
+ *   return;
+ * }
+ *
+ * // Step 2: Check if skill is used by agents
+ * const usage = await getSkillUsage(skillName, process.cwd());
+ * if (usage.count > 0) {
+ *   console.warn(`Warning: Skill is used by ${usage.count} agent(s): ${usage.agentIds.join(', ')}`);
+ *   const confirmDelete = await getUserConfirmation('Delete anyway?');
+ *   if (!confirmDelete) return;
+ * }
+ *
+ * // Step 3: Backup skill before deletion
+ * const parser = new ClaudeStructureParser();
+ * const skills = await parser.parseSkills(process.cwd());
+ * const skillToDelete = skills.find(s => s.id === skillName);
+ * const backup = JSON.stringify(skillToDelete, null, 2);
+ * await fs.writeFile(`backup-${skillName}.json`, backup);
+ *
+ * // Step 4: Delete skill
+ * const response = await deleteSkill(skillName, process.cwd());
+ * console.log('Deletion result:', response.success ? 'Success' : response.error);
+ *
+ * @example
+ * // Handling non-existent skill
+ * const response = await deleteSkill('nonexistent-skill', process.cwd());
+ *
+ * // response.success === false
+ * // response.error === 'Skill "nonexistent-skill" does not exist'
+ *
+ * @example
+ * // Bulk deletion with error handling
+ * const skillsToDelete = ['old-skill-1', 'old-skill-2', 'old-skill-3'];
+ * const results = await Promise.all(
+ *   skillsToDelete.map(async (name) => {
+ *     const response = await deleteSkill(name, process.cwd());
+ *     return {
+ *       skill: name,
+ *       success: response.success,
+ *       error: response.error
+ *     };
+ *   })
+ * );
+ *
+ * const successful = results.filter(r => r.success);
+ * const failed = results.filter(r => !r.success);
+ *
+ * console.log(`Deleted ${successful.length} skills`);
+ * if (failed.length > 0) {
+ *   console.error('Failed to delete:', failed.map(r => `${r.skill} (${r.error})`));
+ * }
+ *
+ * @example
+ * // Delete and verify cleanup
+ * const skillName = 'temporary-skill';
+ *
+ * // Delete skill
+ * const deleteResponse = await deleteSkill(skillName, process.cwd());
+ * console.log('Deleted:', deleteResponse.success);
+ *
+ * // Verify deletion
+ * const stillExists = await skillExists(skillName, process.cwd());
+ * console.log('Cleanup verified:', !stillExists);
+ *
+ * // Output:
+ * // Deleted: true
+ * // Cleanup verified: true
+ *
+ * @example
+ * // Complete workflow: Delete skill and update agents
+ * const skillName = 'deprecated-skill';
+ *
+ * // Step 1: Find agents using this skill
+ * const usage = await getSkillUsage(skillName, process.cwd());
+ * console.log(`Skill used by ${usage.count} agents:`, usage.agentIds);
+ *
+ * // Step 2: Delete skill
+ * await deleteSkill(skillName, process.cwd());
+ *
+ * // Step 3: Update affected agents (remove broken reference)
+ * // Note: This requires agent update logic (not shown here)
+ * for (const agentId of usage.agentIds) {
+ *   console.log(`TODO: Remove "${skillName}" from agent "${agentId}" configuration`);
+ * }
  */
 export async function deleteSkill(name: string, projectRoot: string): Promise<CreateSkillResponse> {
   try {
@@ -324,7 +991,6 @@ export async function deleteSkill(name: string, projectRoot: string): Promise<Cr
       path: skillDir,
     };
   } catch (error) {
-    console.error('Error deleting skill:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -480,7 +1146,6 @@ export async function updateSkillExperience(
 
     return { success: true };
   } catch (error) {
-    console.error('Error updating skill experience:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -509,7 +1174,6 @@ export async function getSkillTrainingHistory(
       history: skill.trainingHistory || [],
     };
   } catch (error) {
-    console.error('Error getting skill training history:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',

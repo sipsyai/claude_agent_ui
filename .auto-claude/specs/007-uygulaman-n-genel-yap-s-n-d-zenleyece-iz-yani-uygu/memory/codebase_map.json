@@ -114,7 +114,17 @@
       "description": "Created FlowDetailPage component with tabs for Overview (flow info, nodes, schedule/triggers) and Execution History (paginated list with expandable rows showing logs, node executions, input/output, and error details). Uses ExecutionRow subcomponent with collapsible details. Navigation handled via ManagerApp.tsx with viewingFlowId state. FlowsPage updated with View button and clickable titles.",
       "category": "component",
       "discovered_at": "2026-01-02T13:52:45.854476+00:00"
+    },
+    "src/services/flow-templates.ts": {
+      "description": "Flow templates service provides 8 pre-built flow templates (Web Scraper, Data Processor, API Integration, Content Writer, Document Analyzer, Code Assistant, Email Responder, File Processor). Each template includes complete flow data with Input/Agent/Output nodes. Functions: getAllTemplates, getTemplateById, getTemplatesByCategory, searchTemplates, createFlowFromTemplate (regenerates node IDs for uniqueness). REST endpoints available at /api/flows/templates/* (routes must be defined before :id routes to avoid conflicts).",
+      "category": "feature",
+      "discovered_at": "2026-01-02T14:11:12.814715+00:00"
+    },
+    "src/services/flow-error-handler.ts": {
+      "description": "Created flow-error-handler.ts with comprehensive error handling utilities: classifyError() for categorizing errors as transient/permanent/unknown, calculateRetryDelay() for exponential backoff with jitter, createRetryState()/recordRetryAttempt()/markWaitingForRetry() for retry state management, shouldRetry() and determineRecoveryAction() for retry decision logic, and formatDelay()/formatErrorSummary() utilities. DEFAULT_RETRY_CONFIG provides sensible defaults (3 retries, 1s initial delay, 30s max, 2x backoff with jitter).",
+      "category": "service",
+      "discovered_at": "2026-01-02T14:20:49.884893+00:00"
     }
   },
-  "last_updated": "2026-01-02T13:52:45.854486+00:00"
+  "last_updated": "2026-01-02T14:20:49.884906+00:00"
 }

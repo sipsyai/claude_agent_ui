@@ -17,14 +17,14 @@
  * ## Component Architecture
  * ```
  * FlowEditorVisual
- *   ├── Header (Minimal top bar: Back + Flow name + Save/Cancel)
+ *   ├── Header (Minimal top bar: Back + Save/Cancel)
  *   ├── FlowCanvasProvider (State management for nodes/edges)
  *   │   └── Main Layout (flex container)
- *   │       ├── NodePalette (left sidebar)
+ *   │       ├── ConfigSidebar (left sidebar - metadata & triggers)
+ *   │       ├── NodePalette (node types sidebar)
  *   │       ├── FlowCanvas (center area)
  *   │       │   └── CanvasToolbar (floating toolbar)
  *   │       └── NodeConfigPanel (right slide-in panel)
- *   └── Footer (Schedule & webhook configuration)
  * ```
  *
  * ## Data Flow
@@ -71,6 +71,7 @@ import type {
 import * as flowApi from '../services/flow-api';
 import { FlowCanvasProvider } from '../contexts/FlowCanvasContext';
 import { FlowCanvas } from './flow-canvas/FlowCanvas';
+import ConfigSidebar from './flow-canvas/ConfigSidebar';
 import NodePalette from './flow-canvas/NodePalette';
 import NodeConfigPanel from './flow-canvas/NodeConfigPanel';
 import CanvasToolbar from './flow-canvas/CanvasToolbar';
@@ -196,9 +197,6 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['triggers'])
-  );
   const [configPanelOpen, setConfigPanelOpen] = useState(false);
   const [showGrid, setShowGrid] = useState(true);
   const [showMinimap, setShowMinimap] = useState(true);
@@ -422,21 +420,6 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   // HANDLERS - UI Controls
   // =========================================================================
 
-  /**
-   * Toggle section expansion in metadata/triggers sections
-   */
-  const toggleSection = (section: string) => {
-    setExpandedSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(section)) {
-        next.delete(section);
-      } else {
-        next.add(section);
-      }
-      return next;
-    });
-  };
-
   // =========================================================================
   // KEYBOARD SHORTCUTS
   // =========================================================================
@@ -458,36 +441,188 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   });
 
   // =========================================================================
-  // SUBCOMPONENTS
+  // METADATA CONTENT FOR SIDEBAR
   // =========================================================================
 
   /**
-   * Section header component for collapsible sections
+   * Metadata form content for ConfigSidebar
    */
-  const SectionHeader: React.FC<{
-    id: string;
-    title: string;
-    description?: string;
-    icon?: React.ReactNode;
-  }> = ({ id, title, description, icon }) => (
-    <button
-      type="button"
-      onClick={() => toggleSection(id)}
-      className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors rounded-lg"
-    >
-      <div className="flex items-center gap-3">
-        {icon && <span className="text-primary">{icon}</span>}
-        <div className="text-left">
-          <h3 className="font-semibold">{title}</h3>
-          {description && <p className="text-sm text-muted-foreground">{description}</p>}
-        </div>
+  const metadataContent = (
+    <div className="space-y-4">
+      {/* Flow Name */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">
+          Flow Name <span className="text-red-500">*</span>
+        </label>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Enter flow name..."
+          className="w-full"
+        />
       </div>
-      {expandedSections.has(id) ? (
-        <ChevronDownIcon className="h-5 w-5 text-muted-foreground" />
-      ) : (
-        <ChevronRightIcon className="h-5 w-5 text-muted-foreground" />
-      )}
-    </button>
+
+      {/* Slug */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">
+          Slug <span className="text-muted-foreground text-xs">(auto-generated)</span>
+        </label>
+        <Input
+          value={slug}
+          onChange={(e) => setSlug(e.target.value)}
+          placeholder="flow-slug"
+          className="w-full font-mono text-sm"
+        />
+      </div>
+
+      {/* Description */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">Description</label>
+        <Textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Describe what this flow does..."
+          rows={3}
+          className="w-full resize-none"
+        />
+      </div>
+
+      {/* Category */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">Category</label>
+        <Select
+          value={category}
+          onChange={(e) => setCategory(e.target.value as FlowCategory)}
+          className="w-full"
+        >
+          {CATEGORY_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.emoji} {option.label}
+            </option>
+          ))}
+        </Select>
+      </div>
+
+      {/* Status */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">Status</label>
+        <Select
+          value={status}
+          onChange={(e) => setStatus(e.target.value as FlowStatus)}
+          className="w-full"
+        >
+          {STATUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+      </div>
+
+      {/* Version */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">Version</label>
+        <Input
+          value={version}
+          onChange={(e) => setVersion(e.target.value)}
+          placeholder="1.0.0"
+          className="w-full font-mono text-sm"
+        />
+      </div>
+
+      {/* Active Toggle */}
+      <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
+        <div>
+          <label className="block font-medium text-sm">Active</label>
+          <p className="text-xs text-muted-foreground">
+            Enable flow for execution
+          </p>
+        </div>
+        <label className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+            className="sr-only peer"
+          />
+          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+    </div>
+  );
+
+  // =========================================================================
+  // TRIGGERS CONTENT FOR SIDEBAR
+  // =========================================================================
+
+  /**
+   * Triggers configuration content for ConfigSidebar
+   */
+  const triggersContent = (
+    <div className="space-y-6">
+      {/* Schedule Configuration */}
+      <div>
+        <FlowScheduleConfig schedule={schedule} onChange={setSchedule} />
+      </div>
+
+      {/* Webhook Configuration */}
+      <div className="border-t pt-4">
+        <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg mb-4">
+          <div>
+            <label className="block font-medium text-sm flex items-center gap-2">
+              <GlobeIcon className="h-4 w-4" />
+              Webhook Trigger
+            </label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Trigger via HTTP POST
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={webhookEnabled}
+              onChange={(e) => setWebhookEnabled(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+
+        {webhookEnabled && (
+          <div className="space-y-4 pl-2">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">
+                Webhook Secret
+                <span className="text-muted-foreground font-normal ml-1 text-xs">
+                  (Optional)
+                </span>
+              </label>
+              <Input
+                type="password"
+                value={webhookSecret}
+                onChange={(e) => setWebhookSecret(e.target.value)}
+                placeholder="Enter secret token..."
+                className="w-full"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Include in X-Webhook-Secret header
+              </p>
+            </div>
+
+            {flowId && (
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <h5 className="font-medium text-xs text-blue-800 dark:text-blue-400 mb-2">
+                  Webhook URL
+                </h5>
+                <code className="block text-[10px] bg-white dark:bg-gray-900 p-2 rounded border border-blue-100 dark:border-blue-900 break-all">
+                  POST /api/webhooks/flows/{slug || flowId}
+                </code>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 
   // =========================================================================
@@ -510,7 +645,7 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* ===================================================================
-          HEADER - Minimal Top Bar (Flow name + Save/Cancel)
+          HEADER - Minimal Top Bar (Back + Save/Cancel)
           =================================================================== */}
       <div className="flex-shrink-0 border-b border-border bg-card" style={{ height: '50px' }}>
         <div className="h-full flex items-center justify-between px-4 gap-4">
@@ -525,14 +660,11 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
             Back
           </Button>
 
-          {/* Center: Flow Name (Editable) */}
-          <div className="flex-1 max-w-md">
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter flow name..."
-              className="h-9 text-base font-medium"
-            />
+          {/* Center: Flow Name Display */}
+          <div className="flex-1 text-center">
+            <h1 className="text-base font-semibold text-foreground truncate">
+              {name || 'Untitled Flow'}
+            </h1>
           </div>
 
           {/* Right: Save/Cancel Buttons */}
@@ -627,7 +759,13 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
           initialEdges={initialEdges}
           onCanvasChange={handleCanvasChange}
         >
-          {/* Left Sidebar - Node Palette */}
+          {/* Left Sidebar - Configuration */}
+          <ConfigSidebar
+            metadataContent={metadataContent}
+            triggersContent={triggersContent}
+          />
+
+          {/* Node Palette */}
           <NodePalette />
 
           {/* Center Area - Flow Canvas */}
@@ -660,89 +798,6 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
           {/* Right Panel - Node Configuration */}
           <NodeConfigPanel isOpen={configPanelOpen} onClose={handleConfigPanelClose} />
         </FlowCanvasProvider>
-      </div>
-
-      {/* ===================================================================
-          FOOTER - Schedule & Triggers
-          =================================================================== */}
-      <div className="flex-shrink-0 border-t border-border bg-card">
-        <div className="max-w-full mx-auto px-6 py-4">
-          <Card className="mb-0">
-            <SectionHeader
-              id="triggers"
-              title="Schedule & Triggers"
-              description="Configure automated execution and webhook triggers"
-              icon={<ClockIcon className="h-5 w-5" />}
-            />
-            {expandedSections.has('triggers') && (
-              <CardContent className="space-y-6 border-t">
-                {/* Schedule Configuration */}
-                <FlowScheduleConfig schedule={schedule} onChange={setSchedule} />
-
-                {/* Webhook Configuration */}
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg mb-4">
-                    <div>
-                      <label className="block font-medium flex items-center gap-2">
-                        <GlobeIcon className="h-4 w-4" />
-                        Enable Webhook Trigger
-                      </label>
-                      <p className="text-sm text-muted-foreground">
-                        Allow this flow to be triggered via HTTP POST request
-                      </p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={webhookEnabled}
-                        onChange={(e) => setWebhookEnabled(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-
-                  {webhookEnabled && (
-                    <div className="space-y-4 pl-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Webhook Secret
-                          <span className="text-muted-foreground font-normal ml-1">
-                            - Optional but recommended
-                          </span>
-                        </label>
-                        <Input
-                          type="password"
-                          value={webhookSecret}
-                          onChange={(e) => setWebhookSecret(e.target.value)}
-                          placeholder="Enter a secret token for authentication"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Include this secret in the X-Webhook-Secret header when calling the
-                          webhook
-                        </p>
-                      </div>
-
-                      {flowId && (
-                        <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-                          <h5 className="font-medium text-sm text-blue-800 dark:text-blue-400 mb-2">
-                            Webhook URL
-                          </h5>
-                          <code className="block text-sm bg-white dark:bg-gray-900 p-2 rounded border border-blue-100 dark:border-blue-900 break-all">
-                            POST /api/webhooks/flows/{slug || flowId}
-                          </code>
-                          <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                            Send a POST request with JSON body containing your input data
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            )}
-          </Card>
-        </div>
       </div>
     </div>
   );

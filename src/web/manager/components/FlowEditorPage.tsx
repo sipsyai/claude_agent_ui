@@ -413,7 +413,12 @@ const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ flowId, onClose, onSave
           <Button variant="secondary" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={saving} className="flex items-center gap-2">
+          <Button
+            onClick={handleSave}
+            disabled={saving || !name.trim()}
+            className="flex items-center gap-2"
+            title={!name.trim() ? 'Flow name is required' : undefined}
+          >
             {saving ? (
               <>
                 <SpinnerIcon className="h-4 w-4" />
@@ -705,7 +710,12 @@ const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ flowId, onClose, onSave
         <Button variant="secondary" onClick={onClose} disabled={saving}>
           Cancel
         </Button>
-        <Button onClick={handleSave} disabled={saving} className="flex items-center gap-2">
+        <Button
+          onClick={handleSave}
+          disabled={saving || !name.trim()}
+          className="flex items-center gap-2"
+          title={!name.trim() ? 'Flow name is required' : undefined}
+        >
           {saving ? (
             <>
               <SpinnerIcon className="h-4 w-4" />

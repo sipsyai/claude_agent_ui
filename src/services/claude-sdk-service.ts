@@ -218,20 +218,165 @@ export class ClaudeSdkService extends EventEmitter {
     });
   }
 
+  /**
+   * Set the Claude Router Service for load balancing and failover
+   *
+   * @description
+   * Optionally configure a router service to handle request routing across multiple
+   * Claude API endpoints. The router can implement load balancing, failover, and
+   * rate limiting strategies.
+   *
+   * @param service - Optional ClaudeRouterService instance for API request routing
+   *
+   * @example
+   * ```typescript
+   * const router = new ClaudeRouterService();
+   * router.registerRoute('primary', 'https://api.anthropic.com');
+   * router.registerRoute('fallback', 'https://backup.anthropic.com');
+   *
+   * claudeSdk.setRouterService(router);
+   * ```
+   */
   setRouterService(service?: ClaudeRouterService): void {
     this.routerService = service;
   }
 
+  /**
+   * Set the path to MCP configuration file
+   *
+   * @description
+   * Configure the path to a .mcp.json file containing MCP server configurations.
+   * When set, MCP servers defined in this file will be loaded and made available
+   * to SDK conversations. These servers have the lowest priority in the merge
+   * strategy (file < Strapi agent < skill-specific MCP).
+   *
+   * @param configPath - Absolute path to .mcp.json configuration file
+   *
+   * @example
+   * ```typescript
+   * import path from 'path';
+   * import os from 'os';
+   *
+   * const mcpPath = path.join(os.homedir(), '.config', 'claude', '.mcp.json');
+   * claudeSdk.setMcpConfigPath(mcpPath);
+   * ```
+   */
   setMcpConfigPath(configPath: string): void {
     this.mcpConfigPath = configPath;
   }
 
+  /**
+   * Set the notification service for conversation events
+   *
+   * @description
+   * Optionally configure a notification service to send in-app and push notifications
+   * for conversation events such as new messages, errors, or conversation completion.
+   * The service will be used to notify users when conversations require attention.
+   *
+   * @param service - Optional NotificationService instance for sending notifications
+   *
+   * @example
+   * ```typescript
+   * const notifications = new NotificationService();
+   * claudeSdk.setNotificationService(notifications);
+   *
+   * // Notifications will be sent automatically for conversation events
+   * claudeSdk.on('process-error', ({ streamingId, error }) => {
+   *   // Notification service can handle this event
+   * });
+   * ```
+   */
   setNotificationService(service?: NotificationService): void {
     this.notificationService = service;
   }
 
   /**
-   * Start a new conversation using the SDK
+   * Start a new conversation using the Claude Agent SDK
+   *
+   * @description
+   * Initializes a new SDK conversation with the provided configuration. This method:
+   * - Creates a unique streaming ID for tracking the conversation
+   * - Builds SDK options including MCP servers from multiple sources
+   * - Initializes session info in the database
+   * - Registers the conversation with the status tracker
+   * - Starts processing SDK messages asynchronously
+   * - Emits 'claude-message' events for real-time updates
+   *
+   * The conversation will continue until stopped via stopConversation() or until
+   * the SDK query completes naturally.
+   *
+   * MCP Server Merge Priority (highest to lowest):
+   * 1. Skill-specific MCP servers (from config.skills[].mcpConfig)
+   * 2. Strapi agent-level MCP servers (from database)
+   * 3. File-based MCP servers (from .mcp.json config file)
+   *
+   * @param config - Conversation configuration including prompt, model, tools, and optional resume session
+   * @param config.initialPrompt - The user's initial message to start the conversation
+   * @param config.workingDirectory - Working directory for the conversation (defaults to process.cwd())
+   * @param config.model - Claude model to use (defaults to 'claude-sonnet-4-5')
+   * @param config.permissionMode - Permission mode for tool execution ('default', 'auto', 'manual')
+   * @param config.allowedTools - Array of allowed tool names (e.g., ['Read', 'Write', 'Bash'])
+   * @param config.disallowedTools - Array of disallowed tool names
+   * @param config.systemPrompt - Optional system prompt for the conversation
+   * @param config.skills - Optional array of skills to enable for the conversation
+   * @param config.previousMessages - Optional array of previous messages to resume from
+   * @param config.resumedSessionId - Optional session ID to resume an existing conversation
+   * @param config.maxThinkingTokens - Maximum tokens for extended thinking (defaults to 10000)
+   *
+   * @returns Promise resolving to an object containing:
+   *   - streamingId: Unique identifier for this conversation instance
+   *   - systemInit: System initialization message with session details
+   *
+   * @throws Error if SDK query creation fails or session initialization fails
+   *
+   * @example
+   * ```typescript
+   * // Start a basic conversation
+   * const { streamingId, systemInit } = await claudeSdk.startConversation({
+   *   initialPrompt: 'Hello, Claude! Can you help me write a function?',
+   *   workingDirectory: '/path/to/project',
+   *   model: 'claude-sonnet-4-5',
+   *   permissionMode: 'default',
+   *   allowedTools: ['Read', 'Write', 'Edit']
+   * });
+   *
+   * console.log('Conversation started:', streamingId);
+   * console.log('Session ID:', systemInit.session_id);
+   *
+   * // Listen for conversation events
+   * claudeSdk.on('claude-message', ({ streamingId, message }) => {
+   *   if (message.type === 'assistant') {
+   *     console.log('Assistant:', message.message.content);
+   *   }
+   * });
+   *
+   * // Resume an existing conversation
+   * const { streamingId: resumedId } = await claudeSdk.startConversation({
+   *   initialPrompt: 'Continue from where we left off',
+   *   resumedSessionId: previousSessionId,
+   *   previousMessages: historyMessages,
+   *   workingDirectory: '/path/to/project'
+   * });
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Start conversation with skills and MCP servers
+   * const { streamingId } = await claudeSdk.startConversation({
+   *   initialPrompt: 'Help me analyze this codebase',
+   *   workingDirectory: '/path/to/project',
+   *   skills: [
+   *     {
+   *       name: 'code-analysis',
+   *       mcpConfig: [
+   *         { mcpServer: 'mcp-server-id-1' }
+   *       ]
+   *     }
+   *   ],
+   *   allowedTools: ['Read', 'Grep', 'Bash', 'Skill'],
+   *   permissionMode: 'auto'
+   * });
+   * ```
    */
   async startConversation(
     config: ConversationConfig & { resumedSessionId?: string }
@@ -335,7 +480,56 @@ export class ClaudeSdkService extends EventEmitter {
   }
 
   /**
-   * Stop a conversation
+   * Stop an active conversation and clean up resources
+   *
+   * @description
+   * Gracefully stops a running SDK conversation by:
+   * - Flushing any pending history writes to disk
+   * - Unregistering the conversation from the status tracker
+   * - Cleaning up internal query and config references
+   * - Emitting a 'process-closed' event with exit code 0
+   *
+   * Note: SDK queries are async generators and cannot be forcefully terminated.
+   * This method cleans up our internal tracking and ensures history is persisted,
+   * but the SDK query may continue briefly before completing.
+   *
+   * @param streamingId - Unique identifier of the conversation to stop
+   *
+   * @returns Promise<boolean> - true if conversation was found and stopped, false if not found
+   *
+   * @example
+   * ```typescript
+   * // Start a conversation
+   * const { streamingId } = await claudeSdk.startConversation({
+   *   initialPrompt: 'Hello!',
+   *   workingDirectory: '/path/to/project'
+   * });
+   *
+   * // ... conversation runs ...
+   *
+   * // Stop the conversation when done
+   * const stopped = await claudeSdk.stopConversation(streamingId);
+   * if (stopped) {
+   *   console.log('Conversation stopped successfully');
+   * } else {
+   *   console.log('Conversation not found');
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Stop conversation on user cancellation
+   * claudeSdk.on('claude-message', async ({ streamingId, message }) => {
+   *   if (message.type === 'assistant') {
+   *     // Process message...
+   *   }
+   * });
+   *
+   * // User clicks cancel button
+   * cancelButton.addEventListener('click', async () => {
+   *   await claudeSdk.stopConversation(currentStreamingId);
+   * });
+   * ```
    */
   async stopConversation(streamingId: string): Promise<boolean> {
     this.logger.debug('Stopping conversation', { streamingId });
@@ -963,14 +1157,100 @@ export class ClaudeSdkService extends EventEmitter {
   }
 
   /**
-   * Get active conversations count
+   * Get the count of currently active conversations
+   *
+   * @description
+   * Returns the number of SDK conversations currently running. This count includes
+   * all conversations that have been started but not yet stopped or completed.
+   * Useful for monitoring system load and enforcing concurrency limits.
+   *
+   * @returns Number of active conversations being managed by this service instance
+   *
+   * @example
+   * ```typescript
+   * // Check active conversation count before starting new one
+   * const activeCount = claudeSdk.getActiveConversationsCount();
+   * console.log(`Currently ${activeCount} conversations running`);
+   *
+   * if (activeCount < MAX_CONCURRENT_CONVERSATIONS) {
+   *   await claudeSdk.startConversation(config);
+   * } else {
+   *   console.log('Maximum concurrent conversations reached');
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Monitor conversation load
+   * setInterval(() => {
+   *   const count = claudeSdk.getActiveConversationsCount();
+   *   console.log(`Active conversations: ${count}`);
+   *
+   *   if (count > 10) {
+   *     console.warn('High conversation load detected');
+   *   }
+   * }, 5000);
+   * ```
    */
   getActiveConversationsCount(): number {
     return this.queries.size;
   }
 
   /**
-   * Check if a conversation is active
+   * Check if a specific conversation is currently active
+   *
+   * @description
+   * Determines whether a conversation with the given streaming ID is currently running.
+   * A conversation is considered active from the time startConversation() returns until
+   * either stopConversation() is called or the SDK query completes naturally.
+   *
+   * @param streamingId - Unique identifier of the conversation to check
+   *
+   * @returns true if the conversation is active, false otherwise
+   *
+   * @example
+   * ```typescript
+   * // Check if conversation is still running before sending a stop command
+   * if (claudeSdk.isConversationActive(streamingId)) {
+   *   await claudeSdk.stopConversation(streamingId);
+   * } else {
+   *   console.log('Conversation already completed');
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Prevent duplicate conversation starts
+   * let currentStreamingId: string | null = null;
+   *
+   * async function startNewConversation(prompt: string) {
+   *   if (currentStreamingId && claudeSdk.isConversationActive(currentStreamingId)) {
+   *     console.log('A conversation is already running');
+   *     return;
+   *   }
+   *
+   *   const { streamingId } = await claudeSdk.startConversation({
+   *     initialPrompt: prompt,
+   *     workingDirectory: process.cwd()
+   *   });
+   *
+   *   currentStreamingId = streamingId;
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Track conversation lifecycle
+   * const { streamingId } = await claudeSdk.startConversation(config);
+   *
+   * console.log('Active:', claudeSdk.isConversationActive(streamingId)); // true
+   *
+   * claudeSdk.on('process-closed', ({ streamingId: closedId }) => {
+   *   if (closedId === streamingId) {
+   *     console.log('Active:', claudeSdk.isConversationActive(streamingId)); // false
+   *   }
+   * });
+   * ```
    */
   isConversationActive(streamingId: string): boolean {
     return this.queries.has(streamingId);

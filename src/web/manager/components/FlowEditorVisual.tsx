@@ -7,7 +7,7 @@
  *
  * ## Features
  * - **Visual Canvas**: React Flow-based drag-and-drop interface
- * - **Node Palette**: Draggable sidebar with available node types
+ * - **Floating Node Palette**: Compact overlay with draggable node types
  * - **Configuration Panel**: Slide-out panel for editing selected nodes
  * - **Canvas Toolbar**: Undo/redo, zoom controls, and layout options
  * - **Metadata Form**: Flow name, description, category, and settings
@@ -17,14 +17,14 @@
  * ## Component Architecture
  * ```
  * FlowEditorVisual
- *   ├── Header (Flow metadata form + Save/Cancel buttons)
+ *   ├── Header (Minimal top bar: Back + Save/Cancel)
  *   ├── FlowCanvasProvider (State management for nodes/edges)
  *   │   └── Main Layout (flex container)
- *   │       ├── NodePalette (left sidebar)
+ *   │       ├── ConfigSidebar (left sidebar - metadata & triggers)
  *   │       ├── FlowCanvas (center area)
+ *   │       │   ├── FloatingNodePalette (overlay - top-left)
  *   │       │   └── CanvasToolbar (floating toolbar)
  *   │       └── NodeConfigPanel (right slide-in panel)
- *   └── Footer (Schedule & webhook configuration)
  * ```
  *
  * ## Data Flow
@@ -36,7 +36,7 @@
  * ## Integration Points
  * - **FlowCanvasContext**: Centralized state for nodes, edges, undo/redo
  * - **flow-converter**: Bidirectional conversion between formats
- * - **NodePalette**: Drag nodes onto canvas
+ * - **FloatingNodePalette**: Floating overlay to drag nodes onto canvas
  * - **FlowCanvas**: Main visual canvas with React Flow
  * - **NodeConfigPanel**: Edit selected node properties
  * - **CanvasToolbar**: Canvas manipulation controls
@@ -62,7 +62,6 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ReactFlowProvider } from '@xyflow/react';
 import type {
   Flow,
   FlowStatus,
@@ -72,7 +71,8 @@ import type {
 import * as flowApi from '../services/flow-api';
 import { FlowCanvasProvider } from '../contexts/FlowCanvasContext';
 import { FlowCanvas } from './flow-canvas/FlowCanvas';
-import NodePalette from './flow-canvas/NodePalette';
+import ConfigSidebar from './flow-canvas/ConfigSidebar';
+import FloatingNodePalette from './flow-canvas/FloatingNodePalette';
 import NodeConfigPanel from './flow-canvas/NodeConfigPanel';
 import CanvasToolbar from './flow-canvas/CanvasToolbar';
 import FlowPreview from './flow-canvas/FlowPreview';
@@ -99,6 +99,7 @@ import {
 } from '../utils/flow-validator';
 import type { ReactFlowNode, ReactFlowEdge } from '../types/react-flow.types';
 import { useFlowKeyboardShortcuts } from '../hooks/useFlowKeyboardShortcuts';
+import { useToast } from '../contexts/ToastContext';
 
 // =============================================================================
 // TYPES AND CONSTANTS
@@ -196,14 +197,15 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   // =========================================================================
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['metadata', 'triggers'])
-  );
   const [configPanelOpen, setConfigPanelOpen] = useState(false);
   const [showGrid, setShowGrid] = useState(true);
   const [showMinimap, setShowMinimap] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+
+  // =========================================================================
+  // TOAST NOTIFICATIONS
+  // =========================================================================
+  const { addToast } = useToast();
 
   // =========================================================================
   // STATE - Validation
@@ -249,7 +251,6 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
     if (!flowId) return;
 
     setLoading(true);
-    setError(null);
 
     try {
       const flow = await flowApi.getFlow(flowId);
@@ -277,7 +278,11 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
       setWebhookEnabled(flow.webhookEnabled || false);
       setWebhookSecret(flow.webhookSecret || '');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load flow');
+      addToast({
+        message: err instanceof Error ? err.message : 'Failed to load flow',
+        variant: 'error',
+        duration: 7000,
+      });
       console.error('Failed to load flow:', err);
     } finally {
       setLoading(false);
@@ -332,25 +337,38 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
    */
   const handleSave = async () => {
     if (!name.trim()) {
-      setError('Flow name is required');
+      addToast({
+        message: 'Flow name is required',
+        variant: 'error',
+        duration: 5000,
+      });
       return;
     }
 
     if (currentNodes.length === 0) {
-      setError('Flow must have at least one node');
+      addToast({
+        message: 'Flow must have at least one node',
+        variant: 'error',
+        duration: 5000,
+      });
       return;
     }
 
     // Validate flow structure before saving
     const validation = validateFlow(currentNodes, currentEdges);
     if (!validation.isValid) {
-      const errorMessage = formatValidationErrors(validation);
-      setError(`Flow validation failed:\n\n${errorMessage}`);
+      // Show each validation error as a separate stacked toast
+      validation.errors.forEach((error) => {
+        addToast({
+          message: error.message,
+          variant: 'error',
+          duration: 7000,
+        });
+      });
       return;
     }
 
     setSaving(true);
-    setError(null);
 
     try {
       // Convert React Flow format back to Flow format
@@ -408,11 +426,22 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
         savedFlow = response.flow;
       }
 
+      // Show success toast
+      addToast({
+        message: `Flow "${savedFlow.name}" saved successfully!`,
+        variant: 'success',
+        duration: 5000,
+      });
+
       // Call success callbacks
       onSave?.(savedFlow);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save flow');
+      addToast({
+        message: err instanceof Error ? err.message : 'Failed to save flow',
+        variant: 'error',
+        duration: 7000,
+      });
       console.error('Failed to save flow:', err);
     } finally {
       setSaving(false);
@@ -422,21 +451,6 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   // =========================================================================
   // HANDLERS - UI Controls
   // =========================================================================
-
-  /**
-   * Toggle section expansion in metadata/triggers sections
-   */
-  const toggleSection = (section: string) => {
-    setExpandedSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(section)) {
-        next.delete(section);
-      } else {
-        next.add(section);
-      }
-      return next;
-    });
-  };
 
   // =========================================================================
   // KEYBOARD SHORTCUTS
@@ -459,36 +473,188 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   });
 
   // =========================================================================
-  // SUBCOMPONENTS
+  // METADATA CONTENT FOR SIDEBAR
   // =========================================================================
 
   /**
-   * Section header component for collapsible sections
+   * Metadata form content for ConfigSidebar
    */
-  const SectionHeader: React.FC<{
-    id: string;
-    title: string;
-    description?: string;
-    icon?: React.ReactNode;
-  }> = ({ id, title, description, icon }) => (
-    <button
-      type="button"
-      onClick={() => toggleSection(id)}
-      className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors rounded-lg"
-    >
-      <div className="flex items-center gap-3">
-        {icon && <span className="text-primary">{icon}</span>}
-        <div className="text-left">
-          <h3 className="font-semibold">{title}</h3>
-          {description && <p className="text-sm text-muted-foreground">{description}</p>}
-        </div>
+  const metadataContent = (
+    <div className="space-y-4">
+      {/* Flow Name */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">
+          Flow Name <span className="text-red-500">*</span>
+        </label>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Enter flow name..."
+          className="w-full"
+        />
       </div>
-      {expandedSections.has(id) ? (
-        <ChevronDownIcon className="h-5 w-5 text-muted-foreground" />
-      ) : (
-        <ChevronRightIcon className="h-5 w-5 text-muted-foreground" />
-      )}
-    </button>
+
+      {/* Slug */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">
+          Slug <span className="text-muted-foreground text-xs">(auto-generated)</span>
+        </label>
+        <Input
+          value={slug}
+          onChange={(e) => setSlug(e.target.value)}
+          placeholder="flow-slug"
+          className="w-full font-mono text-sm"
+        />
+      </div>
+
+      {/* Description */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">Description</label>
+        <Textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Describe what this flow does..."
+          rows={3}
+          className="w-full resize-none"
+        />
+      </div>
+
+      {/* Category */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">Category</label>
+        <Select
+          value={category}
+          onChange={(e) => setCategory(e.target.value as FlowCategory)}
+          className="w-full"
+        >
+          {CATEGORY_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.emoji} {option.label}
+            </option>
+          ))}
+        </Select>
+      </div>
+
+      {/* Status */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">Status</label>
+        <Select
+          value={status}
+          onChange={(e) => setStatus(e.target.value as FlowStatus)}
+          className="w-full"
+        >
+          {STATUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+      </div>
+
+      {/* Version */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">Version</label>
+        <Input
+          value={version}
+          onChange={(e) => setVersion(e.target.value)}
+          placeholder="1.0.0"
+          className="w-full font-mono text-sm"
+        />
+      </div>
+
+      {/* Active Toggle */}
+      <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
+        <div>
+          <label className="block font-medium text-sm">Active</label>
+          <p className="text-xs text-muted-foreground">
+            Enable flow for execution
+          </p>
+        </div>
+        <label className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+            className="sr-only peer"
+          />
+          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+    </div>
+  );
+
+  // =========================================================================
+  // TRIGGERS CONTENT FOR SIDEBAR
+  // =========================================================================
+
+  /**
+   * Triggers configuration content for ConfigSidebar
+   */
+  const triggersContent = (
+    <div className="space-y-6">
+      {/* Schedule Configuration */}
+      <div>
+        <FlowScheduleConfig schedule={schedule} onChange={setSchedule} />
+      </div>
+
+      {/* Webhook Configuration */}
+      <div className="border-t pt-4">
+        <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg mb-4">
+          <div>
+            <label className="block font-medium text-sm flex items-center gap-2">
+              <GlobeIcon className="h-4 w-4" />
+              Webhook Trigger
+            </label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Trigger via HTTP POST
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={webhookEnabled}
+              onChange={(e) => setWebhookEnabled(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+
+        {webhookEnabled && (
+          <div className="space-y-4 pl-2">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">
+                Webhook Secret
+                <span className="text-muted-foreground font-normal ml-1 text-xs">
+                  (Optional)
+                </span>
+              </label>
+              <Input
+                type="password"
+                value={webhookSecret}
+                onChange={(e) => setWebhookSecret(e.target.value)}
+                placeholder="Enter secret token..."
+                className="w-full"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Include in X-Webhook-Secret header
+              </p>
+            </div>
+
+            {flowId && (
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <h5 className="font-medium text-xs text-blue-800 dark:text-blue-400 mb-2">
+                  Webhook URL
+                </h5>
+                <code className="block text-[10px] bg-white dark:bg-gray-900 p-2 rounded border border-blue-100 dark:border-blue-900 break-all">
+                  POST /api/webhooks/flows/{slug || flowId}
+                </code>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 
   // =========================================================================
@@ -509,349 +675,114 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   // =========================================================================
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background overflow-hidden">
       {/* ===================================================================
-          HEADER - Flow Metadata and Actions
+          HEADER - Minimal Top Bar (Back + Save/Cancel)
           =================================================================== */}
-      <div className="flex-shrink-0 border-b border-border bg-card">
-        <div className="max-w-full mx-auto px-6 py-4">
-          {/* Header Row */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <Button variant="secondary" onClick={onClose} className="flex items-center gap-2">
-                <ArrowLeftIcon className="h-4 w-4" />
-                Back
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">
-                  {flowId ? 'Edit Flow' : 'Create New Flow'}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Design your workflow visually with drag-and-drop nodes
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="secondary" onClick={onClose} disabled={saving}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={saving || validationResult.hasErrors}
-                className="flex items-center gap-2"
-                title={validationResult.hasErrors ? 'Fix validation errors before saving' : undefined}
-              >
-                {saving ? (
-                  <>
-                    <SpinnerIcon className="h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircleIcon className="h-4 w-4" />
-                    {flowId ? 'Update Flow' : 'Create Flow'}
-                  </>
-                )}
-              </Button>
-            </div>
+      <div className="flex-shrink-0 border-b border-border bg-card" style={{ height: '50px' }}>
+        <div className="h-full flex items-center justify-between px-4 gap-4">
+          {/* Left: Back Button */}
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            className="flex items-center gap-2 flex-shrink-0"
+            size="sm"
+          >
+            <ArrowLeftIcon className="h-4 w-4" />
+            Back
+          </Button>
+
+          {/* Center: Flow Name Display */}
+          <div className="flex-1 text-center min-w-0 px-4">
+            <h1
+              className="text-base font-semibold text-foreground truncate max-w-full"
+              title={name || 'Untitled Flow'}
+            >
+              {name || 'Untitled Flow'}
+            </h1>
           </div>
 
-          {/* Error Display */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-400">
-              <pre className="whitespace-pre-wrap font-sans">{error}</pre>
-            </div>
-          )}
-
-          {/* Validation Status Display */}
-          {validationResult.hasErrors && (
-            <div className="mb-4 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md">
-              <div className="flex items-start gap-2">
-                <span className="text-red-600 dark:text-red-400 text-lg">⚠️</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-red-700 dark:text-red-400 mb-2">
-                    Flow Validation Errors
-                  </h3>
-                  <ul className="space-y-1 text-sm text-red-600 dark:text-red-400">
-                    {validationResult.errors.map((error, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="mt-1">•</span>
-                        <span>{error.message}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-xs text-red-500 dark:text-red-500 mt-2">
-                    Please fix these errors before saving the flow.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Validation Warnings Display */}
-          {validationResult.hasWarnings && !validationResult.hasErrors && (
-            <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-md">
-              <div className="flex items-start gap-2">
-                <span className="text-yellow-600 dark:text-yellow-400 text-lg">⚠️</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-yellow-700 dark:text-yellow-400 mb-2">
-                    Flow Warnings
-                  </h3>
-                  <ul className="space-y-1 text-sm text-yellow-600 dark:text-yellow-400">
-                    {validationResult.warnings.map((warning, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="mt-1">•</span>
-                        <span>{warning.message}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-xs text-yellow-500 dark:text-yellow-500 mt-2">
-                    These warnings won't prevent saving, but may affect flow execution.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Success Status Display */}
-          {!validationResult.hasErrors && !validationResult.hasWarnings && currentNodes.length > 0 && (
-            <div className="mb-4 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md">
-              <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
-                <CheckCircleIcon className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  Flow structure is valid ({currentNodes.length} nodes, {currentEdges.length} connections)
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Metadata Section */}
-          <Card className="mb-0">
-            <SectionHeader
-              id="metadata"
-              title="Flow Metadata"
-              description="Basic information about your flow"
-              icon="📋"
-            />
-            {expandedSections.has('metadata') && (
-              <CardContent className="space-y-4 border-t">
-                {/* Name and Slug */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Name <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="My Workflow"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Slug</label>
-                    <Input
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
-                      placeholder="my-workflow"
-                    />
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Description</label>
-                  <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe what this flow does..."
-                    className="min-h-[80px]"
-                  />
-                </div>
-
-                {/* Category, Status, Version */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Category</label>
-                    <Select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value as FlowCategory)}
-                    >
-                      {CATEGORY_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.emoji} {opt.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Status</label>
-                    <Select
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value as FlowStatus)}
-                    >
-                      {STATUS_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Version</label>
-                    <Input
-                      value={version}
-                      onChange={(e) => setVersion(e.target.value)}
-                      placeholder="1.0.0"
-                    />
-                  </div>
-                </div>
-
-                {/* Active Toggle */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="isActive"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                    className="w-4 h-4 rounded"
-                  />
-                  <label htmlFor="isActive" className="text-sm font-medium">
-                    Flow is active and can be executed
-                  </label>
-                </div>
-              </CardContent>
-            )}
-          </Card>
+          {/* Right: Save/Cancel Buttons */}
+          <div className="flex gap-2 flex-shrink-0">
+            <Button
+              variant="secondary"
+              onClick={onClose}
+              disabled={saving}
+              size="sm"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={saving || validationResult.hasErrors}
+              className="flex items-center gap-2"
+              title={validationResult.hasErrors ? 'Fix validation errors before saving' : undefined}
+              size="sm"
+            >
+              {saving ? (
+                <>
+                  <SpinnerIcon className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <CheckCircleIcon className="h-4 w-4" />
+                  Save
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* ===================================================================
           MAIN CANVAS - Visual Flow Editor
           =================================================================== */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 50px)' }}>
         <FlowCanvasProvider
           initialNodes={initialNodes}
           initialEdges={initialEdges}
           onCanvasChange={handleCanvasChange}
         >
-          <ReactFlowProvider>
-            {/* Left Sidebar - Node Palette */}
-            <NodePalette />
+          {/* Left Sidebar - Configuration (collapsible: 320px expanded, 50px collapsed) */}
+          <ConfigSidebar
+            metadataContent={metadataContent}
+            triggersContent={triggersContent}
+          />
 
-            {/* Center Area - Flow Canvas */}
-            <div className="flex-1 relative">
-              <FlowCanvas
-                onNodeClick={handleNodeClick}
-                onCanvasClick={handleCanvasClick}
-                showBackground={showGrid}
+          {/* Center Area - Flow Canvas (fills remaining space ~80-90% width) */}
+          <div className="flex-1 relative overflow-hidden h-full">
+            <FlowCanvas
+              onNodeClick={handleNodeClick}
+              onCanvasClick={handleCanvasClick}
+              showBackground={showGrid}
+              showMinimap={showMinimap}
+            />
+
+            {/* Floating Node Palette - Overlay positioned top-left */}
+            <FloatingNodePalette position="top-left" />
+
+            {/* Floating Toolbar - Overlay positioned top-center */}
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
+              <CanvasToolbar
+                showGrid={showGrid}
+                onToggleGrid={() => setShowGrid((prev) => !prev)}
                 showMinimap={showMinimap}
-              />
-
-              {/* Floating Toolbar */}
-              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-                <CanvasToolbar
-                  showGrid={showGrid}
-                  onToggleGrid={() => setShowGrid((prev) => !prev)}
-                  showMinimap={showMinimap}
-                  onToggleMinimap={() => setShowMinimap((prev) => !prev)}
-                  onPreview={() => setShowPreview(true)}
-                />
-              </div>
-
-              {/* Flow Preview Modal */}
-              <FlowPreview
-                isOpen={showPreview}
-                onClose={() => setShowPreview(false)}
+                onToggleMinimap={() => setShowMinimap((prev) => !prev)}
+                onPreview={() => setShowPreview(true)}
               />
             </div>
 
-            {/* Right Panel - Node Configuration */}
-            <NodeConfigPanel isOpen={configPanelOpen} onClose={handleConfigPanelClose} />
-          </ReactFlowProvider>
-        </FlowCanvasProvider>
-      </div>
-
-      {/* ===================================================================
-          FOOTER - Schedule & Triggers
-          =================================================================== */}
-      <div className="flex-shrink-0 border-t border-border bg-card">
-        <div className="max-w-full mx-auto px-6 py-4">
-          <Card className="mb-0">
-            <SectionHeader
-              id="triggers"
-              title="Schedule & Triggers"
-              description="Configure automated execution and webhook triggers"
-              icon={<ClockIcon className="h-5 w-5" />}
+            {/* Flow Preview Modal */}
+            <FlowPreview
+              isOpen={showPreview}
+              onClose={() => setShowPreview(false)}
             />
-            {expandedSections.has('triggers') && (
-              <CardContent className="space-y-6 border-t">
-                {/* Schedule Configuration */}
-                <FlowScheduleConfig schedule={schedule} onChange={setSchedule} />
+          </div>
 
-                {/* Webhook Configuration */}
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg mb-4">
-                    <div>
-                      <label className="block font-medium flex items-center gap-2">
-                        <GlobeIcon className="h-4 w-4" />
-                        Enable Webhook Trigger
-                      </label>
-                      <p className="text-sm text-muted-foreground">
-                        Allow this flow to be triggered via HTTP POST request
-                      </p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={webhookEnabled}
-                        onChange={(e) => setWebhookEnabled(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-
-                  {webhookEnabled && (
-                    <div className="space-y-4 pl-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Webhook Secret
-                          <span className="text-muted-foreground font-normal ml-1">
-                            - Optional but recommended
-                          </span>
-                        </label>
-                        <Input
-                          type="password"
-                          value={webhookSecret}
-                          onChange={(e) => setWebhookSecret(e.target.value)}
-                          placeholder="Enter a secret token for authentication"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Include this secret in the X-Webhook-Secret header when calling the
-                          webhook
-                        </p>
-                      </div>
-
-                      {flowId && (
-                        <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-                          <h5 className="font-medium text-sm text-blue-800 dark:text-blue-400 mb-2">
-                            Webhook URL
-                          </h5>
-                          <code className="block text-sm bg-white dark:bg-gray-900 p-2 rounded border border-blue-100 dark:border-blue-900 break-all">
-                            POST /api/webhooks/flows/{slug || flowId}
-                          </code>
-                          <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                            Send a POST request with JSON body containing your input data
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            )}
-          </Card>
-        </div>
+          {/* Right Panel - Node Configuration (slide-in overlay, doesn't affect layout) */}
+          <NodeConfigPanel isOpen={configPanelOpen} onClose={handleConfigPanelClose} />
+        </FlowCanvasProvider>
       </div>
     </div>
   );

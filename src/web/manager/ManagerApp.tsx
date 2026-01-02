@@ -312,6 +312,7 @@ import SettingsPage from './components/SettingsPage';
 import { FlowCanvasProvider } from './contexts/FlowCanvasContext';
 import * as api from './services/api';
 import ChatPage from './components/ChatPage';
+import { ToastProvider } from './contexts/ToastContext';
 
 /**
  * Setup step type for the three-step onboarding workflow.
@@ -601,33 +602,33 @@ const App: React.FC = () => {
     }
   };
 
-  if (view === 'setup') {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
-        {renderSetupContent()}
-      </main>
-    );
-  }
-
   return (
-    <Layout
-      sidebarProps={{
-        activeView: managerView,
-        onNavigate: setManagerView,
-        directoryName: directoryName,
-        onChangeDirectory: handleChangeDirectory,
-      }}
-      noContainer={managerView === ManagerView.Chat}
-    >
-      {renderDashboardContent()}
-      {selectedAgent && (
-        <AgentConfigModal
-          agent={selectedAgent}
-          isOpen={!!selectedAgent}
-          onClose={() => setSelectedAgent(null)}
-        />
+    <ToastProvider maxToasts={5}>
+      {view === 'setup' ? (
+        <main className="flex min-h-screen flex-col items-center justify-center p-4">
+          {renderSetupContent()}
+        </main>
+      ) : (
+        <Layout
+          sidebarProps={{
+            activeView: managerView,
+            onNavigate: setManagerView,
+            directoryName: directoryName,
+            onChangeDirectory: handleChangeDirectory,
+          }}
+          noContainer={managerView === ManagerView.Chat}
+        >
+          {renderDashboardContent()}
+          {selectedAgent && (
+            <AgentConfigModal
+              agent={selectedAgent}
+              isOpen={!!selectedAgent}
+              onClose={() => setSelectedAgent(null)}
+            />
+          )}
+        </Layout>
       )}
-    </Layout>
+    </ToastProvider>
   );
 };
 

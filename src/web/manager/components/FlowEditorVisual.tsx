@@ -99,6 +99,7 @@ import {
 } from '../utils/flow-validator';
 import type { ReactFlowNode, ReactFlowEdge } from '../types/react-flow.types';
 import { useFlowKeyboardShortcuts } from '../hooks/useFlowKeyboardShortcuts';
+import { useToast } from '../contexts/ToastContext';
 
 // =============================================================================
 // TYPES AND CONSTANTS
@@ -196,11 +197,15 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   // =========================================================================
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [configPanelOpen, setConfigPanelOpen] = useState(false);
   const [showGrid, setShowGrid] = useState(true);
   const [showMinimap, setShowMinimap] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+
+  // =========================================================================
+  // TOAST NOTIFICATIONS
+  // =========================================================================
+  const { addToast } = useToast();
 
   // =========================================================================
   // STATE - Validation
@@ -246,7 +251,6 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
     if (!flowId) return;
 
     setLoading(true);
-    setError(null);
 
     try {
       const flow = await flowApi.getFlow(flowId);
@@ -274,7 +278,11 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
       setWebhookEnabled(flow.webhookEnabled || false);
       setWebhookSecret(flow.webhookSecret || '');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load flow');
+      addToast({
+        message: err instanceof Error ? err.message : 'Failed to load flow',
+        variant: 'error',
+        duration: 7000,
+      });
       console.error('Failed to load flow:', err);
     } finally {
       setLoading(false);
@@ -329,12 +337,20 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
    */
   const handleSave = async () => {
     if (!name.trim()) {
-      setError('Flow name is required');
+      addToast({
+        message: 'Flow name is required',
+        variant: 'error',
+        duration: 5000,
+      });
       return;
     }
 
     if (currentNodes.length === 0) {
-      setError('Flow must have at least one node');
+      addToast({
+        message: 'Flow must have at least one node',
+        variant: 'error',
+        duration: 5000,
+      });
       return;
     }
 
@@ -342,12 +358,15 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
     const validation = validateFlow(currentNodes, currentEdges);
     if (!validation.isValid) {
       const errorMessage = formatValidationErrors(validation);
-      setError(`Flow validation failed:\n\n${errorMessage}`);
+      addToast({
+        message: `Flow validation failed: ${errorMessage}`,
+        variant: 'error',
+        duration: 7000,
+      });
       return;
     }
 
     setSaving(true);
-    setError(null);
 
     try {
       // Convert React Flow format back to Flow format
@@ -405,11 +424,22 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
         savedFlow = response.flow;
       }
 
+      // Show success toast
+      addToast({
+        message: `Flow "${savedFlow.name}" saved successfully!`,
+        variant: 'success',
+        duration: 5000,
+      });
+
       // Call success callbacks
       onSave?.(savedFlow);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save flow');
+      addToast({
+        message: err instanceof Error ? err.message : 'Failed to save flow',
+        variant: 'error',
+        duration: 7000,
+      });
       console.error('Failed to save flow:', err);
     } finally {
       setSaving(false);
@@ -699,56 +729,6 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
           </div>
         </div>
       </div>
-
-      {/* Error/Validation Display - Below Header */}
-      {(error || validationResult.hasErrors || validationResult.hasWarnings) && (
-        <div className="flex-shrink-0 border-b border-border bg-card px-4 py-2">
-          {/* Error Display */}
-          {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-400 text-sm">
-              <pre className="whitespace-pre-wrap font-sans">{error}</pre>
-            </div>
-          )}
-
-          {/* Validation Errors */}
-          {validationResult.hasErrors && (
-            <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md">
-              <div className="flex items-start gap-2">
-                <span className="text-red-600 dark:text-red-400">⚠️</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-red-700 dark:text-red-400 text-sm mb-1">
-                    Validation Errors
-                  </h3>
-                  <ul className="space-y-1 text-xs text-red-600 dark:text-red-400">
-                    {validationResult.errors.map((error, index) => (
-                      <li key={index}>• {error.message}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Validation Warnings */}
-          {validationResult.hasWarnings && !validationResult.hasErrors && (
-            <div className="p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-md">
-              <div className="flex items-start gap-2">
-                <span className="text-yellow-600 dark:text-yellow-400">⚠️</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-yellow-700 dark:text-yellow-400 text-sm mb-1">
-                    Warnings
-                  </h3>
-                  <ul className="space-y-1 text-xs text-yellow-600 dark:text-yellow-400">
-                    {validationResult.warnings.map((warning, index) => (
-                      <li key={index}>• {warning.message}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ===================================================================
           MAIN CANVAS - Visual Flow Editor

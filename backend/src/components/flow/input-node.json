@@ -1,0 +1,46 @@
+{
+  "collectionName": "components_flow_input_nodes",
+  "info": {
+    "displayName": "Input Node",
+    "icon": "login",
+    "description": "Flow input node for defining inputs the flow accepts"
+  },
+  "options": {},
+  "attributes": {
+    "nodeId": {
+      "type": "string",
+      "required": true,
+      "description": "Unique identifier for this node within the flow"
+    },
+    "name": {
+      "type": "string",
+      "required": true,
+      "default": "Input",
+      "description": "Display name for this input node"
+    },
+    "description": {
+      "type": "text",
+      "description": "Description of what inputs are expected"
+    },
+    "inputFields": {
+      "type": "json",
+      "required": true,
+      "default": [],
+      "description": "Array of input field definitions with name, type, label, required, description"
+    },
+    "validationRules": {
+      "type": "json",
+      "default": {},
+      "description": "Custom validation rules for inputs"
+    },
+    "position": {
+      "type": "json",
+      "default": { "x": 0, "y": 0 },
+      "description": "UI position coordinates for the node"
+    },
+    "nextNodeId": {
+      "type": "string",
+      "description": "ID of the next node in the flow sequence"
+    }
+  }
+}

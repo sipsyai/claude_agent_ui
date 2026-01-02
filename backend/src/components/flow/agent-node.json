@@ -1,0 +1,86 @@
+{
+  "collectionName": "components_flow_agent_nodes",
+  "info": {
+    "displayName": "Agent Node",
+    "icon": "robot",
+    "description": "Flow node for executing an agent with configured skills"
+  },
+  "options": {},
+  "attributes": {
+    "nodeId": {
+      "type": "string",
+      "required": true,
+      "description": "Unique identifier for this node within the flow"
+    },
+    "name": {
+      "type": "string",
+      "required": true,
+      "default": "Agent",
+      "description": "Display name for this agent node"
+    },
+    "description": {
+      "type": "text",
+      "description": "Description of what this agent node does"
+    },
+    "agent": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::agent.agent",
+      "required": true
+    },
+    "promptTemplate": {
+      "type": "text",
+      "required": true,
+      "description": "Prompt template for the agent. Use {{variableName}} for input interpolation"
+    },
+    "skills": {
+      "type": "json",
+      "default": [],
+      "description": "Array of skill IDs to enable for this agent execution"
+    },
+    "modelOverride": {
+      "type": "enumeration",
+      "enum": ["default", "haiku", "sonnet", "sonnet-4", "opus", "opus-4"],
+      "default": "default",
+      "description": "Override the agent's default model for this node"
+    },
+    "maxTokens": {
+      "type": "integer",
+      "min": 1,
+      "max": 200000,
+      "description": "Maximum tokens for the agent response"
+    },
+    "timeout": {
+      "type": "integer",
+      "default": 300000,
+      "min": 1000,
+      "description": "Timeout in milliseconds for agent execution"
+    },
+    "retryOnError": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to retry on error"
+    },
+    "maxRetries": {
+      "type": "integer",
+      "default": 3,
+      "min": 1,
+      "max": 10,
+      "description": "Maximum number of retries on error"
+    },
+    "position": {
+      "type": "json",
+      "default": { "x": 0, "y": 100 },
+      "description": "UI position coordinates for the node"
+    },
+    "nextNodeId": {
+      "type": "string",
+      "description": "ID of the next node in the flow sequence"
+    },
+    "metadata": {
+      "type": "json",
+      "default": {},
+      "description": "Additional metadata for the node"
+    }
+  }
+}

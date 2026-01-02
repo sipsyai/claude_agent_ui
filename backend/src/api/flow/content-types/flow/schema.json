@@ -1,0 +1,82 @@
+{
+  "kind": "collectionType",
+  "collectionName": "flows",
+  "info": {
+    "singularName": "flow",
+    "pluralName": "flows",
+    "displayName": "Flow",
+    "description": "Workflow definitions for orchestrating agents and skills"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "required": true,
+      "unique": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "maxLength": 1000
+    },
+    "nodes": {
+      "type": "json",
+      "required": true,
+      "default": []
+    },
+    "status": {
+      "type": "enumeration",
+      "required": true,
+      "default": "draft",
+      "enum": [
+        "draft",
+        "active",
+        "paused",
+        "archived"
+      ]
+    },
+    "inputSchema": {
+      "type": "json",
+      "default": {}
+    },
+    "outputSchema": {
+      "type": "json",
+      "default": {}
+    },
+    "isActive": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    },
+    "version": {
+      "type": "string",
+      "default": "1.0.0",
+      "regex": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "category": {
+      "type": "enumeration",
+      "default": "custom",
+      "enum": [
+        "web-scraping",
+        "data-processing",
+        "api-integration",
+        "file-manipulation",
+        "automation",
+        "custom"
+      ]
+    },
+    "metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

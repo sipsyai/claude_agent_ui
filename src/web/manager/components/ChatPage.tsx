@@ -1,10 +1,314 @@
 /**
- * Modern Chat Page with assistant-ui integration
- * Features:
- * - Modern minimal design (grey tones)
- * - Markdown rendering with syntax highlighting
- * - File attachments support
- * - SSE streaming with Claude Agent SDK
+ * ChatPage - Modern conversational chat interface with session management
+ *
+ * Page-level component for interactive AI chat with Claude Agent SDK integration,
+ * session management, agent/skill selection, permission modes, and real-time SSE
+ * streaming. Features dual-pane layout with session sidebar and chat area using
+ * assistant-ui primitives for modern message display and composition.
+ *
+ * ## Features
+ *
+ * - Chat session management with create, select, archive, delete operations
+ * - Real-time message streaming via SSE with Claude Agent SDK
+ * - Agent and skill selection with per-conversation runtime overrides
+ * - Permission mode switching (default, bypass, auto, plan)
+ * - View mode toggle (simple, detailed) for message display
+ * - File attachments support (images, PDFs, text files)
+ * - Markdown rendering with syntax highlighting via MessageBubble components
+ * - Auto-scroll behavior for new messages
+ * - Session list with skill badges and relative timestamps
+ * - Integration with assistant-ui framework (ThreadPrimitive, ComposerArea)
+ * - ChatDisplayContext integration for SDK event tracking (tool uses, system messages)
+ *
+ * ## Chat Interface
+ *
+ * The interface uses a dual-pane layout:
+ *
+ * ### Left Sidebar - Chat Sessions (w-80, gray-800):
+ * - **Header Section**: "Chats" title with "+ New Chat" button (blue-600)
+ * - **Sessions List**: Vertical scrollable list with:
+ *   - Session title truncated with ellipsis
+ *   - Skill badges (max 2 visible + overflow count)
+ *   - Relative timestamp (e.g., "5m ago", "2h ago", "3d ago")
+ *   - Archive button (ArchiveIcon, hover:text-gray-200)
+ *   - Delete button (TrashIcon, hover:text-red-400)
+ *   - Active highlight: blue-500 left border, gray-700 background
+ *   - Hover effect: gray-700 background transition
+ * - **Empty State**: MessageSquareIcon with "No chat sessions yet" message
+ *
+ * ### Right Side - Chat Area (flex-1, gray-900):
+ * - **Chat Header** (gray-800):
+ *   - Session title (text-lg, semibold, white)
+ *   - Agent/Skills selection area (clickable, hover:border-blue-500):
+ *     * Agent display with model badge (purple-900/30 background)
+ *     * Skills display with badge layout (blue-600 for selected, gray-600 for session defaults)
+ *     * "Click to change" hint text (gray-500)
+ *   - Mode Controls (right-aligned):
+ *     * Permission mode selector (default/bypass/auto/plan)
+ *     * View mode selector (simple/detailed)
+ * - **Messages Area** (flex-1, overflow-hidden):
+ *   - ThreadPrimitive.Viewport with auto-scroll
+ *   - UserMessage, AssistantMessage, SystemMessage components
+ *   - Empty state: MessageSquareIcon with "Start the conversation" message
+ *   - Loading state: "Loading messages..." spinner
+ * - **Composer Area**: ComposerArea component from assistant-ui
+ *   - Auto-resize textarea (48px-200px)
+ *   - File attachment support with preview
+ *   - Send/Cancel button based on running state
+ *   - Keyboard shortcuts (Enter to send, Shift+Enter for newline)
+ *
+ * ## Session Management
+ *
+ * ### Session Creation:
+ * 1. User clicks "+ New Chat" button in sidebar header or empty state
+ * 2. ChatSessionModal opens with skill/agent selection form
+ * 3. User enters session name, selects skills (multi-select), optional agent
+ * 4. API call to POST /api/chat-sessions with directory context
+ * 5. New session added to sessions list at top
+ * 6. New session becomes active automatically
+ * 7. Modal closes, empty chat area displayed
+ *
+ * ### Session Selection:
+ * 1. User clicks on session item in sidebar
+ * 2. handleSelectSession sets activeSession state
+ * 3. useEffect triggers loadMessages for session documentId
+ * 4. Permission mode updated from session.permissionMode or session.planMode
+ * 5. Runtime overrides initialized with session agent and skills
+ * 6. ChatDisplayContext event data cleared via clearEventData
+ * 7. Messages displayed in ThreadPrimitive.Viewport
+ *
+ * ### Session Archive:
+ * 1. User clicks archive button (ArchiveIcon) on session item
+ * 2. Event propagation stopped to prevent session selection
+ * 3. API call to PATCH /api/chat-sessions/:id with status: "archived"
+ * 4. Session removed from active sessions list
+ * 5. If archived session was active, first remaining session selected
+ * 6. If no remaining sessions, activeSession set to null (empty state displayed)
+ *
+ * ### Session Delete:
+ * 1. User clicks delete button (TrashIcon) on session item
+ * 2. Confirmation dialog: "Are you sure you want to delete this chat session?"
+ * 3. If confirmed, API call to DELETE /api/chat-sessions/:id
+ * 4. Session removed from sessions list
+ * 5. If deleted session was active, first remaining session selected
+ * 6. If no remaining sessions, activeSession set to null
+ *
+ * ## Agent and Skill Selection
+ *
+ * ### Runtime Override Mechanism:
+ * - **Session Defaults**: Agent and skills from activeSession.agent and activeSession.skills
+ * - **Runtime Overrides**: selectedAgentId and selectedSkillIds state (initially undefined)
+ * - **Display Logic**:
+ *   - If selectedAgentId is set, show override agent name and model
+ *   - If selectedAgentId is undefined, show session default agent or "Session Default"
+ *   - If selectedSkillIds is non-empty, show override skills with blue-600 badges
+ *   - If selectedSkillIds is empty, show session skills with gray-600 badges or "No skills selected"
+ * - **Runtime Integration**: selectedAgentId and selectedSkillIds passed to useAssistantRuntime
+ *   as agentId and skillIds props for per-message override behavior
+ *
+ * ### Selection Modal Workflow:
+ * 1. User clicks on agent/skills selection area in chat header (gray-750, hover:border-blue-500)
+ * 2. Modal opens with agent dropdown and skills checkbox grid (max-h-[80vh], gray-800)
+ * 3. **Agent Selection**: Dropdown with "Use Session Default" option + all available agents
+ *    - Shows agent name and model in option text (e.g., "Agent Name [claude-3-5-sonnet-20241022]")
+ *    - Selection updates selectedAgentId state (empty string = undefined for session default)
+ * 4. **Skills Selection**: 2-column checkbox grid (max-h-60 overflow-y-auto)
+ *    - Each skill: checkbox + label with skill.displayName or skill.name
+ *    - Selected skills: blue-600 background with border-blue-500
+ *    - Unselected skills: gray-700 background with hover:bg-gray-600
+ *    - Multi-select with checkbox state management
+ * 5. User clicks "Done" button to close modal
+ * 6. Selection persists for entire conversation (not saved to session)
+ * 7. Next message uses runtime overrides if set
+ *
+ * ## Message Handling
+ *
+ * Messages flow through assistant-ui runtime integration via useAssistantRuntime hook:
+ *
+ * ### Message Loading:
+ * 1. loadMessages called on activeSession change (useEffect dependency)
+ * 2. API call to GET /api/chat-sessions/:sessionId/messages
+ * 3. Messages stored in messages state (ChatMessage[])
+ * 4. Messages passed to useAssistantRuntime as initialMessages
+ * 5. Runtime converts to ThreadMessage format for assistant-ui
+ *
+ * ### Message Sending:
+ * 1. User types message in ComposerArea textarea
+ * 2. User clicks Send button or presses Enter (handled by ComposerPrimitive)
+ * 3. ComposerPrimitive triggers runtime.append with message content
+ * 4. useAssistantRuntime handleNewMessage creates optimistic user message
+ * 5. SSE stream initiated to /api/chat-sessions/:sessionId/messages
+ * 6. Stream events processed (content_block_delta, tool_use, message_stop)
+ * 7. handleMessagesUpdate callback invoked with updated messages array
+ * 8. Messages state updated, triggering re-render of ThreadPrimitive.Messages
+ * 9. Auto-scroll to messagesEndRef triggered by useEffect
+ *
+ * ### SDK Event Tracking:
+ * - useAssistantRuntime hook extracts tool_use and system_message events from SSE stream
+ * - onToolUseUpdate callback invokes setToolUses from ChatDisplayContext
+ * - onSystemMessage callback appends to systemMessages array in ChatDisplayContext
+ * - MessageBubble components query context for event data to display in detailed view mode
+ *
+ * ## Permission Modes
+ *
+ * Permission mode controls how the agent handles tool execution requests:
+ *
+ * - **default**: Agent asks for user permission before executing tools (default behavior)
+ *   - User sees permission request messages in chat
+ *   - User must approve each tool execution
+ * - **bypass**: Agent executes tools without asking for permission (fully automated)
+ *   - Tool executions happen silently
+ *   - Useful for trusted automated workflows
+ * - **auto**: Agent automatically accepts permission requests but shows them
+ *   - Similar to bypass but with visibility
+ *   - Good for monitoring automated executions
+ * - **plan**: Plan mode - agent creates implementation plan before execution
+ *   - Agent outlines steps before taking action
+ *   - User can review and approve plan
+ *
+ * Permission mode is:
+ * 1. Initialized from activeSession.planMode (legacy) or activeSession.permissionMode
+ * 2. Stored in permissionMode state (default | bypass | auto | plan)
+ * 3. User can change via Mode dropdown in chat header
+ * 4. Passed to useAssistantRuntime as permissionMode prop
+ * 5. Sent with each SSE request to backend
+ *
+ * ## View Modes
+ *
+ * View mode controls message display detail level via ChatDisplayContext:
+ *
+ * - **simple**: Compact message view
+ *   - Tool uses shown as compact indicator badge
+ *   - System messages hidden or minimized
+ *   - Focus on conversational content
+ * - **detailed**: Expanded message view with full SDK event data
+ *   - Tool uses shown as collapsible sections with input/output
+ *   - System messages displayed with full content
+ *   - Useful for debugging and understanding agent behavior
+ *
+ * View mode is:
+ * 1. Managed by ChatDisplayContext (viewMode state)
+ * 2. Accessed via useChatDisplay hook
+ * 3. User can toggle via View dropdown in chat header
+ * 4. Passed to MessageBubble components for conditional rendering
+ *
+ * ## Auto-Scroll Behavior
+ *
+ * Automatic scrolling to latest message implemented with:
+ *
+ * 1. **messagesEndRef**: useRef<HTMLDivElement> positioned at end of message list
+ * 2. **useEffect Hook**: Triggers on messages state change
+ * 3. **Scroll Invocation**: messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+ * 4. **Timing**: Runs after every message update (user sends, assistant responds, streaming deltas)
+ * 5. **Smooth Scrolling**: CSS smooth scrolling behavior for better UX
+ *
+ * ## Directory Integration
+ *
+ * Directory context is retrieved from cookies and used for API calls:
+ *
+ * - **getDirectory Function**: Parses document.cookie for 'selectedDirectory' key
+ * - **Cookie Format**: selectedDirectory=URI_ENCODED_PATH
+ * - **Usage**: Directory passed to:
+ *   - getChatSessions (filters sessions by directory)
+ *   - getAgents and getSkills (for runtime override options)
+ *   - ChatSessionModal (for session creation with directory context)
+ *
+ * ## Styling Behavior
+ *
+ * Modern dark theme with gray tones and blue accents:
+ *
+ * - **Layout**: flex h-full with sidebar and main area
+ * - **Sidebar**: gray-800 background with border-r border-gray-700
+ * - **Chat Area**: gray-900 background for main content
+ * - **Session Items**: gray-700 hover, blue-500 active border-l-4
+ * - **Chat Header**: gray-800 with border-b border-gray-700
+ * - **Agent/Skills Area**: gray-750 with hover:border-blue-500 transition
+ * - **Selected Skills**: blue-600 badges with border-blue-500
+ * - **Session Default Skills**: gray-600 badges with border-gray-500
+ * - **Buttons**: blue-600/blue-700 for primary actions
+ * - **Archive Button**: hover:text-gray-200, hover:bg-gray-600
+ * - **Delete Button**: hover:text-red-400, hover:bg-red-900/30
+ * - **Dropdown Controls**: gray-700 background with focus:ring-blue-500
+ * - **Modal**: gray-800 background with backdrop-blur-sm overlay
+ * - **Empty States**: gray-400/gray-600 text with large icons
+ * - **Typography**: Inter font family, responsive text sizes
+ *
+ * @example
+ * // Basic usage in ManagerApp dashboard phase
+ * import ChatPage from './components/ChatPage';
+ *
+ * function ManagerApp() {
+ *   const [activeView, setActiveView] = useState('chat');
+ *
+ *   return (
+ *     <Layout>
+ *       {activeView === 'chat' && <ChatPage />}
+ *     </Layout>
+ *   );
+ * }
+ *
+ * @example
+ * // Understanding session creation workflow
+ * // 1. User clicks "+ New Chat" button
+ * // 2. ChatSessionModal opens with form:
+ * //    - Session name input
+ * //    - Multi-select skill checkboxes with search filter
+ * //    - Optional agent dropdown
+ * // 3. User fills form and clicks "Create"
+ * // 4. API call: POST /api/chat-sessions
+ * //    Request body: { name, skills: [skillId1, skillId2], agent: agentId, directory }
+ * // 5. handleChatCreated callback invoked with new session object
+ * // 6. Session added to top of sessions list
+ * // 7. Session becomes active automatically
+ * // 8. Empty chat area displayed with composer ready for first message
+ *
+ * @example
+ * // Understanding agent/skill runtime override workflow
+ * // Initial state from session:
+ * // - activeSession.agent = { documentId: "agent1", name: "Default Agent", modelConfig: { model: "claude-3-5-sonnet" } }
+ * // - activeSession.skills = [{ documentId: "skill1", name: "Skill A" }]
+ * // - selectedAgentId = undefined (use session default)
+ * // - selectedSkillIds = [] (use session default)
+ * //
+ * // User clicks agent/skills area in header:
+ * // 1. Modal opens with current selections:
+ * //    - Agent dropdown shows "Use Session Default" (selected)
+ * //    - Skills grid shows all available skills, none checked
+ * // 2. User selects different agent from dropdown: "agent2"
+ * //    - selectedAgentId = "agent2"
+ * // 3. User checks two skills: "skill2", "skill3"
+ * //    - selectedSkillIds = ["skill2", "skill3"]
+ * // 4. User clicks "Done"
+ * // 5. Header display updates:
+ * //    - Agent: "Override Agent [claude-3-opus]" (purple model badge)
+ * //    - Skills: "Skill B", "Skill C" (blue-600 badges indicating override)
+ * // 6. Next message uses agent2 with skill2 and skill3 instead of session defaults
+ * // 7. Runtime overrides persist for conversation but not saved to session
+ *
+ * @example
+ * // Understanding message flow with SDK event tracking
+ * // 1. User types "Create a Python script to calculate fibonacci"
+ * // 2. User clicks Send button (or presses Enter)
+ * // 3. ComposerArea -> ComposerPrimitive triggers runtime.append
+ * // 4. useAssistantRuntime handleNewMessage:
+ * //    - Creates optimistic user message
+ * //    - Initiates SSE stream to /api/chat-sessions/:sessionId/messages
+ * //    - Headers: { agentId: "agent2", skillIds: ["skill2", "skill3"], permissionMode: "auto" }
+ * // 5. SSE events received and processed:
+ * //    - content_block_start: Assistant message begins
+ * //    - content_block_delta: { delta: { text: "I'll create a..." } } -> append to message content
+ * //    - tool_use: { name: "Write", input: { file_path: "fib.py", content: "def fibonacci..." } }
+ * //      * onToolUseUpdate callback -> setToolUses in ChatDisplayContext
+ * //    - tool_result: { tool_use_id: "...", content: "File written successfully" }
+ * //    - system_message: { type: "result", content: "Task completed" }
+ * //      * onSystemMessage callback -> append to systemMessages in ChatDisplayContext
+ * //    - message_stop: Stream ends
+ * // 6. handleMessagesUpdate invoked with full messages array
+ * // 7. Messages state updated
+ * // 8. ThreadPrimitive.Messages re-renders with new assistant message
+ * // 9. AssistantMessage component queries ChatDisplayContext for tool uses and system messages
+ * // 10. If viewMode === "detailed", tool use displayed as collapsible ToolUseDisplay
+ * // 11. Auto-scroll to messagesEndRef triggered by useEffect
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -24,6 +328,14 @@ import ComposerArea from './ComposerArea';
 // Chat display context
 import { ChatDisplayProvider, useChatDisplay } from '../contexts/ChatDisplayContext';
 
+/**
+ * ChatPageContent - Main chat interface component (internal)
+ *
+ * Internal component containing chat session list, message display, and composer.
+ * Wrapped by ChatPage component with ChatDisplayProvider for SDK event context.
+ *
+ * @internal
+ */
 const ChatPageContent: React.FC = () => {
   const [sessions, setSessions] = useState<chatApi.ChatSession[]>([]);
   const [activeSession, setActiveSession] = useState<chatApi.ChatSession | null>(null);
@@ -48,7 +360,15 @@ const ChatPageContent: React.FC = () => {
   // Use chat display context
   const { viewMode, setViewMode, setToolUses, setSystemMessages, clearEventData } = useChatDisplay();
 
-  // Get directory from cookies
+  /**
+   * Retrieves selected directory from browser cookies
+   *
+   * Parses document.cookie string to find 'selectedDirectory' value for directory context.
+   * Used for filtering sessions, agents, and skills by directory in API calls.
+   *
+   * @internal
+   * @returns Directory path string or undefined if not set
+   */
   const getDirectory = () => {
     const cookies = document.cookie.split(';');
     for (const cookie of cookies) {
@@ -60,11 +380,13 @@ const ChatPageContent: React.FC = () => {
     return undefined;
   };
 
+  // Load initial data on component mount
   useEffect(() => {
     loadSessions();
     loadAvailableAgentsAndSkills();
   }, []);
 
+  // Handle active session changes
   useEffect(() => {
     if (activeSession) {
       loadMessages(activeSession.documentId);
@@ -77,6 +399,14 @@ const ChatPageContent: React.FC = () => {
     }
   }, [activeSession]);
 
+  /**
+   * Loads all active chat sessions from API
+   *
+   * Fetches sessions, filters to active status only (excludes archived), and auto-selects
+   * first session if no session currently active. Displays alert on error.
+   *
+   * @internal
+   */
   const loadSessions = async () => {
     try {
       setLoading(true);
@@ -97,6 +427,15 @@ const ChatPageContent: React.FC = () => {
     }
   };
 
+  /**
+   * Loads available agents and skills for runtime override selection
+   *
+   * Fetches all agents and skills from API in parallel for populating agent/skill
+   * selection modal. Uses directory context from cookies. Silently handles errors
+   * (modal will show empty lists).
+   *
+   * @internal
+   */
   const loadAvailableAgentsAndSkills = async () => {
     try {
       const [agents, skills] = await Promise.all([
@@ -110,6 +449,15 @@ const ChatPageContent: React.FC = () => {
     }
   };
 
+  /**
+   * Loads messages for a specific chat session
+   *
+   * Fetches message history for given session ID and updates messages state.
+   * Shows loading state during fetch. Displays alert on error.
+   *
+   * @internal
+   * @param sessionId - Chat session document ID
+   */
   const loadMessages = async (sessionId: string) => {
     try {
       setMessagesLoading(true);
@@ -123,20 +471,53 @@ const ChatPageContent: React.FC = () => {
     }
   };
 
+  /**
+   * Opens new chat session creation modal
+   *
+   * Sets showNewChatModal to true, triggering ChatSessionModal render.
+   *
+   * @internal
+   */
   const handleNewChat = () => {
     setShowNewChatModal(true);
   };
 
+  /**
+   * Handles successful chat session creation
+   *
+   * Adds new session to top of sessions list, makes it active, and closes modal.
+   * Called by ChatSessionModal onChatCreated callback.
+   *
+   * @internal
+   * @param session - Newly created chat session object
+   */
   const handleChatCreated = (session: chatApi.ChatSession) => {
     setSessions(prev => [session, ...prev]);
     setActiveSession(session);
     setShowNewChatModal(false);
   };
 
+  /**
+   * Handles session selection from sidebar list
+   *
+   * Sets clicked session as active, triggering message load via useEffect.
+   *
+   * @internal
+   * @param session - Chat session to activate
+   */
   const handleSelectSession = (session: chatApi.ChatSession) => {
     setActiveSession(session);
   };
 
+  /**
+   * Deletes a chat session with confirmation
+   *
+   * Shows confirmation dialog, makes DELETE API call, removes from list, and
+   * auto-selects first remaining session if deleted session was active.
+   *
+   * @internal
+   * @param sessionId - Session document ID to delete
+   */
   const handleDeleteSession = async (sessionId: string) => {
     if (!confirm('Are you sure you want to delete this chat session?')) return;
 
@@ -155,6 +536,15 @@ const ChatPageContent: React.FC = () => {
     }
   };
 
+  /**
+   * Archives a chat session (soft delete)
+   *
+   * Updates session status to "archived" via PATCH API call, removes from active list,
+   * and auto-selects first remaining session if archived session was active.
+   *
+   * @internal
+   * @param sessionId - Session document ID to archive
+   */
   const handleArchiveSession = async (sessionId: string) => {
     try {
       await chatApi.archiveChatSession(sessionId);
@@ -171,12 +561,31 @@ const ChatPageContent: React.FC = () => {
     }
   };
 
+  /**
+   * Handles messages update from useAssistantRuntime
+   *
+   * Updates messages state with new array and refreshes sessions list to get
+   * updated session titles (auto-generated from first message).
+   *
+   * @internal
+   * @param newMessages - Updated messages array from runtime
+   */
   const handleMessagesUpdate = (newMessages: chatApi.ChatMessage[]) => {
     setMessages(newMessages);
     // Refresh sessions to get updated title
     loadSessions();
   };
 
+  /**
+   * Formats timestamp as relative time string
+   *
+   * Converts ISO timestamp to human-readable relative time (e.g., "5m ago", "2h ago", "3d ago").
+   * Used for session list timestamp display.
+   *
+   * @internal
+   * @param timestamp - ISO timestamp string
+   * @returns Formatted relative time string
+   */
   const formatTimeAgo = (timestamp: string) => {
     const diff = Date.now() - new Date(timestamp).getTime();
     const minutes = Math.floor(diff / 60000);
@@ -575,7 +984,26 @@ const ChatPageContent: React.FC = () => {
   );
 };
 
-// Wrapper component with ChatDisplayProvider
+ChatPageContent.displayName = 'ChatPageContent';
+
+/**
+ * ChatPage - Wrapper component with ChatDisplayProvider
+ *
+ * Wraps ChatPageContent with ChatDisplayProvider to provide SDK event context
+ * (view mode, tool uses, system messages) to all child components.
+ *
+ * @example
+ * // Basic usage in ManagerApp
+ * import ChatPage from './components/ChatPage';
+ *
+ * function ManagerApp() {
+ *   return (
+ *     <Layout>
+ *       <ChatPage />
+ *     </Layout>
+ *   );
+ * }
+ */
 const ChatPage: React.FC = () => {
   return (
     <ChatDisplayProvider>
@@ -583,5 +1011,7 @@ const ChatPage: React.FC = () => {
     </ChatDisplayProvider>
   );
 };
+
+ChatPage.displayName = 'ChatPage';
 
 export default ChatPage;

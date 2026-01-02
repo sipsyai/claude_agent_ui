@@ -74,6 +74,7 @@ import { FlowCanvas } from './flow-canvas/FlowCanvas';
 import NodePalette from './flow-canvas/NodePalette';
 import NodeConfigPanel from './flow-canvas/NodeConfigPanel';
 import CanvasToolbar from './flow-canvas/CanvasToolbar';
+import FlowPreview from './flow-canvas/FlowPreview';
 import FlowScheduleConfig, { createDefaultSchedule } from './flow/FlowScheduleConfig';
 import { Card, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
@@ -201,6 +202,7 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   const [configPanelOpen, setConfigPanelOpen] = useState(false);
   const [showGrid, setShowGrid] = useState(true);
   const [showMinimap, setShowMinimap] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
 
   // =========================================================================
   // STATE - Validation
@@ -739,7 +741,7 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
             <FlowCanvas
               onNodeClick={handleNodeClick}
               onCanvasClick={handleCanvasClick}
-              showGrid={showGrid}
+              showBackground={showGrid}
               showMinimap={showMinimap}
             />
 
@@ -750,8 +752,15 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
                 onToggleGrid={() => setShowGrid((prev) => !prev)}
                 showMinimap={showMinimap}
                 onToggleMinimap={() => setShowMinimap((prev) => !prev)}
+                onPreview={() => setShowPreview(true)}
               />
             </div>
+
+            {/* Flow Preview Modal */}
+            <FlowPreview
+              isOpen={showPreview}
+              onClose={() => setShowPreview(false)}
+            />
           </div>
 
           {/* Right Panel - Node Configuration */}

@@ -97,6 +97,10 @@ export interface CanvasToolbarProps {
    */
   onToggleMinimap?: () => void;
   /**
+   * Callback fired when preview mode is requested
+   */
+  onPreview?: () => void;
+  /**
    * Optional CSS class name for the toolbar container
    */
   className?: string;
@@ -322,6 +326,28 @@ const MinimapIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 );
 
 /**
+ * Preview Icon Component
+ * Custom icon for flow preview mode (eye icon)
+ */
+const PreviewIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+/**
  * Toolbar Button Component
  * Reusable button component for toolbar actions
  */
@@ -403,6 +429,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   onToggleGrid,
   showMinimap = true,
   onToggleMinimap,
+  onPreview,
   className = '',
   position = 'top',
 }) => {
@@ -467,6 +494,14 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   const handleToggleMinimap = useCallback(() => {
     onToggleMinimap?.();
   }, [onToggleMinimap]);
+
+  /**
+   * Handle preview mode
+   * Calls parent callback to open preview modal
+   */
+  const handlePreview = useCallback(() => {
+    onPreview?.();
+  }, [onPreview]);
 
   /**
    * Determine toolbar position classes
@@ -554,6 +589,19 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         title="Toggle Minimap"
         icon={<MinimapIcon width={18} height={18} />}
       />
+
+      {onPreview && (
+        <>
+          <ToolbarDivider />
+
+          {/* Preview Mode */}
+          <ToolbarButton
+            onClick={handlePreview}
+            title="Preview Flow"
+            icon={<PreviewIcon width={18} height={18} />}
+          />
+        </>
+      )}
     </div>
   );
 };

@@ -386,6 +386,48 @@ export interface FlowExecutionLog {
 export type NodeExecutionStatus = 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
 
 /**
+ * Error category for classification
+ */
+export type ErrorCategory = 'transient' | 'permanent' | 'unknown';
+
+/**
+ * Detailed error information with classification
+ */
+export interface FlowError {
+  message: string;
+  code?: string;
+  statusCode?: number;
+  category: ErrorCategory;
+  isRetryable: boolean;
+  timestamp: string;
+}
+
+/**
+ * Retry attempt information
+ */
+export interface RetryAttempt {
+  attemptNumber: number;
+  startedAt: string;
+  completedAt?: string;
+  delayMs: number;
+  error?: string;
+  success: boolean;
+}
+
+/**
+ * Retry state tracking for a node
+ */
+export interface NodeRetryState {
+  retryCount: number;
+  maxRetries: number;
+  attempts: RetryAttempt[];
+  lastError?: FlowError;
+  isWaitingForRetry: boolean;
+  nextRetryAt?: string;
+  totalRetryTime: number;
+}
+
+/**
  * Tracks execution state of a single node
  */
 export interface NodeExecution {
@@ -399,9 +441,13 @@ export interface NodeExecution {
   output?: Record<string, any>;
   error?: string;
   errorDetails?: Record<string, any>;
+  flowError?: FlowError;
   tokensUsed?: number;
   cost?: number;
   retryCount?: number;
+  retryState?: NodeRetryState;
+  wasSkipped?: boolean;
+  defaultValueUsed?: any;
 }
 
 /**
@@ -444,6 +490,7 @@ export type FlowExecutionUpdateType =
   | 'node_started'
   | 'node_completed'
   | 'node_failed'
+  | 'node_retrying'
   | 'log';
 
 /**
@@ -459,10 +506,17 @@ export interface FlowExecutionUpdate {
     status?: FlowExecutionStatus | NodeExecutionStatus;
     output?: Record<string, any>;
     error?: string;
+    errorCategory?: ErrorCategory;
     log?: FlowExecutionLog;
     tokensUsed?: number;
     cost?: number;
     executionTime?: number;
+    /** Retry-specific data */
+    retryCount?: number;
+    maxRetries?: number;
+    nextRetryIn?: number;
+    retryReason?: string;
+    isRetryable?: boolean;
   };
 }
 

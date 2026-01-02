@@ -231,7 +231,7 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
           type="target"
           position={Position.Top}
           id="target"
-          className={`!w-3 !h-3 !border-2 !border-background ${colors.handle} transition-all hover:!w-4 hover:!h-4`}
+          className={`!w-3 !h-3 !border-2 !border-background ${colors.handle} transition-all hover:!w-4 hover:!h-4 !z-[100]`}
           style={{ top: -6 }}
         />
       )}
@@ -239,8 +239,8 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
       {/* Node Card */}
       <div
         className={`
-          rounded-lg border-2 bg-card text-card-foreground shadow-sm
-          transition-all duration-200
+          relative rounded-lg border-2 bg-card text-card-foreground shadow-sm
+          transition-all duration-200 z-[1]
           ${selected ? colors.border : 'border-border'}
           ${selected ? 'shadow-md' : 'hover:shadow-md'}
         `}
@@ -281,9 +281,9 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
                 onDelete();
               }}
               className="
-                flex-shrink-0 p-1 rounded hover:bg-destructive/20
+                relative flex-shrink-0 p-1 rounded hover:bg-destructive/20
                 text-muted-foreground hover:text-destructive
-                transition-colors
+                transition-colors z-[10]
               "
               title="Delete node"
             >
@@ -304,7 +304,7 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
           type="source"
           position={Position.Bottom}
           id="source"
-          className={`!w-3 !h-3 !border-2 !border-background ${colors.handle} transition-all hover:!w-4 hover:!h-4`}
+          className={`!w-3 !h-3 !border-2 !border-background ${colors.handle} transition-all hover:!w-4 hover:!h-4 !z-[100]`}
           style={{ bottom: -6 }}
         />
       )}
@@ -397,9 +397,9 @@ export const BaseNodeHeader: React.FC<BaseNodeHeaderProps> = ({
             onDelete();
           }}
           className="
-            flex-shrink-0 p-1 rounded hover:bg-destructive/20
+            relative flex-shrink-0 p-1 rounded hover:bg-destructive/20
             text-muted-foreground hover:text-destructive
-            transition-colors
+            transition-colors z-[10]
           "
           title="Delete node"
         >

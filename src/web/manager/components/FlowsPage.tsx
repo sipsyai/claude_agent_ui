@@ -24,6 +24,7 @@ import {
   RefreshIcon,
   ArchiveIcon,
 } from './ui/Icons';
+import FlowExecutionModal from './FlowExecutionModal';
 
 interface FlowsPageProps {
   onEditFlow?: (flow: Flow) => void;
@@ -99,6 +100,9 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onEditFlow, onCreateFlow }) => {
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Flow Execution Modal state
+  const [selectedFlowForExecution, setSelectedFlowForExecution] = useState<Flow | null>(null);
+
   // Load flows
   const loadFlows = useCallback(async () => {
     try {
@@ -149,36 +153,21 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onEditFlow, onCreateFlow }) => {
     return () => clearInterval(interval);
   }, [autoRefreshEnabled, loadFlows]);
 
-  // Handle flow execution
-  const handleExecuteFlow = async (flow: Flow) => {
-    if (executingFlows.has(flow.id)) return;
+  // Handle flow execution - open modal
+  const handleExecuteFlow = (flow: Flow) => {
+    setSelectedFlowForExecution(flow);
+  };
 
-    setExecutingFlows(prev => new Set(prev).add(flow.id));
+  // Handle execution modal close
+  const handleExecutionModalClose = () => {
+    setSelectedFlowForExecution(null);
+  };
 
-    try {
-      // For now, execute with empty input (later this will open a modal for input)
-      await flowApi.executeFlow(
-        flow.id,
-        { input: {} },
-        (event) => {
-          if (event.type === 'result' || event.type === 'error') {
-            setExecutingFlows(prev => {
-              const next = new Set(prev);
-              next.delete(flow.id);
-              return next;
-            });
-            // Refresh executions
-            loadRecentExecutions(flow.id);
-          }
-        }
-      );
-    } catch (err) {
-      setExecutingFlows(prev => {
-        const next = new Set(prev);
-        next.delete(flow.id);
-        return next;
-      });
-      alert(err instanceof Error ? err.message : 'Failed to execute flow');
+  // Handle execution complete
+  const handleExecutionComplete = (execution: FlowExecution) => {
+    // Refresh executions for this flow
+    if (selectedFlowForExecution) {
+      loadRecentExecutions(selectedFlowForExecution.id);
     }
   };
 
@@ -539,6 +528,16 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onEditFlow, onCreateFlow }) => {
             })
           )}
         </div>
+      )}
+
+      {/* Flow Execution Modal */}
+      {selectedFlowForExecution && (
+        <FlowExecutionModal
+          flow={selectedFlowForExecution}
+          isOpen={!!selectedFlowForExecution}
+          onClose={handleExecutionModalClose}
+          onExecutionComplete={handleExecutionComplete}
+        />
       )}
     </div>
   );

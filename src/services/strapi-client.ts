@@ -49,6 +49,7 @@ import type {
   FlowNode,
   FlowInputSchema,
   FlowOutputSchema,
+  FlowSchedule,
   NodeExecution,
   FlowExecutionLog,
 } from '../types/flow-types.js';
@@ -1502,6 +1503,9 @@ export class StrapiClient {
       version: attrs.version || '1.0.0',
       category: (attrs.category || 'custom') as FlowCategory,
       metadata: attrs.metadata,
+      schedule: attrs.schedule || undefined,
+      webhookEnabled: attrs.webhookEnabled ?? false,
+      webhookSecret: attrs.webhookSecret,
       createdAt: new Date(attrs.createdAt),
       updatedAt: new Date(attrs.updatedAt),
     };
@@ -1527,6 +1531,9 @@ export class StrapiClient {
     if (flow.version !== undefined) data.version = flow.version;
     if (flow.category !== undefined) data.category = flow.category;
     if (flow.metadata !== undefined) data.metadata = flow.metadata;
+    if (flow.schedule !== undefined) data.schedule = flow.schedule;
+    if (flow.webhookEnabled !== undefined) data.webhookEnabled = flow.webhookEnabled;
+    if (flow.webhookSecret !== undefined) data.webhookSecret = flow.webhookSecret;
 
     return data;
   }

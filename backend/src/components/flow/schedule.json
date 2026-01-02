@@ -1,0 +1,95 @@
+{
+  "collectionName": "components_flow_schedules",
+  "info": {
+    "displayName": "Schedule",
+    "icon": "clock",
+    "description": "Schedule configuration for automated flow execution"
+  },
+  "options": {},
+  "attributes": {
+    "isEnabled": {
+      "type": "boolean",
+      "default": false,
+      "required": true,
+      "description": "Whether the schedule is currently active"
+    },
+    "scheduleType": {
+      "type": "enumeration",
+      "enum": ["once", "cron", "interval"],
+      "default": "interval",
+      "required": true,
+      "description": "Type of schedule: once (run once at specific time), cron (cron expression), interval (recurring at fixed intervals)"
+    },
+    "cronExpression": {
+      "type": "string",
+      "description": "Cron expression for cron-based scheduling (e.g., '0 9 * * 1-5' for weekdays at 9am)"
+    },
+    "intervalValue": {
+      "type": "integer",
+      "min": 1,
+      "default": 60,
+      "description": "Interval value for interval-based scheduling"
+    },
+    "intervalUnit": {
+      "type": "enumeration",
+      "enum": ["minutes", "hours", "days", "weeks"],
+      "default": "minutes",
+      "description": "Unit for interval-based scheduling"
+    },
+    "startDate": {
+      "type": "datetime",
+      "description": "When the schedule becomes active (optional, defaults to now)"
+    },
+    "endDate": {
+      "type": "datetime",
+      "description": "When the schedule expires (optional, no expiration if not set)"
+    },
+    "timezone": {
+      "type": "string",
+      "default": "UTC",
+      "description": "Timezone for the schedule (e.g., 'America/New_York', 'Europe/Istanbul')"
+    },
+    "nextRunAt": {
+      "type": "datetime",
+      "description": "Calculated next run time (managed by scheduler service)"
+    },
+    "lastRunAt": {
+      "type": "datetime",
+      "description": "Last time the flow was executed by this schedule"
+    },
+    "runCount": {
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "description": "Number of times this schedule has triggered an execution"
+    },
+    "maxRuns": {
+      "type": "integer",
+      "min": 0,
+      "description": "Maximum number of runs (optional, unlimited if not set)"
+    },
+    "defaultInput": {
+      "type": "json",
+      "default": {},
+      "description": "Default input values to use when the schedule triggers (can be overridden by triggerData)"
+    },
+    "retryOnFailure": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to retry if the scheduled execution fails"
+    },
+    "maxRetries": {
+      "type": "integer",
+      "default": 3,
+      "min": 1,
+      "max": 10,
+      "description": "Maximum number of retry attempts on failure"
+    },
+    "retryDelayMinutes": {
+      "type": "integer",
+      "default": 5,
+      "min": 1,
+      "description": "Delay in minutes between retry attempts"
+    }
+  }
+}

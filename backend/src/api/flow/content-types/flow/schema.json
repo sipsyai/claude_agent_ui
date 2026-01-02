@@ -77,6 +77,20 @@
     "metadata": {
       "type": "json",
       "default": {}
+    },
+    "schedule": {
+      "type": "component",
+      "repeatable": false,
+      "component": "flow.schedule"
+    },
+    "webhookEnabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether webhook triggering is enabled for this flow"
+    },
+    "webhookSecret": {
+      "type": "string",
+      "description": "Secret token for authenticating webhook requests"
     }
   }
 }

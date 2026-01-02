@@ -66,6 +66,16 @@ export type FlowModelOverride = 'default' | ClaudeModel;
  */
 export type FlowNodeType = 'input' | 'agent' | 'output';
 
+/**
+ * Schedule type for flow scheduling
+ */
+export type FlowScheduleType = 'once' | 'cron' | 'interval';
+
+/**
+ * Interval unit for interval-based scheduling
+ */
+export type FlowIntervalUnit = 'minutes' | 'hours' | 'days' | 'weeks';
+
 // =============================================================================
 // INPUT FIELD TYPES
 // =============================================================================
@@ -272,6 +282,63 @@ export interface OutputNode extends FlowNodeBase {
 export type FlowNode = InputNode | AgentNode | OutputNode;
 
 // =============================================================================
+// FLOW SCHEDULE
+// =============================================================================
+
+/**
+ * Schedule configuration for automated flow execution
+ */
+export interface FlowSchedule {
+  /** Whether the schedule is currently active */
+  isEnabled: boolean;
+
+  /** Type of schedule */
+  scheduleType: FlowScheduleType;
+
+  /** Cron expression for cron-based scheduling (e.g., '0 9 * * 1-5' for weekdays at 9am) */
+  cronExpression?: string;
+
+  /** Interval value for interval-based scheduling */
+  intervalValue: number;
+
+  /** Unit for interval-based scheduling */
+  intervalUnit: FlowIntervalUnit;
+
+  /** When the schedule becomes active */
+  startDate?: Date;
+
+  /** When the schedule expires */
+  endDate?: Date;
+
+  /** Timezone for the schedule (e.g., 'America/New_York', 'Europe/Istanbul') */
+  timezone: string;
+
+  /** Calculated next run time (managed by scheduler service) */
+  nextRunAt?: Date;
+
+  /** Last time the flow was executed by this schedule */
+  lastRunAt?: Date;
+
+  /** Number of times this schedule has triggered an execution */
+  runCount: number;
+
+  /** Maximum number of runs (optional, unlimited if not set) */
+  maxRuns?: number;
+
+  /** Default input values to use when the schedule triggers */
+  defaultInput: Record<string, any>;
+
+  /** Whether to retry if the scheduled execution fails */
+  retryOnFailure: boolean;
+
+  /** Maximum number of retry attempts on failure */
+  maxRetries: number;
+
+  /** Delay in minutes between retry attempts */
+  retryDelayMinutes: number;
+}
+
+// =============================================================================
 // FLOW DEFINITION
 // =============================================================================
 
@@ -341,6 +408,15 @@ export interface Flow {
 
   /** Additional metadata */
   metadata?: Record<string, any>;
+
+  /** Schedule configuration for automated execution */
+  schedule?: FlowSchedule;
+
+  /** Whether webhook triggering is enabled for this flow */
+  webhookEnabled: boolean;
+
+  /** Secret token for authenticating webhook requests */
+  webhookSecret?: string;
 
   /** Creation timestamp */
   createdAt?: Date;

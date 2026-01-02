@@ -107,7 +107,7 @@ export type LayoutDirection = 'LR' | 'RL' | 'TB' | 'BT';
  * - 'DL': Down Left
  * - 'DR': Down Right (default)
  */
-export type NodeAlignment = 'UL' | 'UR' | 'DL' | 'DR' | undefined;
+export type NodeAlignment = 'UL' | 'UR' | 'DL' | 'DR';
 
 /**
  * Auto-layout configuration options
@@ -164,7 +164,7 @@ const DEFAULT_LAYOUT_CONFIG: Required<AutoLayoutConfig> = {
   nodeSpacing: 150,
   rankSpacing: 250,
   edgeSpacing: 10,
-  align: undefined,
+  align: 'DR',
   useEdgeWeight: true,
   margin: 50,
 };

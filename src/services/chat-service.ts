@@ -342,7 +342,22 @@ export class ChatService extends EventEmitter {
   }
 
   /**
-   * Helper method to make Strapi API calls
+   * Helper method to make authenticated Strapi API calls
+   *
+   * @description
+   * Sends HTTP requests to Strapi API with authentication headers and proper configuration.
+   * Handles request method, endpoint routing, request body data, and query parameters.
+   * Uses axios for HTTP communication and automatically includes Bearer token authentication.
+   *
+   * @template T - Expected response data type
+   * @param method - HTTP method (GET, POST, PUT, DELETE, etc.)
+   * @param endpoint - Strapi API endpoint path (e.g., '/chat-sessions', '/chat-messages')
+   * @param data - Optional request body data for POST/PUT requests
+   * @param params - Optional query parameters for the request
+   * @returns Promise resolving to Strapi API response data of type T
+   * @throws {AxiosError} When the HTTP request fails
+   *
+   * @private
    */
   private async strapiRequest<T = any>(method: string, endpoint: string, data?: any, params?: any): Promise<T> {
     const config: any = {
@@ -3342,7 +3357,18 @@ Your plan should include:
   }
 
   /**
-   * Transform Strapi chat session response
+   * Transform Strapi chat session response into ChatSession format
+   *
+   * @description
+   * Converts Strapi API response data to the application's ChatSession interface.
+   * Handles both Strapi v4 and v5 response formats for backward compatibility.
+   * Processes nested relations including skills array and agent object with their configurations.
+   * Maps planMode boolean to permissionMode 'plan' value for client consumption.
+   *
+   * @param strapiData - Raw Strapi API response containing session data
+   * @returns Normalized ChatSession object with populated skills and agent relations
+   *
+   * @private
    */
   private transformChatSession(strapiData: any): ChatSession {
     const attrs = strapiData.attributes || strapiData;
@@ -3413,7 +3439,18 @@ Your plan should include:
   }
 
   /**
-   * Transform Strapi chat message response
+   * Transform Strapi chat message response into ChatMessage format
+   *
+   * @description
+   * Converts Strapi API response data to the application's ChatMessage interface.
+   * Handles both Strapi v4 and v5 response formats for backward compatibility.
+   * Processes nested attachments relation and extracts file metadata (name, url, mime, size).
+   * Preserves message metadata and timestamp information.
+   *
+   * @param strapiData - Raw Strapi API response containing message data
+   * @returns Normalized ChatMessage object with populated attachments if present
+   *
+   * @private
    */
   private transformChatMessage(strapiData: any): ChatMessage {
     const attrs = strapiData.attributes || strapiData;
@@ -3440,7 +3477,18 @@ Your plan should include:
 
   /**
    * Build MCP servers configuration from agent's mcpConfig
-   * Combines Strapi mcpConfig (which servers/tools to use) with .mcp.json (command/args)
+   *
+   * @description
+   * Constructs MCP (Model Context Protocol) servers configuration by combining agent's server
+   * selection from Strapi with command/args details from .mcp.json file.
+   * The agent's mcpConfig defines which servers/tools to enable, while .mcp.json provides
+   * the actual server command and arguments needed to launch each MCP server process.
+   *
+   * @param mcpConfig - Array of MCP server configurations from agent's Strapi record
+   * @param workingDirectory - Directory path where .mcp.json is located
+   * @returns Promise resolving to MCP servers configuration object, or undefined if no valid servers
+   *
+   * @private
    */
   private async buildMcpServersFromAgentConfig(
     mcpConfig: any[],
@@ -3490,7 +3538,18 @@ Your plan should include:
   }
 
   /**
-   * Load MCP configuration from .mcp.json
+   * Load MCP configuration from .mcp.json file
+   *
+   * @description
+   * Reads and parses the .mcp.json configuration file from the working directory.
+   * This file contains MCP server definitions with their command, arguments, and environment settings.
+   * Returns the mcpServers object which maps server names to their launch configurations.
+   * Gracefully handles missing or invalid .mcp.json files by returning undefined.
+   *
+   * @param workingDirectory - Directory path where .mcp.json should be located
+   * @returns Promise resolving to MCP servers configuration object from .mcp.json, or undefined if not found/invalid
+   *
+   * @private
    */
   private async loadMcpConfig(workingDirectory: string): Promise<Record<string, any> | undefined> {
     try {

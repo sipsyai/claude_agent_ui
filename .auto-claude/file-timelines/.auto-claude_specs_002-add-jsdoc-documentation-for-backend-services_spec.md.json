@@ -1,0 +1,28 @@
+{
+  "file_path": ".auto-claude/specs/002-add-jsdoc-documentation-for-backend-services/spec.md",
+  "main_branch_history": [],
+  "task_views": {
+    "002-add-jsdoc-documentation-for-backend-services": {
+      "task_id": "002-add-jsdoc-documentation-for-backend-services",
+      "branch_point": {
+        "commit_hash": "34a3f60da53773d90bd6579cb1cfd8417a1dd0b9",
+        "content": "",
+        "timestamp": "2026-01-02T14:06:14.995695"
+      },
+      "worktree_state": {
+        "content": "# Add JSDoc documentation for backend services\n\n## Overview\n\nThe src/services directory contains 29 service files with 65+ exported functions, classes, and interfaces. Most lack proper JSDoc documentation. Critical services like ClaudeSdkService, MCPService, and strapiClient have minimal inline documentation, making it difficult for developers to understand function parameters, return types, and usage patterns.\n\n## Rationale\n\nBackend services are the core of the application. Developers frequently need to understand how services interact with Claude SDK, Strapi, and MCP servers. Without JSDoc, developers must read implementation details to understand function behavior.\n\n---\n*This spec was created from ideation and is pending detailed specification.*\n",
+        "last_modified": "2026-01-02T14:06:15.752596"
+      },
+      "task_intent": {
+        "title": "002-add-jsdoc-documentation-for-backend-services",
+        "description": "Add comprehensive JSDoc documentation to 27 service files in src/services with 65+ exported functions, classes, and interfaces. Focus on function parameters, return types, usage patterns, and examples.",
+        "from_plan": true
+      },
+      "commits_behind_main": 0,
+      "status": "active",
+      "merged_at": null
+    }
+  },
+  "created_at": "2026-01-02T14:06:15.393803",
+  "last_updated": "2026-01-02T14:06:15.405543"
+}

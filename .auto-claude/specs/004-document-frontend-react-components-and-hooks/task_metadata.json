@@ -1,0 +1,8 @@
+{
+  "sourceType": "ideation",
+  "ideationType": "documentation_gaps",
+  "ideaId": "doc-003",
+  "rationale": "Frontend development requires understanding component APIs, prop types, and hook behavior. Currently developers must read implementation to understand how to use components like FlowDesigner, AgentExecutionModal, or TaskExecutionModal.",
+  "category": "documentation",
+  "priority": "medium"
+}

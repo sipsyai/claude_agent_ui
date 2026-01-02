@@ -1,0 +1,4 @@
+{
+  "task_description": "# Complete PostgreSQL Migration\n\nFinish the migration from SQLite to PostgreSQL as the primary database, ensuring data integrity, proper migrations, and production-ready configuration.\n\n## Rationale\nPostgreSQL provides better performance, reliability, and scalability for production workloads. Addresses technical debt from mixed database approach. Critical for avoiding the data loss bugs seen in Langflow.\n\n## User Stories\n- As a DevOps engineer, I want a stable PostgreSQL setup so that I can deploy the application with confidence in production\n\n## Acceptance Criteria\n- [ ] All entities stored in PostgreSQL\n- [ ] Migration scripts work without data loss\n- [ ] SQLite code paths removed or clearly deprecated\n- [ ] Database connection pooling configured\n- [ ] Backup and restore procedures documented\n",
+  "workflow_type": "feature"
+}

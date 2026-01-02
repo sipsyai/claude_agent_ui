@@ -1,0 +1,28 @@
+{
+  "file_path": ".auto-claude/specs/003-create-architecture-documentation-with-system-diag/task_metadata.json",
+  "main_branch_history": [],
+  "task_views": {
+    "003-create-architecture-documentation-with-system-diag": {
+      "task_id": "003-create-architecture-documentation-with-system-diag",
+      "branch_point": {
+        "commit_hash": "34a3f60da53773d90bd6579cb1cfd8417a1dd0b9",
+        "content": "",
+        "timestamp": "2026-01-02T10:53:08.483278"
+      },
+      "worktree_state": {
+        "content": "{\n  \"sourceType\": \"ideation\",\n  \"ideationType\": \"documentation_gaps\",\n  \"ideaId\": \"doc-002\",\n  \"rationale\": \"New developers and contributors need to understand the system architecture before making changes. The current project involves streaming SSE connections, MCP protocol interactions, and multi-service communication that aren't immediately obvious from code alone.\",\n  \"category\": \"documentation\",\n  \"priority\": \"high\"\n}",
+        "last_modified": "2026-01-02T11:16:07.576368"
+      },
+      "task_intent": {
+        "title": "003-create-architecture-documentation-with-system-diag",
+        "description": "Create comprehensive visual documentation showing how the hybrid architecture components (React + Express + Strapi + PostgreSQL + Claude SDK + MCP) interact, including data flow, service communication, and deployment topology.",
+        "from_plan": true
+      },
+      "commits_behind_main": 0,
+      "status": "active",
+      "merged_at": null
+    }
+  },
+  "created_at": "2026-01-02T10:53:08.812593",
+  "last_updated": "2026-01-02T10:53:08.824253"
+}

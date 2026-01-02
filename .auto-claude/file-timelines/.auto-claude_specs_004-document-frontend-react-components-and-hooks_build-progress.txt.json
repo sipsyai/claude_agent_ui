@@ -1,0 +1,25 @@
+{
+  "file_path": ".auto-claude/specs/004-document-frontend-react-components-and-hooks/build-progress.txt",
+  "main_branch_history": [],
+  "task_views": {
+    "004-document-frontend-react-components-and-hooks": {
+      "task_id": "004-document-frontend-react-components-and-hooks",
+      "branch_point": {
+        "commit_hash": "34a3f60da53773d90bd6579cb1cfd8417a1dd0b9",
+        "content": "",
+        "timestamp": "2026-01-02T14:01:09.479498"
+      },
+      "worktree_state": null,
+      "task_intent": {
+        "title": "Document Frontend React Components and Hooks",
+        "description": "Add comprehensive JSDoc documentation to all React components and custom hooks in the frontend, including prop types, usage examples, component purposes, state management, and side effects.",
+        "from_plan": true
+      },
+      "commits_behind_main": 0,
+      "status": "active",
+      "merged_at": null
+    }
+  },
+  "created_at": "2026-01-02T14:01:09.511605",
+  "last_updated": "2026-01-02T14:01:09.528092"
+}

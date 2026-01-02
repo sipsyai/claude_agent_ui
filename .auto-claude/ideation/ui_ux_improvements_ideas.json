@@ -1,0 +1,79 @@
+{
+  "ui_ux_improvements": [
+    {
+      "id": "uiux-001",
+      "type": "ui_ux_improvements",
+      "title": "Add Missing Button Variants (outline, ghost)",
+      "description": "The Button component is missing commonly used variants like 'outline' and 'ghost'. The AgentsPage already attempts to use variant='outline' but this variant doesn't exist in the component definition.",
+      "rationale": "Consistent button variants are essential for visual hierarchy. Outline buttons are commonly used for secondary actions and ghost buttons for subtle interactions. Without these, developers may create inconsistent inline styles.",
+      "category": "visual",
+      "affected_components": ["src/web/manager/components/ui/Button.tsx", "src/web/manager/components/AgentsPage.tsx"],
+      "screenshots": [],
+      "current_state": "Button component only has 3 variants: 'primary', 'secondary', 'destructive'. AgentsPage uses 'variant=\"outline\"' which is not defined, causing fallback to primary styling.",
+      "proposed_change": "Add 'outline' and 'ghost' variants to Button.tsx: outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground', ghost: 'hover:bg-accent hover:text-accent-foreground'. This aligns with shadcn/ui patterns already used in the project.",
+      "user_benefit": "Proper visual hierarchy for actions, consistent appearance across the app, and clearer distinction between primary and secondary actions.",
+      "status": "draft",
+      "created_at": "2026-01-02T09:39:00.000Z"
+    },
+    {
+      "id": "uiux-002",
+      "type": "ui_ux_improvements",
+      "title": "Improve Dialog Accessibility with ARIA Attributes",
+      "description": "The Dialog component lacks proper ARIA attributes for accessibility. It's missing role='dialog', aria-modal='true', aria-labelledby, and focus trapping.",
+      "rationale": "Modal dialogs without proper ARIA attributes are inaccessible to screen reader users. Users may not understand they're in a dialog, can't escape it properly, and focus may escape to background content.",
+      "category": "accessibility",
+      "affected_components": ["src/web/manager/components/ui/Dialog.tsx"],
+      "screenshots": [],
+      "current_state": "Dialog component uses simple div elements without ARIA roles. The backdrop onClick closes the modal but there's no keyboard escape handler. Focus is not trapped within the dialog.",
+      "proposed_change": "Add role='dialog', aria-modal='true', aria-labelledby pointing to DialogTitle. Add onKeyDown handler for Escape key. Implement focus trap using useEffect to capture and restore focus. Consider using @radix-ui/react-dialog which is already a dependency.",
+      "user_benefit": "Screen reader users can understand they're in a modal dialog, keyboard users can escape with Escape key, and focus remains within the dialog until closed.",
+      "status": "draft",
+      "created_at": "2026-01-02T09:39:00.000Z"
+    },
+    {
+      "id": "uiux-003",
+      "type": "ui_ux_improvements",
+      "title": "Enhance Dashboard with Summary Stats and Quick Actions",
+      "description": "The DashboardPage component is nearly empty - it only shows a title and welcome text. Users land on a page with no useful information or actions.",
+      "rationale": "A dashboard should provide at-a-glance information and quick access to common actions. The current empty state fails to demonstrate the value of the application and requires extra navigation to do anything useful.",
+      "category": "usability",
+      "affected_components": ["src/web/manager/components/DashboardPage.tsx"],
+      "screenshots": [],
+      "current_state": "DashboardPage renders only: title 'Dashboard', subtitle 'Welcome to your Claude Agent Manager.' No stats, no quick actions, no recent activity.",
+      "proposed_change": "Add summary cards showing: total agents count, total skills count, recent chat sessions, MCP servers status. Add quick action buttons for 'New Chat', 'Create Agent', 'Create Skill'. Consider adding recent activity feed showing last 5 actions. Use existing Card components and API endpoints already available.",
+      "user_benefit": "Users immediately see their workspace status, can quickly access common actions, and don't need to navigate to understand the system state.",
+      "status": "draft",
+      "created_at": "2026-01-02T09:39:00.000Z"
+    },
+    {
+      "id": "uiux-004",
+      "type": "ui_ux_improvements",
+      "title": "Replace Native Browser Dialogs with Styled Confirmation Modals",
+      "description": "The application uses native browser alert() and confirm() dialogs for user feedback and confirmations, which break the visual consistency and provide poor UX.",
+      "rationale": "Native browser dialogs are unstyled, modal-blocking, and cannot be customized. They break the visual flow of the dark-themed application and provide a jarring user experience.",
+      "category": "interaction",
+      "affected_components": ["src/web/manager/components/ChatPage.tsx", "src/web/manager/components/AgentsPage.tsx", "src/web/manager/components/MCPServersPage.tsx"],
+      "screenshots": [],
+      "current_state": "Multiple components use native dialogs: ChatPage uses 'confirm()' for delete confirmation (line 141), AgentsPage uses 'alert()' for import results (lines 63, 73), and similar patterns exist across the codebase.",
+      "proposed_change": "Create a ConfirmDialog component using the existing Dialog component. Implement a toast notification system for success/error messages (could use @radix-ui/react-toast or similar). Replace all alert() calls with toast notifications and all confirm() calls with the ConfirmDialog component.",
+      "user_benefit": "Consistent visual experience, themed dialogs that match the app design, better accessibility, and non-blocking notifications for success messages.",
+      "status": "draft",
+      "created_at": "2026-01-02T09:39:00.000Z"
+    },
+    {
+      "id": "uiux-005",
+      "type": "ui_ux_improvements",
+      "title": "Add Skeleton Loading States for Better Perceived Performance",
+      "description": "Loading states across the application use generic text like 'Loading...' or 'Loading chat sessions...' instead of skeleton loaders that preserve layout.",
+      "rationale": "Skeleton loaders provide better perceived performance by showing the structure of content before it loads. They reduce layout shift and give users confidence that content is loading correctly.",
+      "category": "performance",
+      "affected_components": ["src/web/manager/components/ChatPage.tsx", "src/web/manager/ManagerApp.tsx", "src/web/manager/components/SkillsPage.tsx"],
+      "screenshots": [],
+      "current_state": "ChatPage line 220-226 shows: 'Loading chat sessions...' centered text. ManagerApp AuthGuard shows: 'Loading...' text. Similar patterns exist in other data-loading components.",
+      "proposed_change": "Create a Skeleton component with variants for text, card, avatar, and button shapes. In ChatPage, show skeleton session list items during loading. In AuthGuard, show a skeleton layout of the dashboard. Add subtle pulse animation using existing Tailwind animate classes.",
+      "user_benefit": "Faster perceived loading times, reduced layout shift when content appears, and more professional feel during data fetching.",
+      "status": "draft",
+      "created_at": "2026-01-02T09:39:00.000Z"
+    }
+  ]
+}

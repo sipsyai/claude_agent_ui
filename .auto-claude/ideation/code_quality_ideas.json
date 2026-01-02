@@ -1,0 +1,152 @@
+{
+  "code_quality": [
+    {
+      "id": "cq-001",
+      "type": "code_quality",
+      "title": "Split manager.routes.ts into domain-specific route modules",
+      "description": "The file src/routes/manager.routes.ts has grown to 2042 lines and handles 35+ route handlers for agents, skills, MCP servers, commands, tools, and training operations. This violates single responsibility principle and makes the code difficult to navigate, test, and maintain.",
+      "rationale": "Very large files increase cognitive load, make code reviews harder, lead to merge conflicts, and make it difficult to understand the scope of changes. Splitting into focused modules improves maintainability, testability, and team productivity.",
+      "category": "large_files",
+      "severity": "major",
+      "affectedFiles": [
+        "src/routes/manager.routes.ts"
+      ],
+      "currentState": "Single 2042-line file handling agents, skills, MCP servers, commands, tools, training, import/export, and Claude creation routes",
+      "proposedChange": "Split into domain-specific route modules:\n- src/routes/agents.routes.ts (CRUD + execute)\n- src/routes/skills.routes.ts (CRUD + training)\n- src/routes/mcp-servers.routes.ts (CRUD + tools + import/export)\n- src/routes/commands.routes.ts (list and get)\n- src/routes/tools.routes.ts (list tools)\n- src/routes/training.routes.ts (training config + Claude creation)\n\nCreate a shared src/routes/utils/route-helpers.ts for common patterns like loadMcpConfig and parseSseRequest",
+      "codeExample": "// Current (all in one file):\nrouter.get('/agents', async (req, res) => { ... });\nrouter.get('/skills', async (req, res) => { ... });\nrouter.get('/mcp-servers', async (req, res) => { ... });\n\n// Proposed (separate modules):\n// agents.routes.ts\nexport function createAgentRoutes(): Router {\n  const router = Router();\n  router.get('/', asyncHandler(getAgents));\n  router.post('/', asyncHandler(createAgent));\n  return router;\n}\n\n// server.ts\napp.use('/api/manager/agents', createAgentRoutes());\napp.use('/api/manager/skills', createSkillRoutes());",
+      "bestPractice": "Single Responsibility Principle - each module should have one reason to change. Route files should be organized by domain/resource.",
+      "metrics": {
+        "lineCount": 2042,
+        "complexity": null,
+        "duplicateLines": null,
+        "testCoverage": null
+      },
+      "estimatedEffort": "large",
+      "breakingChange": false,
+      "prerequisites": ["Consider adding integration tests before refactoring to catch regressions"]
+    },
+    {
+      "id": "cq-002",
+      "type": "code_quality",
+      "title": "Reduce 'any' type usage to improve type safety",
+      "description": "There are 213 occurrences of ': any' across 39 source files. This defeats TypeScript's type-checking benefits and allows runtime type errors to slip through. Key problem areas include sdk-event-parser.ts (18 occurrences), execution.routes.ts (18), TasksPage.tsx (15), and AgentExecutionModal.tsx (12).",
+      "rationale": "Excessive 'any' usage creates a false sense of type safety while allowing bugs to reach production. Proper typing enables IDE autocompletion, catches errors at compile time, and makes refactoring safer. This is especially critical for API response handling and state management.",
+      "category": "types",
+      "severity": "major",
+      "affectedFiles": [
+        "src/web/manager/utils/sdk-event-parser.ts",
+        "src/routes/execution.routes.ts",
+        "src/web/manager/components/TasksPage.tsx",
+        "src/web/manager/components/AgentExecutionModal.tsx",
+        "src/services/strapi-client.ts",
+        "src/services/chat-log-service.ts",
+        "src/routes/task.routes.ts"
+      ],
+      "currentState": "213 occurrences of ': any' spread across 39 files, with some files having 10+ occurrences",
+      "proposedChange": "1. Enable stricter TypeScript settings (noUnusedLocals: true, noUnusedParameters: true)\n2. Create proper type definitions in src/types/ for:\n   - SDK event types (ContentBlockEvent, MessageEvent, etc.)\n   - API response types for Strapi client\n   - Route handler request/response types\n3. Replace 'any' with proper types or 'unknown' with type guards\n4. Use Zod's infer utility to derive types from validation schemas",
+      "codeExample": "// Current:\nconst data: any = fetchData();\nconst result: any = process(data as any);\n\n// Proposed:\ninterface SDKEvent {\n  type: 'content_block_start' | 'content_block_delta' | 'message_start';\n  content_block?: ContentBlock;\n  delta?: Delta;\n}\n\nconst data: SDKEvent = fetchData();\nif (isContentBlockEvent(data)) {\n  const result = processContentBlock(data.content_block);\n}",
+      "bestPractice": "TypeScript strict mode should be enabled. Use 'unknown' instead of 'any' when the type is truly unknown, then use type guards to narrow the type.",
+      "metrics": {
+        "lineCount": null,
+        "complexity": null,
+        "duplicateLines": null,
+        "testCoverage": null
+      },
+      "estimatedEffort": "large",
+      "breakingChange": false,
+      "prerequisites": ["Document existing type assumptions before refactoring"]
+    },
+    {
+      "id": "cq-003",
+      "type": "code_quality",
+      "title": "Split SkillCreationModal.tsx into smaller, focused components",
+      "description": "The SkillCreationModal.tsx component is 1160 lines and handles form state, validation, file uploads, tool selection, model configuration, MCP tools, input fields, and both create/edit modes. This violates component composition principles and makes the code hard to test and maintain.",
+      "rationale": "Large monolithic components are difficult to understand, test, and reuse. Breaking them into smaller, focused components improves code organization, enables unit testing, and makes it easier to identify and fix bugs.",
+      "category": "large_files",
+      "severity": "major",
+      "affectedFiles": [
+        "src/web/manager/components/SkillCreationModal.tsx"
+      ],
+      "currentState": "Single 1160-line component handling form state, validation, multiple tabs (basic, tools, model config, input fields, files), API calls, and both create/edit modes",
+      "proposedChange": "Split into focused components:\n- SkillCreationModal.tsx (orchestrator, ~100 lines)\n- SkillBasicInfoForm.tsx (name, description, category)\n- SkillInstructionsEditor.tsx (skillmd textarea with preview)\n- SkillToolsConfig.tsx (allowed/disallowed tools tabs)\n- SkillModelConfig.tsx (model, temperature, tokens)\n- SkillInputFieldsEditor.tsx (input field definitions)\n- SkillFilesManager.tsx (file uploads)\n- useSkillForm.ts (custom hook for form state & validation)\n- useSkillMutation.ts (custom hook for create/update API calls)",
+      "codeExample": "// Current (all in one file):\nconst SkillCreationModal = ({ isOpen, onClose, editSkill }) => {\n  const [formState, setFormState] = useState({ ... });\n  const [selectedTools, setSelectedTools] = useState([]);\n  const [modelConfig, setModelConfig] = useState({ ... });\n  const [inputFields, setInputFields] = useState([]);\n  // ... 50+ state variables and handlers\n  return <Dialog>... 500+ lines of JSX ...</Dialog>\n}\n\n// Proposed:\nconst SkillCreationModal = ({ isOpen, onClose, editSkill }) => {\n  const form = useSkillForm(editSkill);\n  const mutation = useSkillMutation();\n  \n  return (\n    <Dialog open={isOpen}>\n      <SkillBasicInfoForm form={form} />\n      <SkillToolsConfig form={form} />\n      <SkillModelConfig form={form} />\n      <DialogFooter>\n        <Button onClick={() => mutation.mutate(form.values)}>Save</Button>\n      </DialogFooter>\n    </Dialog>\n  );\n}",
+      "bestPractice": "React components should follow the Single Responsibility Principle. Extract complex logic into custom hooks and break large components into smaller, reusable pieces.",
+      "metrics": {
+        "lineCount": 1160,
+        "complexity": null,
+        "duplicateLines": null,
+        "testCoverage": null
+      },
+      "estimatedEffort": "medium",
+      "breakingChange": false,
+      "prerequisites": ["Add component-level tests before refactoring"]
+    },
+    {
+      "id": "cq-004",
+      "type": "code_quality",
+      "title": "Replace console.log statements with proper logging",
+      "description": "There are 49 console.log statements across 11 files instead of using the project's existing pino-based logger (createLogger). This leads to inconsistent logging, lost logs in production, and makes debugging harder.",
+      "rationale": "Production applications should use structured logging with proper log levels, timestamps, and context. Console.log statements don't support log levels, are hard to filter, and don't integrate with log aggregation tools. The project already has a logger service that should be used consistently.",
+      "category": "code_smells",
+      "severity": "minor",
+      "affectedFiles": [
+        "src/routes/manager.routes.ts",
+        "src/services/strapi-client.ts",
+        "src/services/skill-sync-service.ts",
+        "src/web/manager/hooks/useAgentCreator.ts",
+        "src/web/manager/hooks/useSkillCreator.ts",
+        "src/web/manager/hooks/useSkillTraining.ts",
+        "src/web/manager/components/SkillCreationModal.tsx"
+      ],
+      "currentState": "49 console.log statements scattered across backend routes, services, and frontend hooks. Some files use both console.log and the logger.",
+      "proposedChange": "1. For backend files: Replace console.log with logger.debug/info/warn/error using the existing createLogger service\n2. For frontend files: Create a frontend-specific logger wrapper that:\n   - Uses console methods in development\n   - Can be configured to send to a logging service in production\n   - Supports structured context objects\n3. Add an ESLint rule (no-console) to prevent future console.log usage",
+      "codeExample": "// Current:\nconsole.log(`List agents: found ${agents.length} agents`);\nconsole.log(`  - Agent ${agent.id} has ${agent.metadata.inputFields.length} input fields`);\n\n// Proposed (backend):\nconst logger = createLogger('ManagerRoutes');\nlogger.info('List agents', { count: agents.length });\nlogger.debug('Agent input fields', { agentId: agent.id, fieldCount: agent.metadata.inputFields.length });\n\n// Proposed (frontend):\nimport { logger } from '@/lib/logger';\nlogger.debug('Agent input fields', { agentId: agent.id });",
+      "bestPractice": "Use structured logging with appropriate log levels. Debug logs for development details, info for important events, warn for recoverable issues, error for failures.",
+      "metrics": {
+        "lineCount": null,
+        "complexity": null,
+        "duplicateLines": null,
+        "testCoverage": null
+      },
+      "estimatedEffort": "small",
+      "breakingChange": false,
+      "prerequisites": null
+    },
+    {
+      "id": "cq-005",
+      "type": "code_quality",
+      "title": "Add ESLint configuration for code consistency",
+      "description": "The project has no ESLint configuration in the root directory. This means there's no automated enforcement of coding standards, potential bugs from unused variables go undetected, and code style inconsistencies can accumulate over time.",
+      "rationale": "ESLint helps catch bugs early (unused variables, unreachable code), enforces coding conventions, and integrates with editors for real-time feedback. Combined with Prettier, it ensures consistent code formatting across the team.",
+      "category": "linting",
+      "severity": "minor",
+      "affectedFiles": [
+        "Project root (missing eslint.config.js)",
+        "package.json (missing eslint dependencies)"
+      ],
+      "currentState": "No ESLint configuration. TypeScript has noUnusedLocals and noUnusedParameters set to false, allowing dead code to accumulate. No automated code quality checks in place.",
+      "proposedChange": "1. Add ESLint with TypeScript support:\n   - eslint, @typescript-eslint/parser, @typescript-eslint/eslint-plugin\n2. Add React-specific rules: eslint-plugin-react, eslint-plugin-react-hooks\n3. Configure recommended rules plus:\n   - no-console (warn)\n   - @typescript-eslint/no-explicit-any (warn)\n   - @typescript-eslint/no-unused-vars (error)\n   - react-hooks/exhaustive-deps (warn)\n4. Add lint script to package.json\n5. Consider adding Husky for pre-commit linting",
+      "codeExample": "// eslint.config.js\nimport typescript from '@typescript-eslint/eslint-plugin';\nimport react from 'eslint-plugin-react';\nimport reactHooks from 'eslint-plugin-react-hooks';\n\nexport default [\n  {\n    plugins: {\n      '@typescript-eslint': typescript,\n      'react': react,\n      'react-hooks': reactHooks\n    },\n    rules: {\n      'no-console': 'warn',\n      '@typescript-eslint/no-explicit-any': 'warn',\n      '@typescript-eslint/no-unused-vars': 'error',\n      'react-hooks/exhaustive-deps': 'warn'\n    }\n  }\n];\n\n// package.json\n\"scripts\": {\n  \"lint\": \"eslint src --ext .ts,.tsx\",\n  \"lint:fix\": \"eslint src --ext .ts,.tsx --fix\"\n}",
+      "bestPractice": "Every TypeScript project should have linting configured. Start with recommended rules and gradually enable stricter checks as the codebase is cleaned up.",
+      "metrics": {
+        "lineCount": null,
+        "complexity": null,
+        "duplicateLines": null,
+        "testCoverage": null
+      },
+      "estimatedEffort": "small",
+      "breakingChange": false,
+      "prerequisites": ["Consider fixing existing lint errors incrementally rather than all at once"]
+    }
+  ],
+  "metadata": {
+    "filesAnalyzed": 121,
+    "largeFilesFound": 8,
+    "duplicateBlocksFound": 0,
+    "lintingConfigured": false,
+    "testsPresent": false,
+    "typeAnyOccurrences": 213,
+    "consoleLogOccurrences": 49,
+    "generatedAt": "2026-01-02T12:15:00Z"
+  }
+}

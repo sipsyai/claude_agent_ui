@@ -1,0 +1,846 @@
+{
+  "id": "roadmap-2026-01-02T12-45-00Z",
+  "project_name": "Claude Agent UI",
+  "version": "1.0",
+  "vision": "A comprehensive web-based management interface for Claude agents, skills, slash commands, and MCP servers",
+  "target_audience": {
+    "primary": "Developers building AI applications with Claude who need to manage, configure, and execute Claude agents through a visual interface rather than command-line tools",
+    "secondary": [
+      "AI/ML Engineers configuring complex agent workflows",
+      "DevOps engineers managing MCP server configurations",
+      "Technical Product Managers monitoring agent usage and performance",
+      "Teams building agentic AI products who need shared agent management"
+    ]
+  },
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Foundation - MVP Completion",
+      "description": "Complete essential MVP features, fix known gaps, and establish a stable foundation. Focus on making core features production-ready.",
+      "order": 1,
+      "status": "planned",
+      "features": [
+        "feature-1",
+        "feature-2",
+        "feature-3",
+        "feature-4",
+        "feature-5",
+        "feature-6",
+        "feature-7",
+        "feature-8"
+      ],
+      "milestones": [
+        {
+          "id": "milestone-1-1",
+          "title": "Conversation Persistence Complete",
+          "description": "Users can retrieve and delete conversation history, enabling session continuity",
+          "features": [
+            "feature-1",
+            "feature-2"
+          ],
+          "status": "planned"
+        },
+        {
+          "id": "milestone-1-2",
+          "title": "Database Migration Complete",
+          "description": "PostgreSQL is the primary database with stable migrations and no data loss",
+          "features": [
+            "feature-3"
+          ],
+          "status": "planned"
+        },
+        {
+          "id": "milestone-1-3",
+          "title": "Agent Input Fields Working",
+          "description": "Agents can define and collect custom input fields before execution",
+          "features": [
+            "feature-4"
+          ],
+          "status": "planned"
+        },
+        {
+          "id": "milestone-1-4",
+          "title": "MCP Integration Enhanced",
+          "description": "MCP server tools are fully integrated with agent execution",
+          "features": [
+            "feature-5",
+            "feature-6"
+          ],
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Enhancement - User Experience",
+      "description": "Improve user experience with better debugging, monitoring, and workflow efficiency. Address competitor pain points around complexity and visibility.",
+      "order": 2,
+      "status": "planned",
+      "features": [
+        "feature-9",
+        "feature-10",
+        "feature-11",
+        "feature-12",
+        "feature-13",
+        "feature-14",
+        "feature-15"
+      ],
+      "milestones": [
+        {
+          "id": "milestone-2-1",
+          "title": "Execution Tracing Live",
+          "description": "Real-time visibility into agent execution with action logging and trace visualization",
+          "features": [
+            "feature-9",
+            "feature-10"
+          ],
+          "status": "planned"
+        },
+        {
+          "id": "milestone-2-2",
+          "title": "Enhanced Agent Management",
+          "description": "Improved agent editing, versioning, and dependency management",
+          "features": [
+            "feature-11",
+            "feature-12"
+          ],
+          "status": "planned"
+        },
+        {
+          "id": "milestone-2-3",
+          "title": "Dashboard Analytics Available",
+          "description": "Centralized dashboard with usage analytics and performance metrics",
+          "features": [
+            "feature-13",
+            "feature-14"
+          ],
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "Scale - Team Features",
+      "description": "Enable team collaboration, add enterprise features, and optimize for production scale. Address market gaps around self-hosting and team workflows.",
+      "order": 3,
+      "status": "planned",
+      "features": [
+        "feature-16",
+        "feature-17",
+        "feature-18",
+        "feature-19",
+        "feature-20",
+        "feature-21"
+      ],
+      "milestones": [
+        {
+          "id": "milestone-3-1",
+          "title": "Multi-User Support Ready",
+          "description": "Role-based access control and team workspaces are functional",
+          "features": [
+            "feature-16",
+            "feature-17"
+          ],
+          "status": "planned"
+        },
+        {
+          "id": "milestone-3-2",
+          "title": "Production Optimization Complete",
+          "description": "Performance optimized with caching, batch operations, and efficient resource usage",
+          "features": [
+            "feature-18",
+            "feature-19"
+          ],
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "Future - Advanced Capabilities",
+      "description": "Long-term vision features including advanced agent orchestration, marketplace integration, and platform expansion.",
+      "order": 4,
+      "status": "planned",
+      "features": [
+        "feature-22",
+        "feature-23",
+        "feature-24",
+        "feature-25"
+      ],
+      "milestones": [
+        {
+          "id": "milestone-4-1",
+          "title": "Agent Marketplace Live",
+          "description": "Community can share and discover agents, skills, and workflows",
+          "features": [
+            "feature-22",
+            "feature-23"
+          ],
+          "status": "planned"
+        },
+        {
+          "id": "milestone-4-2",
+          "title": "Visual Workflow Execution",
+          "description": "Flow builder can orchestrate multi-agent workflows with visual execution feedback",
+          "features": [
+            "feature-24",
+            "feature-25"
+          ],
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "feature-1",
+      "title": "Conversation History Retrieval",
+      "description": "Implement the ability to retrieve past conversations from the database, allowing users to resume previous agent sessions and review execution history.",
+      "rationale": "Critical for session continuity. Without this, users lose context when refreshing or returning to the UI. Addresses the TODO in execution.routes.ts and mirrors functionality users expect from chat interfaces.",
+      "priority": "must",
+      "complexity": "medium",
+      "impact": "high",
+      "phase_id": "phase-1",
+      "dependencies": [],
+      "status": "planned",
+      "acceptance_criteria": [
+        "Users can view a list of past conversations",
+        "Selecting a conversation loads the full message history",
+        "Conversation metadata (agent, timestamp, status) is displayed",
+        "Pagination works for conversations with many messages"
+      ],
+      "user_stories": [
+        "As a developer, I want to view my past agent conversations so that I can review what was discussed and pick up where I left off"
+      ],
+      "linked_spec_id": "005-conversation-history-retrieval",
+      "competitor_insight_ids": []
+    },
+    {
+      "id": "feature-2",
+      "title": "Conversation Deletion",
+      "description": "Enable users to delete conversations from the database to manage storage and remove sensitive or irrelevant sessions.",
+      "rationale": "Essential for data management and privacy. Users need control over their data. Addresses TODO in execution.routes.ts.",
+      "priority": "must",
+      "complexity": "low",
+      "impact": "medium",
+      "phase_id": "phase-1",
+      "dependencies": [
+        "feature-1"
+      ],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Users can delete individual conversations",
+        "Confirmation dialog prevents accidental deletion",
+        "Associated messages are cascade-deleted",
+        "Bulk delete option for multiple conversations"
+      ],
+      "user_stories": [
+        "As a developer, I want to delete old conversations so that I can manage storage and remove sensitive test data"
+      ],
+      "competitor_insight_ids": []
+    },
+    {
+      "id": "feature-3",
+      "title": "Complete PostgreSQL Migration",
+      "description": "Finish the migration from SQLite to PostgreSQL as the primary database, ensuring data integrity, proper migrations, and production-ready configuration.",
+      "rationale": "PostgreSQL provides better performance, reliability, and scalability for production workloads. Addresses technical debt from mixed database approach. Critical for avoiding the data loss bugs seen in Langflow.",
+      "priority": "must",
+      "complexity": "high",
+      "impact": "high",
+      "phase_id": "phase-1",
+      "dependencies": [],
+      "status": "planned",
+      "acceptance_criteria": [
+        "All entities stored in PostgreSQL",
+        "Migration scripts work without data loss",
+        "SQLite code paths removed or clearly deprecated",
+        "Database connection pooling configured",
+        "Backup and restore procedures documented"
+      ],
+      "user_stories": [
+        "As a DevOps engineer, I want a stable PostgreSQL setup so that I can deploy the application with confidence in production"
+      ],
+      "linked_spec_id": "006-complete-postgresql-migration",
+      "competitor_insight_ids": [
+        "pain-3-4"
+      ]
+    },
+    {
+      "id": "feature-4",
+      "title": "Agent Input Fields Implementation",
+      "description": "Implement the inputFields feature in the Strapi schema and UI, allowing agents to define custom input parameters that users fill in before execution.",
+      "rationale": "Many agents need context-specific inputs (project path, API key, custom instructions). This is marked as TODO in AgentExecutionModal.tsx and is essential for flexible agent usage.",
+      "priority": "must",
+      "complexity": "medium",
+      "impact": "high",
+      "phase_id": "phase-1",
+      "dependencies": [],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Agents can define input fields with types (text, select, file, boolean)",
+        "Input fields are displayed in execution modal",
+        "Validation rules can be set per field",
+        "Field values are passed to agent execution context"
+      ],
+      "user_stories": [
+        "As a developer, I want to define input fields for my agents so that users provide the necessary context before execution"
+      ],
+      "competitor_insight_ids": []
+    },
+    {
+      "id": "feature-5",
+      "title": "MCP Server Tools Integration",
+      "description": "Complete the integration between MCP servers and agent execution, ensuring agents can use tools from configured MCP servers during execution.",
+      "rationale": "MCP server tools are a key differentiator but the TODO in execution.routes.ts indicates this isn't fully wired up. Visual MCP management is unique to this product and addresses a major market gap.",
+      "priority": "must",
+      "complexity": "high",
+      "impact": "high",
+      "phase_id": "phase-1",
+      "dependencies": [],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Agents can list available MCP tools",
+        "Selected MCP tools are available during execution",
+        "Tool responses are visible in execution output",
+        "Tool errors are clearly displayed"
+      ],
+      "user_stories": [
+        "As a developer, I want my agents to use MCP server tools so that they can access external capabilities like database queries or API calls"
+      ],
+      "competitor_insight_ids": [
+        "gap-2"
+      ]
+    },
+    {
+      "id": "feature-6",
+      "title": "Sensitive Tools Permission Prompt",
+      "description": "Implement a user permission prompt for sensitive tool operations, allowing users to approve or deny tool calls that could have significant effects.",
+      "rationale": "Currently marked as TODO in chat-service.ts. Critical for security and user trust. Addresses competitor concerns about agents performing actions without confirmation.",
+      "priority": "should",
+      "complexity": "medium",
+      "impact": "high",
+      "phase_id": "phase-1",
+      "dependencies": [
+        "feature-5"
+      ],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Tools can be marked as sensitive in configuration",
+        "Permission modal appears before sensitive tool execution",
+        "User can approve, deny, or approve-all for session",
+        "Denied tools result in graceful agent handling"
+      ],
+      "user_stories": [
+        "As a developer, I want to be prompted before agents execute sensitive operations so that I maintain control over potentially dangerous actions"
+      ],
+      "competitor_insight_ids": [
+        "pain-4-3"
+      ]
+    },
+    {
+      "id": "feature-7",
+      "title": "Skills Import Ordering",
+      "description": "Fix the import order to ensure skills are imported before agents that reference them, preventing broken references during bulk import.",
+      "rationale": "Directly addresses the TODO in manager.routes.ts. Essential for reliable import/export functionality which is a key workflow for configuration backup and sharing.",
+      "priority": "must",
+      "complexity": "low",
+      "impact": "medium",
+      "phase_id": "phase-1",
+      "dependencies": [],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Import detects skill dependencies in agents",
+        "Skills are imported first in correct order",
+        "Clear error messages if skill references are broken",
+        "Import rollback on failure"
+      ],
+      "user_stories": [
+        "As a developer, I want imports to handle dependencies correctly so that I can reliably transfer configurations between environments"
+      ],
+      "competitor_insight_ids": []
+    },
+    {
+      "id": "feature-8",
+      "title": "Message ID Tracking Improvement",
+      "description": "Implement proper message ID tracking from the backend to ensure reliable message threading and referencing in the UI.",
+      "rationale": "Addresses TODO in MessageBubble.tsx. Essential for features like message editing, referencing, and proper conversation threading.",
+      "priority": "should",
+      "complexity": "low",
+      "impact": "medium",
+      "phase_id": "phase-1",
+      "dependencies": [],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Each message has a unique backend-generated ID",
+        "IDs are consistent across page refreshes",
+        "Messages can be referenced by ID in subsequent requests",
+        "ID format supports future threading features"
+      ],
+      "user_stories": [
+        "As a developer, I want reliable message IDs so that I can reference specific messages in follow-up interactions"
+      ],
+      "competitor_insight_ids": []
+    },
+    {
+      "id": "feature-9",
+      "title": "Execution Trace Visualization",
+      "description": "Provide a visual timeline of agent execution showing each action, tool call, and decision point with timing information.",
+      "rationale": "Addresses the top competitor pain point of debugging and visibility issues (pain-1-4, pain-1-5, pain-2-5). Real-time execution visibility is a key market gap. This differentiates from opaque frameworks like LangChain.",
+      "priority": "should",
+      "complexity": "medium",
+      "impact": "high",
+      "phase_id": "phase-2",
+      "dependencies": [
+        "feature-5"
+      ],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Timeline shows each tool call with timestamp",
+        "Expand/collapse details for each action",
+        "Duration displayed for each step",
+        "Failed actions highlighted with error details",
+        "Export trace as JSON for debugging"
+      ],
+      "user_stories": [
+        "As a developer, I want to see exactly what my agent did during execution so that I can debug issues and understand its reasoning"
+      ],
+      "competitor_insight_ids": [
+        "pain-1-4",
+        "pain-1-5",
+        "pain-2-5",
+        "gap-3"
+      ]
+    },
+    {
+      "id": "feature-10",
+      "title": "Execution Action Logging",
+      "description": "Log all agent actions to the database with structured metadata, enabling historical analysis and audit trails.",
+      "rationale": "Complements trace visualization. Addresses n8n pain point about agents performing actions without logging (pain-4-3). Essential for debugging and compliance.",
+      "priority": "should",
+      "complexity": "medium",
+      "impact": "high",
+      "phase_id": "phase-2",
+      "dependencies": [
+        "feature-9"
+      ],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "All tool calls logged with parameters and results",
+        "Logs are searchable and filterable",
+        "Log retention policies configurable",
+        "Logs can be exported for external analysis"
+      ],
+      "user_stories": [
+        "As a developer, I want execution logs persisted so that I can analyze agent behavior over time and audit what actions were taken"
+      ],
+      "competitor_insight_ids": [
+        "pain-4-3"
+      ]
+    },
+    {
+      "id": "feature-11",
+      "title": "Agent Versioning",
+      "description": "Track changes to agent configurations over time, allowing users to view history, compare versions, and roll back to previous configurations.",
+      "rationale": "Addresses LangChain pain about breaking changes (pain-1-2). Version control for configurations helps teams maintain stability and understand what changed when issues arise.",
+      "priority": "should",
+      "complexity": "medium",
+      "impact": "medium",
+      "phase_id": "phase-2",
+      "dependencies": [],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Each save creates a new version",
+        "Version history viewable in UI",
+        "Diff view between versions",
+        "One-click rollback to previous version",
+        "Version notes/comments supported"
+      ],
+      "user_stories": [
+        "As a developer, I want to track changes to my agents so that I can understand what changed and revert if needed"
+      ],
+      "competitor_insight_ids": [
+        "pain-1-2"
+      ]
+    },
+    {
+      "id": "feature-12",
+      "title": "Skill Usage Analytics",
+      "description": "Enhance the existing skills-usage endpoint with detailed analytics showing usage frequency, performance metrics, and cross-agent dependencies.",
+      "rationale": "Builds on existing feature to address the market gap around skill tracking (gap-4). Helps users understand which skills are most valuable and identify unused ones.",
+      "priority": "should",
+      "complexity": "low",
+      "impact": "medium",
+      "phase_id": "phase-2",
+      "dependencies": [],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Dashboard shows skill usage counts",
+        "Usage trends over time",
+        "Average execution time per skill",
+        "Dependency graph visualization"
+      ],
+      "user_stories": [
+        "As a developer, I want to see how my skills are being used so that I can prioritize improvements and identify unused skills"
+      ],
+      "competitor_insight_ids": [
+        "gap-4"
+      ]
+    },
+    {
+      "id": "feature-13",
+      "title": "Centralized Dashboard",
+      "description": "Create a unified dashboard view showing all agents, skills, MCP servers, and recent executions at a glance with key metrics and quick actions.",
+      "rationale": "Addresses user goal of having a centralized dashboard for all AI agent assets. Provides the overview that CLI-only tools lack (pain-7-3).",
+      "priority": "should",
+      "complexity": "medium",
+      "impact": "high",
+      "phase_id": "phase-2",
+      "dependencies": [
+        "feature-12"
+      ],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Single page shows counts of all entities",
+        "Recent executions with status",
+        "Quick action buttons for common tasks",
+        "System health indicators",
+        "Customizable widgets"
+      ],
+      "user_stories": [
+        "As a developer, I want a dashboard that gives me an overview of my entire agent ecosystem so that I can quickly understand the current state"
+      ],
+      "competitor_insight_ids": [
+        "pain-7-3"
+      ]
+    },
+    {
+      "id": "feature-14",
+      "title": "Model Version Pinning",
+      "description": "Allow agents to pin to specific Claude model versions, preventing unexpected behavior changes when models are updated.",
+      "rationale": "Addresses the Claude CLI pain point about model regressions after updates (pain-7-5). Important for production stability.",
+      "priority": "could",
+      "complexity": "low",
+      "impact": "medium",
+      "phase_id": "phase-2",
+      "dependencies": [],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Agent configuration includes model version field",
+        "List of available model versions from Anthropic API",
+        "Warning when using deprecated versions",
+        "Easy upgrade path to newer versions"
+      ],
+      "user_stories": [
+        "As a developer, I want to pin my agent to a specific model version so that its behavior remains consistent over time"
+      ],
+      "competitor_insight_ids": [
+        "pain-7-5"
+      ]
+    },
+    {
+      "id": "feature-15",
+      "title": "Improved Error Handling and Recovery",
+      "description": "Implement comprehensive error handling with clear error messages, recovery suggestions, and automatic retry logic for transient failures.",
+      "rationale": "Addresses multiple competitor pain points about opaque failures (pain-2-5, pain-4-1). Clear error handling is essential for production reliability.",
+      "priority": "should",
+      "complexity": "medium",
+      "impact": "high",
+      "phase_id": "phase-2",
+      "dependencies": [],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "All errors have human-readable messages",
+        "Suggestions for resolution included",
+        "Automatic retry for network/timeout errors",
+        "Error reporting to external services (optional)",
+        "Error summary in execution history"
+      ],
+      "user_stories": [
+        "As a developer, I want clear error messages and recovery suggestions so that I can quickly resolve issues without deep debugging"
+      ],
+      "competitor_insight_ids": [
+        "pain-2-5",
+        "pain-4-1"
+      ]
+    },
+    {
+      "id": "feature-16",
+      "title": "Role-Based Access Control (RBAC)",
+      "description": "Implement user roles (admin, developer, viewer) with granular permissions for agents, skills, and MCP servers.",
+      "rationale": "Critical enterprise feature that Flowise lacks (pain-2-1). Essential for team adoption and security in production environments.",
+      "priority": "should",
+      "complexity": "high",
+      "impact": "high",
+      "phase_id": "phase-3",
+      "dependencies": [],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Define roles with permission sets",
+        "Assign roles to users",
+        "Permissions enforced at API level",
+        "UI elements hidden based on permissions",
+        "Audit log of permission changes"
+      ],
+      "user_stories": [
+        "As a team lead, I want to control what team members can access and modify so that I can maintain security and organization"
+      ],
+      "competitor_insight_ids": [
+        "pain-2-1"
+      ]
+    },
+    {
+      "id": "feature-17",
+      "title": "Team Workspaces",
+      "description": "Enable teams to organize agents, skills, and configurations into shared workspaces with collaboration features.",
+      "rationale": "Addresses secondary persona of teams building agentic AI products. Differentiates from individual-focused tools.",
+      "priority": "could",
+      "complexity": "high",
+      "impact": "medium",
+      "phase_id": "phase-3",
+      "dependencies": [
+        "feature-16"
+      ],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Create and manage workspaces",
+        "Invite team members to workspaces",
+        "Workspace-level permissions",
+        "Shared resources visible to all members",
+        "Activity feed for workspace changes"
+      ],
+      "user_stories": [
+        "As a team member, I want to share agents and skills with my team so that we can collaborate on AI development"
+      ],
+      "competitor_insight_ids": []
+    },
+    {
+      "id": "feature-18",
+      "title": "Execution Queue and Rate Limiting",
+      "description": "Implement a queue system for agent executions with rate limiting to prevent API overload and manage costs.",
+      "rationale": "Addresses n8n and CrewAI issues with performance and rate limiting (pain-4-2, pain-6-5). Essential for production deployments.",
+      "priority": "should",
+      "complexity": "medium",
+      "impact": "high",
+      "phase_id": "phase-3",
+      "dependencies": [],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Executions are queued when limit reached",
+        "Configurable rate limits",
+        "Queue position visible to users",
+        "Priority queue for urgent executions",
+        "Cost estimation before execution"
+      ],
+      "user_stories": [
+        "As a developer, I want execution rate limiting so that I don't accidentally exceed API limits or incur unexpected costs"
+      ],
+      "competitor_insight_ids": [
+        "pain-4-2",
+        "pain-6-5"
+      ]
+    },
+    {
+      "id": "feature-19",
+      "title": "Caching Layer",
+      "description": "Implement intelligent caching for repeated tool calls and responses to improve performance and reduce API costs.",
+      "rationale": "Addresses Langflow memory leak issues with caching (pain-3-3) by implementing proper caching. Improves performance for common operations.",
+      "priority": "could",
+      "complexity": "medium",
+      "impact": "medium",
+      "phase_id": "phase-3",
+      "dependencies": [],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Cache responses from deterministic tool calls",
+        "Configurable TTL per cache type",
+        "Cache invalidation on data changes",
+        "Cache hit/miss statistics",
+        "Memory limits with LRU eviction"
+      ],
+      "user_stories": [
+        "As a developer, I want repeated operations to be cached so that my agents execute faster and cost less"
+      ],
+      "competitor_insight_ids": [
+        "pain-3-3"
+      ]
+    },
+    {
+      "id": "feature-20",
+      "title": "Batch Operations API",
+      "description": "Add API endpoints for batch operations on agents, skills, and MCP servers to enable efficient bulk management.",
+      "rationale": "Extends existing bulk-delete to full batch operations. Important for teams managing many agents.",
+      "priority": "could",
+      "complexity": "low",
+      "impact": "medium",
+      "phase_id": "phase-3",
+      "dependencies": [],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Batch create/update/delete for all entities",
+        "Transaction-like behavior (all or nothing)",
+        "Progress reporting for large batches",
+        "Error summary for partial failures"
+      ],
+      "user_stories": [
+        "As a developer, I want to perform batch operations so that I can efficiently manage large numbers of agents and skills"
+      ],
+      "competitor_insight_ids": []
+    },
+    {
+      "id": "feature-21",
+      "title": "Webhook Triggers",
+      "description": "Allow agents to be triggered via webhooks, enabling integration with external systems and automation pipelines.",
+      "rationale": "Addresses integration needs for DevOps engineers. Enables event-driven agent execution.",
+      "priority": "could",
+      "complexity": "medium",
+      "impact": "medium",
+      "phase_id": "phase-3",
+      "dependencies": [
+        "feature-18"
+      ],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Generate unique webhook URLs per agent",
+        "Authentication for webhook calls",
+        "Payload parsing and validation",
+        "Execution result callback option",
+        "Webhook logs and metrics"
+      ],
+      "user_stories": [
+        "As a DevOps engineer, I want to trigger agents via webhooks so that I can integrate them with CI/CD pipelines and other systems"
+      ],
+      "competitor_insight_ids": []
+    },
+    {
+      "id": "feature-22",
+      "title": "Agent Marketplace - Discovery",
+      "description": "Create a marketplace where users can discover and import community-shared agents, skills, and workflows.",
+      "rationale": "Leverages Claude's unique capabilities (gap-5) and creates network effects. Differentiation through community.",
+      "priority": "could",
+      "complexity": "high",
+      "impact": "high",
+      "phase_id": "phase-4",
+      "dependencies": [
+        "feature-11",
+        "feature-7"
+      ],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Browse featured agents and skills",
+        "Search and filter by category/tags",
+        "Preview before importing",
+        "One-click import to workspace",
+        "Rating and review system"
+      ],
+      "user_stories": [
+        "As a developer, I want to discover pre-built agents so that I can quickly get started without building from scratch"
+      ],
+      "competitor_insight_ids": [
+        "gap-5"
+      ]
+    },
+    {
+      "id": "feature-23",
+      "title": "Agent Marketplace - Publishing",
+      "description": "Enable users to publish their agents and skills to the marketplace with versioning and update management.",
+      "rationale": "Completes the marketplace ecosystem. Encourages community contribution and knowledge sharing.",
+      "priority": "wont",
+      "complexity": "high",
+      "impact": "medium",
+      "phase_id": "phase-4",
+      "dependencies": [
+        "feature-22"
+      ],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Submit agents for review",
+        "Manage published versions",
+        "Usage analytics for publishers",
+        "Update notifications to users",
+        "License selection"
+      ],
+      "user_stories": [
+        "As a developer, I want to share my agents with the community so that others can benefit from my work"
+      ],
+      "competitor_insight_ids": []
+    },
+    {
+      "id": "feature-24",
+      "title": "Flow Builder Execution",
+      "description": "Enhance the existing flow builder to execute visual workflows, orchestrating multiple agents in sequence or parallel.",
+      "rationale": "Leverages the @xyflow/react investment. Addresses the CrewAI pain point about multi-agent reliability (pain-6-1, pain-6-2) by providing clear visual orchestration.",
+      "priority": "could",
+      "complexity": "high",
+      "impact": "high",
+      "phase_id": "phase-4",
+      "dependencies": [
+        "feature-9",
+        "feature-15"
+      ],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Visual flow execution with live status",
+        "Pass data between nodes",
+        "Conditional branching support",
+        "Parallel execution where possible",
+        "Execution history per flow"
+      ],
+      "user_stories": [
+        "As a developer, I want to execute my visual workflows so that I can orchestrate complex multi-agent tasks"
+      ],
+      "competitor_insight_ids": [
+        "pain-6-1",
+        "pain-6-2"
+      ]
+    },
+    {
+      "id": "feature-25",
+      "title": "Agent Templates Library",
+      "description": "Provide built-in templates for common agent use cases (code review, documentation, data analysis) to accelerate onboarding.",
+      "rationale": "Reduces the steep learning curve that plagues competitors (pain-5-1). Helps new users get value quickly.",
+      "priority": "could",
+      "complexity": "low",
+      "impact": "medium",
+      "phase_id": "phase-4",
+      "dependencies": [],
+      "status": "under_review",
+      "acceptance_criteria": [
+        "Library of 10+ starter templates",
+        "Templates cover common use cases",
+        "Easy customization after creation",
+        "Template documentation included",
+        "Community template contributions"
+      ],
+      "user_stories": [
+        "As a new user, I want pre-built templates so that I can quickly create useful agents without starting from scratch"
+      ],
+      "competitor_insight_ids": [
+        "pain-5-1"
+      ]
+    },
+    {
+      "id": "feature-1767343706867-gwrn89zz6",
+      "title": "Uygulamanın genel yapısını düzenleyeceğiz; yani uygulamanın amacı vs. bunlar ne olacaksa onu belirleyeceğiz",
+      "description": "Uygulamada şunu yapması gerekiyor. Aslında, agent skill MCP gibi yapıları şu anda destekliyor. Bir agent ekleyip bu agenta skill verebiliyoruz. Buradaki amacımız, aslında agent var, skill'ler var. Bunları bir workflow içerisinde, yani bir flow içerisinde düzenleyebilmek ve sabit süreçleri buraya tanımlayabilmek.\n\nNasıl? Bir örnekten gidelim. Mesela, \"website scraper\" diye bir şeyimiz var. Biz ona input olarak bir web sitesi veriyoruz. O bize çıktı olarak, işte marktan formatında, web sitenin tamamına bakan bir yapı; yani web sitenin alt sayfalarına kadar böyle detaylı bir analiz yapan bir yapı var. Bu da bir ne diyelim, buna bir job diyebiliriz, flow diyebiliriz veya bunun adına.\n\nBunun iç designinin yapılması, yani \"web scraper\" diye bir flow'umuz olacak. Bu flow'un altında da bir agent bağlı olacak. Örnekteki olarak veriyorum, input ile başlayacak. Input, hangi web sitesinin adı verildi, gerekiyorsa description verilir; yani tanımların yapılabileceği bir yer olacak. \n\nSonrasında da agenta gelecek. Agentı da nasıl çalıştırılacaksa, zaten agentla tanımlı skiller de tanımlar yapılabilir. Agent, zaten geliştirirken skillerin nasıl kullanılacağını, o input-output'u düzenleyebilecek ki agent oluştururken de AI buna göre zaten oluşturacak. \n\nBurası bir yapıda olacak. Sonrasında da bunu çalıştırıp output verecek. Output da dosya olarak kaydedebilir, zipli ip verebilir; süreçten sürece değişir. Database'de logon tutarsan, onları paketleyip verir gibi bir şey olacak aslında burada.",
+      "rationale": "Şimdi diğer bütün tool'lar, mesela senin de şu an üzerinde çalıştığın Auto Cloud Tool'ı, hep böyle bir proje üzerinde geniş perspektiften bakarak işi yapıyor. \n\nAslında bu geliştirdiğimiz tool'ı, bunu şeye indiriyor, yani kullanıcının süreci seviyesine. Kullanıcı bir RP süreci buraya konumlayabilir. Bir Excel koyabilir bunun içerisine, agent'a tanımlayıp süreci baştan aşağıya yönetebilir. Bir web browser'a giriş yapabilir. Veya e-posta geldiği zaman gelip tetikleyebilir gibi bir yapılı olacak. \n\nYani bu Flow'un agent çalıştırması, buradan outputları, yani böyle genel kullanımı kolay, agent tanımı olan, agent'a skill'lerin bağlandığı ve bunların bir workflow üzerinden yönetilebildiği, schedule'lı, trigger'lı vs. böyle bir uygulama olmasını istiyoruz. \n\nYani burada geniş kapsamda birazcık düşünüp, ilk aşamada geliştirme yaparken sadece benim kullanacağım şekilde olması gerekiyor. Yani production'daki security vs. genişleme, bunların hiçbirini göze alma. \n\nDirekt proje gibi yapma yani bu süreci. Sadece ben kullanacağım şekilde düşün. Çok art core production'a çıkmakla uğraşma.",
+      "priority": "must",
+      "complexity": "high",
+      "impact": "high",
+      "phase_id": "phase-1",
+      "dependencies": [],
+      "status": "planned",
+      "acceptance_criteria": [],
+      "user_stories": [],
+      "linked_spec_id": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu"
+    }
+  ],
+  "metadata": {
+    "created_at": "2026-01-02T12:45:00Z",
+    "updated_at": "2026-01-02T09:15:07.853Z",
+    "generated_by": "roadmap_features agent",
+    "prioritization_framework": "MoSCoW",
+    "competitor_analysis_used": true,
+    "features_addressing_competitor_pain_points": 15,
+    "total_competitor_insights_referenced": 20
+  }
+}

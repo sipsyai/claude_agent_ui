@@ -1,0 +1,8 @@
+{
+  "sourceType": "ideation",
+  "ideationType": "documentation_gaps",
+  "ideaId": "doc-002",
+  "rationale": "New developers and contributors need to understand the system architecture before making changes. The current project involves streaming SSE connections, MCP protocol interactions, and multi-service communication that aren't immediately obvious from code alone.",
+  "category": "documentation",
+  "priority": "high"
+}

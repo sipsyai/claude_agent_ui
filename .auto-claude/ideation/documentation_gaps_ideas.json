@@ -1,0 +1,108 @@
+{
+  "documentation_gaps": [
+    {
+      "id": "doc-001",
+      "type": "documentation_gaps",
+      "title": "Add JSDoc documentation for backend services",
+      "description": "The src/services directory contains 29 service files with 65+ exported functions, classes, and interfaces. Most lack proper JSDoc documentation. Critical services like ClaudeSdkService, MCPService, and strapiClient have minimal inline documentation, making it difficult for developers to understand function parameters, return types, and usage patterns.",
+      "rationale": "Backend services are the core of the application. Developers frequently need to understand how services interact with Claude SDK, Strapi, and MCP servers. Without JSDoc, developers must read implementation details to understand function behavior.",
+      "category": "api_docs",
+      "targetAudience": "developers",
+      "affectedAreas": [
+        "src/services/claude-sdk-service.ts",
+        "src/services/mcp-service.ts",
+        "src/services/strapi-client.ts",
+        "src/services/skill-service.ts",
+        "src/services/flow-service.ts",
+        "src/services/task-storage-service.ts"
+      ],
+      "currentDocumentation": "Only ClaudeSdkService and MCPService have basic class-level JSDoc comments. Individual methods lack parameter and return type documentation.",
+      "proposedContent": "Add comprehensive JSDoc for all public methods including @param, @returns, @throws, @example, and @see tags. Document async behavior, error handling, and integration points with external services.",
+      "priority": "high",
+      "estimatedEffort": "large"
+    },
+    {
+      "id": "doc-002",
+      "type": "documentation_gaps",
+      "title": "Create architecture documentation with system diagrams",
+      "description": "The project has a complex hybrid architecture (React + Express + Strapi + PostgreSQL + Claude SDK + MCP) but lacks visual documentation showing how components interact. The README mentions this architecture but doesn't provide diagrams for data flow, service communication, or deployment topology.",
+      "rationale": "New developers and contributors need to understand the system architecture before making changes. The current project involves streaming SSE connections, MCP protocol interactions, and multi-service communication that aren't immediately obvious from code alone.",
+      "category": "architecture",
+      "targetAudience": "developers",
+      "affectedAreas": [
+        "README.md",
+        "docs/",
+        "src/server.ts",
+        "src/routes/",
+        "src/services/"
+      ],
+      "currentDocumentation": "README has text description of technology stack and basic project structure but no visual diagrams or component interaction documentation.",
+      "proposedContent": "Create Mermaid diagrams in a new docs/architecture/ folder covering: (1) System component overview, (2) Request flow for agent/skill execution, (3) SSE streaming architecture, (4) MCP server integration, (5) Strapi-Express-Frontend data flow. Include both runtime and deployment views.",
+      "priority": "high",
+      "estimatedEffort": "medium"
+    },
+    {
+      "id": "doc-003",
+      "type": "documentation_gaps",
+      "title": "Document frontend React components and hooks",
+      "description": "The frontend has 72 React components across manager UI pages, flow designer, and UI primitives. None have prop documentation, usage examples, or component purpose descriptions. Custom hooks like useAgentCreator, useFlowState, and useSkillTraining lack documentation of their state management and side effects.",
+      "rationale": "Frontend development requires understanding component APIs, prop types, and hook behavior. Currently developers must read implementation to understand how to use components like FlowDesigner, AgentExecutionModal, or TaskExecutionModal.",
+      "category": "api_docs",
+      "targetAudience": "developers",
+      "affectedAreas": [
+        "src/web/manager/components/",
+        "src/web/manager/hooks/",
+        "src/web/manager/types.ts"
+      ],
+      "currentDocumentation": "TypeScript interfaces exist for props but no JSDoc comments explaining component purpose, usage patterns, or hook behavior.",
+      "proposedContent": "Add JSDoc comments to key components and hooks documenting: (1) Component purpose and usage, (2) Prop descriptions with examples, (3) Hook state and side effects, (4) Event handlers and callbacks. Focus on FlowDesigner, ChatPage, AgentExecutionModal, and custom hooks first.",
+      "priority": "medium",
+      "estimatedEffort": "large"
+    },
+    {
+      "id": "doc-004",
+      "type": "documentation_gaps",
+      "title": "Add getting started tutorial for common use cases",
+      "description": "The README provides installation steps but lacks step-by-step tutorials for common tasks. New users don't have guidance on: (1) Creating their first agent, (2) Training a skill, (3) Configuring MCP servers, (4) Building a flow with the visual designer, (5) Executing tasks and viewing results.",
+      "rationale": "The application has rich features but no guided learning path. Users must explore the UI to discover capabilities. A tutorial would significantly reduce onboarding time and demonstrate the value proposition.",
+      "category": "examples",
+      "targetAudience": "users",
+      "affectedAreas": [
+        "docs/",
+        "README.md"
+      ],
+      "currentDocumentation": "README has feature overview and API endpoint list. docs/skill-execution-process/ has technical documentation in Turkish but no user-focused tutorials.",
+      "proposedContent": "Create docs/tutorials/ with: (1) quick-start.md - First agent in 5 minutes, (2) skill-training-guide.md - Training skills with examples, (3) mcp-setup-guide.md - Configuring MCP servers, (4) flow-builder-tutorial.md - Visual workflow design, (5) task-execution.md - Running and monitoring tasks. Include screenshots and expected outputs.",
+      "priority": "high",
+      "estimatedEffort": "medium"
+    },
+    {
+      "id": "doc-005",
+      "type": "documentation_gaps",
+      "title": "Add troubleshooting FAQ and common error solutions",
+      "description": "The README has a basic troubleshooting section but it only covers 4 issues (port in use, agent execution fails, MCP server not working, build errors). Common issues like Strapi connection problems, PostgreSQL setup errors, streaming disconnections, and Claude SDK errors are undocumented.",
+      "rationale": "Users frequently encounter configuration and runtime issues. Without documented solutions, they must debug independently or seek support. A comprehensive FAQ would reduce support burden and improve user experience.",
+      "category": "troubleshooting",
+      "targetAudience": "users",
+      "affectedAreas": [
+        "README.md",
+        "docs/"
+      ],
+      "currentDocumentation": "README.md has 4 troubleshooting items. No separate FAQ document exists.",
+      "proposedContent": "Create docs/troubleshooting.md covering: (1) Docker/PostgreSQL setup issues, (2) Strapi initialization and API token errors, (3) Claude SDK authentication and rate limits, (4) MCP server connection failures and debugging, (5) SSE streaming issues, (6) Build and TypeScript errors, (7) Environment variable configuration problems. Include error messages, causes, and step-by-step solutions.",
+      "priority": "medium",
+      "estimatedEffort": "small"
+    }
+  ],
+  "metadata": {
+    "filesAnalyzed": 156,
+    "documentedFunctions": 12,
+    "undocumentedFunctions": 120,
+    "readmeLastUpdated": "Unknown",
+    "markdownFiles": 95,
+    "frontendComponents": 72,
+    "backendServices": 29,
+    "apiEndpoints": 197,
+    "generatedAt": "2026-01-02T09:38:18.077Z"
+  }
+}

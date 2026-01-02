@@ -1,0 +1,8 @@
+{
+  "sourceType": "ideation",
+  "ideationType": "documentation_gaps",
+  "ideaId": "doc-001",
+  "rationale": "Backend services are the core of the application. Developers frequently need to understand how services interact with Claude SDK, Strapi, and MCP servers. Without JSDoc, developers must read implementation details to understand function behavior.",
+  "category": "documentation",
+  "priority": "high"
+}

@@ -1,0 +1,39 @@
+{
+  "id": "session-1767279351679",
+  "projectId": "71105aad-5a19-423a-9364-bf3091a684e2",
+  "title": "What is the architecture of this project?",
+  "messages": [
+    {
+      "id": "msg-1767279351686",
+      "role": "user",
+      "content": "What is the architecture of this project?",
+      "timestamp": "2026-01-01T14:55:51.686Z"
+    },
+    {
+      "id": "msg-1767279408551",
+      "role": "user",
+      "content": "ewqe",
+      "timestamp": "2026-01-01T14:56:48.551Z"
+    },
+    {
+      "id": "msg-1767279444519",
+      "role": "user",
+      "content": "asa",
+      "timestamp": "2026-01-01T14:57:24.519Z"
+    },
+    {
+      "id": "msg-1767334406440",
+      "role": "user",
+      "content": "asda",
+      "timestamp": "2026-01-02T06:13:26.440Z"
+    },
+    {
+      "id": "msg-1767334538884",
+      "role": "user",
+      "content": "asda",
+      "timestamp": "2026-01-02T06:15:38.884Z"
+    }
+  ],
+  "createdAt": "2026-01-01T14:55:51.679Z",
+  "updatedAt": "2026-01-02T06:15:38.884Z"
+}

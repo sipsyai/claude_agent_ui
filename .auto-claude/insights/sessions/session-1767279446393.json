@@ -1,0 +1,21 @@
+{
+  "id": "session-1767279446393",
+  "projectId": "71105aad-5a19-423a-9364-bf3091a684e2",
+  "title": "qwrq",
+  "messages": [
+    {
+      "id": "msg-1767279447281",
+      "role": "user",
+      "content": "qwrq",
+      "timestamp": "2026-01-01T14:57:27.281Z"
+    },
+    {
+      "id": "msg-1767279473842",
+      "role": "user",
+      "content": "qerq",
+      "timestamp": "2026-01-01T14:57:53.842Z"
+    }
+  ],
+  "createdAt": "2026-01-01T14:57:26.393Z",
+  "updatedAt": "2026-01-01T14:57:53.842Z"
+}

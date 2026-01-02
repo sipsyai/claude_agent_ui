@@ -1,0 +1,28 @@
+{
+  "file_path": "src/types/config.ts",
+  "main_branch_history": [],
+  "task_views": {
+    "004-document-frontend-react-components-and-hooks": {
+      "task_id": "004-document-frontend-react-components-and-hooks",
+      "branch_point": {
+        "commit_hash": "34a3f60da53773d90bd6579cb1cfd8417a1dd0b9",
+        "content": "/**\n * Configuration types for CUI\n */\nimport { RouterConfiguration } from './router-config.js';\n\nexport interface ServerConfig {\n  host: string;\n  port: number;\n}\n\nexport interface GeminiConfig {\n  /**\n   * Google API key for Gemini\n   * Can also be set via GOOGLE_API_KEY environment variable\n   */\n  apiKey?: string;\n  \n  /**\n   * Gemini model to use\n   * Default: 'gemini-2.5-flash'\n   */\n  model?: string;\n}\n\nexport interface InterfaceConfig {\n  colorScheme: 'light' | 'dark' | 'system';\n  language: string;\n  notifications?: {\n    enabled: boolean;\n    ntfyUrl?: string;\n    webPush?: {\n      subject?: string; // e.g. mailto:you@example.com\n      vapidPublicKey?: string;\n      vapidPrivateKey?: string;\n    };\n  };\n}\n\nexport interface CUIConfig {\n  /**\n   * Unique machine identifier\n   * Format: {hostname}-{16char_hash}\n   * Example: \"wenbomacbook-a1b2c3d4e5f6g7h8\"\n   */\n  machine_id: string;\n\n  /**\n   * Server configuration\n   */\n  server: ServerConfig;\n\n  /**\n   * Authentication token for API access\n   * 32-character random string generated on first run\n   */\n  authToken: string;\n\n  /**\n   * Gemini API configuration (optional)\n   */\n  gemini?: GeminiConfig;\n\n  /**\n   * Optional router configuration for Claude Code Router\n   */\n  router?: RouterConfiguration;\n\n  /**\n   * Interface preferences and settings\n   */\n  interface: InterfaceConfig;\n\n  /**\n   * Training agent ID from Strapi database (optional)\n   * If not set, falls back to local training-agent.md\n   */\n  trainingAgentId?: string;\n}\n\n/**\n * Default configuration values\n */\nexport const DEFAULT_CONFIG: Omit<CUIConfig, 'machine_id' | 'authToken'> = {\n  server: {\n    host: 'localhost',\n    port: 3001\n  },\n  interface: {\n    colorScheme: 'system',\n    language: 'en'\n  }\n};",
+        "timestamp": "2026-01-02T14:22:14.293924"
+      },
+      "worktree_state": {
+        "content": "/**\n * Configuration types for CUI\n */\nimport { RouterConfiguration } from './router-config.js';\n\n/**\n * Server configuration\n *\n * Defines the host and port for the CUI server.\n */\nexport interface ServerConfig {\n  /** Server host address (default: 'localhost') */\n  host: string;\n\n  /** Server port number (default: 3001) */\n  port: number;\n}\n\n/**\n * Gemini API configuration\n *\n * Configuration for Google's Gemini API integration.\n */\nexport interface GeminiConfig {\n  /**\n   * Google API key for Gemini\n   * Can also be set via GOOGLE_API_KEY environment variable\n   */\n  apiKey?: string;\n\n  /**\n   * Gemini model to use\n   * Default: 'gemini-2.5-flash'\n   */\n  model?: string;\n}\n\n/**\n * Interface configuration\n *\n * User interface preferences and notification settings.\n */\nexport interface InterfaceConfig {\n  /** Color scheme preference */\n  colorScheme: 'light' | 'dark' | 'system';\n\n  /** Interface language code (e.g., 'en', 'es') */\n  language: string;\n\n  /** Notification settings */\n  notifications?: {\n    /** Whether notifications are enabled */\n    enabled: boolean;\n\n    /** Optional ntfy.sh server URL for notifications */\n    ntfyUrl?: string;\n\n    /** Optional web push notification configuration */\n    webPush?: {\n      /** VAPID subject (e.g. mailto:you@example.com) */\n      subject?: string;\n\n      /** VAPID public key for web push */\n      vapidPublicKey?: string;\n\n      /** VAPID private key for web push */\n      vapidPrivateKey?: string;\n    };\n  };\n}\n\nexport interface CUIConfig {\n  /**\n   * Unique machine identifier\n   * Format: {hostname}-{16char_hash}\n   * Example: \"wenbomacbook-a1b2c3d4e5f6g7h8\"\n   */\n  machine_id: string;\n\n  /**\n   * Server configuration\n   */\n  server: ServerConfig;\n\n  /**\n   * Authentication token for API access\n   * 32-character random string generated on first run\n   */\n  authToken: string;\n\n  /**\n   * Gemini API configuration (optional)\n   */\n  gemini?: GeminiConfig;\n\n  /**\n   * Optional router configuration for Claude Code Router\n   */\n  router?: RouterConfiguration;\n\n  /**\n   * Interface preferences and settings\n   */\n  interface: InterfaceConfig;\n\n  /**\n   * Training agent ID from Strapi database (optional)\n   * If not set, falls back to local training-agent.md\n   */\n  trainingAgentId?: string;\n}\n\n/**\n * Default configuration values\n */\nexport const DEFAULT_CONFIG: Omit<CUIConfig, 'machine_id' | 'authToken'> = {\n  server: {\n    host: 'localhost',\n    port: 3001\n  },\n  interface: {\n    colorScheme: 'system',\n    language: 'en'\n  }\n};",
+        "last_modified": "2026-01-02T14:22:15.543592"
+      },
+      "task_intent": {
+        "title": "Document Frontend React Components and Hooks",
+        "description": "Add comprehensive JSDoc documentation to all React components and custom hooks in the frontend, including prop types, usage examples, component purposes, state management, and side effects.",
+        "from_plan": true
+      },
+      "commits_behind_main": 0,
+      "status": "active",
+      "merged_at": null
+    }
+  },
+  "created_at": "2026-01-02T14:01:10.658080",
+  "last_updated": "2026-01-02T14:22:14.443579"
+}

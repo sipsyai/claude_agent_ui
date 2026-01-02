@@ -1,0 +1,115 @@
+{
+  "code_improvements": [
+    {
+      "id": "ci-001",
+      "type": "code_improvements",
+      "title": "Bulk Delete for Agents and Skills",
+      "description": "Add bulk delete capability for agents and skills, mirroring the existing bulk delete pattern for MCP servers. This would allow users to select multiple agents or skills and delete them in a single operation.",
+      "rationale": "The codebase already has a well-established bulk-delete pattern in src/routes/manager.routes.ts for MCP servers (line 1518). This pattern includes error handling, partial success reporting (successCount, failed, errors array), and a consistent API response structure. Extending this pattern to agents and skills requires minimal new logic since the CRUD operations already exist.",
+      "builds_upon": ["MCP servers bulk-delete endpoint", "Agent CRUD operations", "Skill CRUD operations"],
+      "estimated_effort": "small",
+      "affected_files": [
+        "src/routes/manager.routes.ts",
+        "src/routes/manager.routes.strapi.ts",
+        "src/web/manager/services/api.ts"
+      ],
+      "existing_patterns": [
+        "router.post('/mcp-servers/bulk-delete') in manager.routes.ts",
+        "bulkDeleteMCPServers() in api.ts",
+        "Strapi bulk delete helper pattern"
+      ],
+      "implementation_approach": "1. Copy the /mcp-servers/bulk-delete endpoint pattern. 2. Create /agents/bulk-delete and /skills/bulk-delete routes. 3. Loop through IDs and call existing delete operations. 4. Track success/failure counts. 5. Add corresponding frontend API functions (bulkDeleteAgents, bulkDeleteSkills) following bulkDeleteMCPServers pattern.",
+      "status": "draft",
+      "created_at": "2026-01-02T09:45:00.000Z"
+    },
+    {
+      "id": "ci-002",
+      "type": "code_improvements",
+      "title": "Session Statistics Dashboard Data",
+      "description": "Add a getStats() method for chat sessions similar to how task statistics work. This would provide counts for active/archived sessions, message counts, average messages per session, and session duration metrics.",
+      "rationale": "TaskStorageService already has a getStats() method (line 309) that returns counts by status (pending, running, completed, failed). The pattern is well-established and tested. ChatService has access to session data via Strapi and can aggregate similar metrics. The frontend already expects stats-style data for dashboards.",
+      "builds_upon": ["TaskStorageService.getStats()", "Chat sessions CRUD", "GET /tasks/stats endpoint"],
+      "estimated_effort": "small",
+      "affected_files": [
+        "src/services/chat-service.ts",
+        "src/routes/chat.routes.ts",
+        "src/web/manager/services/api.ts"
+      ],
+      "existing_patterns": [
+        "getStats() in task-storage-service.ts returning status counts",
+        "GET /stats route pattern in task.routes.ts",
+        "Strapi aggregation queries"
+      ],
+      "implementation_approach": "1. Add getSessionStats() method to ChatService that queries Strapi for session counts by status. 2. Create GET /sessions/stats endpoint following the task stats pattern. 3. Calculate: total sessions, active count, archived count, average message count per session. 4. Add getSessionStats() to frontend api.ts.",
+      "status": "draft",
+      "created_at": "2026-01-02T09:45:00.000Z"
+    },
+    {
+      "id": "ci-003",
+      "type": "code_improvements",
+      "title": "Agent and Skill Export/Import",
+      "description": "Add export and import capabilities for agents and skills following the existing MCP servers export/import pattern. This allows users to backup configurations, share agents/skills between projects, or migrate between environments.",
+      "rationale": "The codebase has complete export/import infrastructure for MCP servers including: exportMCPConfig() GET endpoint returning JSON, importMCPConfig() POST endpoint with merge/overwrite modes, and frontend API functions. Agents and skills have similar data structures that can leverage the same pattern.",
+      "builds_upon": ["MCP servers export/import endpoints", "Agent/Skill data structures", "Strapi data transformation patterns"],
+      "estimated_effort": "medium",
+      "affected_files": [
+        "src/routes/manager.routes.ts",
+        "src/routes/manager.routes.strapi.ts",
+        "src/web/manager/services/api.ts",
+        "src/services/strapi-client.ts"
+      ],
+      "existing_patterns": [
+        "GET /mcp-servers/export endpoint",
+        "POST /mcp-servers/import with mode: merge|overwrite",
+        "exportMCPConfig() and importMCPConfig() in api.ts"
+      ],
+      "implementation_approach": "1. Create GET /agents/export that fetches all agents and returns JSON export. 2. Create POST /agents/import with merge/overwrite mode logic. 3. Handle relation references (skills, mcpConfig) during import. 4. Repeat pattern for skills. 5. Add frontend API functions following MCP pattern. 6. Consider version field for compatibility.",
+      "status": "draft",
+      "created_at": "2026-01-02T09:45:00.000Z"
+    },
+    {
+      "id": "ci-004",
+      "type": "code_improvements",
+      "title": "Error Notification for Long-Running Tasks",
+      "description": "Extend the NotificationService to send notifications when tasks fail or encounter errors, not just when they complete successfully. This helps users catch failures in background tasks.",
+      "rationale": "NotificationService already has sendPermissionNotification() and sendConversationEndNotification() methods with ntfy.sh integration and web push fallback. The notification structure (Notification interface) supports different priorities and tags. Adding error notifications follows the same pattern with priority: 'high' for failures.",
+      "builds_upon": ["NotificationService.sendConversationEndNotification()", "Task execution error handling", "ntfy.sh integration"],
+      "estimated_effort": "trivial",
+      "affected_files": [
+        "src/services/notification-service.ts",
+        "src/routes/task.routes.ts"
+      ],
+      "existing_patterns": [
+        "sendConversationEndNotification() method structure",
+        "Notification interface with priority field",
+        "Task status updates in task.routes.ts"
+      ],
+      "implementation_approach": "1. Add sendTaskErrorNotification(taskId, error, sessionId) method to NotificationService following existing method patterns. 2. Set priority: 'high' and tags: ['cui-error'] for error notifications. 3. Call from task.routes.ts when task status changes to 'failed'. 4. Include error message in notification body.",
+      "status": "draft",
+      "created_at": "2026-01-02T09:45:00.000Z"
+    },
+    {
+      "id": "ci-005",
+      "type": "code_improvements",
+      "title": "Task Execution Metrics Tracking",
+      "description": "Extend ToolMetricsService to track and persist execution metrics for tasks including tool usage counts, execution duration, and cost per task. Currently metrics are calculated but not persisted with task records.",
+      "rationale": "ToolMetricsService already calculates linesAdded, linesRemoved, editCount, and writeCount by processing tool_use blocks. The Task interface already has duration field. The service has calculateMetricsFromMessages() for processing historical data. Persisting these metrics alongside task records enables analytics dashboards and cost tracking.",
+      "builds_upon": ["ToolMetricsService.calculateMetricsFromMessages()", "Task.duration field", "Task execution logging"],
+      "estimated_effort": "small",
+      "affected_files": [
+        "src/services/ToolMetricsService.ts",
+        "src/services/task-storage-service.ts",
+        "src/routes/task.routes.ts",
+        "src/types/task-types.ts"
+      ],
+      "existing_patterns": [
+        "ToolMetrics interface with linesAdded/linesRemoved/editCount/writeCount",
+        "Task metadata field for additional data",
+        "calculateMetricsFromMessages() method pattern"
+      ],
+      "implementation_approach": "1. Add toolMetrics field to Task interface in task-types.ts. 2. After task execution completes in task.routes.ts, call calculateMetricsFromMessages() on execution log. 3. Persist metrics in task.metadata or dedicated field via updateTaskStatus(). 4. Add metrics to task stats aggregation. 5. Expose in API response.",
+      "status": "draft",
+      "created_at": "2026-01-02T09:45:00.000Z"
+    }
+  ]
+}

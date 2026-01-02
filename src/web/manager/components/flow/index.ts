@@ -3,7 +3,7 @@
  *
  * These components provide form interfaces for configuring each type of
  * flow node (Input, Agent, Output) in the flow editor, as well as
- * scheduling configuration.
+ * scheduling configuration and template selection.
  */
 
 export { default as InputNodeConfig } from './InputNodeConfig';
@@ -17,3 +17,6 @@ export type { OutputNodeConfigProps } from './OutputNodeConfig';
 
 export { default as FlowScheduleConfig, createDefaultSchedule } from './FlowScheduleConfig';
 export type { FlowScheduleConfigProps } from './FlowScheduleConfig';
+
+export { default as FlowTemplateSelector } from './FlowTemplateSelector';
+export type { FlowTemplateSelectorProps } from './FlowTemplateSelector';

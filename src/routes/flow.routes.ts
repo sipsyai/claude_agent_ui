@@ -16,6 +16,13 @@ import { flowExecutionService } from '../services/flow-execution-service.js';
 import { createLogger } from '../services/logger.js';
 import { asyncHandler, AppError } from '../middleware/error-handler.js';
 import type { FlowExecutionUpdate } from '../types/flow-types.js';
+import {
+  getAllTemplates,
+  getTemplateById,
+  getTemplatesByCategory,
+  searchTemplates,
+  createFlowFromTemplate,
+} from '../services/flow-templates.js';
 
 // Import validation schemas
 import {
@@ -170,6 +177,143 @@ export function createFlowRoutes(): Router {
       }
     });
   }));
+
+  // ============= FLOW TEMPLATES (must come before :id routes) =============
+
+  /**
+   * GET /api/flows/templates
+   * Get all available flow templates
+   */
+  router.get('/templates', asyncHandler(async (_req: Request, res: Response) => {
+    logger.debug('Fetching flow templates');
+
+    const templates = getAllTemplates();
+
+    res.json({
+      data: templates.map(t => ({
+        templateId: t.templateId,
+        name: t.name,
+        description: t.description,
+        category: t.category,
+        icon: t.icon,
+        tags: t.tags,
+      })),
+      count: templates.length
+    });
+  }));
+
+  /**
+   * GET /api/flows/templates/search
+   * Search templates by query (must come before /templates/:templateId)
+   */
+  router.get('/templates/search', asyncHandler(async (req: Request, res: Response) => {
+    const query = (req.query.q as string) || '';
+
+    logger.debug('Searching flow templates', { query });
+
+    const templates = searchTemplates(query);
+
+    res.json({
+      data: templates.map(t => ({
+        templateId: t.templateId,
+        name: t.name,
+        description: t.description,
+        category: t.category,
+        icon: t.icon,
+        tags: t.tags,
+      })),
+      count: templates.length
+    });
+  }));
+
+  /**
+   * GET /api/flows/templates/category/:category
+   * Get templates by category
+   */
+  router.get('/templates/category/:category', asyncHandler(async (req: Request, res: Response) => {
+    const category = req.params.category as any;
+
+    logger.debug('Fetching flow templates by category', { category });
+
+    const templates = getTemplatesByCategory(category);
+
+    res.json({
+      data: templates.map(t => ({
+        templateId: t.templateId,
+        name: t.name,
+        description: t.description,
+        category: t.category,
+        icon: t.icon,
+        tags: t.tags,
+      })),
+      count: templates.length
+    });
+  }));
+
+  /**
+   * GET /api/flows/templates/:templateId
+   * Get a specific template by ID
+   */
+  router.get('/templates/:templateId', asyncHandler(async (req: Request, res: Response) => {
+    const { templateId } = req.params;
+
+    logger.debug('Fetching flow template', { templateId });
+
+    const template = getTemplateById(templateId);
+
+    if (!template) {
+      throw new AppError(404, 'Template not found');
+    }
+
+    res.json({
+      templateId: template.templateId,
+      name: template.name,
+      description: template.description,
+      category: template.category,
+      icon: template.icon,
+      tags: template.tags,
+      flowData: template.flowData,
+    });
+  }));
+
+  /**
+   * POST /api/flows/templates/:templateId/create
+   * Create a new flow from a template
+   */
+  router.post('/templates/:templateId/create', asyncHandler(async (req: Request, res: Response) => {
+    const { templateId } = req.params;
+    const { name: customName } = req.body;
+
+    logger.info('Creating flow from template', { templateId, customName });
+
+    const flowData = createFlowFromTemplate(templateId);
+
+    if (!flowData) {
+      throw new AppError(404, 'Template not found');
+    }
+
+    // Apply custom name if provided
+    if (customName) {
+      flowData.name = customName;
+      flowData.slug = customName
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .substring(0, 50) + '-' + Date.now();
+    }
+
+    // Create the flow in Strapi
+    const flow = await strapiClient.createFlow(flowData);
+
+    res.status(201).json({
+      success: true,
+      flow,
+      message: `Flow "${flow.name}" created from template "${templateId}"`
+    });
+  }));
+
+  // ============= FLOW CRUD BY ID =============
 
   /**
    * GET /api/flows/:id

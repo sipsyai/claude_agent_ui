@@ -695,6 +695,111 @@ export async function getRecentExecutions(limit: number = 10): Promise<RecentExe
 }
 
 // =============================================================================
+// FLOW TEMPLATES
+// =============================================================================
+
+/**
+ * Flow template definition
+ */
+export interface FlowTemplate {
+  templateId: string;
+  name: string;
+  description: string;
+  category: FlowCategory;
+  icon: string;
+  tags: string[];
+  flowData?: Omit<Flow, 'id' | 'createdAt' | 'updatedAt'>;
+}
+
+/**
+ * Templates list response
+ */
+export interface TemplatesListResponse {
+  data: FlowTemplate[];
+  count: number;
+}
+
+/**
+ * Get all available flow templates
+ */
+export async function getFlowTemplates(): Promise<TemplatesListResponse> {
+  const response = await fetch(`${FLOWS_BASE}/templates`, createFetchOptions());
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get flow templates');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get a specific template by ID (includes full flow data)
+ */
+export async function getFlowTemplate(templateId: string): Promise<FlowTemplate> {
+  const response = await fetch(`${FLOWS_BASE}/templates/${templateId}`, createFetchOptions());
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get flow template');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get templates by category
+ */
+export async function getFlowTemplatesByCategory(category: FlowCategory): Promise<TemplatesListResponse> {
+  const response = await fetch(`${FLOWS_BASE}/templates/category/${category}`, createFetchOptions());
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get flow templates by category');
+  }
+
+  return response.json();
+}
+
+/**
+ * Search templates by query
+ */
+export async function searchFlowTemplates(query: string): Promise<TemplatesListResponse> {
+  const url = new URL(`${FLOWS_BASE}/templates/search`, window.location.origin);
+  url.searchParams.set('q', query);
+
+  const response = await fetch(url.toString(), createFetchOptions());
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to search flow templates');
+  }
+
+  return response.json();
+}
+
+/**
+ * Create a new flow from a template
+ */
+export async function createFlowFromTemplate(
+  templateId: string,
+  customName?: string
+): Promise<CreateFlowResponse> {
+  const response = await fetch(`${FLOWS_BASE}/templates/${templateId}/create`, createFetchOptions({
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: customName }),
+  }));
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to create flow from template');
+  }
+
+  return response.json();
+}
+
+// =============================================================================
 // CONVENIENCE EXPORTS
 // =============================================================================
 

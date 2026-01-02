@@ -26,11 +26,13 @@ import {
   EyeIcon,
 } from './ui/Icons';
 import FlowExecutionModal from './FlowExecutionModal';
+import FlowTemplateSelector from './flow/FlowTemplateSelector';
 
 interface FlowsPageProps {
   onViewFlow?: (flow: Flow) => void;
   onEditFlow?: (flow: Flow) => void;
   onCreateFlow?: () => void;
+  onEditFlowById?: (flowId: string) => void;
 }
 
 type FilterMode = 'all' | 'active' | 'draft' | 'paused' | 'archived';
@@ -90,7 +92,7 @@ const ExecutionStatusIcon: React.FC<{ status: FlowExecutionStatus }> = ({ status
   }
 };
 
-const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateFlow }) => {
+const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateFlow, onEditFlowById }) => {
   const [flows, setFlows] = useState<Flow[]>([]);
   const [recentExecutions, setRecentExecutions] = useState<Map<string, FlowExecution[]>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -104,6 +106,10 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
 
   // Flow Execution Modal state
   const [selectedFlowForExecution, setSelectedFlowForExecution] = useState<Flow | null>(null);
+
+  // Template Selector Modal state
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [creatingFromTemplate, setCreatingFromTemplate] = useState(false);
 
   // Load flows
   const loadFlows = useCallback(async () => {
@@ -222,6 +228,37 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
     }
   };
 
+  // Handle template selection
+  const handleTemplateSelect = async (templateId: string) => {
+    setCreatingFromTemplate(true);
+    try {
+      const response = await flowApi.createFlowFromTemplate(templateId);
+      setFlows(prev => [response.flow, ...prev]);
+      setShowTemplateSelector(false);
+      // Open the newly created flow for editing
+      if (onEditFlowById) {
+        onEditFlowById(response.flow.id);
+      } else if (onEditFlow) {
+        onEditFlow(response.flow);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to create flow from template');
+    } finally {
+      setCreatingFromTemplate(false);
+    }
+  };
+
+  // Handle creating flow from scratch
+  const handleStartFromScratch = () => {
+    setShowTemplateSelector(false);
+    onCreateFlow?.();
+  };
+
+  // Open template selector when creating a new flow
+  const handleCreateNewFlow = () => {
+    setShowTemplateSelector(true);
+  };
+
   // Filter flows
   const filteredFlows = flows.filter(flow => {
     if (searchTerm.trim()) {
@@ -271,7 +308,7 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
             Refresh
           </Button>
           <Button
-            onClick={onCreateFlow}
+            onClick={handleCreateNewFlow}
             className="flex items-center gap-2"
           >
             <PlusIcon className="h-4 w-4" />
@@ -558,6 +595,32 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
           onClose={handleExecutionModalClose}
           onExecutionComplete={handleExecutionComplete}
         />
+      )}
+
+      {/* Template Selector Modal */}
+      {showTemplateSelector && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => !creatingFromTemplate && setShowTemplateSelector(false)}
+          />
+          {/* Modal Content */}
+          <div className="relative z-10 bg-background rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 mx-4">
+            {creatingFromTemplate ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <SpinnerIcon className="h-8 w-8 text-primary mb-4" />
+                <p className="text-muted-foreground">Creating flow from template...</p>
+              </div>
+            ) : (
+              <FlowTemplateSelector
+                onSelect={handleTemplateSelect}
+                onStartFromScratch={handleStartFromScratch}
+                onClose={() => setShowTemplateSelector(false)}
+              />
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

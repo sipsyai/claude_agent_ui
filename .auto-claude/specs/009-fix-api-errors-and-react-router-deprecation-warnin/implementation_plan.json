@@ -184,7 +184,9 @@
             "expected_status": 200,
             "notes": "Should return {data: [...executions], count: N} or similar structure"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Successfully implemented GET /api/flows/executions/recent endpoint in backend. Added findRecentExecutions method to flow controller that calls flow-execution service's findRecent method. Method accepts limit query parameter (default 10) and returns recent executions ordered by creation date descending. Added custom route entry to expose endpoint at GET /api/flows/executions/recent. Implementation follows established patterns from existing flow and flow-execution controllers.\"",
+          "updated_at": "2026-01-02T15:56:25.008554+00:00"
         }
       ]
     },
@@ -216,7 +218,9 @@
             "command": "curl http://localhost:3001/api/flows/stats/global 2>/dev/null | jq . | head -20",
             "expected": "Valid JSON with statistics (not error)"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Successfully added getGlobalStats() handler to flow controller with comprehensive logging and error handling. The endpoint now:\n- Logs info message when fetching statistics\n- Checks if execution service is available and returns proper error if missing\n- Handles null/undefined response by returning default empty stats object\n- Logs statistics details on success\n- Catches and logs all errors with full error details (message, stack, name)\n- Returns 500 error for service failures\n- Returns 200 with valid JSON structure even if no executions exist\n- Follows existing error handling patterns used in other controller methods\n- Route added to custom.ts with public access (auth: false)\n- Changes committed successfully",
+          "updated_at": "2026-01-02T15:58:18.944574+00:00"
         },
         {
           "id": "subtask-4-2",
@@ -239,7 +243,9 @@
             "expected_status": 200,
             "notes": "Should return valid statistics object"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Fixed root cause of 500 error in /api/flows/stats/global endpoint:\n\n1. **Backend Flow Execution Service** (`backend/src/api/flow-execution/services/flow-execution.ts`):\n   - Added `populate: ['flow']` to getGlobalStats() query to ensure flow relations are properly populated\n   - Fixed uniqueFlowIds calculation to handle both populated objects and foreign key IDs\n   - Improved cost aggregation with proper type checking and NaN handling\n   - Added null checks for createdAt when filtering today's executions\n   - Applied same fixes to getFlowStats() method for consistency\n\n2. **StrapiClient Service** (`src/services/strapi-client.ts`):\n   - Added missing `getGlobalFlowStats()` method that was being called from flow.routes.ts\n   - Implemented proper caching with 5-minute TTL\n   - Added error handling for failed requests\n\n**Root Cause Analysis**:\nThe 500 error was caused by:\n- Strapi returning unpopulated foreign key IDs instead of full objects when `populate: ['flow']` was not specified\n- Attempting to access `e.flow?.id` on a number value instead of an object\n- Missing `getGlobalFlowStats()` method in StrapiClient preventing the endpoint from working\n\n**Changes Made**:\n- Ensured flow relations are always populated in queries\n- Added defensive programming to handle both object and primitive ID values\n- Improved error handling for data type conversions\n\nAll changes follow existing patterns and maintain backward compatibility.\"",
+          "updated_at": "2026-01-02T16:05:47.916596+00:00"
         }
       ]
     },
@@ -278,7 +284,9 @@
               "Stats, executions, flows display or show error state"
             ]
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added section-level error tracking for each API call (stats, executions, flows, agents, skills). Each section now displays its own error message with retry button. Modified loadDashboardData() to catch errors independently for each API call and store them in separate state variables. UI enhanced with visual error indicators and graceful degradation. Commit: b6e9908",
+          "updated_at": "2026-01-02T20:15:00.000Z"
         },
         {
           "id": "subtask-5-2",
@@ -658,5 +666,5 @@
   "updated_at": "2026-01-02T15:47:24.481Z",
   "status": "in_progress",
   "planStatus": "in_progress",
-  "last_updated": "2026-01-02T15:54:53.136183+00:00"
+  "last_updated": "2026-01-02T16:05:47.916683+00:00"
 }

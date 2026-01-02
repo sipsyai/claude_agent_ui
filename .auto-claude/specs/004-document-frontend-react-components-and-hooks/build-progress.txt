@@ -41,9 +41,9 @@ Add comprehensive JSDoc documentation to 48+ React components and 4 custom hooks
   - Button, Input, Select, Textarea, Switch, Card, Dialog, ProgressBar, ArrayEditor, KeyValueEditor, Icons
 - [x] Phase 2: Layout Components (COMPLETED - 3/3 subtasks)
   - Layout, Sidebar, ChatDisplayContext
-- [x] Phase 3: Custom Hooks (IN PROGRESS - 1/4 subtasks)
+- [x] Phase 3: Custom Hooks (IN PROGRESS - 2/4 subtasks)
   - [x] 3.1 - useAgentCreator hook documentation
-  - [ ] 3.2 - useAssistantRuntime hook
+  - [x] 3.2 - useAssistantRuntime hook documentation
   - [ ] 3.3 - useSkillCreator hook
   - [ ] 3.4 - useSkillTraining hook
 
@@ -56,8 +56,22 @@ Add comprehensive JSDoc documentation to 48+ React components and 4 custom hooks
   - Documented internal callbacks (sendMessageInternal, handleStreamEvent, reset)
   - Committed changes with git
 
+- [x] Subtask 3.2: Documented useAssistantRuntime hook
+  - Added comprehensive JSDoc documentation covering runtime state, message handling, and integration with assistant UI
+  - Documented all major sections:
+    * Runtime State (message, running, SDK event, stream control states)
+    * Message Handling (flow, format conversion, optimistic updates, throttled updates)
+    * Integration with Assistant UI (adapter interface, compatible components, event propagation)
+    * SSE Event Handling (event types, SDK message processing, stream cancellation)
+    * Directory Integration, Permission Modes, Lifecycle (12 steps)
+  - Documented UseAssistantRuntimeProps interface with 8 detailed property descriptions
+  - Added 4 comprehensive usage examples (basic, agent/skill binding, SDK event tracking, permission modes)
+  - Documented all internal functions (convertToThreadMessage, getDirectory, throttledUpdate, handleNewMessage, handleCancel, handleSetMessages)
+  - All internal functions marked with @internal tags
+  - Committed changes with git
+
 ## Next Steps
-1. Continue Phase 3: Document remaining custom hooks (useAssistantRuntime, useSkillCreator, useSkillTraining)
+1. Continue Phase 3: Document remaining custom hooks (useSkillCreator, useSkillTraining)
 2. Proceed to Phase 4: Chat Components
 3. Complete Phase 5: Feature Components
 4. Finish with Phase 6: Page Components and App

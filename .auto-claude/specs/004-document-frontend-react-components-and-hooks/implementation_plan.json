@@ -167,8 +167,9 @@
           "title": "Document useAssistantRuntime hook",
           "description": "Add comprehensive JSDoc documentation including runtime state, message handling, and integration with assistant UI",
           "file": "src/web/manager/hooks/useAssistantRuntime.ts",
-          "status": "pending",
-          "notes": ""
+          "status": "completed",
+          "notes": "Added comprehensive JSDoc documentation to useAssistantRuntime.ts including:\n- Module-level documentation with features, runtime state, message handling, and integration with assistant UI\n- Detailed documentation of all sections:\n  * Runtime State: message state, running state, SDK event state, stream control state\n  * Message Handling: message flow (10 steps), format conversion, optimistic updates, throttled updates\n  * Integration with Assistant UI: adapter interface, compatible components, event propagation\n  * SSE Event Handling: event types, SDK message processing, stream cancellation\n  * Directory Integration: cookie-based directory selection\n  * Permission Modes: default, bypass, auto, plan\n  * Lifecycle: 12-step usage flow from initialization to unmount\n- Props interface documentation with detailed property descriptions for all 8 props\n- Four comprehensive usage examples demonstrating:\n  * Basic usage with chat session\n  * Agent and skill binding\n  * SDK event tracking for tool use display\n  * Permission mode switching\n- Internal function documentation for:\n  * convertToThreadMessage - ChatMessage to ThreadMessage conversion\n  * getDirectory - Cookie-based directory retrieval\n  * throttledUpdate - Performance optimization for rapid deltas\n  * handleNewMessage - User message submission workflow\n  * handleCancel - Stream cancellation handling\n  * handleSetMessages - ExternalStoreAdapter wrapper\n- All internal functions marked with @internal tags\n- @param and @returns tags for all functions\n- Detailed inline examples in property documentation\n\nDocumentation follows established pattern from useAgentCreator.ts, providing developers with complete reference for:\n- Hook initialization with runtime props\n- Runtime state management across conversation lifecycle\n- Message format conversion between backend and UI\n- SSE streaming internals and event processing\n- SDK event tracking (tool uses, tool results, system messages)\n- Performance optimization via throttling\n- Stream cancellation and error handling\n- Integration with assistant-ui components\n- Type-safe API with comprehensive TypeScript documentation\n\nCommitted changes with git.",
+          "updated_at": "2026-01-02T07:32:21.199818+00:00"
         },
         {
           "id": "3.3",
@@ -506,5 +507,5 @@
     "tests_passed": ""
   },
   "spec_file": "spec.md",
-  "last_updated": "2026-01-02T07:28:15.851466+00:00"
+  "last_updated": "2026-01-02T07:32:21.199830+00:00"
 }

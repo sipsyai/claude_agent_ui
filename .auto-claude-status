@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
+  "spec": "009-fix-api-errors-and-react-router-deprecation-warnin",
   "state": "building",
   "subtasks": {
-    "completed": 23,
-    "total": 27,
+    "completed": 0,
+    "total": 15,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Integration & Polish",
+    "current": "Frontend: React Router v7 Future Flags",
     "id": null,
-    "total": 5
+    "total": 1
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 16,
-    "started_at": "2026-01-02T15:21:47.333199"
+    "number": 1,
+    "started_at": "2026-01-02T18:48:01.857571"
   },
-  "last_update": "2026-01-02T16:53:10.042108"
+  "last_update": "2026-01-02T18:48:01.869898"
 }

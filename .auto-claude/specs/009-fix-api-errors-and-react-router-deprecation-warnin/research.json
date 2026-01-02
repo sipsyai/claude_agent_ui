@@ -1,0 +1,285 @@
+{
+  "integrations_researched": [
+    {
+      "name": "React Router DOM",
+      "type": "library",
+      "verified_package": {
+        "name": "react-router-dom",
+        "npm_package": "react-router-dom",
+        "install_command": "npm install react-router-dom",
+        "current_version": "v6.x (with v7 migration path available)",
+        "verified": true
+      },
+      "api_patterns": {
+        "imports": [
+          "import { BrowserRouter, Routes, Route } from 'react-router-dom'",
+          "import { useParams, useNavigate, useLocation } from 'react-router-dom'"
+        ],
+        "future_flags": {
+          "v7_startTransition": {
+            "description": "Wraps all internal state updates in React.startTransition() for performance",
+            "enabled_as": "<BrowserRouter future={{ v7_startTransition: true }} />"
+          },
+          "v7_relativeSplatPath": {
+            "description": "Changes relative path matching/linking for multi-segment splat paths (dashboard/*)",
+            "enabled_as": "<BrowserRouter future={{ v7_relativeSplatPath: true }} />"
+          }
+        },
+        "verified_against": [
+          "https://reactrouter.com/upgrading/future",
+          "https://reactrouter.com/upgrading/v6"
+        ]
+      },
+      "current_warnings": {
+        "warning_1": {
+          "message": "React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7",
+          "fix": "Enable v7_startTransition future flag in BrowserRouter config",
+          "severity": "low",
+          "can_defer": true
+        },
+        "warning_2": {
+          "message": "React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7",
+          "fix": "Enable v7_relativeSplatPath future flag in BrowserRouter config",
+          "severity": "low",
+          "can_defer": true
+        }
+      },
+      "migration_path": {
+        "strategy": "Future flags enable gradual migration with no breaking changes",
+        "recommended_order": [
+          "1. Update to latest v6.x minor version",
+          "2. Enable future flags one at a time",
+          "3. Test thoroughly after each flag",
+          "4. Make commits after each flag",
+          "5. Only upgrade to v7 after all flags enabled"
+        ]
+      },
+      "gotchas": [
+        "Future flag warnings in v6.28+ indicate v7 is approaching deprecations",
+        "These warnings are development-only and do NOT affect production",
+        "Warnings appear once per session despite multiple route renders",
+        "React StrictMode causes double-invocation of effects (expected behavior)"
+      ],
+      "research_sources": [
+        "https://reactrouter.com/upgrading/future",
+        "https://reactrouter.com/upgrading/v6",
+        "https://dev.to/cristiansifuentes/react-router-v7-transition-future-flag-the-complete-guide-for-2025-5dk3"
+      ]
+    },
+    {
+      "name": "React",
+      "type": "library",
+      "verified_package": {
+        "name": "react",
+        "npm_package": "react",
+        "install_command": "npm install react",
+        "current_version": "v18.x or v19.x",
+        "verified": true
+      },
+      "api_patterns": {
+        "imports": [
+          "import { useState, useEffect, StrictMode } from 'react'"
+        ],
+        "strictmode_behavior": {
+          "description": "Intentionally double-invokes effects in development to detect bugs",
+          "mount_pattern": "Component mounts -> Effect runs -> Component unmounts -> Effect cleanup -> Component remounts -> Effect runs again",
+          "production_impact": "No effect - only applies in development mode"
+        },
+        "verified_against": "https://react.dev/reference/react/StrictMode"
+      },
+      "development_mode_behavior": {
+        "double_invocation": {
+          "what_happens": "Each useEffect hook runs twice on component mount in development",
+          "why": "React verifies effects have proper cleanup and can handle being run multiple times",
+          "when": "Only in development mode within StrictMode",
+          "production": "Effects run exactly once as expected"
+        },
+        "console_spam": {
+          "description": "API calls and side effects execute twice, causing duplicate network requests",
+          "solution": "This is expected; use effect dependencies and cleanup to handle it",
+          "root_cause": "React.StrictMode is intentionally detecting side effect issues"
+        }
+      },
+      "gotchas": [
+        "StrictMode double-invocation is INTENTIONAL and recommended for finding bugs",
+        "React 18+ removed console.log deduping, making double-invocation more visible",
+        "This does NOT indicate a bug in the application; it's a development feature",
+        "Effects should be idempotent (safe to run multiple times)",
+        "Proper cleanup functions prevent issues with double-invocation"
+      ],
+      "research_sources": [
+        "https://react.dev/reference/react/StrictMode",
+        "https://dev.to/pockit_tools/why-is-useeffect-running-twice-the-complete-guide-to-react-19-strict-mode-and-effect-cleanup-1n60",
+        "https://www.upgradejs.com/blog/javascript/react/updates-to-strict-mode-in-react-18.html"
+      ]
+    },
+    {
+      "name": "Backend REST API",
+      "type": "service",
+      "verified_package": {
+        "framework": "Node.js/Express (inferred from error patterns)",
+        "base_url": "http://localhost:3001",
+        "verified": true
+      },
+      "api_endpoints_mentioned": [
+        {
+          "endpoint": "GET /api/flows/stats/global",
+          "error_observed": "500 Internal Server Error",
+          "error_type": "Server Error",
+          "likely_cause": "Backend logic failure in stats aggregation or missing database/dependencies",
+          "fix_location": "Backend controller/service"
+        },
+        {
+          "endpoint": "GET /api/flows/executions/recent?limit=10",
+          "error_observed": "404 Not Found",
+          "error_type": "Route Not Implemented",
+          "likely_cause": "Endpoint route not defined on backend",
+          "fix_location": "Backend route definitions"
+        },
+        {
+          "endpoint": "GET /api/flows (with params isActive=true&pageSize=5)",
+          "error_observed": "403 Forbidden",
+          "error_type": "Authorization/Permission Error",
+          "likely_cause": "Authentication middleware or permission check blocking request",
+          "fix_location": "Backend auth middleware or permission service"
+        },
+        {
+          "endpoint": "POST /api/flows/templates/web-scraper/create",
+          "error_observed": "400 Bad Request",
+          "error_type": "Strapi ValidationError - 'slug must be defined'",
+          "likely_cause": "Request payload missing 'slug' field required by Strapi validation",
+          "fix_location": "Frontend request payload OR backend Strapi schema"
+        }
+      ],
+      "error_patterns": {
+        "403_forbidden": {
+          "meaning": "Client request is formed correctly but server refuses to honor it",
+          "causes": [
+            "Missing/invalid authentication credentials",
+            "Expired access tokens",
+            "User lacks required permissions",
+            "Authorization middleware rejecting request"
+          ],
+          "debugging": "Check auth headers, token expiration, user permissions"
+        },
+        "404_not_found": {
+          "meaning": "Requested resource endpoint doesn't exist",
+          "causes": [
+            "Route not defined on backend",
+            "Typo in endpoint URL",
+            "Endpoint not yet implemented"
+          ],
+          "debugging": "Verify endpoint exists in backend router definitions"
+        },
+        "500_internal_server_error": {
+          "meaning": "Backend logic failure or exception",
+          "causes": [
+            "Unhandled exception in route handler",
+            "Database connection failure",
+            "Missing environment variables",
+            "Null reference or incorrect data structure"
+          ],
+          "debugging": "Check backend server logs for stack trace"
+        }
+      },
+      "strapi_framework": {
+        "detected": true,
+        "evidence": [
+          "Error response format: {'error': 'Strapi API Error', 'message': '...', 'details': {...}}",
+          "ValidationError structure matches Strapi patterns",
+          "Error path: /api/flows/templates/web-scraper/create"
+        ],
+        "validation_errors": {
+          "slug_validation": {
+            "message": "slug must be defined",
+            "type": "ValidationError",
+            "http_status": 400,
+            "solution": "Include 'slug' field in request body when creating flow template"
+          }
+        }
+      },
+      "polling_pattern": {
+        "mechanism": "setInterval polling on /api/flows endpoint",
+        "interval": "Observed in console (FlowsPage.tsx:157)",
+        "error_amplification": "403/404/500 errors repeat every poll interval, causing console spam",
+        "solution": "Implement exponential backoff or circuit breaker pattern"
+      },
+      "research_sources": [
+        "https://betterstack.com/community/guides/scaling-nodejs/error-handling-express/",
+        "https://docs.strapi.io/cms/error-handling",
+        "https://www.merge.dev/blog/api-error-handling",
+        "https://www.restonyc.com/what-is-error-code-403-in-rest-api/"
+      ]
+    }
+  ],
+  "unverified_claims": [
+    {
+      "claim": "Backend is running Express.js specifically",
+      "reason": "Inferred from error patterns and endpoint structure; not explicitly confirmed in code review",
+      "risk_level": "low",
+      "note": "Could be Express, Fastify, or other Node.js framework"
+    },
+    {
+      "claim": "/api/flows/stats/global endpoint implementation details",
+      "reason": "Only observed 500 error; backend source not reviewed",
+      "risk_level": "medium",
+      "note": "Requires backend code review to identify exact failure point"
+    },
+    {
+      "claim": "Authorization middleware configuration",
+      "reason": "403 errors suggest middleware issue; config not verified",
+      "risk_level": "medium",
+      "note": "Requires checking auth middleware and permission service logic"
+    }
+  ],
+  "key_findings": [
+    "React Router v6 has deprecation warnings about v7 migration - these are expected and can be deferred with future flags",
+    "React StrictMode double-invocation is INTENTIONAL development behavior to detect side effect issues - not a bug",
+    "API errors are backend issues, not frontend: missing endpoint (404), server error (500), permission/auth issue (403)",
+    "Strapi framework is in use for template creation; requires 'slug' field in request payload",
+    "Polling mechanism causes error spam - 403/404/500 repeat with each poll interval"
+  ],
+  "recommendations": [
+    {
+      "priority": "P0",
+      "action": "Fix backend 403 Forbidden on /api/flows - Check authentication middleware and user permissions",
+      "impact": "Unblocks Dashboard and Flows page from loading"
+    },
+    {
+      "priority": "P1",
+      "action": "Implement missing /api/flows/executions/recent endpoint - Currently returns 404",
+      "impact": "Fixes Dashboard recent executions widget"
+    },
+    {
+      "priority": "P1",
+      "action": "Debug /api/flows/stats/global 500 error - Check backend logs for exception",
+      "impact": "Fixes Dashboard stats widget"
+    },
+    {
+      "priority": "P1",
+      "action": "Add 'slug' field to template creation request or verify Strapi schema - Currently returns 400",
+      "impact": "Fixes template creation from dashboard"
+    },
+    {
+      "priority": "P2",
+      "action": "Implement error handling for polling - Use exponential backoff or circuit breaker",
+      "impact": "Reduces console spam from repeated failed requests"
+    },
+    {
+      "priority": "P3",
+      "action": "Add v7_startTransition and v7_relativeSplatPath future flags - These can be deferred but prepare for v7 upgrade",
+      "impact": "Preparation for React Router v7, removes deprecation warnings"
+    }
+  ],
+  "context_from_error_logs": {
+    "affected_pages": [
+      "DashboardPage.tsx (lines 162-164, 183)",
+      "FlowsPage.tsx (lines 118, 143, 157-158)"
+    ],
+    "api_client_file": "flow-api.ts (lines 113, 648, 687, 788)",
+    "timing": "Errors occur on initial page load and during polling intervals",
+    "strictmode_note": "React.StrictMode causes double-invocation visible in console - this is expected development behavior"
+  },
+  "research_completed_at": "2026-01-02T00:00:00Z",
+  "methodology": "Primary research via Context7 MCP library resolution, supplemented with web search for official documentation and best practices"
+}

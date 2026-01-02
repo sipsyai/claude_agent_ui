@@ -1,0 +1,174 @@
+{
+  "complexity": "complex",
+  "workflow_type": "bug_fix",
+  "confidence": 0.92,
+  "reasoning": "Multiple distinct issues across frontend and backend with different root causes (API endpoint errors, authentication failures, validation errors, React Router deprecations). Requires investigation and fixes across both services, API endpoints, and frontend routing configuration.",
+
+  "analysis": {
+    "scope": {
+      "estimated_files": 15,
+      "estimated_services": 2,
+      "is_cross_cutting": true,
+      "notes": "Frontend routing configuration (1-2 files), API client error handling (3-4 files), backend API endpoints (5-8 files), error handling in frontend components (2-3 files). Cross-cutting because affects dashboard, flows, and data loading layers."
+    },
+    "integrations": {
+      "external_services": [],
+      "new_dependencies": [],
+      "research_needed": false,
+      "notes": "No new external integrations, but complex internal integration between frontend API client and backend Strapi services."
+    },
+    "infrastructure": {
+      "docker_changes": false,
+      "database_changes": false,
+      "config_changes": false,
+      "notes": "No infrastructure changes needed, but requires fixing backend service routing and authentication middleware."
+    },
+    "knowledge": {
+      "patterns_exist": true,
+      "research_required": false,
+      "unfamiliar_tech": [],
+      "notes": "Codebase has established patterns for API calls, routing, and error handling. React Router patterns exist in main.tsx. Strapi backend patterns exist in backend directory."
+    },
+    "risk": {
+      "level": "high",
+      "concerns": [
+        "API errors currently prevent dashboard from loading (500, 404, 403 errors)",
+        "Multiple error sources require different fixes - must identify root cause for each",
+        "Polling mechanism may spam errors if not fixed properly",
+        "Authentication/authorization issues (403) suggest middleware problem that could affect security",
+        "Backend validation error (slug must be defined) indicates incomplete endpoint implementation",
+        "Fixing one error may mask other issues"
+      ],
+      "notes": "Application is currently broken - dashboard cannot load due to API errors. High priority but low risk of breaking other functionality since it's already non-functional."
+    }
+  },
+
+  "recommended_phases": [
+    "discovery",
+    "requirements",
+    "research",
+    "context",
+    "spec_writing",
+    "self_critique",
+    "planning",
+    "validation"
+  ],
+
+  "flags": {
+    "needs_research": false,
+    "needs_self_critique": true,
+    "needs_infrastructure_setup": false
+  },
+
+  "issue_breakdown": {
+    "react_router_warnings": {
+      "severity": "low",
+      "description": "Two deprecation warnings about React Router v7 future flags",
+      "errors": [
+        "v7_startTransition future flag warning",
+        "v7_relativeSplatPath future flag warning"
+      ],
+      "affected_files": [
+        "src/web/main.tsx"
+      ],
+      "fix_strategy": "Add future flags to BrowserRouter configuration"
+    },
+    "api_errors": {
+      "severity": "critical",
+      "description": "Multiple API errors preventing application from functioning",
+      "errors": [
+        {
+          "endpoint": "/api/flows/stats/global",
+          "error_code": 500,
+          "error_type": "Internal Server Error",
+          "symptom": "Dashboard page fails to load global stats",
+          "root_cause": "Backend logic error in stats aggregation",
+          "affected_files": ["backend/src/api/flow-stats", "src/web/manager/services/flow-api.ts"]
+        },
+        {
+          "endpoint": "/api/flows/executions/recent",
+          "error_code": 404,
+          "error_type": "Not Found",
+          "symptom": "Recent executions widget shows error",
+          "root_cause": "Endpoint not implemented on backend",
+          "affected_files": ["backend/src/api/flow-executions", "src/web/manager/services/flow-api.ts"]
+        },
+        {
+          "endpoint": "/api/flows",
+          "error_code": 403,
+          "error_type": "Forbidden",
+          "symptom": "Flows page cannot load, polling errors continue",
+          "root_cause": "Authorization/authentication middleware blocking requests",
+          "affected_files": ["backend/config/middlewares.ts", "backend/src/api/flow", "src/web/manager/services/flow-api.ts"]
+        },
+        {
+          "endpoint": "/api/flows/templates/web-scraper/create",
+          "error_code": 400,
+          "error_type": "Validation Error (slug must be defined)",
+          "symptom": "Cannot create flow from web-scraper template",
+          "root_cause": "Template request missing required 'slug' field",
+          "affected_files": ["backend/src/api/flow-templates", "src/web/manager/components/FlowTemplateSelector.tsx"]
+        }
+      ]
+    },
+    "frontend_error_handling": {
+      "severity": "medium",
+      "description": "Frontend error handling not preventing error spam from polling",
+      "affected_files": [
+        "src/web/manager/components/DashboardPage.tsx",
+        "src/web/manager/components/FlowsPage.tsx"
+      ],
+      "notes": "Polling mechanism causes errors to repeat indefinitely in console"
+    }
+  },
+
+  "validation_recommendations": {
+    "risk_level": "critical",
+    "skip_validation": false,
+    "minimal_mode": false,
+    "test_types_required": ["unit", "integration", "e2e"],
+    "security_scan_required": true,
+    "staging_deployment_required": true,
+    "reasoning": "Critical because application is currently non-functional - dashboard cannot load. Authentication/authorization changes (403 errors) require security review. Multiple API endpoints need integration testing. Staging deployment needed to verify all endpoints work correctly before production."
+  },
+
+  "investigation_priority": [
+    {
+      "priority": 1,
+      "issue": "Fix 403 Forbidden errors on /api/flows endpoints",
+      "reason": "Blocking both Dashboard and Flows pages - highest impact",
+      "investigation": "Check backend auth middleware, verify API key/token passing, review role-based access control",
+      "estimated_effort": "2-3 hours"
+    },
+    {
+      "priority": 2,
+      "issue": "Implement missing /api/flows/executions/recent endpoint",
+      "reason": "Blocking dashboard recent executions widget",
+      "investigation": "Check backend schema for executions, implement query with limit parameter",
+      "estimated_effort": "1-2 hours"
+    },
+    {
+      "priority": 3,
+      "issue": "Debug 500 error on /api/flows/stats/global endpoint",
+      "reason": "Blocking dashboard global stats widget",
+      "investigation": "Check backend implementation, verify database aggregation queries, check for missing data",
+      "estimated_effort": "2-3 hours"
+    },
+    {
+      "priority": 4,
+      "issue": "Fix 400 validation error on template creation",
+      "reason": "Blocking flow creation from templates",
+      "investigation": "Verify request payload includes slug field, check backend validation rules",
+      "estimated_effort": "1 hour"
+    },
+    {
+      "priority": 5,
+      "issue": "Add React Router future flags to suppress v7 deprecation warnings",
+      "reason": "Low priority but quick fix to clean up console",
+      "investigation": "Add v7_startTransition and v7_relativeSplatPath flags to BrowserRouter",
+      "estimated_effort": "15 minutes"
+    }
+  ],
+
+  "created_at": "2026-01-02T18:37:00Z"
+}

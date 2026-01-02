@@ -1,0 +1,657 @@
+{
+  "feature": "Fix API errors and React Router deprecation warnings",
+  "description": "Fix critical API errors preventing Dashboard and Flows pages from loading (500/404/403 errors), add proper error handling and exponential backoff to polling mechanism, and resolve React Router v7 deprecation warnings.",
+  "workflow_type": "bug_fix",
+  "workflow_rationale": "Multiple non-breaking bugs are preventing core features (Dashboard, Flows pages) from functioning. Requires both backend API fixes (missing/failing endpoints, authorization issues) and frontend error handling and router configuration improvements.",
+  "risk_level": "critical",
+  "services_involved": [
+    {
+      "name": "frontend",
+      "type": "React/TypeScript frontend",
+      "path": "src/web/manager",
+      "tech_stack": [
+        "React 18+",
+        "TypeScript",
+        "Vite",
+        "React Router v6"
+      ],
+      "affected_components": [
+        "DashboardPage",
+        "FlowsPage",
+        "flow-api service"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "backend",
+      "type": "Strapi-based Express API",
+      "path": "backend",
+      "tech_stack": [
+        "Node.js",
+        "Express",
+        "Strapi"
+      ],
+      "affected_endpoints": [
+        "/api/flows",
+        "/api/flows/stats/global",
+        "/api/flows/executions/recent"
+      ],
+      "port": 3001
+    }
+  ],
+  "phases": [
+    {
+      "id": "phase-1-router-config",
+      "name": "Frontend: React Router v7 Future Flags",
+      "type": "implementation",
+      "description": "Enable React Router v7 future flags to resolve deprecation warnings. This is a quick fix with no dependencies.",
+      "depends_on": [],
+      "parallel_safe": true,
+      "estimated_effort_hours": 0.25,
+      "subtasks": [
+        {
+          "id": "subtask-1-1",
+          "description": "Add v7_startTransition and v7_relativeSplatPath future flags to BrowserRouter in src/web/main.tsx",
+          "service": "frontend",
+          "files_to_modify": [
+            "src/web/main.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "Documentation: React Router v6 Future Flags"
+          ],
+          "implementation_notes": "Modify BrowserRouter element to include future={{v7_startTransition: true, v7_relativeSplatPath: true}} prop",
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:5173",
+            "checks": [
+              "No React Router deprecation warnings in console",
+              "v7_startTransition warning gone",
+              "v7_relativeSplatPath warning gone",
+              "Application loads without errors"
+            ]
+          },
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-2-backend-auth",
+      "name": "Backend: Fix 403 Authorization Errors on /api/flows",
+      "type": "implementation",
+      "description": "Debug and fix authorization/authentication middleware issues causing 403 Forbidden errors on /api/flows endpoints. This blocks both Dashboard and Flows pages.",
+      "depends_on": [],
+      "parallel_safe": true,
+      "estimated_effort_hours": 2.5,
+      "subtasks": [
+        {
+          "id": "subtask-2-1",
+          "description": "Investigate backend authorization middleware for /api/flows endpoints",
+          "service": "backend",
+          "files_to_modify": [],
+          "files_to_reference": [
+            "backend/config/middlewares.ts",
+            "backend/src/api/flow",
+            "src/server.ts"
+          ],
+          "implementation_notes": "Check if auth middleware is properly configured, verify token validation, check CORS settings, review role-based access control for flows endpoints",
+          "verification": {
+            "type": "command",
+            "command": "curl -H 'Authorization: Bearer <valid-token>' http://localhost:3001/api/flows 2>/dev/null | head -20",
+            "expected": "HTTP 200 or valid JSON response (not 403)"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-2-2",
+          "description": "Fix authorization middleware configuration or token validation to allow /api/flows access",
+          "service": "backend",
+          "files_to_modify": [
+            "backend/config/middlewares.ts",
+            "backend/src/api/flow/route.ts"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "backend/src/api/agents/route.ts (if exists with working auth)"
+          ],
+          "implementation_notes": "Ensure auth middleware allows GET requests to /api/flows, verify token extraction and validation logic, check that endpoints are properly registered and accessible",
+          "verification": {
+            "type": "api",
+            "method": "GET",
+            "url": "http://localhost:3001/api/flows",
+            "body": null,
+            "expected_status": 200,
+            "notes": "Should return flows list, not 403 Forbidden"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-2-3",
+          "description": "Verify frontend is correctly passing auth token to backend API calls",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_reference": [
+            "src/web/manager/services/flow-api.ts"
+          ],
+          "implementation_notes": "Check that getAuthToken() function properly extracts token from cookies, verify Authorization header is set in fetch requests, confirm token format matches backend expectations",
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:5173",
+            "checks": [
+              "Open DevTools Network tab",
+              "Verify Authorization header is present in API requests",
+              "Check Bearer token is included",
+              "No 403 errors on /api/flows requests"
+            ]
+          },
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-3-backend-missing-endpoint",
+      "name": "Backend: Implement Missing /api/flows/executions/recent Endpoint",
+      "type": "implementation",
+      "description": "Implement the missing GET /api/flows/executions/recent endpoint that returns recent flow executions with optional limit parameter. This endpoint is called by Dashboard page.",
+      "depends_on": [
+        "phase-2-backend-auth"
+      ],
+      "parallel_safe": false,
+      "estimated_effort_hours": 1.5,
+      "subtasks": [
+        {
+          "id": "subtask-3-1",
+          "description": "Implement GET /api/flows/executions/recent endpoint in backend",
+          "service": "backend",
+          "files_to_modify": [
+            "backend/src/api/flow/route.ts",
+            "backend/src/api/flow/controllers.ts"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "backend/src/api/flow/route.ts (existing endpoints)"
+          ],
+          "implementation_notes": "Create endpoint that accepts limit query parameter (default 10), queries executions table ordered by date DESC, returns array of FlowExecution objects with pagination metadata",
+          "verification": {
+            "type": "api",
+            "method": "GET",
+            "url": "http://localhost:3001/api/flows/executions/recent?limit=10",
+            "body": null,
+            "expected_status": 200,
+            "notes": "Should return {data: [...executions], count: N} or similar structure"
+          },
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-4-backend-stats",
+      "name": "Backend: Debug and Fix /api/flows/stats/global 500 Error",
+      "type": "implementation",
+      "description": "Debug the 500 Internal Server Error in /api/flows/stats/global endpoint. Likely issues: null reference, missing data, aggregation query error.",
+      "depends_on": [
+        "phase-2-backend-auth"
+      ],
+      "parallel_safe": false,
+      "estimated_effort_hours": 2,
+      "subtasks": [
+        {
+          "id": "subtask-4-1",
+          "description": "Add logging and error handling to /api/flows/stats/global endpoint",
+          "service": "backend",
+          "files_to_modify": [
+            "backend/src/api/flow/controllers.ts"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "backend error handling patterns"
+          ],
+          "implementation_notes": "Add try-catch with detailed logging, check for null/undefined data, verify aggregation queries succeed, test with sample data",
+          "verification": {
+            "type": "command",
+            "command": "curl http://localhost:3001/api/flows/stats/global 2>/dev/null | jq . | head -20",
+            "expected": "Valid JSON with statistics (not error)"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-4-2",
+          "description": "Fix root cause of 500 error (query logic, null checks, aggregation)",
+          "service": "backend",
+          "files_to_modify": [
+            "backend/src/api/flow/controllers.ts",
+            "backend/src/services/flow.service.ts"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "other aggregation endpoints (if exist)"
+          ],
+          "implementation_notes": "Based on logs from subtask-4-1, fix the specific issue: handle missing data, fix aggregation query, add null checks, handle edge cases",
+          "verification": {
+            "type": "api",
+            "method": "GET",
+            "url": "http://localhost:3001/api/flows/stats/global",
+            "body": null,
+            "expected_status": 200,
+            "notes": "Should return valid statistics object"
+          },
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-5-frontend-error-handling",
+      "name": "Frontend: Add Error Handling to API Calls and Components",
+      "type": "implementation",
+      "description": "Add proper error handling to DashboardPage and FlowsPage to prevent crashes and console errors when APIs return errors.",
+      "depends_on": [
+        "phase-2-backend-auth",
+        "phase-3-backend-missing-endpoint",
+        "phase-4-backend-stats"
+      ],
+      "parallel_safe": true,
+      "estimated_effort_hours": 2,
+      "subtasks": [
+        {
+          "id": "subtask-5-1",
+          "description": "Add error handling to DashboardPage.tsx API calls",
+          "service": "frontend",
+          "files_to_modify": [
+            "src/web/manager/components/DashboardPage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "spec.md error handling pattern"
+          ],
+          "implementation_notes": "Already uses Promise.all with .catch() - verify errors are properly handled, add error state display in UI, prevent component crash on API errors",
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:5173/manager/dashboard",
+            "checks": [
+              "Dashboard page loads without crashing",
+              "Error messages display gracefully if APIs fail",
+              "No unhandled promise rejections in console",
+              "Stats, executions, flows display or show error state"
+            ]
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-5-2",
+          "description": "Add error handling to FlowsPage.tsx API calls",
+          "service": "frontend",
+          "files_to_modify": [
+            "src/web/manager/components/FlowsPage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "spec.md error handling pattern"
+          ],
+          "implementation_notes": "Wrap loadFlows() in try-catch, set error state, display error messages in UI, handle polling errors gracefully",
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:5173/manager/flows",
+            "checks": [
+              "Flows page loads without crashing",
+              "Error messages display if API fails",
+              "No console errors on initial load",
+              "Polling doesn't spam errors"
+            ]
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-5-3",
+          "description": "Verify API error handling in flow-api.ts",
+          "service": "frontend",
+          "files_to_modify": [
+            "src/web/manager/services/flow-api.ts"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "spec.md API error handling"
+          ],
+          "implementation_notes": "Review existing error handling in fetch calls, ensure errors are thrown correctly so components can catch them, don't suppress errors at API layer",
+          "verification": {
+            "type": "command",
+            "command": "grep -A 5 'if (!response.ok)' src/web/manager/services/flow-api.ts | head -30",
+            "expected": "Error throwing pattern present"
+          },
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-6-frontend-polling",
+      "name": "Frontend: Implement Exponential Backoff for Polling",
+      "type": "implementation",
+      "description": "Implement exponential backoff in FlowsPage polling mechanism to prevent error spam when API calls fail repeatedly.",
+      "depends_on": [
+        "phase-2-backend-auth",
+        "phase-5-frontend-error-handling"
+      ],
+      "parallel_safe": false,
+      "estimated_effort_hours": 1.5,
+      "subtasks": [
+        {
+          "id": "subtask-6-1",
+          "description": "Replace fixed-interval polling with exponential backoff in FlowsPage.tsx",
+          "service": "frontend",
+          "files_to_modify": [
+            "src/web/manager/components/FlowsPage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "spec.md exponential backoff pattern"
+          ],
+          "implementation_notes": "Replace setInterval with exponential backoff: BASE_DELAY=5000ms, MAX_DELAY=30000ms, MAX_RETRIES=3, reset on success. Use scheduleNextPoll() helper, always cleanup interval",
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:5173/manager/flows",
+            "checks": [
+              "Polling active every 30 seconds when healthy",
+              "On error: polling pauses and increases delay",
+              "2nd attempt: 10 seconds later",
+              "3rd attempt: 20 seconds later",
+              "Stops after 3 failed attempts",
+              "Resets on successful request"
+            ]
+          },
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-7-integration",
+      "name": "Integration & Verification",
+      "type": "integration",
+      "description": "Wire all services together and verify end-to-end functionality. Ensure all API endpoints return 200 OK and Dashboard/Flows pages load without errors.",
+      "depends_on": [
+        "phase-1-router-config",
+        "phase-2-backend-auth",
+        "phase-3-backend-missing-endpoint",
+        "phase-4-backend-stats",
+        "phase-5-frontend-error-handling",
+        "phase-6-frontend-polling"
+      ],
+      "parallel_safe": false,
+      "estimated_effort_hours": 1,
+      "subtasks": [
+        {
+          "id": "subtask-7-1",
+          "description": "Verify all API endpoints return 200 OK responses",
+          "service": "backend",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "implementation_notes": "Test each endpoint manually with curl or Postman, verify response status and data structure",
+          "verification": {
+            "type": "command",
+            "command": "bash -c 'curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/api/flows && curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/api/flows/stats/global && curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/api/flows/executions/recent'",
+            "expected": "200200200"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-7-2",
+          "description": "Verify Dashboard page loads successfully without errors",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "implementation_notes": "Navigate to Dashboard, wait for data to load, check console for errors",
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:5173/manager/dashboard",
+            "checks": [
+              "Page loads within 5 seconds",
+              "Global stats widget displays data",
+              "Recent executions widget displays data",
+              "Active flows widget displays data",
+              "No error messages visible",
+              "No console errors or warnings (except React DevTools)"
+            ]
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-7-3",
+          "description": "Verify Flows page loads successfully and polling works",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "implementation_notes": "Navigate to Flows, wait for initial load, monitor for 60+ seconds to verify polling",
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:5173/manager/flows",
+            "checks": [
+              "Page loads within 5 seconds",
+              "Flows list displays",
+              "No initial 403 errors",
+              "Polling active (check Network tab)",
+              "No repeated error spam in console",
+              "Exponential backoff working if errors occur"
+            ]
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-7-4",
+          "description": "Verify React Router deprecation warnings are gone",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "implementation_notes": "Open browser console and check for v7_startTransition and v7_relativeSplatPath warnings",
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:5173",
+            "checks": [
+              "No v7_startTransition warning",
+              "No v7_relativeSplatPath warning",
+              "Only React DevTools suggestion visible (acceptable)"
+            ]
+          },
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_phases": 7,
+    "total_subtasks": 14,
+    "services_involved": [
+      "frontend",
+      "backend"
+    ],
+    "affected_pages": [
+      "Dashboard",
+      "Flows"
+    ],
+    "affected_endpoints": [
+      "/api/flows",
+      "/api/flows/stats/global",
+      "/api/flows/executions/recent"
+    ],
+    "estimated_total_effort_hours": 11.25,
+    "parallelism": {
+      "max_parallel_phases": 2,
+      "parallel_groups": [
+        {
+          "phases": [
+            "phase-1-router-config"
+          ],
+          "reason": "Independent, no dependencies"
+        },
+        {
+          "phases": [
+            "phase-2-backend-auth",
+            "phase-4-backend-stats"
+          ],
+          "reason": "Both backend, independent investigations"
+        },
+        {
+          "phases": [
+            "phase-5-frontend-error-handling"
+          ],
+          "reason": "Frontend work, depends on backend fixes"
+        }
+      ],
+      "recommended_workers": 1,
+      "speedup_estimate": "Sequential execution recommended due to tight dependencies between phases",
+      "notes": "While some phases could run in parallel (e.g., backend auth and stats debugging), the complexity of integration testing suggests sequential execution to catch issues early."
+    }
+  },
+  "verification_strategy": {
+    "risk_level": "critical",
+    "skip_validation": false,
+    "test_creation_phase": "post_implementation",
+    "test_types_required": [
+      "unit",
+      "integration",
+      "e2e"
+    ],
+    "security_scanning_required": true,
+    "staging_deployment_required": true,
+    "acceptance_criteria": [
+      "All three API endpoints return 200 OK",
+      "Dashboard page loads without errors",
+      "Flows page loads without errors",
+      "No React Router deprecation warnings",
+      "Polling uses exponential backoff (not fixed interval)",
+      "No unhandled promise rejections",
+      "No console errors on normal operation",
+      "All existing tests pass"
+    ],
+    "verification_steps": [
+      {
+        "name": "Unit Tests",
+        "command": "npm test",
+        "expected_outcome": "All tests pass",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Integration Tests",
+        "command": "npm run test:integration",
+        "expected_outcome": "All integration tests pass",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "API Endpoint Verification",
+        "command": "bash -c 'curl -s http://localhost:3001/api/flows | jq . && curl -s http://localhost:3001/api/flows/stats/global | jq . && curl -s http://localhost:3001/api/flows/executions/recent | jq .'",
+        "expected_outcome": "All endpoints return valid JSON (HTTP 200)",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Browser Verification",
+        "command": "Manual: Open http://localhost:5173/manager/dashboard and http://localhost:5173/manager/flows, check console",
+        "expected_outcome": "Both pages load, no 403/404/500 errors, no React Router warnings",
+        "type": "manual",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Security Scan",
+        "command": "npm audit",
+        "expected_outcome": "No critical vulnerabilities",
+        "type": "security",
+        "required": true,
+        "blocking": true
+      }
+    ],
+    "reasoning": "Critical risk level because application is currently non-functional. Multiple integration points between frontend and backend require thorough testing. Authorization changes (403 fixes) require security review. E2E testing ensures user-visible functionality works correctly."
+  },
+  "qa_acceptance": {
+    "unit_tests": {
+      "required": true,
+      "commands": [
+        "npm test"
+      ],
+      "minimum_coverage": null
+    },
+    "integration_tests": {
+      "required": true,
+      "commands": [
+        "npm run test:integration"
+      ],
+      "services_to_test": [
+        "frontend",
+        "backend",
+        "API integration"
+      ]
+    },
+    "e2e_tests": {
+      "required": true,
+      "commands": [
+        "npm run test:e2e"
+      ],
+      "flows": [
+        "dashboard-load",
+        "flows-load",
+        "polling-mechanism"
+      ]
+    },
+    "browser_verification": {
+      "required": true,
+      "pages": [
+        {
+          "url": "http://localhost:5173/manager/dashboard",
+          "checks": [
+            "renders-without-errors",
+            "no-console-errors",
+            "displays-stats",
+            "displays-executions",
+            "displays-flows",
+            "no-404-500-403-errors"
+          ]
+        },
+        {
+          "url": "http://localhost:5173/manager/flows",
+          "checks": [
+            "renders-without-errors",
+            "no-console-errors",
+            "displays-flows-list",
+            "polling-active",
+            "no-repeated-errors",
+            "exponential-backoff-working"
+          ]
+        },
+        {
+          "url": "http://localhost:5173",
+          "checks": [
+            "no-react-router-warnings",
+            "no-v7-deprecation-messages",
+            "react-devtools-suggestion-ok"
+          ]
+        }
+      ]
+    },
+    "database_verification": {
+      "required": false,
+      "checks": []
+    }
+  },
+  "qa_signoff": null,
+  "implementation_notes": {
+    "critical_points": [
+      "Phase 2 (backend auth) MUST complete before Dashboard/Flows can load - highest priority",
+      "Phase 3 (missing endpoint) depends on Phase 2 - implement 404 fix after auth issues are resolved",
+      "Phase 4 (stats 500 error) depends on Phase 2 - debug only after auth is working",
+      "All API fixes MUST be complete before testing frontend error handling (Phase 5)",
+      "Exponential backoff (Phase 6) only testable after API is stable"
+    ],
+    "rollback_strategy": "If backend changes break existing functionality, rollback to committed state and investigate root cause before re-applying changes.",
+    "communication": "Backend and frontend developers should coordinate on API contract to ensure fixes align with frontend expectations."
+  },
+  "created_at": "2026-01-02T18:45:00.000Z",
+  "updated_at": "2026-01-02T15:47:24.481Z",
+  "status": "in_progress",
+  "planStatus": "in_progress"
+}

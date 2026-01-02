@@ -57,11 +57,40 @@ function generateSlug(text: string): string {
 
 // ============= CONFIGURATION =============
 
+/**
+ * Strapi API base URL
+ * @description Configure via STRAPI_URL environment variable
+ * @default 'http://localhost:1337'
+ * @example
+ * // In .env file:
+ * STRAPI_URL=https://cms.example.com
+ */
 const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:1337';
+
+/**
+ * Strapi API authentication token
+ * @description Configure via STRAPI_API_TOKEN environment variable.
+ * Generate tokens in Strapi Admin Panel: Settings > API Tokens > Create new API Token
+ * @required Required for all API requests
+ * @example
+ * // In .env file:
+ * STRAPI_API_TOKEN=your_strapi_api_token_here
+ */
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
 
-// Cache configuration
+/**
+ * Cache Time-To-Live (TTL) in milliseconds
+ * @description How long cache entries remain valid before automatic expiration.
+ * Cache entries are refreshed on access (updateAgeOnGet: true)
+ * @default 300000 (5 minutes)
+ */
 const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
+
+/**
+ * Maximum number of cache entries
+ * @description LRU cache evicts least recently used entries when limit is reached
+ * @default 100
+ */
 const CACHE_MAX_SIZE = 100;
 
 // ============= STRAPI CLIENT CLASS =============
@@ -69,11 +98,127 @@ const CACHE_MAX_SIZE = 100;
 /**
  * StrapiClient - Singleton service for Strapi API interactions
  *
- * Provides CRUD operations for all content types with built-in caching,
- * data transformation, and error handling.
+ * @description
+ * The StrapiClient provides a robust data access layer for the Strapi CMS API, handling
+ * all HTTP communication, caching, and data transformation between Strapi's response format
+ * and the application's domain models. It implements the singleton pattern to ensure a single
+ * shared instance with consistent caching across the application.
+ *
+ * **Key Features:**
+ * - HTTP client with axios and Bearer token authentication
+ * - LRU cache with 5-minute TTL and automatic cache invalidation on mutations
+ * - Request/response interceptors for logging and error handling
+ * - Automatic data transformation between Strapi format and domain models
+ * - Support for Strapi v5 features (populate, filters, sort, pagination, components)
+ * - Health check endpoint for API availability monitoring
+ * - CRUD operations for Agents, Skills, MCP Servers, MCP Tools, Tasks
+ * - File upload/delete operations
+ * - Cache management utilities
+ *
+ * **Environment Variables:**
+ * - `STRAPI_URL`: Base URL for Strapi API (default: 'http://localhost:1337')
+ * - `STRAPI_API_TOKEN`: Bearer token for API authentication (required)
+ *
+ * **Cache Configuration:**
+ * - TTL: 5 minutes (300000ms) with refresh on access
+ * - Max Size: 100 entries (LRU eviction)
+ * - Automatic invalidation on mutations (create/update/delete)
+ * - Manual cache management via clearCache() and getCacheStats()
+ *
+ * @example
+ * // Basic usage - use the singleton instance
+ * import { strapiClient } from './strapi-client';
+ *
+ * // Check API health
+ * const isHealthy = await strapiClient.healthCheck();
+ *
+ * // Fetch all agents
+ * const agents = await strapiClient.getAllAgents();
+ *
+ * @example
+ * // Advanced filtering and population
+ * import { strapiClient } from './strapi-client';
+ *
+ * // Get agents with custom filters and populated relations
+ * const activeAgents = await strapiClient.getAllAgents({
+ *   filters: { enabled: true },
+ *   populate: ['mcpConfig', 'skillSelection', 'tasks'],
+ *   sort: ['name:asc'],
+ *   pagination: { page: 1, pageSize: 10 }
+ * });
+ *
+ * // Get a single agent with all relations populated
+ * const agent = await strapiClient.getAgent('agent-id');
+ * console.log(agent.mcpConfig); // Populated component data
+ *
+ * @example
+ * // CRUD operations
+ * import { strapiClient } from './strapi-client';
+ *
+ * // Create a new agent
+ * const newAgent = await strapiClient.createAgent({
+ *   name: 'Code Assistant',
+ *   description: 'Helps with coding tasks',
+ *   systemPrompt: 'You are a helpful coding assistant.',
+ *   enabled: true,
+ *   modelConfig: {
+ *     model: 'sonnet',
+ *     temperature: 1.0,
+ *     timeout: 300000
+ *   }
+ * });
+ *
+ * // Update the agent
+ * const updatedAgent = await strapiClient.updateAgent(newAgent.id, {
+ *   description: 'Updated description'
+ * });
+ *
+ * // Delete the agent
+ * await strapiClient.deleteAgent(newAgent.id);
+ *
+ * @example
+ * // Cache management
+ * import { strapiClient } from './strapi-client';
+ *
+ * // Get cache statistics
+ * const stats = strapiClient.getCacheStats();
+ * console.log(`Cache: ${stats.size}/${stats.max} entries, TTL: ${stats.ttl}ms`);
+ *
+ * // Clear all cache entries
+ * strapiClient.clearCache();
+ *
+ * @example
+ * // File upload workflow
+ * import { strapiClient } from './strapi-client';
+ * import fs from 'fs';
+ *
+ * // Upload a file
+ * const fileBuffer = fs.readFileSync('./example.pdf');
+ * const uploadedFile = await strapiClient.uploadFile(fileBuffer, 'example.pdf');
+ * console.log(`File uploaded: ${uploadedFile.url}`);
+ *
+ * // Use the file in a skill's additionalFiles
+ * const skill = await strapiClient.createSkill({
+ *   name: 'example-skill',
+ *   displayName: 'Example Skill',
+ *   description: 'A skill with an additional file',
+ *   skillmd: '# Skill content',
+ *   additionalFiles: [
+ *     { file: uploadedFile.documentId }
+ *   ]
+ * });
+ *
+ * // Delete the file when no longer needed
+ * await strapiClient.deleteFile(uploadedFile.documentId);
+ *
+ * @see {@link https://docs.strapi.io/dev-docs/api/rest|Strapi REST API Documentation}
+ * @see {@link https://github.com/isaacs/node-lru-cache|LRU Cache Documentation}
  */
 export class StrapiClient {
+  /** Axios HTTP client instance configured with base URL and authentication */
   private client: AxiosInstance;
+
+  /** LRU cache for GET responses with 5-minute TTL and 100-entry limit */
   private cache: LRUCache<string, any>;
 
   constructor() {

@@ -514,6 +514,7 @@ export interface CreateAgentRequest {
   description: string;
   systemPrompt: string;
   tools?: string[];
+  disallowedTools?: string[]; // Tools that are explicitly disallowed for this agent
   model?: 'sonnet' | 'opus' | 'haiku';
   inputFields?: InputField[];
   outputSchema?: string | object;

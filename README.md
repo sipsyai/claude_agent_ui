@@ -43,9 +43,9 @@ A comprehensive web-based management interface for Claude agents, skills, slash 
 - Claude CLI installed and configured (for project analysis)
 - Docker and Docker Compose (for PostgreSQL database)
 
-## Infrastructure Setup (PostgreSQL Migration)
+## Database Infrastructure
 
-This project is being migrated from SQLite to a production-ready PostgreSQL + Strapi + Express architecture. The infrastructure setup includes:
+This project uses **PostgreSQL** as its primary production database with a Strapi CMS backend and Express API frontend. The infrastructure provides:
 
 ### Quick Start with Docker
 
@@ -86,28 +86,37 @@ docker inspect --format='{{.State.Health.Status}}' claude-postgres
 ### Environment Variables
 
 All database credentials and secrets are managed through the `.env` file. Required variables:
-- `POSTGRES_DB` - Database name
-- `POSTGRES_USER` - Database user
-- `POSTGRES_PASSWORD` - Database password (generated)
-- `STRAPI_*` - Strapi secrets (for future tasks)
+- `DATABASE_HOST` - Database host (default: localhost)
+- `DATABASE_PORT` - Database port (default: 5432)
+- `DATABASE_NAME` - Database name (default: claude_agent_ui)
+- `DATABASE_USERNAME` - Database user
+- `DATABASE_PASSWORD` - Database password (generated)
+- `DATABASE_POOL_MIN` - Minimum pool connections (default: 2)
+- `DATABASE_POOL_MAX` - Maximum pool connections (default: 10)
 
-See `.env.example` for the complete list.
+See `.env.example` for the complete list of database and connection pool configuration variables.
 
-### Migration Status
+### Database Features
 
-The project is currently undergoing a phased migration:
+✅ **Production-Ready PostgreSQL Setup**
+- PostgreSQL 16 (Alpine) in Docker
+- Connection pooling with configurable limits
+- Automated health checks and monitoring
+- Persistent data volumes
 
-✅ **Task 01: Infrastructure Setup** (Complete)
-- Docker Compose with PostgreSQL
-- Environment configuration
-- Secrets generation utility
-- Network and volume setup
+✅ **Backup & Restore Procedures**
+- Automated daily backups with retention policies
+- Point-in-time recovery (PITR) support
+- Disaster recovery procedures
+- Comprehensive testing infrastructure
 
-🔄 **Upcoming Tasks**:
-- Task 02: PostgreSQL Schema Creation
-- Task 03: Strapi CMS Initialization
-- Task 04: Content Types Creation
-- ... (see `.claude/Project/README.md` for full roadmap)
+✅ **Complete Documentation**
+- Connection pool configuration and optimization
+- Health check endpoints with real-time metrics
+- Backup and restore procedures
+- End-to-end testing guides
+
+👉 **[View Complete Database Documentation](./docs/database/README.md)**
 
 ### Troubleshooting Docker Setup
 
@@ -331,12 +340,46 @@ MCP servers are configured in `.mcp.json` at the project root:
 ## Technology Stack
 
 - **Frontend**: React 18, React Router, Tailwind CSS, Radix UI
-- **Backend**: Express, Node.js
+- **Backend**: Express, Node.js, Strapi CMS
+- **Database**: PostgreSQL 16 with connection pooling
 - **AI/SDK**: Claude Agent SDK, Anthropic SDK, MCP SDK
 - **Build Tools**: Vite, TypeScript
+- **Infrastructure**: Docker, Docker Compose
 - **Utilities**: js-yaml, zod, uuid
 
 ## Development Tips
+
+### Database
+
+Monitor PostgreSQL health and connection pool metrics:
+```bash
+# View real-time pool metrics
+curl http://localhost:1337/_health | jq '.pool'
+
+# Test connection pooling
+npm run test:pool-connections
+
+# Test health endpoints
+npm run test:health
+```
+
+Backup and restore operations:
+```bash
+# Create backup
+bash ./scripts/backup-postgres.sh
+
+# Test backup/restore procedures
+npm run test:backup-restore
+
+# Restore from backup
+bash ./scripts/restore-postgres.sh database/backups/backup_20260102_120000.sql.gz
+```
+
+See [Database Documentation](./docs/database/README.md) for comprehensive guides on:
+- Connection pooling configuration
+- Health check endpoints
+- Backup and restore procedures
+- End-to-end testing
 
 ### Type Safety
 The project uses TypeScript throughout. Run type checking with:
@@ -364,6 +407,55 @@ To add a custom MCP server:
 5. Save and enable
 
 ## Troubleshooting
+
+### Database Issues
+
+**PostgreSQL not starting:**
+```bash
+# Check container status
+docker-compose ps
+
+# View logs
+docker-compose logs postgres
+
+# Restart container
+docker-compose restart postgres
+```
+
+**Connection refused:**
+```bash
+# Verify PostgreSQL is healthy
+docker-compose exec postgres pg_isready -U postgres
+
+# Test connection
+docker-compose exec postgres psql -U postgres -d claude_agent_ui
+
+# Check health endpoint
+curl http://localhost:1337/_health
+```
+
+**Connection pool exhausted:**
+```bash
+# Check pool metrics
+curl http://localhost:1337/_health | jq '.pool'
+
+# Adjust pool size in .env
+DATABASE_POOL_MAX=20
+
+# Monitor pool usage
+npm run test:pool-connections
+```
+
+**Need to restore database:**
+```bash
+# List available backups
+ls -lh database/backups/
+
+# Restore from backup
+bash ./scripts/restore-postgres.sh database/backups/backup_YYYYMMDD_HHMMSS.sql.gz
+```
+
+See [Database Documentation](./docs/database/README.md) for detailed troubleshooting guides.
 
 ### Port Already in Use
 Change the port in `.env`:

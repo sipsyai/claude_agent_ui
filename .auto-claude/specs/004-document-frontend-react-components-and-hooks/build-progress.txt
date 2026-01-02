@@ -603,9 +603,53 @@ Add comprehensive JSDoc documentation to 48+ React components and 4 custom hooks
   - Committed changes with git
   - **Phase 6: Page Components and App (6/15 subtasks completed)**
 
+- [x] Subtask 6.7: Documented SkillsPage component (COMPLETED in previous session)
+- [x] Subtask 6.8: Documented ChatsPage component (COMPLETED in previous session)
+- [x] Subtask 6.9: Documented FlowDesignerPage component (COMPLETED in previous session)
+- [x] Subtask 6.10: Documented CommandsPage component (COMPLETED in previous session)
+- [x] Subtask 6.11: Documented MCPServersPage component (COMPLETED in previous session)
+
+- [x] Subtask 6.12: Documented SettingsPage component
+  - Added comprehensive JSDoc documentation covering settings form, preference handling, and save behavior
+  - Component description with features and functionality
+  - Detailed sections on:
+    * Settings Form - Two-card layout with Project Directory and Training Agent Configuration sections
+    * Preference Handling - Directory path and training agent selection with different persistence mechanisms
+    * Save Behavior - Two independent save operations (handleSave, handleTrainingAgentSave)
+    * Form State Management - Six state variables (inputValue, agents, selectedAgentId, useLocalFallback, loading, saving)
+    * API Integration - Three endpoints (GET/PUT training-agent-config, GET agents)
+    * UI States - Four states (Default, Loading, Saving, Fallback Enabled)
+    * Styling Behavior - Tailwind CSS with responsive design and dark theme
+  - Props interface documentation with detailed property descriptions:
+    * directoryName - Optional current project directory path for pre-filling input
+    * onDirectoryChange - Callback for directory changes with parent persistence
+  - Type interface documentation for Agent and TrainingAgentConfig
+  - Four comprehensive usage examples demonstrating:
+    * Basic usage in ManagerApp with localStorage persistence
+    * Understanding training agent workflow (9-step API interaction process)
+    * Understanding local fallback mode behavior (checkbox toggle, dropdown visibility)
+    * Directory path handling (empty/absolute/relative paths)
+  - Internal function documentation for all handlers:
+    * handleSave - Directory preference save workflow (synchronous callback)
+    * loadData useEffect - API data loading on mount (parallel fetches)
+    * handleTrainingAgentSave - Training agent config save workflow (PUT request with loading states)
+  - All internal functions marked with @internal tags
+  - Display name for better debugging experience
+  - Documentation covers:
+    * Two-card layout with CardHeader, CardTitle, CardDescription, CardContent
+    * Directory input with current directory display and auto-population
+    * Training agent selection with fallback checkbox and agent dropdown
+    * Form validation and button disabled states
+    * API integration with loading/saving states and error handling
+    * Alert dialogs for success/error feedback
+    * Blue info panel explaining local fallback behavior
+    * Responsive typography (3xl mobile, 4xl tablet) and spacing
+  - Committed changes with git
+  - **Phase 6: Page Components and App (12/15 subtasks completed)**
+
 ## Next Steps
 1. ✅ Phase 3: Custom Hooks (COMPLETED)
 2. ✅ Phase 4: Chat Components (COMPLETED)
 3. ✅ Phase 5: Feature Components (COMPLETED - 12/12 subtasks)
-4. 🔄 Phase 6: Page Components and App (IN PROGRESS - 6/15 subtasks completed)
-   - Next: 6.7 - Document SkillsPage component
+4. 🔄 Phase 6: Page Components and App (IN PROGRESS - 12/15 subtasks completed)
+   - Next: 6.13 - Document ValidationPage component

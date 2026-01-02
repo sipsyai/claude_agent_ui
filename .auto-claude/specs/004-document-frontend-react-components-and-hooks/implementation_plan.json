@@ -458,40 +458,45 @@
           "title": "Document TasksPage component",
           "description": "Add JSDoc documentation including task listing, execution history, and task status display",
           "file": "src/web/manager/components/TasksPage.tsx",
-          "status": "pending",
-          "notes": ""
+          "status": "completed",
+          "notes": "Added comprehensive JSDoc documentation to TasksPage.tsx including:\n- TasksPage component documentation with features, task listing, statistics dashboard, task creation, execution, detail viewing, filtering, clone/delete operations, directory integration, and styling behavior\n- All internal functions documented (loadTasks, stats, tasks, handleDeleteTask, handleCloneTask, handleExecuteTask, getStatusColor, getStatusIcon, formatTimeAgo)\n- CreateTaskModal component documentation with features, form sections (6 fields), dynamic input configuration (7 field types), creation workflow, validation, directory integration, and styling behavior\n- handleCreate function documentation with validation steps and creation workflow\n- TaskDetailModal component documentation with features, modal layout (3 sections), message types (5 types), execution log parsing logic, tool use visualization, and styling behavior\n- parseExecutionLog function documentation\n- Display names for all three components (TasksPage, CreateTaskModal, TaskDetailModal)\n- Four comprehensive usage examples for each component demonstrating:\n  * TasksPage: Basic usage, agent task creation, skill task creation with input fields, execution and detail viewing\n  * CreateTaskModal: Basic usage, agent task creation, skill task creation with input fields\n  * TaskDetailModal: Basic usage, execution log display, task info display\n\nDocumentation follows established pattern from SkillsPage.tsx, providing developers with complete reference for task management interface including creation with dynamic forms, execution with SSE streaming, and detailed execution log viewing with parsed messages and tool use visualization.",
+          "updated_at": "2026-01-02T09:09:38.994303+00:00"
         },
         {
           "id": "6.9",
           "title": "Document ChatPage component",
           "description": "Add JSDoc documentation including chat interface, session management, and message handling",
           "file": "src/web/manager/components/ChatPage.tsx",
-          "status": "pending",
-          "notes": ""
+          "status": "completed",
+          "notes": "Added comprehensive JSDoc documentation to ChatPage.tsx including:\n- Module-level documentation with features and dual-pane layout overview\n- Detailed Chat Interface section covering sidebar and chat area structure with complete UI element descriptions\n- Session Management section with 4 workflows (creation, selection, archive, delete) with step-by-step details\n- Agent and Skill Selection section explaining runtime override mechanism and selection modal workflow\n- Message Handling section covering loading, sending, and SDK event tracking workflows\n- Permission Modes section documenting all 4 modes (default, bypass, auto, plan) with behavior descriptions\n- View Modes section explaining simple vs detailed display\n- Auto-Scroll Behavior section with implementation details\n- Directory Integration section explaining cookie-based directory context\n- Styling Behavior section with complete Tailwind CSS class documentation\n- Four comprehensive usage examples demonstrating:\n  * Basic usage in ManagerApp dashboard phase\n  * Session creation workflow (8-step process)\n  * Agent/skill runtime override workflow (7-step example with state transitions)\n  * Message flow with SDK event tracking (11-step detailed example)\n- Internal function documentation for all 9 handlers:\n  * getDirectory - Cookie parsing for directory context\n  * loadSessions - API fetch with filtering and auto-selection\n  * loadAvailableAgentsAndSkills - Parallel API fetch for modal population\n  * loadMessages - Session message history loading\n  * handleNewChat - Modal open trigger\n  * handleChatCreated - Session creation callback with list update\n  * handleSelectSession - Session activation handler\n  * handleDeleteSession - Delete with confirmation and state management\n  * handleArchiveSession - Archive with soft delete and state management\n  * handleMessagesUpdate - Messages update and session refresh callback\n  * formatTimeAgo - Relative timestamp formatting\n- ChatPageContent and ChatPage component documentation with @internal tags\n- Display names for both components for better debugging experience\n\nDocumentation follows established pattern from TasksPage.tsx and SkillsPage.tsx, providing developers with complete reference for:\n- Modern chat interface with dual-pane layout\n- Session lifecycle management (create, select, archive, delete)\n- Runtime agent/skill overrides with modal selection\n- SSE streaming integration via useAssistantRuntime hook\n- Permission mode and view mode controls\n- SDK event tracking via ChatDisplayContext\n- Auto-scroll and directory integration\n- Type-safe API with comprehensive TypeScript documentation\n\nCommitted changes with git.",
+          "updated_at": "2026-01-02T09:13:37.276728+00:00"
         },
         {
           "id": "6.10",
           "title": "Document CommandsPage component",
           "description": "Add JSDoc documentation including command listing, execution, and command history",
           "file": "src/web/manager/components/CommandsPage.tsx",
-          "status": "pending",
-          "notes": ""
+          "status": "completed",
+          "notes": "Added comprehensive JSDoc documentation to CommandsPage.tsx including:\n- Component description with features and read-only listing overview\n- Detailed Command Listing section explaining responsive grid layout (1/2/3 columns)\n- Command Cards section with comprehensive metadata display:\n  * Card Header (command name with \"/\" prefix, description, category)\n  * Card Content (allowed tools preview with overflow, model display, argument hints, file path)\n  * Card Footer (View Details placeholder button)\n- Empty State section documenting \"no commands found\" message\n- Styling Behavior section explaining Tailwind CSS classes and hover effects\n- Props interface documentation with detailed property descriptions\n- Four comprehensive usage examples demonstrating:\n  * Basic usage in ManagerApp dashboard phase\n  * Understanding command structure with full metadata example\n  * Empty state handling\n  * Understanding metadata display (full vs minimal metadata)\n- Display name for better debugging experience\n\nDocumentation covers:\n- Responsive grid layout (1 col mobile, 2 cols tablet, 3 cols desktop)\n- Tool configuration preview (first 3 visible + overflow indicator)\n- Optional metadata sections (category, allowed tools, model, arguments)\n- File path display with relative path from project root\n- Empty state with centered message\n- Hover effects on cards (border-primary/80 transition)\n- Badge styling for tools and model (bg-secondary, rounded, text-xs)\n- Discovery count display in subheading\n- Type-safe API with comprehensive TypeScript documentation\n\nDocumentation follows established pattern from ChatPage.tsx and other page components, providing developers with complete reference for the slash commands discovery and listing interface.",
+          "updated_at": "2026-01-02T09:15:46.410972+00:00"
         },
         {
           "id": "6.11",
           "title": "Document MCPServersPage component",
           "description": "Add JSDoc documentation including MCP server listing, configuration, and status display",
           "file": "src/web/manager/components/MCPServersPage.tsx",
-          "status": "pending",
-          "notes": ""
+          "status": "completed",
+          "notes": "Added comprehensive JSDoc documentation to MCPServersPage component covering:\n- Module-level documentation with 10+ feature sections (Server Listing, CRUD Operations, Quick Add Mode, Server Testing, Tool Synchronization, Bulk Operations, Import/Export, Enable/Disable Toggle, Toast Notifications, State Management, Directory Integration, Styling Behavior)\n- Props interface documentation (MCPServersPageProps)\n- 18 internal function documentation (loadServers, parseCLICommand, showToast, handleQuickAdd, handleCreate, handleEdit, handleView, handleSave, handleDeleteClick, handleDeleteConfirm, handleTest, handleToggle, handleLoadTools, handleExport, handleImport, handleImportFile, handleSelectAll, handleSelectServer, handleBulkDelete, handleBulkDeleteConfirm)\n- ServerCard component documentation with features and props interface\n- 4 comprehensive usage examples demonstrating server creation (Quick Add mode), testing, tool synchronization, and bulk delete workflows\n- Display names for both components\n- Committed changes with git",
+          "updated_at": "2026-01-02T09:21:04.855011+00:00"
         },
         {
           "id": "6.12",
           "title": "Document SettingsPage component",
           "description": "Add JSDoc documentation including settings form, preference handling, and save behavior",
           "file": "src/web/manager/components/SettingsPage.tsx",
-          "status": "pending",
-          "notes": ""
+          "status": "completed",
+          "notes": "Added comprehensive JSDoc documentation to SettingsPage component including:\n- Component description with features and functionality\n- Detailed sections on:\n  * Settings Form (Project Directory, Training Agent Configuration)\n  * Preference Handling (directory path, training agent selection, local fallback)\n  * Save Behavior (handleSave, handleTrainingAgentSave workflows)\n  * Form State Management (6 state variables and triggers)\n  * API Integration (3 endpoints: GET/PUT training-agent-config, GET agents)\n  * UI States (Default, Loading, Saving, Fallback Enabled)\n  * Styling Behavior (Tailwind CSS, responsive design, dark theme)\n- Props interface documentation (directoryName, onDirectoryChange)\n- Type interface documentation (Agent, TrainingAgentConfig)\n- Four comprehensive usage examples demonstrating:\n  * Basic usage in ManagerApp with localStorage persistence\n  * Understanding training agent workflow (9-step process)\n  * Understanding local fallback mode behavior\n  * Directory path handling (empty, absolute, relative paths)\n- Internal function documentation:\n  * handleSave - Directory preference save workflow\n  * loadData useEffect - API data loading on mount\n  * handleTrainingAgentSave - Training agent config save workflow\n- All internal functions marked with @internal tags\n- Display name for better debugging experience\n- Committed changes with git\n- **Phase 6: Page Components and App (12/15 subtasks completed)**",
+          "updated_at": "2026-01-02T09:24:26.734513+00:00"
         },
         {
           "id": "6.13",
@@ -536,5 +541,5 @@
     "tests_passed": ""
   },
   "spec_file": "spec.md",
-  "last_updated": "2026-01-02T09:04:15.413346+00:00"
+  "last_updated": "2026-01-02T09:24:26.734535+00:00"
 }

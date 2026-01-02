@@ -537,6 +537,131 @@ export class ChatService extends EventEmitter {
 
   /**
    * Save a chat message to Strapi
+   *
+   * @description
+   * Persists a chat message (user, assistant, or system) to the Strapi CMS database
+   * with optional file attachments and metadata. This method is called internally by
+   * sendMessage() to save both user messages (before streaming) and assistant messages
+   * (after streaming completes).
+   *
+   * The saved message is associated with a chat session via the session documentId
+   * and includes a timestamp for message ordering. Attachments are referenced by their
+   * Strapi file upload IDs.
+   *
+   * **Key Features:**
+   * - Saves message to Strapi chat-messages collection
+   * - Associates message with chat session via session documentId
+   * - Supports file attachments (images, PDFs, text files) via attachment IDs
+   * - Stores arbitrary metadata (tool uses, cost, usage stats, etc.)
+   * - Auto-generates ISO timestamp for message ordering
+   * - Returns transformed ChatMessage with documentId for future reference
+   *
+   * **Message Metadata Usage:**
+   * - User messages: Typically empty or minimal metadata
+   * - Assistant messages: Includes toolUses[], cost (USD), usage (tokens)
+   * - System messages: May include initialization or status information
+   *
+   * **Database Schema:**
+   * The message is saved to Strapi with the following fields:
+   * - session: documentId of the parent ChatSession
+   * - role: 'user' | 'assistant' | 'system'
+   * - content: Full message text content
+   * - attachments: Array of Strapi file IDs (Many-to-many relation)
+   * - metadata: JSON object with custom data (toolUses, cost, usage, etc.)
+   * - timestamp: ISO 8601 timestamp for message ordering
+   *
+   * @param {string} sessionDocId - The documentId of the parent chat session
+   * @param {'user' | 'assistant' | 'system'} role - Message sender role
+   * @param {string} content - The message text content (may be empty for tool-only messages)
+   * @param {number[]} [attachmentIds] - Optional array of Strapi file upload IDs
+   * @param {any} [metadata] - Optional metadata object (toolUses, cost, usage, etc.)
+   *
+   * @returns {Promise<ChatMessage>} The saved message with documentId and timestamps
+   *
+   * @throws {Error} If the Strapi API request fails or returns invalid data
+   *
+   * @example
+   * ```typescript
+   * // Save user message with image attachment
+   * const buffer = await fs.readFile('./diagram.png');
+   * const uploaded = await strapiClient.uploadFile(buffer, 'diagram.png');
+   *
+   * const userMessage = await this.saveChatMessage(
+   *   'session-doc-id-123',
+   *   'user',
+   *   'Can you analyze this diagram?',
+   *   [uploaded.id], // Attachment IDs
+   *   {} // No metadata
+   * );
+   *
+   * console.log('Saved user message:', userMessage.documentId);
+   * // => Saved user message: msg_xyz789
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Save assistant message with tool uses and cost
+   * const assistantMessage = await this.saveChatMessage(
+   *   'session-doc-id-123',
+   *   'assistant',
+   *   'I analyzed the code and found 3 issues...',
+   *   undefined, // No attachments
+   *   {
+   *     toolUses: [
+   *       { type: 'tool_use', id: 'toolu_1', name: 'Read', input: { file_path: 'src/auth.ts' } },
+   *       { type: 'tool_use', id: 'toolu_2', name: 'Grep', input: { pattern: 'TODO' } }
+   *     ],
+   *     cost: 0.0025, // $0.0025 USD
+   *     usage: {
+   *       input_tokens: 1234,
+   *       output_tokens: 567,
+   *       cache_creation_input_tokens: 0,
+   *       cache_read_input_tokens: 890
+   *     }
+   *   }
+   * );
+   *
+   * console.log('Assistant message cost:', assistantMessage.metadata?.cost);
+   * // => Assistant message cost: 0.0025
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Save system message with initialization metadata
+   * const systemMessage = await this.saveChatMessage(
+   *   'session-doc-id-123',
+   *   'system',
+   *   'Session initialized with claude-sonnet-4-5',
+   *   undefined,
+   *   {
+   *     sessionId: 'sdk_session_abc123',
+   *     model: 'claude-sonnet-4-5',
+   *     tools: ['Read', 'Write', 'Bash', 'Grep'],
+   *     permissionMode: 'default'
+   *   }
+   * );
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle save errors gracefully
+   * try {
+   *   const message = await this.saveChatMessage(
+   *     'invalid-session-id',
+   *     'user',
+   *     'Hello',
+   *     undefined,
+   *     {}
+   *   );
+   * } catch (error) {
+   *   console.error('Failed to save message:', error);
+   *   // Error: Chat session invalid-session-id not found
+   * }
+   * ```
+   *
+   * @private
+   * @see {@link sendMessage} - Uses this method to save user and assistant messages
+   * @see {@link ChatMessage} - The returned message type
    */
   private async saveChatMessage(
     sessionDocId: string,
@@ -569,8 +694,291 @@ export class ChatService extends EventEmitter {
   }
 
   /**
-   * Send a message and stream response
-   * This is an async generator that yields chat messages as they arrive
+   * Send a message and stream response from Claude Agent SDK
+   *
+   * @description
+   * Core async generator method that sends a user message to Claude AI and streams
+   * the assistant's response in real-time. This method orchestrates the complete
+   * conversation lifecycle including message persistence, skill synchronization,
+   * agent configuration, MCP server setup, SDK query execution, and streaming events.
+   *
+   * **AsyncGenerator Streaming Pattern:**
+   * This method uses AsyncGenerator to yield events as they occur, enabling real-time
+   * UI updates and responsive user experience. The frontend can consume events using
+   * `for await (const event of chatService.sendMessage(...))` pattern.
+   *
+   * **Yielded Event Types:**
+   * 1. **user_message_saved** - User message saved to Strapi (before streaming)
+   * 2. **stream_id** - Unique stream ID for cancellation support
+   * 3. **sdk_message** - Raw SDK message (system, assistant, result, stream_event)
+   * 4. **assistant_message_start** - Assistant message streaming started
+   * 5. **assistant_message_delta** - Real-time text delta from Claude
+   * 6. **assistant_message_saved** - Complete assistant message saved to Strapi
+   * 7. **done** - Conversation complete with cost and usage metadata
+   * 8. **error** - Error occurred during streaming
+   * 9. **cancelled** - Stream was cancelled by user
+   *
+   * **Message Flow:**
+   * 1. Fetch chat session with agent and skill configurations
+   * 2. Sync skills to filesystem (.claude/skills/*.md files)
+   * 3. Upload attachments to Strapi and save user message
+   * 4. Yield 'user_message_saved' event
+   * 5. Build SDK options (model, systemPrompt, permissions, tools, mcpServers)
+   * 6. Create SDK Query with AsyncGenerator prompt and AbortController
+   * 7. Yield 'stream_id' event (enables cancellation via cancelMessage)
+   * 8. Stream SDK messages and yield 'sdk_message' events
+   * 9. Accumulate assistant text from content_block_delta stream events
+   * 10. Yield 'assistant_message_delta' events for real-time UI updates
+   * 11. Save complete assistant message to Strapi and chat log
+   * 12. Yield 'assistant_message_saved' event
+   * 13. Yield 'done' event with cost/usage metadata
+   *
+   * **Agent Override:**
+   * Supports per-message agent override via the agentId parameter. This allows
+   * using different agents within the same chat session (e.g., switching between
+   * a coding agent and a security review agent).
+   *
+   * **Skill Override:**
+   * Supports per-message skill override via the skillIds parameter. This allows
+   * using different skill sets for different messages in the same session.
+   *
+   * **Permission Modes:**
+   * - **default**: User approves tool usage (except safe read-only tools)
+   * - **bypass**: Auto-approve all tools (bypassPermissions)
+   * - **auto**: Auto-approve Write/Edit tools (acceptEdits mode)
+   * - **plan**: Read-only mode with Glob/Read/Grep/Skill tools only
+   *
+   * **Plan Mode:**
+   * When permissionMode is 'plan', the service restricts to read-only tools and
+   * adds plan mode instructions to the system prompt. Claude analyzes the codebase
+   * and presents a detailed implementation plan without making any changes.
+   *
+   * **File Attachment Support:**
+   * - Images: Sent as base64-encoded image blocks (image/png, image/jpeg, etc.)
+   * - PDFs: Sent as document blocks (application/pdf) - SDK processes page by page
+   * - Text: Sent as inline text content with file name header
+   *
+   * **MCP Server Integration:**
+   * Loads MCP servers from agent's mcpConfig (Strapi) and .mcp.json file (project root).
+   * Only includes servers enabled in the agent's mcpConfig. Merges command/args from
+   * .mcp.json with server selection from mcpConfig.
+   *
+   * **Stream Cancellation:**
+   * Each stream has a unique streamId (UUID) yielded in the 'stream_id' event.
+   * The client can call cancelMessage(streamId) to abort the stream gracefully.
+   * The SDK Query respects the abort signal and stops processing immediately.
+   *
+   * @param {string} sessionDocId - The documentId of the chat session
+   * @param {string} message - The user's message text
+   * @param {SendMessageRequest['attachments']} attachments - Optional file attachments (images, PDFs, text files)
+   * @param {string} workingDirectory - Working directory for SDK execution (project root)
+   * @param {'default' | 'bypass' | 'auto' | 'plan'} [permissionMode] - Permission mode override (defaults to session mode)
+   * @param {string} [agentId] - Optional agent override (defaults to session agent)
+   * @param {string[]} [skillIds] - Optional skill override (defaults to session skills)
+   *
+   * @yields {Object} Stream events with different types:
+   *   - `{ type: 'user_message_saved', message: ChatMessage }` - User message persisted
+   *   - `{ type: 'stream_id', streamId: string, timestamp: string }` - Stream ID for cancellation
+   *   - `{ type: 'sdk_message', data: SdkMessage }` - Raw SDK message (system, assistant, result, etc.)
+   *   - `{ type: 'assistant_message_start', messageId: string, timestamp: string }` - Streaming started
+   *   - `{ type: 'assistant_message_delta', delta: string, messageId: string, timestamp: string }` - Text delta
+   *   - `{ type: 'assistant_message_saved', message: ChatMessage }` - Assistant message persisted
+   *   - `{ type: 'done', cost: number, usage: object }` - Conversation complete
+   *   - `{ type: 'error', error: string }` - Error occurred
+   *   - `{ type: 'cancelled', streamId: string, timestamp: string, reason: string }` - Stream cancelled
+   *
+   * @returns {AsyncGenerator<any>} Async generator yielding stream events
+   *
+   * @throws {Error} If chat session is not found or SDK query fails
+   *
+   * @example
+   * ```typescript
+   * // Basic message streaming with event handling
+   * import { chatService } from './chat-service';
+   *
+   * const sessionDocId = 'chat-session-doc-id';
+   * const message = 'Review the authentication code in src/auth.ts';
+   *
+   * for await (const event of chatService.sendMessage(
+   *   sessionDocId,
+   *   message,
+   *   [], // No attachments
+   *   '/path/to/project'
+   * )) {
+   *   switch (event.type) {
+   *     case 'user_message_saved':
+   *       console.log('User message saved:', event.message.documentId);
+   *       break;
+   *     case 'stream_id':
+   *       console.log('Stream ID:', event.streamId);
+   *       // Store for potential cancellation
+   *       currentStreamId = event.streamId;
+   *       break;
+   *     case 'assistant_message_delta':
+   *       // Real-time streaming text
+   *       process.stdout.write(event.delta);
+   *       break;
+   *     case 'assistant_message_saved':
+   *       console.log('\nAssistant response saved');
+   *       break;
+   *     case 'done':
+   *       console.log('Cost: $' + event.cost);
+   *       break;
+   *     case 'error':
+   *       console.error('Error:', event.error);
+   *       break;
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Send message with image attachment
+   * import { chatService } from './chat-service';
+   * import fs from 'fs';
+   *
+   * const imageBuffer = fs.readFileSync('./architecture-diagram.png');
+   * const attachments = [{
+   *   name: 'architecture-diagram.png',
+   *   mimeType: 'image/png',
+   *   data: imageBuffer.toString('base64')
+   * }];
+   *
+   * for await (const event of chatService.sendMessage(
+   *   'session-doc-id',
+   *   'Analyze this architecture diagram and suggest improvements',
+   *   attachments,
+   *   '/path/to/project'
+   * )) {
+   *   if (event.type === 'assistant_message_delta') {
+   *     updateUI(event.delta); // Real-time UI update
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Use plan mode for read-only analysis
+   * import { chatService } from './chat-service';
+   *
+   * for await (const event of chatService.sendMessage(
+   *   'session-doc-id',
+   *   'Create a detailed plan to add user authentication',
+   *   [],
+   *   '/path/to/project',
+   *   'plan' // Read-only mode - no file modifications
+   * )) {
+   *   if (event.type === 'assistant_message_delta') {
+   *     console.log(event.delta); // Claude presents implementation plan
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Override agent per message
+   * import { chatService } from './chat-service';
+   *
+   * // First message uses default agent
+   * for await (const event of chatService.sendMessage(
+   *   'session-doc-id',
+   *   'Write a test file',
+   *   [],
+   *   '/path/to/project'
+   * )) { /* ... */ }
+   *
+   * // Second message overrides with security specialist agent
+   * for await (const event of chatService.sendMessage(
+   *   'session-doc-id',
+   *   'Review this code for security vulnerabilities',
+   *   [],
+   *   '/path/to/project',
+   *   undefined, // Use session permission mode
+   *   'security-agent-id' // Override with security agent
+   * )) { /* ... */ }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Stream cancellation with AbortController
+   * import { chatService } from './chat-service';
+   *
+   * let currentStreamId: string | null = null;
+   *
+   * // Start streaming
+   * const streamPromise = (async () => {
+   *   for await (const event of chatService.sendMessage(
+   *     'session-doc-id',
+   *     'This is a long running task...',
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     if (event.type === 'stream_id') {
+   *       currentStreamId = event.streamId;
+   *     }
+   *     if (event.type === 'cancelled') {
+   *       console.log('Stream cancelled:', event.reason);
+   *     }
+   *   }
+   * })();
+   *
+   * // Cancel after 5 seconds
+   * setTimeout(() => {
+   *   if (currentStreamId) {
+   *     chatService.cancelMessage(currentStreamId);
+   *   }
+   * }, 5000);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Collect SDK messages for debugging
+   * import { chatService } from './chat-service';
+   *
+   * const sdkMessages: any[] = [];
+   *
+   * for await (const event of chatService.sendMessage(
+   *   'session-doc-id',
+   *   'Debug this error',
+   *   [],
+   *   '/path/to/project'
+   * )) {
+   *   if (event.type === 'sdk_message') {
+   *     sdkMessages.push(event.data);
+   *     console.log('SDK event:', event.data.type, event.data.subtype);
+   *   }
+   *   if (event.type === 'done') {
+   *     console.log('Total SDK messages:', sdkMessages.length);
+   *     fs.writeFileSync('sdk-debug.json', JSON.stringify(sdkMessages, null, 2));
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Override skills per message
+   * import { chatService } from './chat-service';
+   *
+   * // Use different skill set for this specific message
+   * for await (const event of chatService.sendMessage(
+   *   'session-doc-id',
+   *   'Generate API documentation',
+   *   [],
+   *   '/path/to/project',
+   *   undefined, // Use session permission mode
+   *   undefined, // Use session agent
+   *   ['documentation-skill-id', 'api-skill-id'] // Override skills
+   * )) {
+   *   if (event.type === 'assistant_message_delta') {
+   *     console.log(event.delta);
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link cancelMessage} - Cancel an active stream
+   * @see {@link buildPromptGenerator} - Builds the AsyncGenerator prompt for SDK
+   * @see {@link saveChatMessage} - Saves messages to Strapi
+   * @see {@link https://docs.anthropic.com/en/api/agent-sdk|Claude Agent SDK Documentation}
    */
   async* sendMessage(
     sessionDocId: string,
@@ -1174,7 +1582,206 @@ Your plan should include:
   }
 
   /**
-   * Build async generator for streaming input mode
+   * Build async generator for streaming input mode to Claude Agent SDK
+   *
+   * @description
+   * Creates an AsyncGenerator that yields a single user message with optional file
+   * attachments to the Claude Agent SDK. This generator serves as the prompt input
+   * for the SDK's query() function, which expects an AsyncGenerator to enable
+   * streaming conversation patterns.
+   *
+   * The generator constructs a user message with content blocks based on the message
+   * text and attachment types. It handles three types of attachments:
+   * - **Images**: Sent as base64-encoded image blocks (PNG, JPEG, WebP, GIF)
+   * - **PDFs**: Sent as document blocks - SDK extracts text and images page by page
+   * - **Text files**: Included as inline text content with file name headers
+   *
+   * **AsyncGenerator Pattern:**
+   * The SDK's query() function expects an AsyncGenerator<PromptMessage> as input
+   * to enable streaming conversations where messages can be added dynamically.
+   * This method creates a simple generator that yields a single user message
+   * with all content blocks (text + attachments).
+   *
+   * **Content Block Structure:**
+   * 1. **Text block**: `{ type: 'text', text: message }`
+   * 2. **Image block**: `{ type: 'image', source: { type: 'base64', media_type, data } }`
+   * 3. **Document block**: `{ type: 'document', source: { type: 'base64', media_type, data } }`
+   * 4. **Text file block**: `{ type: 'text', text: '--- File: name ---\n...' }`
+   *
+   * **Supported Image Formats:**
+   * - image/png, image/jpeg, image/jpg, image/webp, image/gif
+   *
+   * **Supported Document Formats:**
+   * - application/pdf (SDK processes page by page, extracts text and images)
+   *
+   * **Text File Handling:**
+   * Text files are decoded from base64 and included as inline text content
+   * with file name headers for context. This allows Claude to reference the
+   * file name when discussing the content.
+   *
+   * @param {string} message - The user's message text
+   * @param {SendMessageRequest['attachments']} [attachments] - Optional file attachments
+   *   Each attachment has: `{ name: string, mimeType: string, data: string (base64) }`
+   *
+   * @yields {Object} A single user message with content blocks:
+   *   `{ type: 'user', message: { role: 'user', content: string | Array<ContentBlock> } }`
+   *
+   * @returns {AsyncGenerator<any>} Async generator yielding user message for SDK
+   *
+   * @example
+   * ```typescript
+   * // Simple text message
+   * const generator = this.buildPromptGenerator('Hello Claude');
+   *
+   * for await (const msg of generator) {
+   *   console.log(msg);
+   * }
+   * // Output:
+   * // {
+   * //   type: 'user',
+   * //   message: {
+   * //     role: 'user',
+   * //     content: 'Hello Claude'
+   * //   }
+   * // }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Message with image attachment
+   * import fs from 'fs';
+   *
+   * const imageBuffer = fs.readFileSync('./diagram.png');
+   * const attachments = [{
+   *   name: 'diagram.png',
+   *   mimeType: 'image/png',
+   *   data: imageBuffer.toString('base64')
+   * }];
+   *
+   * const generator = this.buildPromptGenerator(
+   *   'Analyze this diagram',
+   *   attachments
+   * );
+   *
+   * for await (const msg of generator) {
+   *   console.log(msg);
+   * }
+   * // Output:
+   * // {
+   * //   type: 'user',
+   * //   message: {
+   * //     role: 'user',
+   * //     content: [
+   * //       { type: 'text', text: 'Analyze this diagram' },
+   * //       {
+   * //         type: 'image',
+   * //         source: {
+   * //           type: 'base64',
+   * //           media_type: 'image/png',
+   * //           data: 'iVBORw0KGgoAAAANS...'
+   * //         }
+   * //       }
+   * //     ]
+   * //   }
+   * // }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Message with PDF document
+   * import fs from 'fs';
+   *
+   * const pdfBuffer = fs.readFileSync('./report.pdf');
+   * const attachments = [{
+   *   name: 'report.pdf',
+   *   mimeType: 'application/pdf',
+   *   data: pdfBuffer.toString('base64')
+   * }];
+   *
+   * const generator = this.buildPromptGenerator(
+   *   'Summarize this report',
+   *   attachments
+   * );
+   *
+   * for await (const msg of generator) {
+   *   console.log(msg.message.content[1].type);
+   *   // => 'document'
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Message with text file
+   * import fs from 'fs';
+   *
+   * const textBuffer = fs.readFileSync('./config.json');
+   * const attachments = [{
+   *   name: 'config.json',
+   *   mimeType: 'text/plain',
+   *   data: textBuffer.toString('base64')
+   * }];
+   *
+   * const generator = this.buildPromptGenerator(
+   *   'Review this configuration',
+   *   attachments
+   * );
+   *
+   * for await (const msg of generator) {
+   *   console.log(msg.message.content[1].text);
+   * }
+   * // Output:
+   * // --- File: config.json ---
+   * // {
+   * //   "port": 3000,
+   * //   "host": "localhost"
+   * // }
+   * // --- End of file ---
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Message with multiple attachments
+   * const attachments = [
+   *   { name: 'screenshot.png', mimeType: 'image/png', data: base64Image },
+   *   { name: 'logs.txt', mimeType: 'text/plain', data: base64Text },
+   *   { name: 'report.pdf', mimeType: 'application/pdf', data: base64Pdf }
+   * ];
+   *
+   * const generator = this.buildPromptGenerator(
+   *   'Debug this issue using these files',
+   *   attachments
+   * );
+   *
+   * for await (const msg of generator) {
+   *   console.log('Content blocks:', msg.message.content.length);
+   *   // => Content blocks: 4 (1 text + 1 image + 1 text file + 1 pdf)
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Use with SDK query() function
+   * import { query } from '@anthropic-ai/claude-agent-sdk';
+   *
+   * const promptGenerator = this.buildPromptGenerator('Review the code');
+   *
+   * const queryInstance = query({
+   *   prompt: promptGenerator,
+   *   options: {
+   *     model: 'claude-sonnet-4-5',
+   *     systemPrompt: 'You are a code reviewer',
+   *     cwd: '/path/to/project'
+   *   }
+   * });
+   *
+   * for await (const msg of queryInstance) {
+   *   console.log('SDK message:', msg.type);
+   * }
+   * ```
+   *
+   * @private
+   * @see {@link sendMessage} - Uses this generator to build SDK prompt
+   * @see {@link https://docs.anthropic.com/en/api/agent-sdk|Claude Agent SDK Documentation}
    */
   private async* buildPromptGenerator(
     message: string,
@@ -1278,8 +1885,255 @@ Your plan should include:
 
   /**
    * Cancel an active message stream
-   * @param streamId - The unique stream ID returned in stream_id event
-   * @returns true if stream was cancelled, false if stream not found
+   *
+   * @description
+   * Gracefully cancels an active message stream using the AbortController pattern.
+   * This method aborts the SDK query execution and triggers cleanup of active stream
+   * resources. The cancelled stream yields a 'cancelled' event to notify the client.
+   *
+   * **Cancellation Flow:**
+   * 1. Client receives 'stream_id' event from sendMessage()
+   * 2. Client calls cancelMessage(streamId) to abort the stream
+   * 3. Service calls abortController.abort() to signal cancellation
+   * 4. SDK Query respects the abort signal and stops processing
+   * 5. Service removes stream from activeStreams and activeAbortControllers Maps
+   * 6. sendMessage() generator yields 'cancelled' event with reason and timestamp
+   * 7. No incomplete assistant message is saved to Strapi (prevents partial data)
+   *
+   * **Use Cases:**
+   * - User manually cancels a long-running request
+   * - Timeout logic for requests exceeding a threshold
+   * - User navigates away from chat UI
+   * - Application shutdown cleanup
+   * - Rate limiting or quota management
+   * - User starts a new message (cancel previous)
+   *
+   * **AbortController Pattern:**
+   * Each stream has a dedicated AbortController instance stored in the
+   * activeAbortControllers Map. The abort signal is passed to the SDK Query
+   * via the options.abortController parameter. When abort() is called,
+   * the SDK immediately stops processing and throws an error that's caught
+   * by sendMessage()'s try/catch block.
+   *
+   * **Cleanup Safety:**
+   * The method performs cleanup even if the stream is already completed or
+   * doesn't exist. This ensures no memory leaks or dangling references in
+   * the activeStreams and activeAbortControllers Maps.
+   *
+   * **Partial Message Handling:**
+   * When a stream is cancelled, any accumulated assistant text is NOT saved
+   * to Strapi. This prevents partial, incomplete, or misleading responses
+   * from being persisted in the chat history.
+   *
+   * @param {string} streamId - The unique stream ID returned in the 'stream_id' event
+   *
+   * @returns {boolean} `true` if stream was found and cancelled successfully,
+   *   `false` if stream was not found (already completed or invalid ID)
+   *
+   * @example
+   * ```typescript
+   * // Basic cancellation flow
+   * import { chatService } from './chat-service';
+   *
+   * let currentStreamId: string | null = null;
+   *
+   * // Start streaming in background
+   * (async () => {
+   *   for await (const event of chatService.sendMessage(
+   *     'session-doc-id',
+   *     'This is a long running task...',
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     if (event.type === 'stream_id') {
+   *       currentStreamId = event.streamId;
+   *       console.log('Stream started:', currentStreamId);
+   *     }
+   *     if (event.type === 'cancelled') {
+   *       console.log('Stream cancelled:', event.reason);
+   *     }
+   *   }
+   * })();
+   *
+   * // Cancel after 5 seconds
+   * setTimeout(() => {
+   *   if (currentStreamId) {
+   *     const cancelled = chatService.cancelMessage(currentStreamId);
+   *     console.log('Cancellation requested:', cancelled);
+   *     // => Cancellation requested: true
+   *   }
+   * }, 5000);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Cancel on user action (button click)
+   * import { chatService } from './chat-service';
+   *
+   * let activeStreamId: string | null = null;
+   *
+   * // UI button handler
+   * function handleCancelClick() {
+   *   if (activeStreamId) {
+   *     const success = chatService.cancelMessage(activeStreamId);
+   *     if (success) {
+   *       showNotification('Request cancelled');
+   *       activeStreamId = null;
+   *     } else {
+   *       showNotification('Request already completed');
+   *     }
+   *   }
+   * }
+   *
+   * // Start streaming and enable cancel button
+   * async function sendMessage(text: string) {
+   *   for await (const event of chatService.sendMessage(
+   *     sessionDocId,
+   *     text,
+   *     [],
+   *     workingDir
+   *   )) {
+   *     if (event.type === 'stream_id') {
+   *       activeStreamId = event.streamId;
+   *       enableCancelButton(); // Enable UI cancel button
+   *     }
+   *     if (event.type === 'done' || event.type === 'cancelled') {
+   *       activeStreamId = null;
+   *       disableCancelButton(); // Disable UI cancel button
+   *     }
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Timeout-based cancellation
+   * import { chatService } from './chat-service';
+   *
+   * async function sendMessageWithTimeout(
+   *   sessionDocId: string,
+   *   message: string,
+   *   timeoutMs: number = 60000
+   * ) {
+   *   let streamId: string | null = null;
+   *   let timeoutHandle: NodeJS.Timeout | null = null;
+   *
+   *   try {
+   *     for await (const event of chatService.sendMessage(
+   *       sessionDocId,
+   *       message,
+   *       [],
+   *       '/path/to/project'
+   *     )) {
+   *       if (event.type === 'stream_id') {
+   *         streamId = event.streamId;
+   *
+   *         // Set timeout to cancel after timeoutMs
+   *         timeoutHandle = setTimeout(() => {
+   *           if (streamId) {
+   *             console.log('Request timeout - cancelling stream');
+   *             chatService.cancelMessage(streamId);
+   *           }
+   *         }, timeoutMs);
+   *       }
+   *
+   *       if (event.type === 'done' || event.type === 'cancelled' || event.type === 'error') {
+   *         // Clear timeout on completion
+   *         if (timeoutHandle) {
+   *           clearTimeout(timeoutHandle);
+   *         }
+   *       }
+   *
+   *       // Handle other events...
+   *     }
+   *   } catch (error) {
+   *     if (timeoutHandle) {
+   *       clearTimeout(timeoutHandle);
+   *     }
+   *     throw error;
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Cancel all active streams (e.g., on shutdown)
+   * import { chatService } from './chat-service';
+   *
+   * function cancelAllActiveStreams() {
+   *   const activeStreamIds = chatService.getActiveStreamIds();
+   *   console.log(`Cancelling ${activeStreamIds.length} active streams`);
+   *
+   *   let cancelledCount = 0;
+   *   for (const streamId of activeStreamIds) {
+   *     const success = chatService.cancelMessage(streamId);
+   *     if (success) {
+   *       cancelledCount++;
+   *     }
+   *   }
+   *
+   *   console.log(`Successfully cancelled ${cancelledCount} streams`);
+   * }
+   *
+   * // Call during application shutdown
+   * process.on('SIGTERM', () => {
+   *   cancelAllActiveStreams();
+   *   process.exit(0);
+   * });
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Cancel and start new message (replace current)
+   * import { chatService } from './chat-service';
+   *
+   * let currentStreamId: string | null = null;
+   *
+   * async function sendNewMessage(sessionDocId: string, message: string) {
+   *   // Cancel current stream if active
+   *   if (currentStreamId) {
+   *     const cancelled = chatService.cancelMessage(currentStreamId);
+   *     if (cancelled) {
+   *       console.log('Cancelled previous request');
+   *     }
+   *     currentStreamId = null;
+   *   }
+   *
+   *   // Start new stream
+   *   for await (const event of chatService.sendMessage(
+   *     sessionDocId,
+   *     message,
+   *     [],
+   *     '/path/to/project'
+   *   )) {
+   *     if (event.type === 'stream_id') {
+   *       currentStreamId = event.streamId;
+   *     }
+   *     if (event.type === 'done' || event.type === 'cancelled' || event.type === 'error') {
+   *       currentStreamId = null;
+   *     }
+   *     // Handle events...
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Check if stream was actually cancelled
+   * import { chatService } from './chat-service';
+   *
+   * const streamId = 'stream-uuid-123';
+   * const wasCancelled = chatService.cancelMessage(streamId);
+   *
+   * if (wasCancelled) {
+   *   console.log('Stream cancelled successfully');
+   * } else {
+   *   console.log('Stream not found - may have already completed');
+   * }
+   * ```
+   *
+   * @see {@link sendMessage} - Yields 'stream_id' event for cancellation
+   * @see {@link getActiveStreamIds} - Get list of active stream IDs
    */
   cancelMessage(streamId: string): boolean {
     this.logger.info('Cancelling message stream', { streamId });

@@ -47,11 +47,71 @@
         }
       ],
       "status": "completed"
+    },
+    "subtask-3-1": {
+      "attempts": [
+        {
+          "session": 5,
+          "timestamp": "2026-01-02T18:56:41.936670",
+          "approach": "Implemented: Implement GET /api/flows/executions/recent endpoint in backend",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-4-1": {
+      "attempts": [
+        {
+          "session": 6,
+          "timestamp": "2026-01-02T18:58:27.160701",
+          "approach": "Implemented: Add logging and error handling to /api/flows/stats/global endpoint",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-4-2": {
+      "attempts": [
+        {
+          "session": 7,
+          "timestamp": "2026-01-02T19:05:55.936971",
+          "approach": "Implemented: Fix root cause of 500 error (query logic, null checks, aggregation)",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-5-1": {
+      "attempts": [
+        {
+          "session": 8,
+          "timestamp": "2026-01-02T19:09:19.466257",
+          "approach": "Implemented: Add error handling to DashboardPage.tsx API calls",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-5-2": {
+      "attempts": [
+        {
+          "session": 9,
+          "timestamp": "2026-01-02T19:12:31.208241",
+          "approach": "Implemented: Add error handling to FlowsPage.tsx API calls",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-02T18:48:01.857123",
-    "last_updated": "2026-01-02T18:55:20.246124"
+    "last_updated": "2026-01-02T19:12:31.208254"
   }
 }

@@ -41,11 +41,11 @@ Add comprehensive JSDoc documentation to 48+ React components and 4 custom hooks
   - Button, Input, Select, Textarea, Switch, Card, Dialog, ProgressBar, ArrayEditor, KeyValueEditor, Icons
 - [x] Phase 2: Layout Components (COMPLETED - 3/3 subtasks)
   - Layout, Sidebar, ChatDisplayContext
-- [x] Phase 3: Custom Hooks (IN PROGRESS - 3/4 subtasks)
+- [x] Phase 3: Custom Hooks (COMPLETED - 4/4 subtasks)
   - [x] 3.1 - useAgentCreator hook documentation
   - [x] 3.2 - useAssistantRuntime hook documentation
   - [x] 3.3 - useSkillCreator hook documentation
-  - [ ] 3.4 - useSkillTraining hook
+  - [x] 3.4 - useSkillTraining hook documentation
 
 ### 2026-01-02
 - [x] Subtask 3.1: Documented useAgentCreator hook
@@ -89,8 +89,91 @@ Add comprehensive JSDoc documentation to 48+ React components and 4 custom hooks
   - @param and @returns tags for all functions
   - Committed changes with git
 
+- [x] Subtask 3.4: Documented useSkillTraining hook
+  - Added comprehensive JSDoc documentation covering training workflow, state transitions, and event handling
+  - Documented all interfaces (Message, TrainingStatus, UseSkillTrainingOptions, UseSkillTrainingReturn)
+  - Options interface documentation with detailed property descriptions for skillId, directory, onTrainingComplete, and onError
+  - Return values interface documentation covering messages, trainingStatus, isProcessing, error, startTraining, sendMessage, and reset
+  - Training workflow section outlining all 8 phases: idle, starting, analyzing, training, evaluating, updating, completed, error
+  - State transitions section explaining explicit status events, content parsing, and score extraction mechanisms
+  - SSE streaming handling section with stream lifecycle, event types, event handling, and stream cancellation details
+  - Lifecycle section outlining the typical usage flow from initialization to reset
+  - Authentication section documenting automatic token-based auth with cookie management
+  - Four comprehensive usage examples demonstrating:
+    * Basic usage with training completion detection
+    * Custom directory and score tracking
+    * Handling user interaction during training
+    * Reset conversation after training completes
+  - Internal function documentation for getAuthToken, createFetchOptions, sendMessageInternal, handleStreamEvent, sendMessage, startTraining, and reset
+  - @internal tags for helper and internal functions
+  - @param and @returns tags for all functions
+  - Committed changes with git
+  - **Phase 3 COMPLETED: All 4 custom hooks now fully documented**
+
+- [x] Subtask 4.1: Documented ChatInput component
+  - Added comprehensive JSDoc documentation covering input handling, submit behavior, keyboard shortcuts, and styling
+  - Component description with features and functionality
+  - Detailed sections on:
+    * Input Handling - Controlled state and auto-resizing textarea (48px-200px)
+    * Submit Behavior - Validation, callback invocation, state reset workflow
+    * Keyboard Shortcuts - Enter to send, Shift+Enter for newline
+    * File Attachments - Type validation, size limits, base64 encoding, preview display
+    * Styling Behavior - Tailwind CSS classes, button variants, layout structure
+  - ChatInputProps interface documentation with detailed callback descriptions
+  - Four usage examples demonstrating:
+    * Basic usage with message handler
+    * Integration with chat state management
+    * API integration with error handling
+    * File validation understanding
+  - Internal function documentation for all handlers:
+    * handleFileSelect - File upload workflow with validation (images, PDFs, text, max 10MB)
+    * handleRemoveAttachment - Attachment removal from array
+    * handleSend - Message submission and state reset
+    * handleKeyDown - Keyboard shortcuts implementation
+    * handleTextareaChange - Auto-resizing behavior (scrollHeight calculation)
+  - All internal functions marked with @internal tags
+  - Display name for better debugging experience
+  - Committed changes with git
+  - **Phase 4: Chat Components (1/8 subtasks completed)**
+
+- [x] Subtask 4.2: Documented ChatMessageList component
+  - Added comprehensive JSDoc documentation covering message rendering, scroll behavior, and message types
+  - Documented ChatMessage interface with all properties
+  - Added documentation for MessageBubble and AttachmentPreview components
+  - Four usage examples demonstrating various scenarios
+  - Display names for all components
+  - Committed changes with git
+  - **Phase 4: Chat Components (2/8 subtasks completed)**
+
+- [x] Subtask 4.3: Documented MessageBubble component
+  - Added comprehensive JSDoc documentation covering message display, role-based styling, and content rendering
+  - Module-level documentation with features and detailed sections:
+    * Message Display (UserMessage, AssistantMessage, SystemMessage)
+    * Role-Based Styling (alignment, colors, borders, padding)
+    * Content Rendering (plain text vs markdown with prose)
+    * View Modes (simple vs detailed with collapsible sections)
+    * SDK Event Integration (tool uses, system messages)
+    * Streaming Behavior (animated dots indicator)
+    * Styling Behavior (Tailwind CSS, typography, colors)
+  - Individual component documentation for all three exported components:
+    * UserMessage - Right-aligned blue bubble with "You" label
+    * AssistantMessage - Left-aligned with avatar, markdown, streaming, SDK events
+    * SystemMessage - Center-aligned pill-shaped for notifications
+  - MessageBubbleProps interface documentation
+  - Six comprehensive usage examples:
+    * Basic UserMessage in message thread
+    * AssistantMessage with ChatDisplayProvider
+    * SystemMessage for notifications
+    * Complete chat with view mode toggle
+    * Tool execution display
+    * Session notifications
+  - Display names for all three components
+  - Committed changes with git
+  - **Phase 4: Chat Components (3/8 subtasks completed)**
+
 ## Next Steps
-1. Continue Phase 3: Document remaining custom hook (useSkillTraining)
-2. Proceed to Phase 4: Chat Components
-3. Complete Phase 5: Feature Components
-4. Finish with Phase 6: Page Components and App
+1. ✅ Phase 3: Custom Hooks (COMPLETED)
+2. 🔄 Phase 4: Chat Components (IN PROGRESS - 3/8 subtasks completed)
+   - Next: 4.4 - Document CodeBlock component
+3. Complete Phase 5: Feature Components (12 subtasks)
+4. Finish with Phase 6: Page Components and App (15 subtasks)

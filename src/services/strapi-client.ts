@@ -1220,6 +1220,35 @@ export class StrapiClient {
   }
 
   /**
+   * Get recent flow executions across all flows
+   */
+  async getRecentFlowExecutions(limit: number = 10): Promise<FlowExecution[]> {
+    const cacheKey = `flow-executions:recent:${limit}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const { data } = await this.client.get<StrapiResponse<StrapiAttributes<any>[]>>(
+      '/flow-executions',
+      {
+        params: {
+          populate: '*',
+          sort: 'createdAt:desc',
+          pagination: {
+            limit
+          }
+        },
+      }
+    );
+
+    const executions = data.data.map((item: StrapiAttributes<any>) => this.transformFlowExecution(item));
+    this.cache.set(cacheKey, executions, 30000); // Cache for 30 seconds
+
+    return executions;
+  }
+
+  /**
    * Get global flow statistics
    */
   async getGlobalFlowStats(): Promise<GlobalFlowStats> {

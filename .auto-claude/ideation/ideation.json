@@ -1,9 +1,11 @@
 {
-  "id": "ideation-20260102-094802",
+  "id": "ideation-20260102-214843",
   "project_id": "/Users/ali/Documents/Projects/claude_agent_ui",
   "config": {
     "enabled_types": [
-      "code_quality"
+      "code_improvements",
+      "ui_ux_improvements",
+      "documentation_gaps"
     ],
     "include_roadmap_context": true,
     "include_kanban_context": true,
@@ -13,468 +15,319 @@
     {
       "id": "ci-001",
       "type": "code_improvements",
-      "title": "Bulk Delete for Agents and Skills",
-      "description": "Add bulk delete capability for agents and skills, mirroring the existing bulk delete pattern for MCP servers. This would allow users to select multiple agents or skills and delete them in a single operation.",
-      "rationale": "The codebase already has a well-established bulk-delete pattern in src/routes/manager.routes.ts for MCP servers (line 1518). This pattern includes error handling, partial success reporting (successCount, failed, errors array), and a consistent API response structure. Extending this pattern to agents and skills requires minimal new logic since the CRUD operations already exist.",
+      "title": "Add Duplicate Agent Functionality",
+      "description": "Add ability to duplicate/clone an existing agent with all its configuration, similar to the existing flow duplication feature. This allows users to quickly create agent variants without manually copying configuration.",
+      "rationale": "Flow duplication pattern already exists in flow.routes.ts (POST /:id/duplicate endpoint at line 856) and flow-api.ts (duplicateFlow function). Agents share similar CRUD patterns via strapiClient and would benefit from the same clone capability.",
       "builds_upon": [
-        "MCP servers bulk-delete endpoint",
-        "Agent CRUD operations",
-        "Skill CRUD operations"
+        "Flow Duplicate API",
+        "Agent CRUD pattern via StrapiClient"
       ],
       "estimated_effort": "small",
       "affected_files": [
         "src/routes/manager.routes.ts",
         "src/routes/manager.routes.strapi.ts",
-        "src/web/manager/services/api.ts"
+        "src/services/strapi-client.ts",
+        "src/web/manager/services/api.ts",
+        "src/web/manager/components/AgentsPage.tsx"
       ],
       "existing_patterns": [
-        "router.post('/mcp-servers/bulk-delete') in manager.routes.ts",
-        "bulkDeleteMCPServers() in api.ts",
-        "Strapi bulk delete helper pattern"
+        "POST /api/flows/:id/duplicate in flow.routes.ts (line 856-889)",
+        "duplicateFlow() in web/manager/services/flow-api.ts",
+        "strapiClient.createAgent() for creating agent records"
       ],
-      "implementation_approach": "1. Copy the /mcp-servers/bulk-delete endpoint pattern. 2. Create /agents/bulk-delete and /skills/bulk-delete routes. 3. Loop through IDs and call existing delete operations. 4. Track success/failure counts. 5. Add corresponding frontend API functions (bulkDeleteAgents, bulkDeleteSkills) following bulkDeleteMCPServers pattern.",
+      "implementation_approach": "1. Add POST /api/manager/agents/:id/duplicate endpoint in manager.routes.ts following flow duplicate pattern. 2. Fetch existing agent, deep clone data, generate new name with ' (Copy)' suffix. 3. Create new agent via strapiClient.createAgent(). 4. Add duplicateAgent() API function in web/manager/services/api.ts. 5. Add 'Duplicate' action button to AgentsPage using existing TrashIcon/PencilIcon pattern.",
       "status": "draft",
-      "created_at": "2026-01-02T09:45:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
     },
     {
       "id": "ci-002",
       "type": "code_improvements",
-      "title": "Session Statistics Dashboard Data",
-      "description": "Add a getStats() method for chat sessions similar to how task statistics work. This would provide counts for active/archived sessions, message counts, average messages per session, and session duration metrics.",
-      "rationale": "TaskStorageService already has a getStats() method (line 309) that returns counts by status (pending, running, completed, failed). The pattern is well-established and tested. ChatService has access to session data via Strapi and can aggregate similar metrics. The frontend already expects stats-style data for dashboards.",
+      "title": "Add Condition Node Type to Flow Editor",
+      "description": "Add a new Condition node type that enables conditional branching in flows based on agent output or input field values. This extends the flow system to support more complex workflow logic.",
+      "rationale": "The NodeHandler pattern in flow-nodes is well-established with InputNodeHandler, AgentNodeHandler, and OutputNodeHandler. The architecture supports registering new node types via registerNodeHandler(). Condition nodes would enable if/else branching in flow execution.",
       "builds_upon": [
-        "TaskStorageService.getStats()",
-        "Chat sessions CRUD",
-        "GET /tasks/stats endpoint"
+        "NodeHandler interface pattern",
+        "Flow Execution Service",
+        "Node Registration Pattern"
       ],
-      "estimated_effort": "small",
+      "estimated_effort": "medium",
       "affected_files": [
-        "src/services/chat-service.ts",
-        "src/routes/chat.routes.ts",
-        "src/web/manager/services/api.ts"
+        "src/services/flow-nodes/condition-node-handler.ts",
+        "src/services/flow-nodes/index.ts",
+        "src/types/flow-types.ts",
+        "src/web/manager/components/flow-canvas/nodes/ConditionNode.tsx",
+        "src/web/manager/components/flow-canvas/NodePalette.tsx"
       ],
       "existing_patterns": [
-        "getStats() in task-storage-service.ts returning status counts",
-        "GET /stats route pattern in task.routes.ts",
-        "Strapi aggregation queries"
+        "NodeHandler interface in flow-execution-service.ts",
+        "AgentNodeHandler class implementation pattern (56-435 lines)",
+        "registerAllNodeHandlers() in flow-nodes/index.ts (line 53-57)",
+        "BaseNode.tsx component pattern for visual nodes"
       ],
-      "implementation_approach": "1. Add getSessionStats() method to ChatService that queries Strapi for session counts by status. 2. Create GET /sessions/stats endpoint following the task stats pattern. 3. Calculate: total sessions, active count, archived count, average message count per session. 4. Add getSessionStats() to frontend api.ts.",
+      "implementation_approach": "1. Add ConditionNode type to flow-types.ts with condition expression and true/false output ports. 2. Create ConditionNodeHandler implementing NodeHandler interface with evaluate() logic for JSON path expressions. 3. Register in flow-nodes/index.ts nodeHandlers map. 4. Create ConditionNode.tsx component extending BaseNode pattern with two output handles. 5. Add to NodePalette with conditional branch icon.",
       "status": "draft",
-      "created_at": "2026-01-02T09:45:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
     },
     {
       "id": "ci-003",
       "type": "code_improvements",
-      "title": "Agent and Skill Export/Import",
-      "description": "Add export and import capabilities for agents and skills following the existing MCP servers export/import pattern. This allows users to backup configurations, share agents/skills between projects, or migrate between environments.",
-      "rationale": "The codebase has complete export/import infrastructure for MCP servers including: exportMCPConfig() GET endpoint returning JSON, importMCPConfig() POST endpoint with merge/overwrite modes, and frontend API functions. Agents and skills have similar data structures that can leverage the same pattern.",
+      "title": "Add Keyboard Shortcuts to Chat Page",
+      "description": "Extend the keyboard shortcuts pattern from Flow Editor to Chat Page for common operations like send message (Ctrl+Enter), new session (Ctrl+N), and clear selection (Escape).",
+      "rationale": "useFlowKeyboardShortcuts hook provides a well-documented 514-line pattern for keyboard shortcuts with cross-platform support (Mac/Windows), input field awareness, and clean event handling. ChatPage could benefit from similar shortcuts for improved accessibility and power-user experience.",
       "builds_upon": [
-        "MCP servers export/import endpoints",
-        "Agent/Skill data structures",
-        "Strapi data transformation patterns"
+        "useFlowKeyboardShortcuts hook",
+        "ChatPage component",
+        "ChatInput component"
       ],
-      "estimated_effort": "medium",
+      "estimated_effort": "small",
       "affected_files": [
-        "src/routes/manager.routes.ts",
-        "src/routes/manager.routes.strapi.ts",
-        "src/web/manager/services/api.ts",
-        "src/services/strapi-client.ts"
+        "src/web/manager/hooks/useChatKeyboardShortcuts.ts",
+        "src/web/manager/components/ChatPage.tsx"
       ],
       "existing_patterns": [
-        "GET /mcp-servers/export endpoint",
-        "POST /mcp-servers/import with mode: merge|overwrite",
-        "exportMCPConfig() and importMCPConfig() in api.ts"
+        "useFlowKeyboardShortcuts in hooks/useFlowKeyboardShortcuts.ts",
+        "isMac() helper for platform detection (line 247-249)",
+        "isInputField() helper for input awareness (line 255-267)",
+        "Keyboard event pattern with modKey detection"
       ],
-      "implementation_approach": "1. Create GET /agents/export that fetches all agents and returns JSON export. 2. Create POST /agents/import with merge/overwrite mode logic. 3. Handle relation references (skills, mcpConfig) during import. 4. Repeat pattern for skills. 5. Add frontend API functions following MCP pattern. 6. Consider version field for compatibility.",
+      "implementation_approach": "1. Create useChatKeyboardShortcuts hook following the exact pattern of useFlowKeyboardShortcuts.ts. 2. Implement: Ctrl+Enter to send, Ctrl+N for new session, Ctrl+L to clear chat, Escape to cancel. 3. Use same isMac() and modKey detection pattern. 4. Integrate with ChatPage using enabled option for conditional shortcuts. 5. Add to ChatInput for send shortcut when focused.",
       "status": "draft",
-      "created_at": "2026-01-02T09:45:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
     },
     {
       "id": "ci-004",
       "type": "code_improvements",
-      "title": "Error Notification for Long-Running Tasks",
-      "description": "Extend the NotificationService to send notifications when tasks fail or encounter errors, not just when they complete successfully. This helps users catch failures in background tasks.",
-      "rationale": "NotificationService already has sendPermissionNotification() and sendConversationEndNotification() methods with ntfy.sh integration and web push fallback. The notification structure (Notification interface) supports different priorities and tags. Adding error notifications follows the same pattern with priority: 'high' for failures.",
+      "title": "Add Search and Filter to Agents Page",
+      "description": "Add search box and filter capabilities to AgentsPage matching the pattern already used in SkillSelector component. Enables users to quickly find agents by name or description.",
+      "rationale": "SkillSelector already implements real-time search filtering with multi-field search (name AND description). AgentsPage displays agent cards but lacks search functionality. The backend validator (agent.validators.ts) already supports search and filter query parameters via agentQuerySchema.",
       "builds_upon": [
-        "NotificationService.sendConversationEndNotification()",
-        "Task execution error handling",
-        "ntfy.sh integration"
+        "SkillSelector search pattern",
+        "Agent Query Validators",
+        "SearchIcon component"
       ],
       "estimated_effort": "trivial",
       "affected_files": [
-        "src/services/notification-service.ts",
-        "src/routes/task.routes.ts"
+        "src/web/manager/components/AgentsPage.tsx"
       ],
       "existing_patterns": [
-        "sendConversationEndNotification() method structure",
-        "Notification interface with priority field",
-        "Task status updates in task.routes.ts"
+        "Search filtering in SkillSelector.tsx with useState for searchTerm",
+        "SearchIcon from components/ui/Icons.tsx (line 345)",
+        "agentQuerySchema.search parameter in agent.validators.ts (line 74-75)",
+        "Input component for text input"
       ],
-      "implementation_approach": "1. Add sendTaskErrorNotification(taskId, error, sessionId) method to NotificationService following existing method patterns. 2. Set priority: 'high' and tags: ['cui-error'] for error notifications. 3. Call from task.routes.ts when task status changes to 'failed'. 4. Include error message in notification body.",
+      "implementation_approach": "1. Add useState<string>('') for searchTerm in AgentsPage. 2. Add Input component with SearchIcon at top of agents list section. 3. Implement useMemo filter on agents array: filter by name.toLowerCase().includes(searchTerm.toLowerCase()) OR description.toLowerCase().includes(searchTerm.toLowerCase()). 4. Apply same styling as SkillSelector search input.",
       "status": "draft",
-      "created_at": "2026-01-02T09:45:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
     },
     {
       "id": "ci-005",
       "type": "code_improvements",
-      "title": "Task Execution Metrics Tracking",
-      "description": "Extend ToolMetricsService to track and persist execution metrics for tasks including tool usage counts, execution duration, and cost per task. Currently metrics are calculated but not persisted with task records.",
-      "rationale": "ToolMetricsService already calculates linesAdded, linesRemoved, editCount, and writeCount by processing tool_use blocks. The Task interface already has duration field. The service has calculateMetricsFromMessages() for processing historical data. Persisting these metrics alongside task records enables analytics dashboards and cost tracking.",
+      "title": "Add JSON Export/Import for Agents and Skills",
+      "description": "Enable users to export agents and skills configuration as JSON files and import them, following the MCP server export/import pattern. Supports backup, sharing, and environment migration.",
+      "rationale": "MCPServersPage already has working export/import functionality (handleExport at line 818-833, handleImportFile at line 857-879). Agents and Skills share similar configuration structures and would benefit from portable configuration export.",
       "builds_upon": [
-        "ToolMetricsService.calculateMetricsFromMessages()",
-        "Task.duration field",
-        "Task execution logging"
+        "MCP Server Export/Import pattern",
+        "Agent CRUD",
+        "Skill CRUD"
       ],
       "estimated_effort": "small",
       "affected_files": [
-        "src/services/ToolMetricsService.ts",
-        "src/services/task-storage-service.ts",
-        "src/routes/task.routes.ts",
-        "src/types/task-types.ts"
+        "src/routes/manager.routes.ts",
+        "src/web/manager/services/api.ts",
+        "src/web/manager/components/AgentsPage.tsx",
+        "src/web/manager/components/SkillsPage.tsx"
       ],
       "existing_patterns": [
-        "ToolMetrics interface with linesAdded/linesRemoved/editCount/writeCount",
-        "Task metadata field for additional data",
-        "calculateMetricsFromMessages() method pattern"
+        "handleExport() in MCPServersPage.tsx creating Blob and download link",
+        "handleImportFile() with FileReader and JSON.parse",
+        "GET /api/manager/mcp-servers/export endpoint",
+        "POST /api/manager/mcp-servers/import endpoint with mode parameter"
       ],
-      "implementation_approach": "1. Add toolMetrics field to Task interface in task-types.ts. 2. After task execution completes in task.routes.ts, call calculateMetricsFromMessages() on execution log. 3. Persist metrics in task.metadata or dedicated field via updateTaskStatus(). 4. Add metrics to task stats aggregation. 5. Expose in API response.",
+      "implementation_approach": "1. Add GET /agents/export endpoint returning all agents as JSON. 2. Add POST /agents/import with merge/overwrite mode. 3. Copy handleExport pattern to AgentsPage: JSON.stringify, Blob, download link. 4. Copy handleImportFile pattern with FileReader. 5. Add Export/Import buttons to AgentsPage header. 6. Repeat for SkillsPage.",
       "status": "draft",
-      "created_at": "2026-01-02T09:45:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
     },
     {
       "id": "uiux-001",
       "type": "ui_ux_improvements",
-      "title": "Add Missing Button Variants (outline, ghost)",
-      "description": "The Button component is missing commonly used variants like 'outline' and 'ghost'. The AgentsPage already attempts to use variant='outline' but this variant doesn't exist in the component definition.",
-      "rationale": "Consistent button variants are essential for visual hierarchy. Outline buttons are commonly used for secondary actions and ghost buttons for subtle interactions. Without these, developers may create inconsistent inline styles.",
-      "category": "visual",
-      "affected_components": [
-        "src/web/manager/components/ui/Button.tsx",
-        "src/web/manager/components/AgentsPage.tsx"
-      ],
-      "screenshots": [],
-      "current_state": "Button component only has 3 variants: 'primary', 'secondary', 'destructive'. AgentsPage uses 'variant=\"outline\"' which is not defined, causing fallback to primary styling.",
-      "proposed_change": "Add 'outline' and 'ghost' variants to Button.tsx: outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground', ghost: 'hover:bg-accent hover:text-accent-foreground'. This aligns with shadcn/ui patterns already used in the project.",
-      "user_benefit": "Proper visual hierarchy for actions, consistent appearance across the app, and clearer distinction between primary and secondary actions.",
-      "status": "draft",
-      "created_at": "2026-01-02T09:39:00.000Z"
-    },
-    {
-      "id": "uiux-002",
-      "type": "ui_ux_improvements",
-      "title": "Improve Dialog Accessibility with ARIA Attributes",
-      "description": "The Dialog component lacks proper ARIA attributes for accessibility. It's missing role='dialog', aria-modal='true', aria-labelledby, and focus trapping.",
-      "rationale": "Modal dialogs without proper ARIA attributes are inaccessible to screen reader users. Users may not understand they're in a dialog, can't escape it properly, and focus may escape to background content.",
+      "title": "Add Keyboard Trap to Dialog Component",
+      "description": "Implement ESC key handling and focus trap for the Dialog component to improve accessibility and user experience",
+      "rationale": "The Dialog component currently only closes via backdrop click. Users expect to close modals with the ESC key, which is a standard UX pattern and WCAG accessibility requirement. Focus should also be trapped within the dialog while open.",
       "category": "accessibility",
       "affected_components": [
         "src/web/manager/components/ui/Dialog.tsx"
       ],
       "screenshots": [],
-      "current_state": "Dialog component uses simple div elements without ARIA roles. The backdrop onClick closes the modal but there's no keyboard escape handler. Focus is not trapped within the dialog.",
-      "proposed_change": "Add role='dialog', aria-modal='true', aria-labelledby pointing to DialogTitle. Add onKeyDown handler for Escape key. Implement focus trap using useEffect to capture and restore focus. Consider using @radix-ui/react-dialog which is already a dependency.",
-      "user_benefit": "Screen reader users can understand they're in a modal dialog, keyboard users can escape with Escape key, and focus remains within the dialog until closed.",
+      "current_state": "Dialog component renders a backdrop that closes on click, but has no keyboard event listeners. No ESC key handling, no focus trap implementation. The component just renders children without trapping keyboard focus inside.",
+      "proposed_change": "1. Add useEffect hook to listen for 'keydown' events on document\n2. Close dialog when ESC key is pressed (event.key === 'Escape')\n3. Add focus trap using useRef to track focusable elements\n4. On open, focus the first focusable element\n5. On Tab, cycle through focusable elements within dialog\n6. Add aria-modal='true' and role='dialog' to DialogContent\n7. Clean up event listeners on unmount",
+      "user_benefit": "Users can close dialogs with ESC key as expected. Screen reader users get proper modal semantics. Keyboard-only users can navigate within the dialog without focus escaping to background content.",
       "status": "draft",
-      "created_at": "2026-01-02T09:39:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
+    },
+    {
+      "id": "uiux-002",
+      "type": "ui_ux_improvements",
+      "title": "Remove Debug Information from AssistantMessage",
+      "description": "Remove the visible debug info section that displays view mode, tool counts, and status in the AssistantMessage component",
+      "rationale": "The AssistantMessage component displays debug information (line 446-448) that shows 'View: {viewMode} | Tools: {allToolUses.length} | System: {allSystemMessages.length} | Status: {message?.status?.type}' directly in the UI. This is development-only information that should not be visible to end users.",
+      "category": "visual",
+      "affected_components": [
+        "src/web/manager/components/MessageBubble.tsx"
+      ],
+      "screenshots": [],
+      "current_state": "Lines 446-448 render a div with debug info inside every assistant message bubble: 'View: {viewMode} | Tools: {allToolUses.length} | System: {allSystemMessages.length} | Status: {message?.status?.type}'. This creates visual clutter and exposes internal state to users.",
+      "proposed_change": "1. Remove the debug div entirely (lines 446-448) from MessageBubble.tsx\n2. Alternatively, wrap in a conditional that checks process.env.NODE_ENV === 'development' if debug info is needed during development\n3. Consider using React DevTools or a dedicated debug panel instead",
+      "user_benefit": "Cleaner chat interface without confusing technical information. Professional appearance in production. Reduced visual noise in the message area.",
+      "status": "draft",
+      "created_at": "2026-01-02T21:30:00.000Z"
     },
     {
       "id": "uiux-003",
       "type": "ui_ux_improvements",
-      "title": "Enhance Dashboard with Summary Stats and Quick Actions",
-      "description": "The DashboardPage component is nearly empty - it only shows a title and welcome text. Users land on a page with no useful information or actions.",
-      "rationale": "A dashboard should provide at-a-glance information and quick access to common actions. The current empty state fails to demonstrate the value of the application and requires extra navigation to do anything useful.",
-      "category": "usability",
+      "title": "Add Ghost and Outline Button Variants",
+      "description": "Extend the Button component to include 'ghost' and 'outline' variants for subtle actions and icon buttons",
+      "rationale": "The Button component only has primary, secondary, and destructive variants. Many UI patterns require ghost buttons (transparent background, text color only) and outline buttons (transparent with border). These are commonly used for icon buttons, toolbar actions, and less prominent CTAs.",
+      "category": "visual",
       "affected_components": [
-        "src/web/manager/components/DashboardPage.tsx"
+        "src/web/manager/components/ui/Button.tsx"
       ],
       "screenshots": [],
-      "current_state": "DashboardPage renders only: title 'Dashboard', subtitle 'Welcome to your Claude Agent Manager.' No stats, no quick actions, no recent activity.",
-      "proposed_change": "Add summary cards showing: total agents count, total skills count, recent chat sessions, MCP servers status. Add quick action buttons for 'New Chat', 'Create Agent', 'Create Skill'. Consider adding recent activity feed showing last 5 actions. Use existing Card components and API endpoints already available.",
-      "user_benefit": "Users immediately see their workspace status, can quickly access common actions, and don't need to navigate to understand the system state.",
+      "current_state": "Button variantClasses object only defines: primary (bg-primary), secondary (bg-secondary), and destructive (bg-destructive). No ghost or outline variants exist. Currently, developers may use className overrides to achieve similar effects, leading to inconsistent styling.",
+      "proposed_change": "1. Add 'ghost' variant: 'hover:bg-accent hover:text-accent-foreground' (transparent bg, shows on hover)\n2. Add 'outline' variant: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground'\n3. Update ButtonProps interface to include new variants\n4. Add 'icon' size: 'h-10 w-10' for square icon buttons\n5. Update JSDoc examples to show new variants",
+      "user_benefit": "Developers get consistent, reusable button styles for all common use cases. Icon buttons and toolbar actions look consistent. Better visual hierarchy with subtle button options.",
       "status": "draft",
-      "created_at": "2026-01-02T09:39:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
     },
     {
       "id": "uiux-004",
       "type": "ui_ux_improvements",
-      "title": "Replace Native Browser Dialogs with Styled Confirmation Modals",
-      "description": "The application uses native browser alert() and confirm() dialogs for user feedback and confirmations, which break the visual consistency and provide poor UX.",
-      "rationale": "Native browser dialogs are unstyled, modal-blocking, and cannot be customized. They break the visual flow of the dark-themed application and provide a jarring user experience.",
-      "category": "interaction",
+      "title": "Create Consistent Skeleton Loading Component",
+      "description": "Create a reusable Skeleton component for consistent loading states across all pages",
+      "rationale": "Multiple components use different loading patterns: MCPServersPage uses a spinner, DashboardPage has loading states, TasksPage shows different indicators. A consistent skeleton/loading component would improve perceived performance and provide a unified loading experience.",
+      "category": "performance",
       "affected_components": [
-        "src/web/manager/components/ChatPage.tsx",
-        "src/web/manager/components/AgentsPage.tsx",
-        "src/web/manager/components/MCPServersPage.tsx"
+        "src/web/manager/components/ui/Skeleton.tsx (new)",
+        "src/web/manager/components/MCPServersPage.tsx",
+        "src/web/manager/components/DashboardPage.tsx",
+        "src/web/manager/components/TasksPage.tsx",
+        "src/web/manager/components/AgentsPage.tsx"
       ],
       "screenshots": [],
-      "current_state": "Multiple components use native dialogs: ChatPage uses 'confirm()' for delete confirmation (line 141), AgentsPage uses 'alert()' for import results (lines 63, 73), and similar patterns exist across the codebase.",
-      "proposed_change": "Create a ConfirmDialog component using the existing Dialog component. Implement a toast notification system for success/error messages (could use @radix-ui/react-toast or similar). Replace all alert() calls with toast notifications and all confirm() calls with the ConfirmDialog component.",
-      "user_benefit": "Consistent visual experience, themed dialogs that match the app design, better accessibility, and non-blocking notifications for success messages.",
+      "current_state": "Loading states are inconsistent: MCPServersPage shows a spinner icon with 'text-primary animate-spin', DashboardPage has 'loading' boolean conditionals, TasksPage shows 'Loading tasks...' text. No unified skeleton component exists. Some pages have no loading indication at all.",
+      "proposed_change": "1. Create src/web/manager/components/ui/Skeleton.tsx component\n2. Implement base skeleton with pulse animation: 'animate-pulse rounded-md bg-muted'\n3. Add variants: SkeletonCard, SkeletonList, SkeletonTable\n4. Create SkeletonAgentCard matching AgentsPage card layout\n5. Create SkeletonServerRow matching MCPServersPage row layout\n6. Replace spinner-based loading with skeleton layouts\n7. Use Content-aware skeletons that match actual content shape",
+      "user_benefit": "Faster perceived loading times. Users see content shape immediately. Consistent loading experience across all pages. Reduced layout shift when content loads.",
       "status": "draft",
-      "created_at": "2026-01-02T09:39:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
     },
     {
       "id": "uiux-005",
       "type": "ui_ux_improvements",
-      "title": "Add Skeleton Loading States for Better Perceived Performance",
-      "description": "Loading states across the application use generic text like 'Loading...' or 'Loading chat sessions...' instead of skeleton loaders that preserve layout.",
-      "rationale": "Skeleton loaders provide better perceived performance by showing the structure of content before it loads. They reduce layout shift and give users confidence that content is loading correctly.",
-      "category": "performance",
+      "title": "Enhance Empty States with Icons and CTAs",
+      "description": "Improve empty state displays across all pages with consistent icons, helpful messaging, and clear call-to-action buttons",
+      "rationale": "Current empty states are minimal text like 'No agents found in .claude/agents/' or 'No MCP Servers Found'. These miss opportunities to guide users with visual feedback, helpful hints, and clear next actions. Good empty states reduce confusion and increase engagement.",
+      "category": "usability",
       "affected_components": [
-        "src/web/manager/components/ChatPage.tsx",
-        "src/web/manager/ManagerApp.tsx",
-        "src/web/manager/components/SkillsPage.tsx"
+        "src/web/manager/components/AgentsPage.tsx",
+        "src/web/manager/components/SkillsPage.tsx",
+        "src/web/manager/components/FlowsPage.tsx",
+        "src/web/manager/components/MCPServersPage.tsx",
+        "src/web/manager/components/CommandsPage.tsx"
       ],
       "screenshots": [],
-      "current_state": "ChatPage line 220-226 shows: 'Loading chat sessions...' centered text. ManagerApp AuthGuard shows: 'Loading...' text. Similar patterns exist in other data-loading components.",
-      "proposed_change": "Create a Skeleton component with variants for text, card, avatar, and button shapes. In ChatPage, show skeleton session list items during loading. In AuthGuard, show a skeleton layout of the dashboard. Add subtle pulse animation using existing Tailwind animate classes.",
-      "user_benefit": "Faster perceived loading times, reduced layout shift when content appears, and more professional feel during data fetching.",
+      "current_state": "AgentsPage line 294-295: 'No agents found in .claude/agents/' as plain centered text. MCPServersPage has slightly better empty state with icon and CTA. Most pages just show muted text without icons, illustrations, or clear guidance on what to do next.",
+      "proposed_change": "1. Create EmptyState component with props: icon, title, description, actionLabel, onAction\n2. Add relevant Lucide icons for each empty state (e.g., CpuChipIcon for agents, PuzzlePieceIcon for skills)\n3. Include helpful description explaining what this section is for\n4. Add primary CTA button matching page's create action\n5. Use consistent padding (py-16), centered layout, max-w-md for text\n6. Apply to all list pages: Agents, Skills, Flows, Commands, MCP Servers, Tasks\n7. Example structure: Icon (64x64 text-muted) + Title (text-lg font-medium) + Description (text-sm text-muted) + Button",
+      "user_benefit": "Users understand what each section is for even when empty. Clear guidance on how to create first item. Visual consistency across all empty states. Reduced confusion for new users.",
       "status": "draft",
-      "created_at": "2026-01-02T09:39:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
     },
     {
       "id": "doc-001",
       "type": "documentation_gaps",
-      "title": "Add JSDoc documentation for backend services",
-      "description": "The src/services directory contains 29 service files with 65+ exported functions, classes, and interfaces. Most lack proper JSDoc documentation. Critical services like ClaudeSdkService, MCPService, and strapiClient have minimal inline documentation, making it difficult for developers to understand function parameters, return types, and usage patterns.",
-      "rationale": "Backend services are the core of the application. Developers frequently need to understand how services interact with Claude SDK, Strapi, and MCP servers. Without JSDoc, developers must read implementation details to understand function behavior.",
-      "category": "api_docs",
-      "targetAudience": "developers",
+      "title": "Create CONTRIBUTING.md with development workflow guidelines",
+      "description": "The project lacks a CONTRIBUTING.md file to guide new contributors. This is critical for onboarding developers who want to contribute to or maintain the codebase.",
+      "rationale": "With 65+ React components, 25+ services, and a complex hybrid architecture (React+Express+Strapi+PostgreSQL), new developers need clear guidelines on code style, PR process, testing requirements, and branch naming conventions. Currently, developers must reverse-engineer these conventions from existing code.",
+      "category": "readme",
+      "targetAudience": "contributors",
       "affectedAreas": [
-        "src/services/claude-sdk-service.ts",
-        "src/services/mcp-service.ts",
-        "src/services/strapi-client.ts",
-        "src/services/skill-service.ts",
-        "src/services/flow-service.ts",
-        "src/services/task-storage-service.ts"
+        "./CONTRIBUTING.md",
+        "./README.md"
       ],
-      "currentDocumentation": "Only ClaudeSdkService and MCPService have basic class-level JSDoc comments. Individual methods lack parameter and return type documentation.",
-      "proposedContent": "Add comprehensive JSDoc for all public methods including @param, @returns, @throws, @example, and @see tags. Document async behavior, error handling, and integration points with external services.",
+      "currentDocumentation": "No CONTRIBUTING.md exists. README mentions 'feel free to customize' but provides no contribution guidelines.",
+      "proposedContent": "Create CONTRIBUTING.md covering: development setup, code style (TypeScript strict mode, ESLint rules), component patterns (following existing UI components), PR template, testing requirements, commit message format, and branch naming conventions.",
       "priority": "high",
-      "estimatedEffort": "large",
-      "status": "archived",
-      "linked_task_id": "002-add-jsdoc-documentation-for-backend-services"
+      "estimatedEffort": "medium"
     },
     {
       "id": "doc-002",
       "type": "documentation_gaps",
-      "title": "Create architecture documentation with system diagrams",
-      "description": "The project has a complex hybrid architecture (React + Express + Strapi + PostgreSQL + Claude SDK + MCP) but lacks visual documentation showing how components interact. The README mentions this architecture but doesn't provide diagrams for data flow, service communication, or deployment topology.",
-      "rationale": "New developers and contributors need to understand the system architecture before making changes. The current project involves streaming SSE connections, MCP protocol interactions, and multi-service communication that aren't immediately obvious from code alone.",
-      "category": "architecture",
+      "title": "Document API error responses and error codes across all endpoints",
+      "description": "The 124 API endpoints lack comprehensive error response documentation. Developers don't know what error codes, formats, or recovery actions to expect when API calls fail.",
+      "rationale": "The project has robust error handling (src/middleware/error-handler.ts, flow-error-handler.ts) but this isn't exposed in documentation. Frontend developers need to know error response shapes to implement proper error boundaries and user feedback. Currently documented endpoints only show success responses.",
+      "category": "api_docs",
       "targetAudience": "developers",
       "affectedAreas": [
-        "README.md",
-        "docs/",
-        "src/server.ts",
-        "src/routes/",
-        "src/services/"
+        "src/routes/*.ts",
+        "src/middleware/error-handler.ts",
+        "docs/api/"
       ],
-      "currentDocumentation": "README has text description of technology stack and basic project structure but no visual diagrams or component interaction documentation.",
-      "proposedContent": "Create Mermaid diagrams in a new docs/architecture/ folder covering: (1) System component overview, (2) Request flow for agent/skill execution, (3) SSE streaming architecture, (4) MCP server integration, (5) Strapi-Express-Frontend data flow. Include both runtime and deployment views.",
+      "currentDocumentation": "README lists API endpoints with brief descriptions but no error documentation. Error handler middleware exists but error shapes are undocumented.",
+      "proposedContent": "Add error documentation to README API section or create docs/api/ERROR_RESPONSES.md covering: standard error response format, HTTP status codes used, error categories (validation, auth, resource-not-found, server), retry guidance, and example error payloads for key endpoints.",
       "priority": "high",
-      "estimatedEffort": "medium",
-      "status": "archived",
-      "linked_task_id": "003-create-architecture-documentation-with-system-diag"
+      "estimatedEffort": "medium"
     },
     {
       "id": "doc-003",
       "type": "documentation_gaps",
-      "title": "Document frontend React components and hooks",
-      "description": "The frontend has 72 React components across manager UI pages, flow designer, and UI primitives. None have prop documentation, usage examples, or component purpose descriptions. Custom hooks like useAgentCreator, useFlowState, and useSkillTraining lack documentation of their state management and side effects.",
-      "rationale": "Frontend development requires understanding component APIs, prop types, and hook behavior. Currently developers must read implementation to understand how to use components like FlowDesigner, AgentExecutionModal, or TaskExecutionModal.",
-      "category": "api_docs",
+      "title": "Create environment variables reference guide with validation",
+      "description": "The project has 42+ environment variables across .env files but documentation is scattered across README sections. Developers struggle to understand which variables are required, their formats, and valid value ranges.",
+      "rationale": "Environment configuration is a common source of setup errors. The current README mentions some variables but doesn't document all 42 detected variables. Variables like DATABASE_POOL_MIN/MAX, CORS_ORIGIN, and STRAPI keys lack usage context. New developers waste time debugging configuration issues.",
+      "category": "troubleshooting",
       "targetAudience": "developers",
       "affectedAreas": [
-        "src/web/manager/components/",
-        "src/web/manager/hooks/",
-        "src/web/manager/types.ts"
+        ".env.example",
+        "docs/configuration/",
+        "src/services/config-service.ts"
       ],
-      "currentDocumentation": "TypeScript interfaces exist for props but no JSDoc comments explaining component purpose, usage patterns, or hook behavior.",
-      "proposedContent": "Add JSDoc comments to key components and hooks documenting: (1) Component purpose and usage, (2) Prop descriptions with examples, (3) Hook state and side effects, (4) Event handlers and callbacks. Focus on FlowDesigner, ChatPage, AgentExecutionModal, and custom hooks first.",
+      "currentDocumentation": "README has a basic environment variables table (6 variables) and database section, but .env.example shows 42 variables. Many have no description.",
+      "proposedContent": "Create docs/ENVIRONMENT_VARIABLES.md with: complete variable reference table (name, type, required, default, description), grouped by category (server, database, Strapi, Claude SDK, CORS), validation rules, and common misconfiguration errors with solutions.",
       "priority": "medium",
-      "estimatedEffort": "large",
-      "status": "archived",
-      "linked_task_id": "004-document-frontend-react-components-and-hooks"
+      "estimatedEffort": "small"
     },
     {
       "id": "doc-004",
       "type": "documentation_gaps",
-      "title": "Add getting started tutorial for common use cases",
-      "description": "The README provides installation steps but lacks step-by-step tutorials for common tasks. New users don't have guidance on: (1) Creating their first agent, (2) Training a skill, (3) Configuring MCP servers, (4) Building a flow with the visual designer, (5) Executing tasks and viewing results.",
-      "rationale": "The application has rich features but no guided learning path. Users must explore the UI to discover capabilities. A tutorial would significantly reduce onboarding time and demonstrate the value proposition.",
-      "category": "examples",
-      "targetAudience": "users",
+      "title": "Document SSE event protocol for real-time streaming features",
+      "description": "The application heavily uses Server-Sent Events for agent execution, chat streaming, and flow execution but the SSE event protocol is undocumented for frontend developers.",
+      "rationale": "Multiple components depend on SSE streaming: ChatPage, TaskExecutionModal, FlowExecutionModal. The skill-execution-process docs describe event flow from backend perspective, but frontend developers need a protocol reference to understand event types, payloads, and handling. The sdk-event-parser.ts utility processes these events but its documentation is internal.",
+      "category": "api_docs",
+      "targetAudience": "developers",
       "affectedAreas": [
-        "docs/",
-        "README.md"
+        "src/web/manager/utils/sdk-event-parser.ts",
+        "src/types/sse.types.ts",
+        "src/services/chat-service.ts",
+        "docs/api/"
       ],
-      "currentDocumentation": "README has feature overview and API endpoint list. docs/skill-execution-process/ has technical documentation in Turkish but no user-focused tutorials.",
-      "proposedContent": "Create docs/tutorials/ with: (1) quick-start.md - First agent in 5 minutes, (2) skill-training-guide.md - Training skills with examples, (3) mcp-setup-guide.md - Configuring MCP servers, (4) flow-builder-tutorial.md - Visual workflow design, (5) task-execution.md - Running and monitoring tasks. Include screenshots and expected outputs.",
-      "priority": "high",
+      "currentDocumentation": "docs/skill-execution-process/03-task-execution.md documents backend SSE flow but no frontend integration guide exists. SSE event types are defined in sse.types.ts but not documented.",
+      "proposedContent": "Create docs/api/SSE_PROTOCOL.md covering: event types (status, assistant:message, tool_use, tool_result, error, done), payload schemas for each event type, client-side handling patterns, reconnection strategy, and example integration code using EventSource.",
+      "priority": "medium",
       "estimatedEffort": "medium"
     },
     {
       "id": "doc-005",
       "type": "documentation_gaps",
-      "title": "Add troubleshooting FAQ and common error solutions",
-      "description": "The README has a basic troubleshooting section but it only covers 4 issues (port in use, agent execution fails, MCP server not working, build errors). Common issues like Strapi connection problems, PostgreSQL setup errors, streaming disconnections, and Claude SDK errors are undocumented.",
-      "rationale": "Users frequently encounter configuration and runtime issues. Without documented solutions, they must debug independently or seek support. A comprehensive FAQ would reduce support burden and improve user experience.",
-      "category": "troubleshooting",
-      "targetAudience": "users",
+      "title": "Add inline comments for complex flow execution retry logic",
+      "description": "The flow-error-handler.ts implements sophisticated retry and error recovery logic (exponential backoff, jitter, error classification) but lacks inline comments explaining the algorithms and design decisions.",
+      "rationale": "The error handling code uses advanced patterns like exponential backoff with jitter, error classification (RETRYABLE, TEMPORARY, PERMANENT, FATAL), and recovery actions. Maintainers need to understand why specific retry delays were chosen, what error classifications mean, and how the state machine works. Current JSDoc exists but doesn't explain algorithm internals.",
+      "category": "inline_comments",
+      "targetAudience": "maintainers",
       "affectedAreas": [
-        "README.md",
-        "docs/"
+        "src/services/flow-error-handler.ts",
+        "src/services/flow-execution-service.ts"
       ],
-      "currentDocumentation": "README.md has 4 troubleshooting items. No separate FAQ document exists.",
-      "proposedContent": "Create docs/troubleshooting.md covering: (1) Docker/PostgreSQL setup issues, (2) Strapi initialization and API token errors, (3) Claude SDK authentication and rate limits, (4) MCP server connection failures and debugging, (5) SSE streaming issues, (6) Build and TypeScript errors, (7) Environment variable configuration problems. Include error messages, causes, and step-by-step solutions.",
-      "priority": "medium",
+      "currentDocumentation": "Functions have JSDoc signatures but algorithm explanations are missing. Constants like DEFAULT_RETRY_CONFIG have values (3 retries, 1s-30s delays) without explaining the rationale.",
+      "proposedContent": "Add inline comments explaining: exponential backoff formula rationale, why jitter is added (thundering herd prevention), error classification decision tree, retry state machine transitions, and edge cases handled. Include references to industry best practices these patterns follow.",
+      "priority": "low",
       "estimatedEffort": "small"
-    },
-    {
-      "id": "cq-001",
-      "type": "code_quality",
-      "title": "Split manager.routes.ts into domain-specific route modules",
-      "description": "The file src/routes/manager.routes.ts has grown to 2042 lines and handles 35+ route handlers for agents, skills, MCP servers, commands, tools, and training operations. This violates single responsibility principle and makes the code difficult to navigate, test, and maintain.",
-      "rationale": "Very large files increase cognitive load, make code reviews harder, lead to merge conflicts, and make it difficult to understand the scope of changes. Splitting into focused modules improves maintainability, testability, and team productivity.",
-      "category": "large_files",
-      "severity": "major",
-      "affectedFiles": [
-        "src/routes/manager.routes.ts"
-      ],
-      "currentState": "Single 2042-line file handling agents, skills, MCP servers, commands, tools, training, import/export, and Claude creation routes",
-      "proposedChange": "Split into domain-specific route modules:\n- src/routes/agents.routes.ts (CRUD + execute)\n- src/routes/skills.routes.ts (CRUD + training)\n- src/routes/mcp-servers.routes.ts (CRUD + tools + import/export)\n- src/routes/commands.routes.ts (list and get)\n- src/routes/tools.routes.ts (list tools)\n- src/routes/training.routes.ts (training config + Claude creation)\n\nCreate a shared src/routes/utils/route-helpers.ts for common patterns like loadMcpConfig and parseSseRequest",
-      "codeExample": "// Current (all in one file):\nrouter.get('/agents', async (req, res) => { ... });\nrouter.get('/skills', async (req, res) => { ... });\nrouter.get('/mcp-servers', async (req, res) => { ... });\n\n// Proposed (separate modules):\n// agents.routes.ts\nexport function createAgentRoutes(): Router {\n  const router = Router();\n  router.get('/', asyncHandler(getAgents));\n  router.post('/', asyncHandler(createAgent));\n  return router;\n}\n\n// server.ts\napp.use('/api/manager/agents', createAgentRoutes());\napp.use('/api/manager/skills', createSkillRoutes());",
-      "bestPractice": "Single Responsibility Principle - each module should have one reason to change. Route files should be organized by domain/resource.",
-      "metrics": {
-        "lineCount": 2042,
-        "complexity": null,
-        "duplicateLines": null,
-        "testCoverage": null
-      },
-      "estimatedEffort": "large",
-      "breakingChange": false,
-      "prerequisites": [
-        "Consider adding integration tests before refactoring to catch regressions"
-      ]
-    },
-    {
-      "id": "cq-002",
-      "type": "code_quality",
-      "title": "Reduce 'any' type usage to improve type safety",
-      "description": "There are 213 occurrences of ': any' across 39 source files. This defeats TypeScript's type-checking benefits and allows runtime type errors to slip through. Key problem areas include sdk-event-parser.ts (18 occurrences), execution.routes.ts (18), TasksPage.tsx (15), and AgentExecutionModal.tsx (12).",
-      "rationale": "Excessive 'any' usage creates a false sense of type safety while allowing bugs to reach production. Proper typing enables IDE autocompletion, catches errors at compile time, and makes refactoring safer. This is especially critical for API response handling and state management.",
-      "category": "types",
-      "severity": "major",
-      "affectedFiles": [
-        "src/web/manager/utils/sdk-event-parser.ts",
-        "src/routes/execution.routes.ts",
-        "src/web/manager/components/TasksPage.tsx",
-        "src/web/manager/components/AgentExecutionModal.tsx",
-        "src/services/strapi-client.ts",
-        "src/services/chat-log-service.ts",
-        "src/routes/task.routes.ts"
-      ],
-      "currentState": "213 occurrences of ': any' spread across 39 files, with some files having 10+ occurrences",
-      "proposedChange": "1. Enable stricter TypeScript settings (noUnusedLocals: true, noUnusedParameters: true)\n2. Create proper type definitions in src/types/ for:\n   - SDK event types (ContentBlockEvent, MessageEvent, etc.)\n   - API response types for Strapi client\n   - Route handler request/response types\n3. Replace 'any' with proper types or 'unknown' with type guards\n4. Use Zod's infer utility to derive types from validation schemas",
-      "codeExample": "// Current:\nconst data: any = fetchData();\nconst result: any = process(data as any);\n\n// Proposed:\ninterface SDKEvent {\n  type: 'content_block_start' | 'content_block_delta' | 'message_start';\n  content_block?: ContentBlock;\n  delta?: Delta;\n}\n\nconst data: SDKEvent = fetchData();\nif (isContentBlockEvent(data)) {\n  const result = processContentBlock(data.content_block);\n}",
-      "bestPractice": "TypeScript strict mode should be enabled. Use 'unknown' instead of 'any' when the type is truly unknown, then use type guards to narrow the type.",
-      "metrics": {
-        "lineCount": null,
-        "complexity": null,
-        "duplicateLines": null,
-        "testCoverage": null
-      },
-      "estimatedEffort": "large",
-      "breakingChange": false,
-      "prerequisites": [
-        "Document existing type assumptions before refactoring"
-      ]
-    },
-    {
-      "id": "cq-003",
-      "type": "code_quality",
-      "title": "Split SkillCreationModal.tsx into smaller, focused components",
-      "description": "The SkillCreationModal.tsx component is 1160 lines and handles form state, validation, file uploads, tool selection, model configuration, MCP tools, input fields, and both create/edit modes. This violates component composition principles and makes the code hard to test and maintain.",
-      "rationale": "Large monolithic components are difficult to understand, test, and reuse. Breaking them into smaller, focused components improves code organization, enables unit testing, and makes it easier to identify and fix bugs.",
-      "category": "large_files",
-      "severity": "major",
-      "affectedFiles": [
-        "src/web/manager/components/SkillCreationModal.tsx"
-      ],
-      "currentState": "Single 1160-line component handling form state, validation, multiple tabs (basic, tools, model config, input fields, files), API calls, and both create/edit modes",
-      "proposedChange": "Split into focused components:\n- SkillCreationModal.tsx (orchestrator, ~100 lines)\n- SkillBasicInfoForm.tsx (name, description, category)\n- SkillInstructionsEditor.tsx (skillmd textarea with preview)\n- SkillToolsConfig.tsx (allowed/disallowed tools tabs)\n- SkillModelConfig.tsx (model, temperature, tokens)\n- SkillInputFieldsEditor.tsx (input field definitions)\n- SkillFilesManager.tsx (file uploads)\n- useSkillForm.ts (custom hook for form state & validation)\n- useSkillMutation.ts (custom hook for create/update API calls)",
-      "codeExample": "// Current (all in one file):\nconst SkillCreationModal = ({ isOpen, onClose, editSkill }) => {\n  const [formState, setFormState] = useState({ ... });\n  const [selectedTools, setSelectedTools] = useState([]);\n  const [modelConfig, setModelConfig] = useState({ ... });\n  const [inputFields, setInputFields] = useState([]);\n  // ... 50+ state variables and handlers\n  return <Dialog>... 500+ lines of JSX ...</Dialog>\n}\n\n// Proposed:\nconst SkillCreationModal = ({ isOpen, onClose, editSkill }) => {\n  const form = useSkillForm(editSkill);\n  const mutation = useSkillMutation();\n  \n  return (\n    <Dialog open={isOpen}>\n      <SkillBasicInfoForm form={form} />\n      <SkillToolsConfig form={form} />\n      <SkillModelConfig form={form} />\n      <DialogFooter>\n        <Button onClick={() => mutation.mutate(form.values)}>Save</Button>\n      </DialogFooter>\n    </Dialog>\n  );\n}",
-      "bestPractice": "React components should follow the Single Responsibility Principle. Extract complex logic into custom hooks and break large components into smaller, reusable pieces.",
-      "metrics": {
-        "lineCount": 1160,
-        "complexity": null,
-        "duplicateLines": null,
-        "testCoverage": null
-      },
-      "estimatedEffort": "medium",
-      "breakingChange": false,
-      "prerequisites": [
-        "Add component-level tests before refactoring"
-      ]
-    },
-    {
-      "id": "cq-004",
-      "type": "code_quality",
-      "title": "Replace console.log statements with proper logging",
-      "description": "There are 49 console.log statements across 11 files instead of using the project's existing pino-based logger (createLogger). This leads to inconsistent logging, lost logs in production, and makes debugging harder.",
-      "rationale": "Production applications should use structured logging with proper log levels, timestamps, and context. Console.log statements don't support log levels, are hard to filter, and don't integrate with log aggregation tools. The project already has a logger service that should be used consistently.",
-      "category": "code_smells",
-      "severity": "minor",
-      "affectedFiles": [
-        "src/routes/manager.routes.ts",
-        "src/services/strapi-client.ts",
-        "src/services/skill-sync-service.ts",
-        "src/web/manager/hooks/useAgentCreator.ts",
-        "src/web/manager/hooks/useSkillCreator.ts",
-        "src/web/manager/hooks/useSkillTraining.ts",
-        "src/web/manager/components/SkillCreationModal.tsx"
-      ],
-      "currentState": "49 console.log statements scattered across backend routes, services, and frontend hooks. Some files use both console.log and the logger.",
-      "proposedChange": "1. For backend files: Replace console.log with logger.debug/info/warn/error using the existing createLogger service\n2. For frontend files: Create a frontend-specific logger wrapper that:\n   - Uses console methods in development\n   - Can be configured to send to a logging service in production\n   - Supports structured context objects\n3. Add an ESLint rule (no-console) to prevent future console.log usage",
-      "codeExample": "// Current:\nconsole.log(`List agents: found ${agents.length} agents`);\nconsole.log(`  - Agent ${agent.id} has ${agent.metadata.inputFields.length} input fields`);\n\n// Proposed (backend):\nconst logger = createLogger('ManagerRoutes');\nlogger.info('List agents', { count: agents.length });\nlogger.debug('Agent input fields', { agentId: agent.id, fieldCount: agent.metadata.inputFields.length });\n\n// Proposed (frontend):\nimport { logger } from '@/lib/logger';\nlogger.debug('Agent input fields', { agentId: agent.id });",
-      "bestPractice": "Use structured logging with appropriate log levels. Debug logs for development details, info for important events, warn for recoverable issues, error for failures.",
-      "metrics": {
-        "lineCount": null,
-        "complexity": null,
-        "duplicateLines": null,
-        "testCoverage": null
-      },
-      "estimatedEffort": "small",
-      "breakingChange": false,
-      "prerequisites": null
-    },
-    {
-      "id": "cq-005",
-      "type": "code_quality",
-      "title": "Add ESLint configuration for code consistency",
-      "description": "The project has no ESLint configuration in the root directory. This means there's no automated enforcement of coding standards, potential bugs from unused variables go undetected, and code style inconsistencies can accumulate over time.",
-      "rationale": "ESLint helps catch bugs early (unused variables, unreachable code), enforces coding conventions, and integrates with editors for real-time feedback. Combined with Prettier, it ensures consistent code formatting across the team.",
-      "category": "linting",
-      "severity": "minor",
-      "affectedFiles": [
-        "Project root (missing eslint.config.js)",
-        "package.json (missing eslint dependencies)"
-      ],
-      "currentState": "No ESLint configuration. TypeScript has noUnusedLocals and noUnusedParameters set to false, allowing dead code to accumulate. No automated code quality checks in place.",
-      "proposedChange": "1. Add ESLint with TypeScript support:\n   - eslint, @typescript-eslint/parser, @typescript-eslint/eslint-plugin\n2. Add React-specific rules: eslint-plugin-react, eslint-plugin-react-hooks\n3. Configure recommended rules plus:\n   - no-console (warn)\n   - @typescript-eslint/no-explicit-any (warn)\n   - @typescript-eslint/no-unused-vars (error)\n   - react-hooks/exhaustive-deps (warn)\n4. Add lint script to package.json\n5. Consider adding Husky for pre-commit linting",
-      "codeExample": "// eslint.config.js\nimport typescript from '@typescript-eslint/eslint-plugin';\nimport react from 'eslint-plugin-react';\nimport reactHooks from 'eslint-plugin-react-hooks';\n\nexport default [\n  {\n    plugins: {\n      '@typescript-eslint': typescript,\n      'react': react,\n      'react-hooks': reactHooks\n    },\n    rules: {\n      'no-console': 'warn',\n      '@typescript-eslint/no-explicit-any': 'warn',\n      '@typescript-eslint/no-unused-vars': 'error',\n      'react-hooks/exhaustive-deps': 'warn'\n    }\n  }\n];\n\n// package.json\n\"scripts\": {\n  \"lint\": \"eslint src --ext .ts,.tsx\",\n  \"lint:fix\": \"eslint src --ext .ts,.tsx --fix\"\n}",
-      "bestPractice": "Every TypeScript project should have linting configured. Start with recommended rules and gradually enable stricter checks as the codebase is cleaned up.",
-      "metrics": {
-        "lineCount": null,
-        "complexity": null,
-        "duplicateLines": null,
-        "testCoverage": null
-      },
-      "estimatedEffort": "small",
-      "breakingChange": false,
-      "prerequisites": [
-        "Consider fixing existing lint errors incrementally rather than all at once"
-      ]
     }
   ],
   "project_context": {
@@ -483,52 +336,55 @@
       "TypeScript",
       "React"
     ],
-    "target_audience": "Developers building AI applications with Claude who need to manage, configure, and execute Claude agents through a visual interface rather than command-line tools",
+    "target_audience": "Developers and technical teams who want to visually manage and execute Claude AI agents without CLI complexity",
     "planned_features": [
-      "Conversation Deletion",
+      "SDK Permission Handling",
       "Skill Usage Analytics",
-      "Create architecture documentation with system diagrams",
-      "Document frontend React components and hooks",
+      "Flows sayfas\u0131n\u0131n react flow ile s\u00fcr\u00fckle b\u0131rak ve aralar\u0131nda ili\u015fki veri transferleri yapan n8n , langchain benzer bir yap\u0131da olmas\u0131",
+      "Fix Missing EyeIcon Export",
+      "Specification: Create Frontend Tests and Bug Tracking Task",
+      "Workflow Marketplace",
+      "Agent Comparison & Diff View",
+      "Enhanced Real-Time Execution Monitoring",
       "Add JSDoc documentation for backend services",
-      "Webhook Triggers",
-      "Execution Queue and Rate Limiting",
-      "Sensitive Tools Permission Prompt",
-      "Caching Layer",
-      "Agent Marketplace - Publishing",
-      "Execution Action Logging",
-      "Execution Trace Visualization",
-      "Agent Versioning",
-      "Agent Marketplace - Discovery",
-      "Improved Error Handling and Recovery",
-      "Complete PostgreSQL Migration",
-      "Role-Based Access Control (RBAC)",
-      "Agent Input Fields Implementation",
-      "Skills Import Ordering",
-      "Centralized Dashboard",
-      "MCP Server Tools Integration",
-      "Model Version Pinning",
-      "Agent Templates Library",
-      "Message ID Tracking Improvement",
-      "Batch Operations API",
-      "Team Workspaces",
-      "Flow Builder Execution",
+      "API Rate Limiting & Quotas",
+      "Execution History & Logs",
+      "Scheduled Agent Executions",
+      "Uygulaman\u0131n genel yap\u0131s\u0131n\u0131 d\u00fczenleyece\u011fiz; yani uygulaman\u0131n amac\u0131 vs. bunlar ne olacaksa onu belirleyece\u011fiz",
+      "User Authentication & Authorization",
+      "Enhanced MCP Server Configuration",
+      "Resource Access Control",
+      "Agent Collaboration & Chaining",
       "Conversation History Retrieval",
-      "Uygulaman\u0131n genel yap\u0131s\u0131n\u0131 d\u00fczenleyece\u011fiz; yani uygulaman\u0131n amac\u0131 vs. bunlar ne olacaksa onu belirleyece\u011fiz"
+      "Comprehensive Audit Logging",
+      "Specification: Fix API Errors and React Router Deprecation Warnings",
+      "Workflow Sharing & Export",
+      "Enterprise SSO Integration",
+      "Agent Execution Input Fields",
+      "Replace Simulated API Calls",
+      "Complete Conversation Management",
+      "Document frontend React components and hooks",
+      "Agent Analytics Dashboard",
+      "Agent Version Control",
+      "Skill Training Insights",
+      "Complete PostgreSQL Migration",
+      "Plugin System",
+      "Agent Templates Gallery",
+      "Multi-User Team Support",
+      "Create architecture documentation with system diagrams"
     ]
   },
   "summary": {
-    "total_ideas": 20,
+    "total_ideas": 15,
     "by_type": {
       "code_improvements": 5,
       "ui_ux_improvements": 5,
-      "documentation_gaps": 5,
-      "code_quality": 5
+      "documentation_gaps": 5
     },
     "by_status": {
-      "draft": 17,
-      "archived": 3
+      "draft": 15
     }
   },
-  "generated_at": "2026-01-02T09:48:02.678113",
-  "updated_at": "2026-01-02T12:17:08.710744"
+  "generated_at": "2026-01-02T21:48:43.506621",
+  "updated_at": "2026-01-02T21:48:43.506627"
 }

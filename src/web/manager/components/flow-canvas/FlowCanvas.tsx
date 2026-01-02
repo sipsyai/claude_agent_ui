@@ -104,7 +104,6 @@ import {
   Connection,
   Edge,
   useReactFlow,
-  ReactFlowProvider,
   Panel,
   SelectionMode,
   OnNodesChange,
@@ -455,15 +454,11 @@ const FlowCanvasInner: React.FC<FlowCanvasProps> = ({
 /**
  * FlowCanvas Component
  *
- * Main component that wraps FlowCanvasInner with ReactFlowProvider.
- * This ensures React Flow hooks are available in the inner component.
+ * Main component that renders the React Flow canvas.
+ * Note: ReactFlowProvider should be provided by parent component (FlowEditorVisual).
  */
 export const FlowCanvas: React.FC<FlowCanvasProps> = (props) => {
-  return (
-    <ReactFlowProvider>
-      <FlowCanvasInner {...props} />
-    </ReactFlowProvider>
-  );
+  return <FlowCanvasInner {...props} />;
 };
 
 /**

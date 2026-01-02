@@ -47,7 +47,7 @@ export default factories.createCoreService('api::flow.flow', ({ strapi }) => ({
   /**
    * Update flow status
    */
-  async updateStatus(id: number, status: string) {
+  async updateStatus(id: number, status: 'draft' | 'active' | 'paused' | 'archived') {
     return await strapi.entityService.update('api::flow.flow', id, {
       data: { status },
     });

@@ -1,0 +1,358 @@
+{
+  "integrations_researched": [
+    {
+      "name": "Vitest",
+      "type": "library",
+      "description": "A blazing fast unit test framework powered by Vite, designed as a Jest-compatible testing solution for Vite projects",
+      "verified_package": {
+        "name": "vitest",
+        "install_command": "npm install --save-dev vitest",
+        "latest_versions": ["v4.0.7", "v3.2.4"],
+        "verified": true,
+        "npm_url": "https://www.npmjs.com/package/vitest"
+      },
+      "api_patterns": {
+        "imports": [
+          "import { describe, it, expect } from 'vitest'",
+          "import { render, screen } from '@testing-library/react'"
+        ],
+        "basic_test_example": "describe('Component', () => { it('should render', () => { expect(true).toBe(true); }); });",
+        "configuration_file": "vitest.config.ts or vitest.config.js",
+        "inherits_from_vite": "Vitest automatically reads vite.config.ts if present, inheriting plugins and setup"
+      },
+      "configuration": {
+        "env_vars": [],
+        "config_files": [
+          "vitest.config.ts"
+        ],
+        "vite_integration": "Vitest reads from existing vite.config.ts (project already has one)",
+        "jsdom_requirement": "Need jsdom for DOM testing in Node.js environment",
+        "dependencies": [
+          "vitest",
+          "@testing-library/react",
+          "@testing-library/jest-dom",
+          "jsdom"
+        ]
+      },
+      "infrastructure": {
+        "requires_docker": false,
+        "requires_browser": false,
+        "node_environment": "Node.js with jsdom for DOM simulation"
+      },
+      "integration_with_project": {
+        "project_already_uses": "Vite 7.0.6, React 18.2.0, TypeScript 5.3.3",
+        "integration_level": "Perfect fit - Vitest is built for Vite projects",
+        "configuration_inheritance": "Can automatically use existing vite.config.ts"
+      },
+      "gotchas": [
+        "Must install jsdom separately for DOM testing in Node.js",
+        "Watch mode works best with '--run' flag for CI/CD",
+        "Need to configure setupFiles in vitest.config.ts for @testing-library/jest-dom matchers",
+        "TypeScript support requires no extra configuration if already present in project"
+      ],
+      "research_sources": [
+        "https://vitest.dev/guide/",
+        "https://vitest.dev/config/",
+        "https://dev.to/janoskocs/setting-up-a-react-project-using-vite-typescript-vitest-2gl2",
+        "https://www.typescriptcourse.com/tutorials/build-a-dynamic-avatar-component-with-react-typescript/set-up-testing-with-vitest-and-testing-library",
+        "https://johnsmilga.com/articles/2024/10/15"
+      ]
+    },
+    {
+      "name": "React Testing Library",
+      "type": "library",
+      "description": "A lightweight testing library providing utilities for testing React components by simulating user interactions and focusing on accessibility",
+      "verified_package": {
+        "name": "@testing-library/react",
+        "install_command": "npm install --save-dev @testing-library/react",
+        "version": ">=18 for React 18 compatibility",
+        "verified": true,
+        "npm_url": "https://www.npmjs.com/package/@testing-library/react"
+      },
+      "api_patterns": {
+        "core_imports": [
+          "import { render, screen } from '@testing-library/react'",
+          "import userEvent from '@testing-library/user-event'"
+        ],
+        "key_functions": [
+          "render(component) - Renders a React component for testing",
+          "screen.getByText(text) - Query elements by text content",
+          "screen.getByRole(role) - Query elements by ARIA role",
+          "screen.getByPlaceholderText(text) - Query by placeholder",
+          "waitFor(callback) - Wait for async operations",
+          "userEvent.click(element) - Simulate user interactions"
+        ],
+        "guiding_principle": "Tests should resemble how software is used - focus on user interactions not implementation details"
+      },
+      "configuration": {
+        "peer_dependencies": [
+          "react",
+          "react-dom"
+        ],
+        "optional_packages": [
+          "@testing-library/jest-dom - Custom matchers for DOM assertions",
+          "@testing-library/user-event - User interaction simulation"
+        ],
+        "dom_testing_environment": "Requires jsdom or happy-dom for DOM simulation in Node.js"
+      },
+      "infrastructure": {
+        "requires_docker": false,
+        "requires_browser": false,
+        "works_with": "Any test runner (Jest, Vitest, etc.)"
+      },
+      "integration_with_project": {
+        "project_already_uses": "React 18.2.0, TypeScript 5.3.3, Radix UI components",
+        "compatibility": "Fully compatible with existing React setup",
+        "accessibility_focus": "Perfect for testing Radix UI components which are accessibility-focused"
+      },
+      "gotchas": [
+        "Avoid testing implementation details - test user behavior",
+        "Don't query by testid unless necessary - prefer semantic queries",
+        "async queries require waitFor() for elements rendered after user interaction",
+        "userEvent is preferred over fireEvent for simulating real user behavior",
+        "Each render() creates a new DOM instance - wrap multiple renders in describe block or use beforeEach"
+      ],
+      "research_sources": [
+        "https://testing-library.com/docs/dom-testing-library/install/",
+        "https://www.npmjs.com/package/@testing-library/react",
+        "https://leandroaps.medium.com/how-to-install-react-testing-library-with-yarn-and-npm-d264b37ffdf8",
+        "https://www.codementor.io/@rajjeet/getting-started-with-testing-in-react-react-testing-library-jest-1do0xulpx5"
+      ]
+    },
+    {
+      "name": "@testing-library/jest-dom",
+      "type": "library",
+      "description": "Custom Jest matchers for testing the state of the DOM, providing assertions like toBeInTheDocument(), toBeVisible(), etc.",
+      "verified_package": {
+        "name": "@testing-library/jest-dom",
+        "install_command": "npm install --save-dev @testing-library/jest-dom",
+        "latest_version": "6.9.1",
+        "verified": true,
+        "npm_url": "https://www.npmjs.com/package/@testing-library/jest-dom"
+      },
+      "api_patterns": {
+        "setup_import": "import '@testing-library/jest-dom' (in setupFiles)",
+        "common_matchers": [
+          "expect(element).toBeInTheDocument()",
+          "expect(element).toBeVisible()",
+          "expect(element).toBeDisabled()",
+          "expect(element).toHaveTextContent(text)",
+          "expect(element).toHaveAttribute(attr, value)",
+          "expect(element).toHaveClass(className)"
+        ]
+      },
+      "configuration": {
+        "setup_required": true,
+        "vitest_setup": "In vitest.config.ts, add setupFiles: ['./src/test/setup.ts']",
+        "setup_file_content": "import '@testing-library/jest-dom/vitest' (for Vitest) or import '@testing-library/jest-dom/jest-globals' (for Jest)"
+      },
+      "integration_with_project": {
+        "required_for": "Enhanced DOM assertions in Vitest tests",
+        "setup_location": "Should be in a setup file referenced by vitest.config.ts"
+      },
+      "gotchas": [
+        "Must be imported in setup file, not in individual test files",
+        "Different import path for Vitest vs Jest",
+        "Module must be installed as devDependency"
+      ],
+      "research_sources": [
+        "https://www.npmjs.com/package/@testing-library/jest-dom",
+        "https://testing-library.com/docs/dom-testing-library/install/",
+        "https://vitaneri.com/posts/setting-up-vitest-testing-library-and-jest-dom-in-your-vite-project"
+      ]
+    },
+    {
+      "name": "jsdom",
+      "type": "library",
+      "description": "A JavaScript implementation of web standards, providing a DOM implementation for testing React components in Node.js without a real browser",
+      "verified_package": {
+        "name": "jsdom",
+        "install_command": "npm install --save-dev jsdom",
+        "verified": true,
+        "npm_url": "https://www.npmjs.com/package/jsdom"
+      },
+      "api_patterns": {
+        "usage": "Configured automatically by Vitest when specified in vitest.config.ts",
+        "configuration_option": "test: { environment: 'jsdom' } in vitest.config.ts"
+      },
+      "configuration": {
+        "vitest_config": "Set environment: 'jsdom' in vitest.config.ts",
+        "dom_simulation": "Simulates DOM API, window, document, etc. for testing in Node.js"
+      },
+      "infrastructure": {
+        "requires_docker": false,
+        "requires_browser": false,
+        "provides": "Fake DOM implementation for Node.js testing"
+      },
+      "gotchas": [
+        "jsdom is slower than happy-dom but more complete",
+        "happy-dom is a lightweight alternative if performance is critical",
+        "JSDOM may not support all newer browser APIs - check compatibility",
+        "Some browser features require manual setup (e.g., localStorage, cookies)"
+      ],
+      "research_sources": [
+        "https://www.npmjs.com/package/jsdom",
+        "https://github.com/jsdom/jsdom"
+      ]
+    },
+    {
+      "name": "Playwright",
+      "type": "library",
+      "description": "A cross-browser automation library for reliable end-to-end testing of web applications across Chromium, Firefox, and WebKit",
+      "verified_package": {
+        "name": "@playwright/test",
+        "install_command": "npm init playwright@latest --save-dev (recommended) OR npm install --save-dev @playwright/test",
+        "latest_version": "v1.51.0",
+        "verified": true,
+        "npm_url": "https://www.npmjs.com/package/@playwright/test"
+      },
+      "api_patterns": {
+        "imports": [
+          "import { test, expect } from '@playwright/test'",
+          "import { Page, Browser } from '@playwright/test'"
+        ],
+        "basic_test": "test('should navigate to page', async ({ page }) => { await page.goto('http://localhost:3000'); await expect(page.locator('h1')).toBeVisible(); });",
+        "key_methods": [
+          "page.goto(url) - Navigate to URL",
+          "page.locator(selector) - Find elements",
+          "page.click(selector) - Click elements",
+          "page.fill(selector, text) - Fill input fields",
+          "expect(locator).toBeVisible() - Assert visibility"
+        ]
+      },
+      "configuration": {
+        "config_file": "playwright.config.ts (generated by init)",
+        "key_config_options": [
+          "baseURL - Base URL for tests (e.g., http://localhost:3000)",
+          "webServer - Start dev server before tests",
+          "testDir - Directory containing tests",
+          "use > browserType - Browser to test (chromium, firefox, webkit)",
+          "projects - Define multiple browser configurations",
+          "retries - Auto-retry failed tests",
+          "timeout - Test timeout in milliseconds"
+        ],
+        "browsers_required": "Must run 'npx playwright install --with-deps' to download browser binaries"
+      },
+      "infrastructure": {
+        "requires_docker": false,
+        "browser_automation": "Downloads and manages browser binaries automatically",
+        "cross_browser": "Tests on Chromium, Firefox, WebKit (and mobile emulation)"
+      },
+      "integration_with_project": {
+        "current_e2e_tests": "Project already has bash-based e2e tests in ./tests/e2e/",
+        "can_supplement": "Playwright could be added alongside or replace existing e2e tests",
+        "recommended_location": "./tests/e2e/playwright/ or ./e2e/",
+        "frontend_testing": "Better for e2e than component testing - use Vitest+RTL for component tests"
+      },
+      "gotchas": [
+        "Browser binaries are large (~500MB total for all browsers)",
+        "Must run 'npx playwright install' after npm install",
+        "Tests run sequentially by default for file stability - use --workers for parallel execution",
+        "baseURL must match actual dev server port (project uses port 3000 for frontend)",
+        "Headless mode enabled by default - use --headed flag for debugging",
+        "Tests should wait for app to be ready (use webServer config)",
+        "Selectors should be stable - avoid relying on implementation details"
+      ],
+      "research_sources": [
+        "https://playwright.dev/docs/intro",
+        "https://playwright.dev/docs/api/class-locator",
+        "https://dev.to/dutchskull/how-to-create-e2e-tests-for-react-using-playwright-4fgp",
+        "https://medium.com/@oshadhadushan/end-to-end-testing-in-react-with-playwright-a-step-by-step-integration-guide-00e32effbd15",
+        "https://articles.mergify.com/e-2-e-testing-react-playwright/"
+      ]
+    }
+  ],
+  "testing_framework_recommendation": {
+    "test_types": {
+      "unit_tests_component_tests": {
+        "recommended_tools": [
+          "Vitest (test runner)",
+          "React Testing Library (component testing utilities)",
+          "@testing-library/jest-dom (DOM assertions)",
+          "jsdom (DOM environment simulation)"
+        ],
+        "rationale": "Vitest is optimized for Vite projects (current project uses Vite 7.0.6), offers Jest-compatible API, and provides excellent TypeScript support. React Testing Library encourages testing user behavior over implementation details."
+      },
+      "end_to_end_tests": {
+        "recommended_tools": [
+          "Playwright (or supplement existing bash e2e tests)"
+        ],
+        "rationale": "Project already has e2e test infrastructure (bash scripts). Playwright could be added for more sophisticated browser automation testing if needed.",
+        "current_state": "Project has ./tests/e2e/test-runner.sh with existing e2e test pattern"
+      }
+    }
+  },
+  "project_specific_findings": {
+    "current_tech_stack": {
+      "frontend_framework": "React 18.2.0 with TypeScript 5.3.3",
+      "build_tool": "Vite 7.0.6",
+      "ui_library": "Radix UI (accessibility-focused)",
+      "state_management": "React Context API",
+      "routing": "React Router v6.22.0"
+    },
+    "existing_test_infrastructure": {
+      "test_scripts": "bash-based tests in ./tests/ directory",
+      "e2e_tests": "./tests/e2e/test-runner.sh",
+      "performance_tests": "./tests/performance/benchmark.sh",
+      "security_tests": "./tests/security/security-audit.sh",
+      "missing": "Frontend component unit tests (no Jest/Vitest configuration found)"
+    },
+    "vite_already_configured": "Project has vite.config.ts with React plugin - Vitest can inherit this configuration automatically",
+    "typescript_support": "Project uses TypeScript - Vitest provides first-class TypeScript support"
+  },
+  "unverified_claims": [
+    {
+      "claim": "auto claude system for bug task creation",
+      "reason": "Requirements mention creating new tasks in 'auto claude' for discovered bugs, but system mechanism not fully documented",
+      "risk_level": "low",
+      "notes": "Project has .auto-claude/specs/ directory structure suggesting task creation is possible, but format/API for creating tasks from tests not verified"
+    }
+  ],
+  "implementation_recommendations": [
+    "Use Vitest for unit/component tests - it's purpose-built for Vite projects and has perfect React/TypeScript support",
+    "Install React Testing Library + @testing-library/jest-dom for component testing utilities aligned with modern best practices",
+    "Configure jsdom as test environment in vitest.config.ts",
+    "Create ./src/test/setup.ts to import @testing-library/jest-dom matchers",
+    "Create test files alongside components: ComponentName.test.tsx for each component",
+    "Focus tests on user behavior and accessibility (project uses Radix UI which is accessibility-focused)",
+    "For React Router v6 components, use MemoryRouter in tests to simulate routing",
+    "Consider adding Vitest UI dashboard for better test visualization",
+    "Integrate tests into CI/CD pipeline by adding npm script: 'test:components' for component tests",
+    "For bug tracking integration, establish pattern for test file comments or separate bug log that can trigger .auto-claude/specs task creation"
+  ],
+  "missing_information": [
+    "Exact scope of frontend components to test (which pages/components are priority)",
+    "Specific bug tracking format expected by 'auto claude' system",
+    "Target test coverage percentage",
+    "Whether to keep existing bash-based e2e tests or migrate to Playwright",
+    "Whether to test with visual regression testing (Playwright Screenshot API)"
+  ],
+  "installation_commands_summary": {
+    "all_at_once": "npm install --save-dev vitest @testing-library/react @testing-library/jest-dom jsdom",
+    "individual": [
+      "npm install --save-dev vitest",
+      "npm install --save-dev @testing-library/react",
+      "npm install --save-dev @testing-library/jest-dom",
+      "npm install --save-dev jsdom"
+    ]
+  },
+  "research_completion_timestamp": "2026-01-02T21:45:00Z",
+  "research_coverage": {
+    "context7_libraries_queried": [
+      "/vitest-dev/vitest",
+      "/websites/testing-library",
+      "/microsoft/playwright"
+    ],
+    "web_search_queries": [
+      "Vitest React TypeScript Vite setup",
+      "React Testing Library installation npm package API",
+      "Playwright npm installation React e2e testing configuration",
+      "@testing-library/jest-dom npm package installation"
+    ],
+    "verification_methods": [
+      "Context7 MCP resolve-library-id for official package resolution",
+      "Web search for documentation and tutorials",
+      "Local project file inspection (package.json, vite.config.ts)"
+    ]
+  }
+}

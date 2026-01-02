@@ -701,6 +701,7 @@ export interface ApiFlowFlow extends Struct.CollectionTypeSchema {
       Schema.Attribute.DefaultTo<[]>;
     outputSchema: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
     publishedAt: Schema.Attribute.DateTime;
+    schedule: Schema.Attribute.Component<'flow.schedule', false>;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
     status: Schema.Attribute.Enumeration<
       ['draft', 'active', 'paused', 'archived']
@@ -711,6 +712,9 @@ export interface ApiFlowFlow extends Struct.CollectionTypeSchema {
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     version: Schema.Attribute.String & Schema.Attribute.DefaultTo<'1.0.0'>;
+    webhookEnabled: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    webhookSecret: Schema.Attribute.String;
   };
 }
 

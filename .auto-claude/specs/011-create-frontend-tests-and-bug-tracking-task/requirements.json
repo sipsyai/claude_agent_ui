@@ -1,0 +1,4 @@
+{
+  "task_description": "make frontend tests if you find bug create new task in auto claude . playwright mcp ile testlerini yap bug bulursan aç bu kadar basit .",
+  "workflow_type": "testing"
+}

@@ -1,6 +1,6 @@
 {
-  "enabled": false,
-  "reason": "Graphiti not configured",
+  "enabled": true,
   "hints": [],
-  "created_at": "2026-01-02T09:40:44.906440"
+  "hint_count": 0,
+  "created_at": "2026-01-02T21:28:18.884346"
 }

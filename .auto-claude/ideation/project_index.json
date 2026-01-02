@@ -30,7 +30,6 @@
         "@assistant-ui/react",
         "@assistant-ui/react-markdown",
         "@modelcontextprotocol/sdk",
-        "@xyflow/react",
         "@musistudio/llms",
         "@radix-ui/react-checkbox",
         "@radix-ui/react-dialog",
@@ -42,9 +41,10 @@
         "@radix-ui/react-tabs",
         "@radix-ui/react-tooltip",
         "@types/better-sqlite3",
-        "@types/cookie-parser",
+        "@types/dagre",
         "@types/eventsource",
-        "@types/react-syntax-highlighter"
+        "@types/react-syntax-highlighter",
+        "@types/web-push"
       ],
       "dev_dependencies": [
         "@tailwindcss/typography",
@@ -291,11 +291,74 @@
             "type": "string",
             "sensitive": false,
             "required": true
+          },
+          "DATABASE_POOL_MIN": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_POOL_MAX": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_ACQUIRE_TIMEOUT": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_CREATE_TIMEOUT": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_DESTROY_TIMEOUT": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_IDLE_TIMEOUT": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_REAP_INTERVAL": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_RETRY_INTERVAL": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_DEBUG": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
           }
         },
-        "required_count": 33,
+        "required_count": 42,
         "optional_count": 0,
-        "detected_count": 33
+        "detected_count": 42
       },
       "api": {
         "routes": [
@@ -304,888 +367,6 @@
             "methods": [
               "GET"
             ],
-            "file": "dist/server.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/api/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/server.js",
-            "framework": "Express",
-            "requires_auth": true
-          },
-          {
-            "path": "/api/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/server.js",
-            "framework": "Express",
-            "requires_auth": true
-          },
-          {
-            "path": "*",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/server.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/route",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/middleware/error-handler.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/chat.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/chat.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/chat.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": "dist/routes/chat.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/archive",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/chat.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/messages",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/chat.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/messages",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/chat.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:sessionId/messages/:streamId/cancel",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/chat.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/attachments",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/chat.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/validate",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/commands",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/analyze",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/commands/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills-usage",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/training-history",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train/message",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/history-path",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/test",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/toggle",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/export",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/import",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/bulk-delete",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/create-with-claude/message",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/create-with-claude/message",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/import",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/import",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/training-agent-config",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/training-agent-config",
-            "methods": [
-              "PUT"
-            ],
-            "file": "dist/routes/manager.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/flow.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/flow.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/flow.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": "dist/routes/flow.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": "dist/routes/flow.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/task.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/stats",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/task.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/task.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/task.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/task.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": "dist/routes/task.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/login",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/auth.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/logout",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/auth.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/status",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/auth.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/key",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/auth.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/flow-execution.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/hello.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agent/:id",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/execution.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/task/:id",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/execution.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/conversation/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/execution.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/conversation/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": "dist/routes/execution.routes.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train/message",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/refresh-tools",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/upload",
-            "methods": [
-              "POST"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/upload/:fileId",
-            "methods": [
-              "DELETE"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/health",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/routes/manager.routes.strapi.js",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/health",
-            "methods": [
-              "GET"
-            ],
             "file": "src/server.ts",
             "framework": "Express",
             "requires_auth": false
@@ -1197,7 +378,7 @@
             ],
             "file": "src/server.ts",
             "framework": "Express",
-            "requires_auth": true
+            "requires_auth": false
           },
           {
             "path": "/api/skills",
@@ -1206,7 +387,7 @@
             ],
             "file": "src/server.ts",
             "framework": "Express",
-            "requires_auth": true
+            "requires_auth": false
           },
           {
             "path": "*",
@@ -1214,15 +395,6 @@
               "GET"
             ],
             "file": "src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/route",
-            "methods": [
-              "GET"
-            ],
-            "file": "dist/middleware/error-handler.d.ts",
             "framework": "Express",
             "requires_auth": false
           },
@@ -1506,6 +678,42 @@
             "requires_auth": false
           },
           {
+            "path": "/flows/:identifier",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/webhook.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows/:identifier/info",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/webhook.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows/:identifier/test",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/webhook.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/flows",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/webhook.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
             "path": "/validate",
             "methods": [
               "POST"
@@ -1803,24 +1011,6 @@
             "requires_auth": false
           },
           {
-            "path": "/agents/import",
-            "methods": [
-              "POST"
-            ],
-            "file": "src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/import",
-            "methods": [
-              "POST"
-            ],
-            "file": "src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
             "path": "/training-agent-config",
             "methods": [
               "GET"
@@ -1929,6 +1119,51 @@
             "requires_auth": false
           },
           {
+            "path": "/templates",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/search",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/category/:category",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/:templateId",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/templates/:templateId/create",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
             "path": "/:id",
             "methods": [
               "GET"
@@ -1965,38 +1200,110 @@
             "requires_auth": false
           },
           {
-            "path": "/login",
+            "path": "/:id/execute",
             "methods": [
               "POST"
             ],
-            "file": "src/routes/auth.routes.ts",
+            "file": "src/routes/flow.routes.ts",
             "framework": "Express",
             "requires_auth": false
           },
           {
-            "path": "/logout",
+            "path": "/executions/running",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id/cancel",
             "methods": [
               "POST"
             ],
-            "file": "src/routes/auth.routes.ts",
+            "file": "src/routes/flow.routes.ts",
             "framework": "Express",
             "requires_auth": false
           },
           {
-            "path": "/status",
+            "path": "/executions/:id/stream",
             "methods": [
               "GET"
             ],
-            "file": "src/routes/auth.routes.ts",
+            "file": "src/routes/flow.routes.ts",
             "framework": "Express",
             "requires_auth": false
           },
           {
-            "path": "/key",
+            "path": "/:id/executions",
             "methods": [
               "GET"
             ],
-            "file": "src/routes/auth.routes.ts",
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/stats/global",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/stats/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/recent",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/activate",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/deactivate",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/duplicate",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/routes/flow.routes.ts",
             "framework": "Express",
             "requires_auth": false
           },
@@ -2055,15 +1362,6 @@
             "requires_auth": false
           },
           {
-            "path": "/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": "src/routes/flow-execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
             "path": "/",
             "methods": [
               "GET"
@@ -2071,21 +1369,124 @@
             "file": "src/routes/hello.routes.ts",
             "framework": "Express",
             "requires_auth": false
+          },
+          {
+            "path": "/api/config",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/config-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/public-key",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/available",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/stats",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/subscribe",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/unsubscribe",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/subscriptions",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/logs",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/log-stream-buffer.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/logs/clear",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/log-stream-buffer.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/webhooks/skill-updated",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/skill-sync-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/webhooks/skill-deleted",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/skill-sync-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/health",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/chat-service.ts",
+            "framework": "Express",
+            "requires_auth": false
           }
         ],
-        "total_routes": 197,
+        "total_routes": 124,
         "methods": [
           "GET",
-          "PUT",
+          "DELETE",
           "POST",
-          "DELETE"
+          "PUT"
         ],
-        "protected_routes": [
-          "/api/agents",
-          "/api/skills",
-          "/api/agents",
-          "/api/skills"
-        ]
+        "protected_routes": []
       },
       "services": {
         "databases": [
@@ -2103,7 +1504,6 @@
       },
       "monitoring": {
         "health_checks": [
-          "/health",
           "/health",
           "/health",
           "/health"

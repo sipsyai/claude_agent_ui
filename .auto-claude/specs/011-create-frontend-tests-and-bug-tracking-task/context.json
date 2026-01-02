@@ -1,0 +1,153 @@
+{
+  "task_description": "Create comprehensive unit test suite for frontend using Vitest and React Testing Library. Auto-generate bug tracking tasks when issues are discovered.",
+  "workflow_type": "testing",
+  "scoped_services": [
+    "frontend"
+  ],
+  "frontend_service": {
+    "name": "Frontend (Main)",
+    "path": "src/web/",
+    "technology_stack": {
+      "language": "TypeScript 5.3.3",
+      "framework": "React 18.2.0",
+      "build_tool": "Vite 7.0.6",
+      "ui_library": "Radix UI",
+      "styling": "Tailwind CSS",
+      "routing": "React Router v6.22.0",
+      "package_manager": "npm"
+    },
+    "entry_point": "src/web/main.tsx",
+    "dev_port": 3000,
+    "production_port": 3001
+  },
+  "files_to_modify": [
+    "package.json"
+  ],
+  "files_to_create": [
+    "vitest.config.ts",
+    "src/test/setup.ts",
+    "tests/components/DashboardPage.test.tsx",
+    "tests/components/ChatPage.test.tsx",
+    "tests/components/AgentsPage.test.tsx",
+    "tests/components/FlowDetailPage.test.tsx",
+    "tests/components/ui/Button.test.tsx",
+    "tests/components/ui/Card.test.tsx",
+    "tests/components/ui/Dialog.test.tsx",
+    "tests/hooks/useAgentCreator.test.ts",
+    "tests/hooks/useSkillCreator.test.ts",
+    "tests/hooks/useFlowKeyboardShortcuts.test.ts",
+    "tests/utils/helpers.test.ts",
+    "tests/utils/formatters.test.ts",
+    "tests/services/api.test.ts",
+    "tests/services/flow-api.test.ts",
+    "BUG_DISCOVERY_GUIDE.md",
+    "tests/BUG_TEMPLATE.md",
+    "tests/setup.ts",
+    "tests/mocks/factories.ts",
+    "tests/mocks/handlers.ts"
+  ],
+  "files_to_reference": [
+    "src/web/manager/components/DashboardPage.tsx",
+    "src/web/manager/components/ChatPage.tsx",
+    "src/web/manager/components/AgentsPage.tsx",
+    "src/web/manager/components/FlowDetailPage.tsx",
+    "src/web/manager/components/ui/Button.tsx",
+    "src/web/manager/hooks/useAgentCreator.ts",
+    "src/web/manager/hooks/useSkillCreator.ts",
+    "src/web/manager/hooks/useFlowKeyboardShortcuts.ts",
+    "src/web/manager/utils/flow-validator.ts",
+    "src/web/manager/services/api.ts"
+  ],
+  "testing_framework": {
+    "runner": "Vitest",
+    "testing_library": "React Testing Library",
+    "dom_implementation": "jsdom",
+    "matchers": "@testing-library/jest-dom",
+    "user_interaction": "@testing-library/user-event"
+  },
+  "patterns": {
+    "component_testing": {
+      "description": "Use React Testing Library with semantic queries (getByRole, getByLabelText, getByText) and userEvent for interactions",
+      "example": "render(<Component />); const button = screen.getByRole('button', { name: /submit/i }); await userEvent.click(button);"
+    },
+    "radix_ui_testing": {
+      "description": "Test Radix UI components using their WAI-ARIA roles and accessibility attributes",
+      "example": "Radix components expose standard roles (button, dialog, etc.) that can be queried with screen.getByRole()"
+    },
+    "async_operations": {
+      "description": "Use waitFor() for async state updates and data fetching",
+      "example": "await waitFor(() => { expect(screen.getByText(/loaded/i)).toBeInTheDocument(); })"
+    },
+    "mock_api_calls": {
+      "description": "Mock fetch/API calls to avoid external dependencies",
+      "example": "vi.mocked(fetch).mockResolvedValueOnce(Response.ok)"
+    },
+    "test_file_naming": {
+      "description": "Use consistent naming: ComponentName.test.tsx or FunctionName.test.ts",
+      "files_follow_pattern": true
+    }
+  },
+  "existing_implementations": {
+    "component_examples": "src/web/manager/components/ contains 50+ React components using Radix UI and Tailwind CSS",
+    "hook_examples": "src/web/manager/hooks/ contains custom hooks like useAgentCreator, useSkillCreator",
+    "utility_examples": "src/web/manager/utils/ contains flow-validator.ts, connection-validator.ts, etc.",
+    "context_usage": "src/web/manager/contexts/ contains FlowCanvasContext and ChatDisplayContext",
+    "api_integration": "src/web/manager/services/api.ts handles API communication"
+  },
+  "dependencies_to_install": {
+    "testing_framework": [
+      "vitest@latest",
+      "@vitest/ui@latest"
+    ],
+    "testing_library": [
+      "@testing-library/react@latest",
+      "@testing-library/user-event@latest",
+      "@testing-library/jest-dom@latest"
+    ],
+    "test_environment": [
+      "jsdom@latest",
+      "happy-dom@latest"
+    ]
+  },
+  "npm_scripts_to_add": [
+    "test: vitest --run",
+    "test:watch: vitest",
+    "test:ui: vitest --ui",
+    "test:coverage: vitest --coverage"
+  ],
+  "critical_patterns": {
+    "semantic_queries": "Always use getByRole, getByLabelText, getByText instead of test IDs",
+    "user_event": "Use userEvent for all user interactions (clicks, typing) instead of fireEvent",
+    "wait_for": "Use waitFor() for async operations with appropriate timeouts",
+    "accessibility": "Test ARIA roles and keyboard navigation for Radix UI components",
+    "component_behavior": "Test component behavior through props and effects, not implementation details"
+  },
+  "vitest_config": {
+    "environment": "jsdom",
+    "globals": true,
+    "setupFiles": ["src/test/setup.ts"]
+  },
+  "test_organization": {
+    "components": "tests/components/ for component unit tests",
+    "hooks": "tests/hooks/ for custom hook tests",
+    "utils": "tests/utils/ for utility function tests",
+    "services": "tests/services/ for service/API integration tests",
+    "mocks": "tests/mocks/ for mock factories and handlers"
+  },
+  "bug_tracking": {
+    "system": "auto-claude spec-based task creation",
+    "task_location": ".auto-claude/specs/",
+    "naming_pattern": "[3-digit-number]-[task-description]",
+    "trigger": "When bugs are discovered during test creation/execution",
+    "documentation": "Create BUG_DISCOVERY_GUIDE.md with process and BUG_TEMPLATE.md with required fields"
+  },
+  "verification_commands": {
+    "install_deps": "npm install",
+    "run_tests": "npm run test",
+    "watch_mode": "npm run test:watch",
+    "ui_mode": "npm run test:ui",
+    "coverage": "npm run test:coverage",
+    "type_check": "npx tsc --noEmit --skipLibCheck tests/"
+  },
+  "created_at": "2026-01-02T22:46:00Z"
+}

@@ -3,145 +3,142 @@
   "project_type": "web-app",
   "tech_stack": {
     "primary_language": "TypeScript",
-    "frameworks": ["React", "Express", "Vite", "Tailwind CSS"],
+    "frameworks": ["React 18", "Express", "Vite", "Strapi CMS"],
     "key_dependencies": [
       "@anthropic-ai/claude-agent-sdk",
       "@anthropic-ai/sdk",
       "@modelcontextprotocol/sdk",
       "@assistant-ui/react",
+      "@radix-ui/react-*",
       "@xyflow/react",
+      "Tailwind CSS",
+      "PostgreSQL",
       "better-sqlite3",
-      "PostgreSQL (migrating)",
-      "Strapi CMS (planned)"
+      "pino"
     ]
   },
   "target_audience": {
-    "primary_persona": "Developers building AI applications with Claude who need to manage, configure, and execute Claude agents through a visual interface rather than command-line tools",
+    "primary_persona": "Developers and technical teams who want to visually manage and execute Claude AI agents without CLI complexity",
     "secondary_personas": [
-      "AI/ML Engineers configuring complex agent workflows",
-      "DevOps engineers managing MCP server configurations",
-      "Technical Product Managers monitoring agent usage and performance",
-      "Teams building agentic AI products who need shared agent management"
+      "AI/ML engineers building agent-based automation workflows",
+      "DevOps teams setting up AI-powered tooling and integrations",
+      "Technical product managers overseeing AI agent deployments",
+      "Solo developers exploring Claude API capabilities"
     ],
     "pain_points": [
-      "Managing Claude agents via CLI or configuration files is cumbersome and error-prone",
-      "No visual way to see agent configurations, skills, and their relationships",
+      "Managing multiple Claude agents via CLI is cumbersome and error-prone",
+      "No visual overview of agent configurations, skills, and MCP server integrations",
       "Difficulty tracking which skills are used by which agents",
-      "MCP server configuration scattered across multiple files",
-      "No centralized interface for testing and executing agents",
-      "Lack of real-time visibility into agent execution",
-      "Complex setup required to integrate Claude Agent SDK with custom tools"
+      "MCP server configuration and testing requires manual JSON editing",
+      "No real-time visibility into agent execution and streaming outputs",
+      "Setting up agent workflows requires deep technical knowledge"
     ],
     "goals": [
-      "Quickly create and configure Claude agents through a visual interface",
+      "Quickly create, configure, and execute Claude agents through a visual interface",
       "Manage reusable skills and track their usage across agents",
-      "Configure and test MCP servers with visual feedback",
-      "Execute agents and see real-time streaming output",
-      "Import/export configurations for backup and sharing",
-      "Have a centralized dashboard for all AI agent assets"
+      "Connect and test MCP servers with minimal configuration effort",
+      "Build automated workflows using visual flow editors",
+      "Monitor agent executions in real-time with streaming output",
+      "Reduce time-to-value when working with Claude AI"
     ],
-    "usage_context": "Used during development and operations of Claude-powered AI applications, accessed via web browser on localhost or deployed server, typically during development sprints and agent configuration sessions"
+    "usage_context": "Used as a self-hosted web application for local or team-based AI agent development and management, typically during development and production monitoring phases"
   },
   "product_vision": {
-    "one_liner": "A comprehensive web-based management interface for Claude agents, skills, slash commands, and MCP servers",
-    "problem_statement": "Developers working with Claude agents need to manage complex configurations including agents, skills, MCP servers, and slash commands. Currently, this requires editing multiple configuration files, using CLI tools, and manually tracking relationships between components - leading to errors, duplicated effort, and poor visibility.",
-    "value_proposition": "Provides a visual, intuitive web interface for managing the entire Claude agent ecosystem - from creating agents with AI assistance, to configuring MCP servers, to executing agents with real-time streaming output. Consolidates scattered configuration into a single, user-friendly dashboard.",
+    "one_liner": "A comprehensive web-based management interface for Claude agents, skills, and MCP servers with visual workflow automation",
+    "problem_statement": "Managing Claude AI agents, their skills, and MCP server integrations through CLI and config files is time-consuming, error-prone, and lacks visibility into agent behavior and execution",
+    "value_proposition": "Claude Agent UI provides a unified visual dashboard for creating, configuring, executing, and monitoring Claude agents with real-time streaming output, skill management, MCP server integration, and visual workflow automation - all without touching the command line",
     "success_metrics": [
-      "Number of agents managed through the UI",
-      "Time saved in agent configuration vs CLI-only approach",
-      "Reduction in configuration errors",
-      "MCP server connection success rate",
-      "Agent execution completion rate",
-      "User session duration and engagement",
-      "Import/export usage frequency"
+      "Time reduction in agent setup and configuration",
+      "Number of agents and skills successfully managed",
+      "MCP server integration success rate",
+      "User adoption and active usage frequency",
+      "Workflow execution success rate",
+      "Reduction in configuration errors vs CLI"
     ]
   },
   "current_state": {
     "maturity": "mvp",
     "existing_features": [
-      "Agent Management: Create, edit, view, and delete Claude agents",
-      "AI-Powered Agent Creator: Chat-based agent creation using Claude",
-      "Agent Execution: Run agents with real-time SSE streaming output",
-      "Skills Management: Create, edit skills with YAML frontmatter",
-      "Skill References Tracking: See which agents use specific skills",
-      "Slash Commands Browser: View and browse available commands",
-      "MCP Server Configuration: Add, edit, delete MCP servers",
-      "Multiple Transport Support: stdio, SDK, SSE, HTTP transports",
-      "Server Testing: Validate MCP server connectivity",
-      "Tool Discovery: Browse tools from each MCP server",
-      "Import/Export: Backup and restore MCP configurations",
-      "Bulk Operations: Manage multiple servers efficiently",
-      "Task Management: Create, execute, and monitor tasks",
-      "Chat Interface: Chat-based interaction with agents",
-      "Flow Builder: Visual workflow builder with @xyflow/react",
-      "Authentication: Login/logout with API key management",
-      "Health Checks: API health monitoring endpoints"
+      "Agent CRUD operations with visual editor",
+      "AI-powered agent creation via chat interface",
+      "Agent execution with real-time SSE streaming output",
+      "Skill management with YAML frontmatter support",
+      "Skill training via interactive chat",
+      "Slash command browser",
+      "MCP server management (add, edit, delete, test, import/export)",
+      "Multi-transport MCP support (stdio, SDK, SSE, HTTP)",
+      "Tool discovery from MCP servers",
+      "Task management and execution",
+      "Visual flow editor with React Flow for workflow automation",
+      "Flow templates and execution monitoring",
+      "Chat interface with session management",
+      "PostgreSQL database with connection pooling",
+      "Docker containerization for all services",
+      "Web push notifications",
+      "Comprehensive health check endpoints"
     ],
     "known_gaps": [
-      "inputFields feature not yet implemented in Strapi schema",
-      "Conversation retrieval from cache/database not implemented",
-      "Conversation deletion from cache/database not implemented",
-      "MCP server tools integration needs enhancement",
-      "PostgreSQL migration in progress - currently using SQLite",
-      "Strapi CMS integration planned but not complete",
-      "User permission handling for sensitive tools needs implementation",
-      "Message ID tracking from backend needs improvement",
-      "Skills import before agents with skill references ordering"
+      "User authentication and authorization system",
+      "Multi-tenant/team support",
+      "Agent version control and rollback",
+      "Agent analytics and usage metrics dashboard",
+      "Scheduled agent executions (cron-like)",
+      "Agent collaboration/chaining features",
+      "Input fields feature for agent execution not implemented",
+      "Conversation retrieval/deletion endpoints not fully implemented"
     ],
     "technical_debt": [
-      "Mixed database approach: SQLite (current) + PostgreSQL (migrating)",
-      "Multiple TODO comments indicating incomplete features",
-      "Dual route files: manager.routes.ts and manager.routes.strapi.ts",
-      "Infrastructure migration partially complete (Task 01 done, Tasks 02+ pending)",
-      "Type definitions scattered across multiple files",
-      "Some API type annotations marked as 'any' needing proper types"
+      "Some API calls simulated with delays (TODO: Replace with actual API calls)",
+      "User permission prompts for sensitive tools not implemented",
+      "Message ID tracking from backend needs improvement",
+      "inputFields feature not yet in Strapi schema",
+      "ZIP archive creation for skills not implemented",
+      "Proper SDK hook permission handling pending"
     ]
   },
   "competitive_context": {
     "alternatives": [
-      "Claude CLI (command-line only, no visual interface)",
-      "Direct SDK Integration (requires custom code for each project)",
-      "LangChain/LangGraph (different ecosystem, more complex)",
-      "OpenAI Playground (different AI provider)",
-      "Anthropic Console (API testing only, no agent management)",
-      "Custom internal tools built by teams"
+      "OpenAI Assistants API Dashboard",
+      "LangChain/LangGraph Studio",
+      "AutoGPT WebUI",
+      "Custom AI agent dashboards built in-house",
+      "n8n and Zapier for AI workflow automation",
+      "Flowise for visual LLM flow building"
     ],
     "differentiators": [
-      "Purpose-built for Claude Agent SDK - not a generic AI tool",
-      "Full MCP server management with visual configuration",
-      "AI-assisted agent creation using Claude itself",
-      "Integrated skill tracking and usage analytics",
-      "Real-time streaming execution output",
-      "Unified management of agents, skills, commands, and MCP servers",
-      "Open source and self-hosted"
+      "Native Claude/Anthropic integration with official SDKs",
+      "First-class MCP (Model Context Protocol) server management",
+      "Combined agent management + visual workflow builder",
+      "Skill system with training and usage tracking",
+      "Real-time streaming execution output via SSE",
+      "Self-hosted with full control over data",
+      "Comprehensive Docker deployment stack",
+      "Open source and customizable"
     ],
-    "market_position": "First-mover in providing a dedicated visual management interface for the Claude Agent SDK ecosystem. Positioned as the go-to tool for teams serious about building production Claude agent applications.",
+    "market_position": "A developer-focused, self-hosted alternative to proprietary AI agent platforms, specifically optimized for Claude/Anthropic users who need visual management of agents, skills, and MCP server integrations",
     "competitor_pain_points": [],
     "competitor_analysis_available": false
   },
   "constraints": {
     "technical": [
-      "Requires Node.js >= 20.19.0",
       "Requires Anthropic API key for agent execution",
-      "Claude CLI must be installed and configured for project analysis",
-      "Docker required for PostgreSQL database",
-      "Currently in database migration from SQLite to PostgreSQL",
-      "Strapi CMS integration incomplete",
-      "MCP server support limited to specific transport types"
+      "Node.js 20.19.0+ required",
+      "PostgreSQL database required for production",
+      "Docker and Docker Compose recommended for deployment",
+      "MCP servers require proper configuration for tool access"
     ],
     "resources": [
-      "Solo developer project (single contributor: asedra)",
-      "Limited to 3 commits - early stage development",
-      "Self-funded/personal project"
+      "Solo developer project (primary contributor: Ali Mehmetoglu)",
+      "264+ commits indicating active but resource-constrained development",
+      "Community contributions minimal (3 contributors total)"
     ],
     "dependencies": [
-      "Anthropic API (Claude models)",
-      "Claude Agent SDK (core functionality)",
-      "MCP SDK (server protocol)",
-      "PostgreSQL (planned primary database)",
-      "Strapi CMS (planned content management)",
-      "Docker/Docker Compose (infrastructure)"
+      "Anthropic Claude API (external service)",
+      "MCP servers for tool integrations (external)",
+      "Strapi CMS as backend data layer",
+      "PostgreSQL for persistent storage",
+      "Docker ecosystem for containerization"
     ]
   },
-  "created_at": "2026-01-02T12:00:00Z"
+  "created_at": "2025-01-02T21:30:00Z"
 }

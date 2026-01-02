@@ -670,6 +670,40 @@ export async function updateSkill(
 }
 
 /**
+ * Upload a file to Strapi Media Library
+ */
+export async function uploadFile(file: File): Promise<any> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${STRAPI_BASE}/upload`, createFetchOptions({
+    method: 'POST',
+    body: formData,
+  }));
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to upload file');
+  }
+
+  return response.json();
+}
+
+/**
+ * Delete a file from Strapi Media Library
+ */
+export async function deleteFile(fileId: string): Promise<void> {
+  const response = await fetch(`${STRAPI_BASE}/upload/${fileId}`, createFetchOptions({
+    method: 'DELETE',
+  }));
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to delete file');
+  }
+}
+
+/**
  * Execute an agent with streaming response
  * Now using dedicated execution endpoint for SSE streaming
  */

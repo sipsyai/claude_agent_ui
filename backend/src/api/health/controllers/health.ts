@@ -3,7 +3,7 @@
  * Validates database connectivity and connection pool health
  */
 
-import type { Core } from '@strapi/strapi';
+import type { Context } from 'koa';
 
 export default {
   /**
@@ -13,7 +13,7 @@ export default {
    * - Connection pool statistics
    * - System uptime
    */
-  async index(ctx: Core.Context) {
+  async index(ctx: Context) {
     const startTime = Date.now();
     const healthStatus: any = {
       status: 'healthy',
@@ -44,12 +44,13 @@ export default {
       healthStatus.database.responseTime = queryEndTime - queryStartTime;
 
       // Get connection pool statistics if available
-      if (db.pool) {
+      const pool = (db as any).pool;
+      if (pool) {
         healthStatus.pool = {
-          numUsed: db.pool.numUsed?.() || 0,
-          numFree: db.pool.numFree?.() || 0,
-          numPendingAcquires: db.pool.numPendingAcquires?.() || 0,
-          numPendingCreates: db.pool.numPendingCreates?.() || 0,
+          numUsed: pool.numUsed?.() || 0,
+          numFree: pool.numFree?.() || 0,
+          numPendingAcquires: pool.numPendingAcquires?.() || 0,
+          numPendingCreates: pool.numPendingCreates?.() || 0,
         };
       }
 
@@ -79,7 +80,7 @@ export default {
    * Readiness check endpoint
    * Returns 200 if the service is ready to accept requests
    */
-  async ready(ctx: Core.Context) {
+  async ready(ctx: Context) {
     try {
       // Check if database is accessible
       const db = strapi.db.connection;
@@ -105,7 +106,7 @@ export default {
    * Liveness check endpoint
    * Returns 200 if the service is alive (process is running)
    */
-  async live(ctx: Core.Context) {
+  async live(ctx: Context) {
     ctx.status = 200;
     ctx.body = {
       status: 'alive',

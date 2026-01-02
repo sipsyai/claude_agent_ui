@@ -1218,6 +1218,15 @@
             "requires_auth": false
           },
           {
+            "path": "/executions/recent",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
             "path": "/executions/:id",
             "methods": [
               "GET"
@@ -1264,15 +1273,6 @@
           },
           {
             "path": "/stats/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": "src/routes/flow.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/executions/recent",
             "methods": [
               "GET"
             ],
@@ -1481,10 +1481,10 @@
         ],
         "total_routes": 124,
         "methods": [
-          "POST",
           "PUT",
           "GET",
-          "DELETE"
+          "DELETE",
+          "POST"
         ],
         "protected_routes": []
       },

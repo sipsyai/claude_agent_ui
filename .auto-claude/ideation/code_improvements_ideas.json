@@ -3,113 +3,118 @@
     {
       "id": "ci-001",
       "type": "code_improvements",
-      "title": "Bulk Delete for Agents and Skills",
-      "description": "Add bulk delete capability for agents and skills, mirroring the existing bulk delete pattern for MCP servers. This would allow users to select multiple agents or skills and delete them in a single operation.",
-      "rationale": "The codebase already has a well-established bulk-delete pattern in src/routes/manager.routes.ts for MCP servers (line 1518). This pattern includes error handling, partial success reporting (successCount, failed, errors array), and a consistent API response structure. Extending this pattern to agents and skills requires minimal new logic since the CRUD operations already exist.",
-      "builds_upon": ["MCP servers bulk-delete endpoint", "Agent CRUD operations", "Skill CRUD operations"],
+      "title": "Add Duplicate Agent Functionality",
+      "description": "Add ability to duplicate/clone an existing agent with all its configuration, similar to the existing flow duplication feature. This allows users to quickly create agent variants without manually copying configuration.",
+      "rationale": "Flow duplication pattern already exists in flow.routes.ts (POST /:id/duplicate endpoint at line 856) and flow-api.ts (duplicateFlow function). Agents share similar CRUD patterns via strapiClient and would benefit from the same clone capability.",
+      "builds_upon": ["Flow Duplicate API", "Agent CRUD pattern via StrapiClient"],
       "estimated_effort": "small",
       "affected_files": [
         "src/routes/manager.routes.ts",
         "src/routes/manager.routes.strapi.ts",
-        "src/web/manager/services/api.ts"
+        "src/services/strapi-client.ts",
+        "src/web/manager/services/api.ts",
+        "src/web/manager/components/AgentsPage.tsx"
       ],
       "existing_patterns": [
-        "router.post('/mcp-servers/bulk-delete') in manager.routes.ts",
-        "bulkDeleteMCPServers() in api.ts",
-        "Strapi bulk delete helper pattern"
+        "POST /api/flows/:id/duplicate in flow.routes.ts (line 856-889)",
+        "duplicateFlow() in web/manager/services/flow-api.ts",
+        "strapiClient.createAgent() for creating agent records"
       ],
-      "implementation_approach": "1. Copy the /mcp-servers/bulk-delete endpoint pattern. 2. Create /agents/bulk-delete and /skills/bulk-delete routes. 3. Loop through IDs and call existing delete operations. 4. Track success/failure counts. 5. Add corresponding frontend API functions (bulkDeleteAgents, bulkDeleteSkills) following bulkDeleteMCPServers pattern.",
+      "implementation_approach": "1. Add POST /api/manager/agents/:id/duplicate endpoint in manager.routes.ts following flow duplicate pattern. 2. Fetch existing agent, deep clone data, generate new name with ' (Copy)' suffix. 3. Create new agent via strapiClient.createAgent(). 4. Add duplicateAgent() API function in web/manager/services/api.ts. 5. Add 'Duplicate' action button to AgentsPage using existing TrashIcon/PencilIcon pattern.",
       "status": "draft",
-      "created_at": "2026-01-02T09:45:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
     },
     {
       "id": "ci-002",
       "type": "code_improvements",
-      "title": "Session Statistics Dashboard Data",
-      "description": "Add a getStats() method for chat sessions similar to how task statistics work. This would provide counts for active/archived sessions, message counts, average messages per session, and session duration metrics.",
-      "rationale": "TaskStorageService already has a getStats() method (line 309) that returns counts by status (pending, running, completed, failed). The pattern is well-established and tested. ChatService has access to session data via Strapi and can aggregate similar metrics. The frontend already expects stats-style data for dashboards.",
-      "builds_upon": ["TaskStorageService.getStats()", "Chat sessions CRUD", "GET /tasks/stats endpoint"],
-      "estimated_effort": "small",
+      "title": "Add Condition Node Type to Flow Editor",
+      "description": "Add a new Condition node type that enables conditional branching in flows based on agent output or input field values. This extends the flow system to support more complex workflow logic.",
+      "rationale": "The NodeHandler pattern in flow-nodes is well-established with InputNodeHandler, AgentNodeHandler, and OutputNodeHandler. The architecture supports registering new node types via registerNodeHandler(). Condition nodes would enable if/else branching in flow execution.",
+      "builds_upon": ["NodeHandler interface pattern", "Flow Execution Service", "Node Registration Pattern"],
+      "estimated_effort": "medium",
       "affected_files": [
-        "src/services/chat-service.ts",
-        "src/routes/chat.routes.ts",
-        "src/web/manager/services/api.ts"
+        "src/services/flow-nodes/condition-node-handler.ts",
+        "src/services/flow-nodes/index.ts",
+        "src/types/flow-types.ts",
+        "src/web/manager/components/flow-canvas/nodes/ConditionNode.tsx",
+        "src/web/manager/components/flow-canvas/NodePalette.tsx"
       ],
       "existing_patterns": [
-        "getStats() in task-storage-service.ts returning status counts",
-        "GET /stats route pattern in task.routes.ts",
-        "Strapi aggregation queries"
+        "NodeHandler interface in flow-execution-service.ts",
+        "AgentNodeHandler class implementation pattern (56-435 lines)",
+        "registerAllNodeHandlers() in flow-nodes/index.ts (line 53-57)",
+        "BaseNode.tsx component pattern for visual nodes"
       ],
-      "implementation_approach": "1. Add getSessionStats() method to ChatService that queries Strapi for session counts by status. 2. Create GET /sessions/stats endpoint following the task stats pattern. 3. Calculate: total sessions, active count, archived count, average message count per session. 4. Add getSessionStats() to frontend api.ts.",
+      "implementation_approach": "1. Add ConditionNode type to flow-types.ts with condition expression and true/false output ports. 2. Create ConditionNodeHandler implementing NodeHandler interface with evaluate() logic for JSON path expressions. 3. Register in flow-nodes/index.ts nodeHandlers map. 4. Create ConditionNode.tsx component extending BaseNode pattern with two output handles. 5. Add to NodePalette with conditional branch icon.",
       "status": "draft",
-      "created_at": "2026-01-02T09:45:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
     },
     {
       "id": "ci-003",
       "type": "code_improvements",
-      "title": "Agent and Skill Export/Import",
-      "description": "Add export and import capabilities for agents and skills following the existing MCP servers export/import pattern. This allows users to backup configurations, share agents/skills between projects, or migrate between environments.",
-      "rationale": "The codebase has complete export/import infrastructure for MCP servers including: exportMCPConfig() GET endpoint returning JSON, importMCPConfig() POST endpoint with merge/overwrite modes, and frontend API functions. Agents and skills have similar data structures that can leverage the same pattern.",
-      "builds_upon": ["MCP servers export/import endpoints", "Agent/Skill data structures", "Strapi data transformation patterns"],
-      "estimated_effort": "medium",
+      "title": "Add Keyboard Shortcuts to Chat Page",
+      "description": "Extend the keyboard shortcuts pattern from Flow Editor to Chat Page for common operations like send message (Ctrl+Enter), new session (Ctrl+N), and clear selection (Escape).",
+      "rationale": "useFlowKeyboardShortcuts hook provides a well-documented 514-line pattern for keyboard shortcuts with cross-platform support (Mac/Windows), input field awareness, and clean event handling. ChatPage could benefit from similar shortcuts for improved accessibility and power-user experience.",
+      "builds_upon": ["useFlowKeyboardShortcuts hook", "ChatPage component", "ChatInput component"],
+      "estimated_effort": "small",
       "affected_files": [
-        "src/routes/manager.routes.ts",
-        "src/routes/manager.routes.strapi.ts",
-        "src/web/manager/services/api.ts",
-        "src/services/strapi-client.ts"
+        "src/web/manager/hooks/useChatKeyboardShortcuts.ts",
+        "src/web/manager/components/ChatPage.tsx"
       ],
       "existing_patterns": [
-        "GET /mcp-servers/export endpoint",
-        "POST /mcp-servers/import with mode: merge|overwrite",
-        "exportMCPConfig() and importMCPConfig() in api.ts"
+        "useFlowKeyboardShortcuts in hooks/useFlowKeyboardShortcuts.ts",
+        "isMac() helper for platform detection (line 247-249)",
+        "isInputField() helper for input awareness (line 255-267)",
+        "Keyboard event pattern with modKey detection"
       ],
-      "implementation_approach": "1. Create GET /agents/export that fetches all agents and returns JSON export. 2. Create POST /agents/import with merge/overwrite mode logic. 3. Handle relation references (skills, mcpConfig) during import. 4. Repeat pattern for skills. 5. Add frontend API functions following MCP pattern. 6. Consider version field for compatibility.",
+      "implementation_approach": "1. Create useChatKeyboardShortcuts hook following the exact pattern of useFlowKeyboardShortcuts.ts. 2. Implement: Ctrl+Enter to send, Ctrl+N for new session, Ctrl+L to clear chat, Escape to cancel. 3. Use same isMac() and modKey detection pattern. 4. Integrate with ChatPage using enabled option for conditional shortcuts. 5. Add to ChatInput for send shortcut when focused.",
       "status": "draft",
-      "created_at": "2026-01-02T09:45:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
     },
     {
       "id": "ci-004",
       "type": "code_improvements",
-      "title": "Error Notification for Long-Running Tasks",
-      "description": "Extend the NotificationService to send notifications when tasks fail or encounter errors, not just when they complete successfully. This helps users catch failures in background tasks.",
-      "rationale": "NotificationService already has sendPermissionNotification() and sendConversationEndNotification() methods with ntfy.sh integration and web push fallback. The notification structure (Notification interface) supports different priorities and tags. Adding error notifications follows the same pattern with priority: 'high' for failures.",
-      "builds_upon": ["NotificationService.sendConversationEndNotification()", "Task execution error handling", "ntfy.sh integration"],
+      "title": "Add Search and Filter to Agents Page",
+      "description": "Add search box and filter capabilities to AgentsPage matching the pattern already used in SkillSelector component. Enables users to quickly find agents by name or description.",
+      "rationale": "SkillSelector already implements real-time search filtering with multi-field search (name AND description). AgentsPage displays agent cards but lacks search functionality. The backend validator (agent.validators.ts) already supports search and filter query parameters via agentQuerySchema.",
+      "builds_upon": ["SkillSelector search pattern", "Agent Query Validators", "SearchIcon component"],
       "estimated_effort": "trivial",
       "affected_files": [
-        "src/services/notification-service.ts",
-        "src/routes/task.routes.ts"
+        "src/web/manager/components/AgentsPage.tsx"
       ],
       "existing_patterns": [
-        "sendConversationEndNotification() method structure",
-        "Notification interface with priority field",
-        "Task status updates in task.routes.ts"
+        "Search filtering in SkillSelector.tsx with useState for searchTerm",
+        "SearchIcon from components/ui/Icons.tsx (line 345)",
+        "agentQuerySchema.search parameter in agent.validators.ts (line 74-75)",
+        "Input component for text input"
       ],
-      "implementation_approach": "1. Add sendTaskErrorNotification(taskId, error, sessionId) method to NotificationService following existing method patterns. 2. Set priority: 'high' and tags: ['cui-error'] for error notifications. 3. Call from task.routes.ts when task status changes to 'failed'. 4. Include error message in notification body.",
+      "implementation_approach": "1. Add useState<string>('') for searchTerm in AgentsPage. 2. Add Input component with SearchIcon at top of agents list section. 3. Implement useMemo filter on agents array: filter by name.toLowerCase().includes(searchTerm.toLowerCase()) OR description.toLowerCase().includes(searchTerm.toLowerCase()). 4. Apply same styling as SkillSelector search input.",
       "status": "draft",
-      "created_at": "2026-01-02T09:45:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
     },
     {
       "id": "ci-005",
       "type": "code_improvements",
-      "title": "Task Execution Metrics Tracking",
-      "description": "Extend ToolMetricsService to track and persist execution metrics for tasks including tool usage counts, execution duration, and cost per task. Currently metrics are calculated but not persisted with task records.",
-      "rationale": "ToolMetricsService already calculates linesAdded, linesRemoved, editCount, and writeCount by processing tool_use blocks. The Task interface already has duration field. The service has calculateMetricsFromMessages() for processing historical data. Persisting these metrics alongside task records enables analytics dashboards and cost tracking.",
-      "builds_upon": ["ToolMetricsService.calculateMetricsFromMessages()", "Task.duration field", "Task execution logging"],
+      "title": "Add JSON Export/Import for Agents and Skills",
+      "description": "Enable users to export agents and skills configuration as JSON files and import them, following the MCP server export/import pattern. Supports backup, sharing, and environment migration.",
+      "rationale": "MCPServersPage already has working export/import functionality (handleExport at line 818-833, handleImportFile at line 857-879). Agents and Skills share similar configuration structures and would benefit from portable configuration export.",
+      "builds_upon": ["MCP Server Export/Import pattern", "Agent CRUD", "Skill CRUD"],
       "estimated_effort": "small",
       "affected_files": [
-        "src/services/ToolMetricsService.ts",
-        "src/services/task-storage-service.ts",
-        "src/routes/task.routes.ts",
-        "src/types/task-types.ts"
+        "src/routes/manager.routes.ts",
+        "src/web/manager/services/api.ts",
+        "src/web/manager/components/AgentsPage.tsx",
+        "src/web/manager/components/SkillsPage.tsx"
       ],
       "existing_patterns": [
-        "ToolMetrics interface with linesAdded/linesRemoved/editCount/writeCount",
-        "Task metadata field for additional data",
-        "calculateMetricsFromMessages() method pattern"
+        "handleExport() in MCPServersPage.tsx creating Blob and download link",
+        "handleImportFile() with FileReader and JSON.parse",
+        "GET /api/manager/mcp-servers/export endpoint",
+        "POST /api/manager/mcp-servers/import endpoint with mode parameter"
       ],
-      "implementation_approach": "1. Add toolMetrics field to Task interface in task-types.ts. 2. After task execution completes in task.routes.ts, call calculateMetricsFromMessages() on execution log. 3. Persist metrics in task.metadata or dedicated field via updateTaskStatus(). 4. Add metrics to task stats aggregation. 5. Expose in API response.",
+      "implementation_approach": "1. Add GET /agents/export endpoint returning all agents as JSON. 2. Add POST /agents/import with merge/overwrite mode. 3. Copy handleExport pattern to AgentsPage: JSON.stringify, Blob, download link. 4. Copy handleImportFile pattern with FileReader. 5. Add Export/Import buttons to AgentsPage header. 6. Repeat for SkillsPage.",
       "status": "draft",
-      "created_at": "2026-01-02T09:45:00.000Z"
+      "created_at": "2026-01-02T21:30:00.000Z"
     }
   ]
 }

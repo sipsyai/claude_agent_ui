@@ -57,7 +57,7 @@ export default factories.createCoreService('api::flow-execution.flow-execution',
   /**
    * Find executions by status
    */
-  async findByStatus(status: string, limit = 20) {
+  async findByStatus(status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled', limit = 20) {
     return await strapi.entityService.findMany('api::flow-execution.flow-execution', {
       filters: {
         status: { $eq: status },
@@ -71,7 +71,7 @@ export default factories.createCoreService('api::flow-execution.flow-execution',
   /**
    * Start a new execution
    */
-  async startExecution(flowId: number, input: any, triggeredBy: string = 'manual', triggerData?: any) {
+  async startExecution(flowId: number, input: any, triggeredBy: 'manual' | 'schedule' | 'webhook' | 'api' = 'manual', triggerData?: any) {
     const now = new Date().toISOString();
 
     return await strapi.entityService.create('api::flow-execution.flow-execution', {

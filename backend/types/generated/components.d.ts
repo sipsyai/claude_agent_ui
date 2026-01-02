@@ -273,6 +273,76 @@ export interface FlowOutputNode extends Struct.ComponentSchema {
   };
 }
 
+export interface FlowSchedule extends Struct.ComponentSchema {
+  collectionName: 'components_flow_schedules';
+  info: {
+    description: 'Schedule configuration for automated flow execution';
+    displayName: 'Schedule';
+    icon: 'clock';
+  };
+  attributes: {
+    cronExpression: Schema.Attribute.String;
+    defaultInput: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+    endDate: Schema.Attribute.DateTime;
+    intervalUnit: Schema.Attribute.Enumeration<
+      ['minutes', 'hours', 'days', 'weeks']
+    > &
+      Schema.Attribute.DefaultTo<'minutes'>;
+    intervalValue: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<60>;
+    isEnabled: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    lastRunAt: Schema.Attribute.DateTime;
+    maxRetries: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 10;
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<3>;
+    maxRuns: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    nextRunAt: Schema.Attribute.DateTime;
+    retryDelayMinutes: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<5>;
+    retryOnFailure: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    runCount: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+    scheduleType: Schema.Attribute.Enumeration<['once', 'cron', 'interval']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'interval'>;
+    startDate: Schema.Attribute.DateTime;
+    timezone: Schema.Attribute.String & Schema.Attribute.DefaultTo<'UTC'>;
+  };
+}
+
 export interface McpServerSelection extends Struct.ComponentSchema {
   collectionName: 'components_mcp_server_selections';
   info: {
@@ -483,6 +553,7 @@ declare module '@strapi/strapi' {
       'flow.agent-node': FlowAgentNode;
       'flow.input-node': FlowInputNode;
       'flow.output-node': FlowOutputNode;
+      'flow.schedule': FlowSchedule;
       'mcp.server-selection': McpServerSelection;
       'mcp.tool-selection': McpToolSelection;
       'shared.metadata': SharedMetadata;

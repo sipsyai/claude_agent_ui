@@ -1,0 +1,71 @@
+{
+  "complexity": "standard",
+  "workflow_type": "refactor",
+  "confidence": 0.85,
+  "reasoning": "UI refactor reorganizing FlowEditorVisual layout. Moves metadata/triggers to sidebar while keeping canvas central. Contains to frontend with existing patterns (React, Radix UI, Tailwind). No external integrations or infrastructure changes. Moderate scope (5-8 files) with medium risk due to need to preserve all functionality.",
+
+  "analysis": {
+    "scope": {
+      "estimated_files": 7,
+      "estimated_services": 1,
+      "is_cross_cutting": false,
+      "notes": "Primary changes in FlowEditorVisual.tsx. May need new sidebar component, NodePalette adjustments, and style updates. Isolated to flow editor page."
+    },
+    "integrations": {
+      "external_services": [],
+      "new_dependencies": [],
+      "research_needed": false,
+      "notes": "No new dependencies needed. Radix UI (@radix-ui/react-dialog) already available for drawer/sidebar implementation. Pure reorganization of existing components."
+    },
+    "infrastructure": {
+      "docker_changes": false,
+      "database_changes": false,
+      "config_changes": false,
+      "notes": "Frontend-only UI restructuring. No backend, infrastructure, or configuration changes required."
+    },
+    "knowledge": {
+      "patterns_exist": true,
+      "research_required": false,
+      "unfamiliar_tech": [],
+      "notes": "All required technologies already in use: React components, Radix UI for dialogs/drawers, Tailwind for styling, ReactFlow for canvas. Sidebar pattern is common React pattern."
+    },
+    "risk": {
+      "level": "medium",
+      "concerns": [
+        "Must preserve all existing functionality (metadata editing, schedule configuration, webhook settings)",
+        "State management for sidebar collapsed/expanded states",
+        "Canvas must properly resize when sidebar opens/closes",
+        "Responsive design considerations for different screen sizes",
+        "User workflow disruption if layout changes are not intuitive"
+      ],
+      "notes": "Medium risk due to significant UI restructure affecting user interaction patterns. All functionality must continue working after layout changes."
+    }
+  },
+
+  "recommended_phases": [
+    "discovery",
+    "requirements",
+    "context",
+    "spec_writing",
+    "planning",
+    "validation"
+  ],
+
+  "flags": {
+    "needs_research": false,
+    "needs_self_critique": false,
+    "needs_infrastructure_setup": false
+  },
+
+  "validation_recommendations": {
+    "risk_level": "medium",
+    "skip_validation": false,
+    "minimal_mode": false,
+    "test_types_required": ["unit", "integration"],
+    "security_scan_required": false,
+    "staging_deployment_required": false,
+    "reasoning": "UI refactor affecting multiple component interactions requires testing to ensure all existing functionality (metadata form inputs, flow saving, triggers configuration, scheduling) remains functional after layout restructuring. Integration tests needed to verify canvas resizing and sidebar state management work correctly."
+  },
+
+  "created_at": "2026-01-02T21:54:17.089044"
+}

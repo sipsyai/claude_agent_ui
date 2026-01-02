@@ -1,0 +1,502 @@
+{
+  "feature": "Create Frontend Tests and Bug Tracking Task",
+  "description": "Comprehensive unit test suite for React frontend using Vitest and React Testing Library. Includes bug discovery and auto-claude task creation for any issues found.",
+  "workflow_type": "testing",
+  "workflow_rationale": "Primary goal is test creation with bug reporting as a secondary workflow trigger. This separation of concerns (testing vs. bug-fixing) aligns with the testing workflow type.",
+  "created_at": "2026-01-02T22:00:00Z",
+  "updated_at": "2026-01-02T18:47:06.331Z",
+  "phases": [
+    {
+      "id": "phase-1-setup",
+      "name": "Testing Framework Setup",
+      "type": "setup",
+      "description": "Install Vitest, React Testing Library, and configure test environment with jsdom",
+      "depends_on": [],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-1-1",
+          "description": "Install testing dependencies: vitest, @vitest/ui, @testing-library/react, @testing-library/user-event, jsdom, @testing-library/jest-dom",
+          "service": "frontend",
+          "files_to_modify": [
+            "package.json"
+          ],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "npm ls vitest @testing-library/react @testing-library/user-event jsdom",
+            "expected": "installed (no errors)"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-1-2",
+          "description": "Create vitest.config.ts with jsdom environment configuration and setupFiles",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "vitest.config.ts"
+          ],
+          "patterns_from": [
+            "vite.config.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "npx vitest --version && cat vitest.config.ts | grep -E 'environment|setupFiles'",
+            "expected": "vitest version output + setupFiles found"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-1-3",
+          "description": "Create src/test/setup.ts file with jest-dom matchers registration and globals configuration",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/test/setup.ts"
+          ],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "test -f src/test/setup.ts && cat src/test/setup.ts | grep -E 'jest-dom|testing-library'",
+            "expected": "File exists with jest-dom imports"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-1-4",
+          "description": "Add npm test scripts to package.json: test, test:watch, test:ui, test:coverage",
+          "service": "frontend",
+          "files_to_modify": [
+            "package.json"
+          ],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "npm run 2>&1 | grep -E 'test[:|]'",
+            "expected": "test, test:watch, test:ui, test:coverage scripts listed"
+          },
+          "status": "pending"
+        }
+      ],
+      "phase": 1
+    },
+    {
+      "id": "phase-2-core-components",
+      "name": "Core Component Tests",
+      "type": "implementation",
+      "description": "Create unit tests for high-priority core components (DashboardPage, ChatPage, AgentsPage)",
+      "depends_on": [
+        "phase-1-setup"
+      ],
+      "parallel_safe": false,
+      "subtasks": [
+        {
+          "id": "subtask-2-1",
+          "description": "Create tests for DashboardPage component (rendering, data fetching, UI elements)",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "tests/components/DashboardPage.test.tsx"
+          ],
+          "patterns_from": [
+            "src/web/manager/components/DashboardPage.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "npm run test -- tests/components/DashboardPage.test.tsx",
+            "expected": "All tests pass"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-2-2",
+          "description": "Create tests for ChatPage component (rendering, message handling, user interactions)",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "tests/components/ChatPage.test.tsx"
+          ],
+          "patterns_from": [
+            "src/web/manager/components/ChatPage.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "npm run test -- tests/components/ChatPage.test.tsx",
+            "expected": "All tests pass"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-2-3",
+          "description": "Create tests for AgentsPage component (list rendering, agent operations, modals)",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "tests/components/AgentsPage.test.tsx"
+          ],
+          "patterns_from": [
+            "src/web/manager/components/AgentsPage.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "npm run test -- tests/components/AgentsPage.test.tsx",
+            "expected": "All tests pass"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-2-4",
+          "description": "Create tests for FlowDetailPage component (flow display, editing, execution)",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "tests/components/FlowDetailPage.test.tsx"
+          ],
+          "patterns_from": [
+            "src/web/manager/components/FlowDetailPage.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "npm run test -- tests/components/FlowDetailPage.test.tsx",
+            "expected": "All tests pass"
+          },
+          "status": "pending"
+        }
+      ],
+      "phase": 2
+    },
+    {
+      "id": "phase-3-ui-and-utility",
+      "name": "UI Components and Utilities",
+      "type": "implementation",
+      "description": "Create tests for UI components, hooks, and utility functions",
+      "depends_on": [
+        "phase-2-core-components"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-3-1",
+          "description": "Create tests for Radix UI wrapper components (Button, Card, Dialog, Modal, etc.)",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "tests/components/ui/Button.test.tsx",
+            "tests/components/ui/Card.test.tsx",
+            "tests/components/ui/Dialog.test.tsx"
+          ],
+          "patterns_from": [
+            "src/web/manager/components/ui/Button.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "npm run test -- tests/components/ui/",
+            "expected": "All UI component tests pass"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-3-2",
+          "description": "Create tests for custom React hooks (useAgentCreator, useSkillCreator, useFlowKeyboardShortcuts)",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "tests/hooks/useAgentCreator.test.ts",
+            "tests/hooks/useSkillCreator.test.ts",
+            "tests/hooks/useFlowKeyboardShortcuts.test.ts"
+          ],
+          "patterns_from": [
+            "src/web/manager/hooks/useAgentCreator.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "npm run test -- tests/hooks/",
+            "expected": "All hook tests pass"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-3-3",
+          "description": "Create tests for utility functions (helpers, formatters, validators)",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "tests/utils/helpers.test.ts",
+            "tests/utils/formatters.test.ts"
+          ],
+          "patterns_from": [
+            "src/web/manager/utils/"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "npm run test -- tests/utils/",
+            "expected": "All utility tests pass"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-3-4",
+          "description": "Create tests for API service integration (mocking fetch calls, error handling)",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "tests/services/api.test.ts",
+            "tests/services/flow-api.test.ts"
+          ],
+          "patterns_from": [
+            "src/web/manager/services/api.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "npm run test -- tests/services/",
+            "expected": "All service tests pass"
+          },
+          "status": "pending"
+        }
+      ],
+      "phase": 3
+    },
+    {
+      "id": "phase-4-integration",
+      "name": "Integration and Verification",
+      "type": "integration",
+      "description": "Run complete test suite, verify coverage, and establish bug tracking workflow",
+      "depends_on": [
+        "phase-3-ui-and-utility"
+      ],
+      "parallel_safe": false,
+      "subtasks": [
+        {
+          "id": "subtask-4-1",
+          "description": "Run complete test suite and verify all tests pass",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "npm run test",
+            "expected": "All tests pass (100% pass rate)"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-4-2",
+          "description": "Generate and review test coverage report to identify gaps",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "npm run test:coverage 2>&1 | head -30",
+            "expected": "Coverage report generated showing test coverage metrics"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-4-3",
+          "description": "Document bug discovery and create process guide for creating auto-claude tasks",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "BUG_DISCOVERY_GUIDE.md",
+            "tests/BUG_TEMPLATE.md"
+          ],
+          "patterns_from": [
+            ".auto-claude/specs/011-create-frontend-tests-and-bug-tracking-task/"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "test -f BUG_DISCOVERY_GUIDE.md && test -f tests/BUG_TEMPLATE.md",
+            "expected": "Both files exist with clear bug reporting instructions"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-4-4",
+          "description": "Create test utilities and mock factories for common test scenarios",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "tests/setup.ts",
+            "tests/mocks/factories.ts",
+            "tests/mocks/handlers.ts"
+          ],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "test -f tests/setup.ts && test -f tests/mocks/factories.ts && grep -E 'export.*factory|export.*mock' tests/mocks/factories.ts",
+            "expected": "Test utilities exist with mock factories"
+          },
+          "status": "pending"
+        }
+      ],
+      "phase": 4
+    }
+  ],
+  "summary": {
+    "total_phases": 4,
+    "total_subtasks": 15,
+    "services_involved": [
+      "frontend"
+    ],
+    "parallelism": {
+      "max_parallel_phases": 1,
+      "parallel_groups": [
+        {
+          "phases": [
+            "phase-1-setup"
+          ],
+          "reason": "Initial setup can be done in any environment"
+        },
+        {
+          "phases": [
+            "phase-3-ui-and-utility"
+          ],
+          "reason": "UI components and utilities can be tested in parallel if phase-2 is complete"
+        }
+      ],
+      "recommended_workers": 1,
+      "speedup_estimate": "1.0x (sequential required due to dependencies)"
+    },
+    "startup_command": "source auto-claude/.venv/bin/activate && python auto-claude/run.py --spec 011 --parallel 1"
+  },
+  "verification_strategy": {
+    "risk_level": "medium",
+    "skip_validation": false,
+    "test_creation_phase": "post_implementation",
+    "test_types_required": [
+      "unit",
+      "integration"
+    ],
+    "security_scanning_required": false,
+    "staging_deployment_required": false,
+    "acceptance_criteria": [
+      "All test dependencies installed without errors",
+      "vitest.config.ts properly configured with jsdom environment",
+      "All 15+ test files created with valid TypeScript",
+      "100% of tests pass with npm run test",
+      "No console errors during test execution",
+      "Test coverage shows meaningful code coverage",
+      "React Testing Library best practices followed (semantic queries, userEvent, waitFor)",
+      "Radix UI components tested with proper accessibility attributes",
+      "Bug discovery documentation complete",
+      "Auto-claude task creation process documented"
+    ],
+    "verification_steps": [
+      {
+        "name": "Install Dependencies",
+        "command": "npm install",
+        "expected_outcome": "All packages installed without peer dependency errors",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Unit Tests",
+        "command": "npm run test",
+        "expected_outcome": "All unit tests pass (pass rate 100%)",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Test UI",
+        "command": "npm run test:ui 2>&1 | head -20",
+        "expected_outcome": "Vitest UI mode starts successfully showing test results",
+        "type": "test",
+        "required": true,
+        "blocking": false
+      },
+      {
+        "name": "Type Checking",
+        "command": "npx tsc --noEmit --skipLibCheck tests/",
+        "expected_outcome": "No TypeScript compilation errors in test files",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Coverage Report",
+        "command": "npm run test:coverage 2>&1 | tail -20",
+        "expected_outcome": "Coverage report shows code coverage metrics",
+        "type": "test",
+        "required": true,
+        "blocking": false
+      }
+    ],
+    "reasoning": "Medium risk test suite creation requires comprehensive unit test coverage and verification that testing patterns follow React Testing Library best practices. Integration tests for component tree interactions ensure compatibility. Bug tracking mechanism must be validated to ensure auto-claude task creation works correctly."
+  },
+  "qa_acceptance": {
+    "unit_tests": {
+      "required": true,
+      "commands": [
+        "npm run test"
+      ],
+      "minimum_coverage": null,
+      "acceptance_criteria": [
+        "All unit tests pass",
+        "No flaky tests (tests pass consistently on multiple runs)",
+        "Semantic query patterns used (getByRole, getByLabelText, getByText)",
+        "userEvent used for all user interactions",
+        "waitFor used appropriately for async operations",
+        "Component behavior tested, not implementation details"
+      ]
+    },
+    "integration_tests": {
+      "required": true,
+      "commands": [
+        "npm run test -- tests/"
+      ],
+      "services_to_test": [
+        "frontend"
+      ],
+      "acceptance_criteria": [
+        "Component tree integration works (parent-child communication)",
+        "Context providers function correctly",
+        "API mocking prevents external calls",
+        "Error states handled properly"
+      ]
+    },
+    "e2e_tests": {
+      "required": false,
+      "commands": [],
+      "flows": []
+    },
+    "browser_verification": {
+      "required": false,
+      "pages": []
+    },
+    "database_verification": {
+      "required": false,
+      "checks": []
+    },
+    "testing_patterns": {
+      "required": true,
+      "checks": [
+        "React Testing Library best practices followed throughout",
+        "Semantic queries used instead of test IDs",
+        "Radix UI components tested with accessibility queries",
+        "No implementation detail testing",
+        "Consistent test file naming (ComponentName.test.tsx)",
+        "Related tests grouped in describe blocks"
+      ]
+    },
+    "bug_tracking": {
+      "required": true,
+      "checks": [
+        "Bug discovery guide created and documented",
+        "Process to create auto-claude tasks defined",
+        "Bug template with required fields exists",
+        "Instructions clear for developers to follow when bugs found"
+      ]
+    }
+  },
+  "qa_signoff": null,
+  "status": "done",
+  "planStatus": "completed"
+}

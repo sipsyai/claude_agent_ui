@@ -309,6 +309,7 @@ import FlowsPage from './components/FlowsPage';
 import FlowEditorVisual from './components/FlowEditorVisual';
 import FlowDetailPage from './components/FlowDetailPage';
 import SettingsPage from './components/SettingsPage';
+import { FlowCanvasProvider } from './contexts/FlowCanvasContext';
 import * as api from './services/api';
 import ChatPage from './components/ChatPage';
 
@@ -548,11 +549,13 @@ const App: React.FC = () => {
     // Handle flow editor view
     if (managerView === ManagerView.Flows && (isCreatingFlow || editingFlowId)) {
       return (
-        <FlowEditorVisual
-          flowId={editingFlowId || undefined}
-          onClose={handleCloseFlowEditor}
-          onSave={handleFlowSaved}
-        />
+        <FlowCanvasProvider>
+          <FlowEditorVisual
+            flowId={editingFlowId || undefined}
+            onClose={handleCloseFlowEditor}
+            onSave={handleFlowSaved}
+          />
+        </FlowCanvasProvider>
       );
     }
 

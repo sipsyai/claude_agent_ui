@@ -62,6 +62,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { ReactFlowProvider } from '@xyflow/react';
 import type {
   Flow,
   FlowStatus,
@@ -733,38 +734,40 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
           initialEdges={initialEdges}
           onCanvasChange={handleCanvasChange}
         >
-          {/* Left Sidebar - Node Palette */}
-          <NodePalette />
+          <ReactFlowProvider>
+            {/* Left Sidebar - Node Palette */}
+            <NodePalette />
 
-          {/* Center Area - Flow Canvas */}
-          <div className="flex-1 relative">
-            <FlowCanvas
-              onNodeClick={handleNodeClick}
-              onCanvasClick={handleCanvasClick}
-              showBackground={showGrid}
-              showMinimap={showMinimap}
-            />
-
-            {/* Floating Toolbar */}
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-              <CanvasToolbar
-                showGrid={showGrid}
-                onToggleGrid={() => setShowGrid((prev) => !prev)}
+            {/* Center Area - Flow Canvas */}
+            <div className="flex-1 relative">
+              <FlowCanvas
+                onNodeClick={handleNodeClick}
+                onCanvasClick={handleCanvasClick}
+                showBackground={showGrid}
                 showMinimap={showMinimap}
-                onToggleMinimap={() => setShowMinimap((prev) => !prev)}
-                onPreview={() => setShowPreview(true)}
+              />
+
+              {/* Floating Toolbar */}
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
+                <CanvasToolbar
+                  showGrid={showGrid}
+                  onToggleGrid={() => setShowGrid((prev) => !prev)}
+                  showMinimap={showMinimap}
+                  onToggleMinimap={() => setShowMinimap((prev) => !prev)}
+                  onPreview={() => setShowPreview(true)}
+                />
+              </div>
+
+              {/* Flow Preview Modal */}
+              <FlowPreview
+                isOpen={showPreview}
+                onClose={() => setShowPreview(false)}
               />
             </div>
 
-            {/* Flow Preview Modal */}
-            <FlowPreview
-              isOpen={showPreview}
-              onClose={() => setShowPreview(false)}
-            />
-          </div>
-
-          {/* Right Panel - Node Configuration */}
-          <NodeConfigPanel isOpen={configPanelOpen} onClose={handleConfigPanelClose} />
+            {/* Right Panel - Node Configuration */}
+            <NodeConfigPanel isOpen={configPanelOpen} onClose={handleConfigPanelClose} />
+          </ReactFlowProvider>
         </FlowCanvasProvider>
       </div>
 

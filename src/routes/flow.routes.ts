@@ -568,6 +568,24 @@ export function createFlowRoutes(): Router {
   }));
 
   /**
+   * GET /api/flows/executions/recent
+   * Get recent flow executions across all flows
+   * NOTE: This route must come BEFORE /executions/:id to avoid path conflict
+   */
+  router.get('/executions/recent', asyncHandler(async (req: Request, res: Response) => {
+    const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+
+    logger.debug('Fetching recent executions', { limit });
+
+    const executions = await strapiClient.getRecentFlowExecutions(limit);
+
+    res.json({
+      data: executions,
+      count: executions.length
+    });
+  }));
+
+  /**
    * GET /api/flows/executions/:id
    * Get a single execution by ID
    */
@@ -788,23 +806,6 @@ export function createFlowRoutes(): Router {
     res.json({
       ...stats,
       flowName: flow.name
-    });
-  }));
-
-  /**
-   * GET /api/flows/executions/recent
-   * Get recent flow executions across all flows
-   */
-  router.get('/executions/recent', asyncHandler(async (req: Request, res: Response) => {
-    const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
-
-    logger.debug('Fetching recent executions', { limit });
-
-    const executions = await strapiClient.getRecentFlowExecutions(limit);
-
-    res.json({
-      data: executions,
-      count: executions.length
     });
   }));
 

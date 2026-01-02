@@ -1481,10 +1481,10 @@
         ],
         "total_routes": 124,
         "methods": [
-          "POST",
+          "DELETE",
           "PUT",
-          "GET",
-          "DELETE"
+          "POST",
+          "GET"
         ],
         "protected_routes": []
       },

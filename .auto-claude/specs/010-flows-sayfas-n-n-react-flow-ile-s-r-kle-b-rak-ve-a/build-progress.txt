@@ -281,3 +281,45 @@ COMMIT: 96f3433
 
 **Phase 3 Progress: 4/5 subtasks complete** - Only Node Configuration Panel remaining.
 
+================================================================================
+DATE: 2026-01-02
+SUBTASK: 4.1 - Create Flow Data Converter
+STATUS: COMPLETED
+================================================================================
+
+IMPLEMENTATION SUMMARY:
+Created comprehensive utility functions to convert between React Flow format
+and existing Flow format (nodes, edges to/from Flow.nodes). This is critical
+for backward compatibility with existing flows and enables the visual flow
+editor to work with the existing backend API.
+
+ACCEPTANCE CRITERIA MET:
+✅ flowToReactFlow converts Flow to React Flow nodes/edges
+✅ reactFlowToFlow converts React Flow nodes/edges back to Flow
+✅ Position data is preserved during conversion
+✅ nextNodeId is properly calculated from edges using adjacency map
+✅ All node types (input, agent, output) are handled correctly
+
+KEY FEATURES:
+- Bidirectional conversion between Flow and React Flow formats
+- flowToReactFlow: Transforms linear nodes (with nextNodeId) to nodes + edges arrays
+- reactFlowToFlow: Transforms nodes + edges back to linear nodes (with nextNodeId)
+- buildNextNodeMap: Builds adjacency map from edges for nextNodeId calculation
+- autoLayoutNodes: BFS-based auto-layout algorithm for horizontal flow positioning
+- ensureNodePositions: Ensures all nodes have valid positions
+- validateFlowForConversion: Validates Flow before conversion (checks for duplicates, invalid refs)
+- validateReactFlowForConversion: Validates React Flow before conversion
+- Handles disconnected nodes gracefully
+- Supports multiple outgoing edges (uses first edge for backward compatibility)
+- Comprehensive JSDoc documentation following codebase patterns
+- Full TypeScript type safety throughout
+
+FILES CREATED:
+- src/web/manager/utils/flow-converter.ts (630 lines)
+
+COMMIT: 3900433
+
+TypeScript compilation verified with no errors
+
+**Phase 4 Progress: 1/4 subtasks complete** - Flow Data Converter complete!
+

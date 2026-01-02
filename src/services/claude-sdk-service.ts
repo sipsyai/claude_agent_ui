@@ -29,25 +29,173 @@ import type Anthropic from '@anthropic-ai/sdk';
 import * as fs from 'fs/promises';
 
 /**
- * Manages Claude conversations using the Agent SDK
- * Replaces CLI-based approach with direct SDK integration
+ * ClaudeSdkService - Core service for managing Claude conversations using the Agent SDK
+ *
+ * @description
+ * Manages the lifecycle of Claude Agent SDK conversations, providing a high-level interface
+ * for starting/stopping conversations, handling message streaming, and integrating with
+ * MCP servers. This service replaces the legacy CLI-based approach with direct SDK integration,
+ * enabling better control over conversation state, real-time event streaming, and seamless
+ * integration with the application's architecture.
+ *
+ * Key responsibilities:
+ * - Initialize and manage SDK query instances for active conversations
+ * - Stream SDK messages and transform them to application's StreamEvent format
+ * - Integrate with MCP servers from multiple sources (config files, Strapi, skills)
+ * - Write conversation history to JSONL files via SdkHistoryWriter
+ * - Track conversation status and emit real-time events to the frontend
+ * - Handle session lifecycle, including resume functionality
+ * - Manage permissions and tool access control
+ *
+ * Architecture:
+ * - Uses EventEmitter to broadcast conversation events ('claude-message', 'process-closed', 'process-error')
+ * - Maintains internal maps for queries, configs, and session IDs
+ * - Integrates with ClaudeHistoryReader, ConversationStatusManager, and other services
+ * - Supports multiple concurrent conversations with unique streamingId tracking
+ *
+ * @example
+ * ```typescript
+ * // Initialize the service with required dependencies
+ * const historyReader = new ClaudeHistoryReader();
+ * const statusTracker = new ConversationStatusManager();
+ * const toolMetrics = new ToolMetricsService();
+ * const sessionInfo = new SessionInfoService();
+ * const fileSystem = new FileSystemService();
+ *
+ * const claudeSdk = new ClaudeSdkService(
+ *   historyReader,
+ *   statusTracker,
+ *   toolMetrics,
+ *   sessionInfo,
+ *   fileSystem
+ * );
+ *
+ * // Configure optional services
+ * claudeSdk.setMcpConfigPath('/path/to/.mcp.json');
+ * claudeSdk.setNotificationService(notificationService);
+ *
+ * // Start a new conversation
+ * const config = {
+ *   initialPrompt: 'Hello, Claude!',
+ *   workingDirectory: '/path/to/project',
+ *   model: 'claude-sonnet-4-5',
+ *   permissionMode: 'default',
+ *   allowedTools: ['Read', 'Write', 'Bash']
+ * };
+ *
+ * const { streamingId, systemInit } = await claudeSdk.startConversation(config);
+ *
+ * // Listen for conversation events
+ * claudeSdk.on('claude-message', ({ streamingId, message }) => {
+ *   console.log('Received message:', message);
+ * });
+ *
+ * claudeSdk.on('process-closed', ({ streamingId, code }) => {
+ *   console.log('Conversation ended:', streamingId);
+ * });
+ *
+ * // Stop conversation when done
+ * await claudeSdk.stopConversation(streamingId);
+ * ```
+ *
+ * @see {@link https://github.com/anthropics/anthropic-sdk-typescript|Anthropic SDK Documentation}
  */
 export class ClaudeSdkService extends EventEmitter {
+  /**
+   * Active SDK query instances indexed by streaming ID
+   * Each query represents an active conversation with the Claude Agent SDK
+   */
   private queries: Map<string, Query> = new Map();
+
+  /**
+   * Conversation configurations indexed by streaming ID
+   * Stores the initial config for each conversation (prompt, model, tools, etc.)
+   */
   private conversationConfigs: Map<string, ConversationConfig> = new Map();
-  private sessionIds: Map<string, string> = new Map(); // streamingId -> sessionId
+
+  /**
+   * Maps streaming IDs to SDK session IDs
+   * The streaming ID is generated internally, while session ID comes from the SDK
+   */
+  private sessionIds: Map<string, string> = new Map();
+
+  /**
+   * Logger instance for structured logging
+   */
   private logger: Logger;
+
+  /**
+   * Service for reading Claude's conversation history from JSONL files
+   */
   private historyReader: ClaudeHistoryReader;
+
+  /**
+   * Service for writing SDK messages to conversation history files
+   */
   private historyWriter: SdkHistoryWriter;
+
+  /**
+   * Tracks active conversation sessions and manages optimistic UI state
+   */
   private statusTracker: ConversationStatusManager;
+
+  /**
+   * Optional service for tracking tool usage metrics and analytics
+   */
   private toolMetricsService?: ToolMetricsService;
+
+  /**
+   * Optional service for persisting session metadata to database
+   */
   private sessionInfoService?: SessionInfoService;
+
+  /**
+   * Optional service providing abstraction over Node.js filesystem operations
+   */
   private fileSystemService?: FileSystemService;
+
+  /**
+   * Optional service for sending in-app and push notifications
+   */
   private notificationService?: NotificationService;
+
+  /**
+   * Optional service for routing Claude API requests (load balancing, failover)
+   */
   private routerService?: ClaudeRouterService;
+
+  /**
+   * Path to MCP configuration file (.mcp.json)
+   * When set, MCP servers are loaded from this file for SDK conversations
+   */
   private mcpConfigPath?: string;
+
+  /**
+   * Pending permission requests awaiting user approval
+   * Maps permission request ID to PermissionRequest object
+   */
   private pendingPermissions: Map<string, PermissionRequest> = new Map();
 
+  /**
+   * Creates a new ClaudeSdkService instance
+   *
+   * @param historyReader - Service for reading Claude's JSONL conversation history
+   * @param statusTracker - Service for tracking active conversation sessions
+   * @param toolMetricsService - Optional service for tracking tool usage analytics
+   * @param sessionInfoService - Optional service for persisting session metadata
+   * @param fileSystemService - Optional service for filesystem operations
+   *
+   * @example
+   * ```typescript
+   * const service = new ClaudeSdkService(
+   *   new ClaudeHistoryReader(),
+   *   new ConversationStatusManager(),
+   *   new ToolMetricsService(),
+   *   new SessionInfoService(),
+   *   new FileSystemService()
+   * );
+   * ```
+   */
   constructor(
     historyReader: ClaudeHistoryReader,
     statusTracker: ConversationStatusManager,

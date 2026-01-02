@@ -23,11 +23,23 @@
         }
       ],
       "status": "completed"
+    },
+    "subtask-2-2": {
+      "attempts": [
+        {
+          "session": 3,
+          "timestamp": "2026-01-02T18:53:55.873184",
+          "approach": "Implemented: Fix authorization middleware configuration or token validation to allow /api/flows access",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-02T18:48:01.857123",
-    "last_updated": "2026-01-02T18:51:57.103015"
+    "last_updated": "2026-01-02T18:53:55.873196"
   }
 }

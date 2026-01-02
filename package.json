@@ -48,6 +48,8 @@
     "test:health": "bash scripts/test-health-endpoints.sh",
     "test:backup-restore": "bash scripts/test-backup-restore.sh",
     "test:e2e-entities": "bash scripts/test-e2e-entities.sh",
+    "test:migration": "bash scripts/test-migration-integrity.sh",
+    "create-test-sqlite": "tsx scripts/migration-tools/create-test-sqlite-data.ts",
     "verify:tables": "tsx scripts/verify-postgres-tables.ts",
     "import-training-agent": "tsx scripts/import-training-agent.ts",
     "run-payload": "tsx run-sdk-payload.ts"

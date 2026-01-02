@@ -32,6 +32,36 @@ The PostgreSQL migration is complete. All Strapi content types now use PostgreSQ
 
 ## 🔧 Tools Included
 
+### 0. `create-test-sqlite-data.ts` - Test Data Generator
+
+**Purpose:** Create realistic SQLite test database for migration testing
+
+**Features:**
+- Creates old-style SQLite schema (flat structure with JSON fields)
+- Inserts comprehensive test data for all entity types
+- Includes relationships (agent-skill, agent-MCP server links)
+- Automatic backup of existing database
+- Statistics display after creation
+
+**Usage:**
+```bash
+npm run create-test-sqlite
+```
+
+**Test Data Included:**
+- 3 agents (code-reviewer, test-writer, doc-generator)
+- 3 skills (code-review, test-generation, api-documentation)
+- 2 MCP servers (filesystem, postgres)
+- 3 tasks (2 completed, 1 failed)
+- 4 agent-skill relationships
+- 3 agent-MCP server relationships
+
+**Output:**
+- Creates `backend/.tmp/data.db` with test data
+- Displays database statistics
+
+---
+
 ### 1. `migrate-sqlite-to-postgres.ts` - Main Migration Script
 
 **Purpose:** One-time migration of all data from SQLite to PostgreSQL via Strapi API
@@ -141,7 +171,39 @@ npm run test:rollback -- --dry-run --verbose
 
 ---
 
-### 5. `check-sqlite.cjs` - SQLite Database Inspector
+### 5. Migration Integrity Test Script
+
+**File:** `../test-migration-integrity.sh`
+**Purpose:** Comprehensive end-to-end migration testing with automated validation
+
+**Features:**
+- Automated test data creation
+- Service verification (Docker, PostgreSQL, Strapi)
+- Migration execution with error handling
+- Data integrity validation
+- Comprehensive report generation
+- Cleanup of test services
+
+**Usage:**
+```bash
+npm run test:migration
+```
+
+**Test Procedure:**
+1. Creates test SQLite database
+2. Verifies PostgreSQL is running
+3. Verifies Strapi is running
+4. Runs migration script
+5. Validates data integrity (100%)
+6. Generates comprehensive report
+
+**Output:**
+- Migration test report in `.auto-claude/specs/006-complete-postgresql-migration/`
+- Exit code 0 on success, non-zero on failure
+
+---
+
+### 6. `check-sqlite.cjs` - SQLite Database Inspector
 
 **Purpose:** Inspect SQLite database structure and content before migration
 

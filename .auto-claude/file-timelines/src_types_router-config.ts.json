@@ -11,7 +11,7 @@
       },
       "worktree_state": {
         "content": "/**\n * Claude Code Router provider configuration\n *\n * Defines a model provider (e.g., OpenRouter, Together AI) for routing.\n */\nexport interface RouterProvider {\n  /** Provider name (e.g., 'openrouter', 'together') */\n  name: string;\n\n  /** API base URL for the provider */\n  api_base_url: string;\n\n  /** API key for authentication */\n  api_key: string;\n\n  /** List of model identifiers supported by this provider */\n  models: string[];\n\n  /** Optional request/response transformer configuration */\n  transformer?: Record<string, unknown>;\n}\n\n/**\n * Claude Code Router configuration\n *\n * Enables routing of Claude model requests to alternative providers\n * based on configurable rules.\n */\nexport interface RouterConfiguration {\n  /** Whether router is enabled */\n  enabled: boolean;\n\n  /** Array of configured providers */\n  providers: RouterProvider[];\n\n  /**\n   * Routing rules mapping Claude models to provider model identifiers\n   *\n   * Router rules always resolve to model identifiers, which are strings.\n   * Example: { \"sonnet\": \"anthropic/claude-3-5-sonnet\", \"opus\": \"anthropic/claude-opus-4\" }\n   */\n  rules: Record<string, string>;\n}\n",
-        "last_modified": "2026-01-02T14:22:15.545120"
+        "last_modified": "2026-01-02T15:11:36.270892"
       },
       "task_intent": {
         "title": "Document Frontend React Components and Hooks",

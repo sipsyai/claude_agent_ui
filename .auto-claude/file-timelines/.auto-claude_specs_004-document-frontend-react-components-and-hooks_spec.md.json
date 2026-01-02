@@ -11,7 +11,7 @@
       },
       "worktree_state": {
         "content": "# Document frontend React components and hooks\n\n## Overview\n\nThe frontend has 72 React components across manager UI pages, flow designer, and UI primitives. None have prop documentation, usage examples, or component purpose descriptions. Custom hooks like useAgentCreator, useFlowState, and useSkillTraining lack documentation of their state management and side effects.\n\n## Rationale\n\nFrontend development requires understanding component APIs, prop types, and hook behavior. Currently developers must read implementation to understand how to use components like FlowDesigner, AgentExecutionModal, or TaskExecutionModal.\n\n---\n*This spec was created from ideation and is pending detailed specification.*\n",
-        "last_modified": "2026-01-02T14:22:15.541524"
+        "last_modified": "2026-01-02T15:11:36.266493"
       },
       "task_intent": {
         "title": "Document Frontend React Components and Hooks",

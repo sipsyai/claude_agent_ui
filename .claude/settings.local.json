@@ -7,7 +7,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Skill(strapi-project-helper)",
       "Bash(find:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

@@ -9,7 +9,10 @@
         "content": "",
         "timestamp": "2026-01-02T14:22:14.293924"
       },
-      "worktree_state": null,
+      "worktree_state": {
+        "content": "{\n  \"subtasks\": {\n    \"6.15\": {\n      \"attempts\": [\n        {\n          \"session\": 1,\n          \"timestamp\": \"2026-01-02T14:24:11.819728\",\n          \"approach\": \"Implemented: Add JSDoc documentation to api.ts and chat-api.ts including function descriptions, parameters, and r\",\n          \"success\": true,\n          \"error\": null\n        }\n      ],\n      \"status\": \"completed\"\n    }\n  },\n  \"stuck_subtasks\": [],\n  \"metadata\": {\n    \"created_at\": \"2026-01-02T14:22:15.680418\",\n    \"last_updated\": \"2026-01-02T14:24:11.819735\"\n  }\n}",
+        "last_modified": "2026-01-02T15:11:36.266015"
+      },
       "task_intent": {
         "title": "Document Frontend React Components and Hooks",
         "description": "Add comprehensive JSDoc documentation to all React components and custom hooks in the frontend, including prop types, usage examples, component purposes, state management, and side effects.",

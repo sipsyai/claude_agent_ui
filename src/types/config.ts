@@ -3,18 +3,31 @@
  */
 import { RouterConfiguration } from './router-config.js';
 
+/**
+ * Server configuration
+ *
+ * Defines the host and port for the CUI server.
+ */
 export interface ServerConfig {
+  /** Server host address (default: 'localhost') */
   host: string;
+
+  /** Server port number (default: 3001) */
   port: number;
 }
 
+/**
+ * Gemini API configuration
+ *
+ * Configuration for Google's Gemini API integration.
+ */
 export interface GeminiConfig {
   /**
    * Google API key for Gemini
    * Can also be set via GOOGLE_API_KEY environment variable
    */
   apiKey?: string;
-  
+
   /**
    * Gemini model to use
    * Default: 'gemini-2.5-flash'
@@ -22,15 +35,35 @@ export interface GeminiConfig {
   model?: string;
 }
 
+/**
+ * Interface configuration
+ *
+ * User interface preferences and notification settings.
+ */
 export interface InterfaceConfig {
+  /** Color scheme preference */
   colorScheme: 'light' | 'dark' | 'system';
+
+  /** Interface language code (e.g., 'en', 'es') */
   language: string;
+
+  /** Notification settings */
   notifications?: {
+    /** Whether notifications are enabled */
     enabled: boolean;
+
+    /** Optional ntfy.sh server URL for notifications */
     ntfyUrl?: string;
+
+    /** Optional web push notification configuration */
     webPush?: {
-      subject?: string; // e.g. mailto:you@example.com
+      /** VAPID subject (e.g. mailto:you@example.com) */
+      subject?: string;
+
+      /** VAPID public key for web push */
       vapidPublicKey?: string;
+
+      /** VAPID private key for web push */
       vapidPrivateKey?: string;
     };
   };

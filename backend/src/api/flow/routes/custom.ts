@@ -150,5 +150,17 @@ export default {
         middlewares: [],
       },
     },
+
+    // Get recent executions
+    {
+      method: 'GET',
+      path: '/flows/executions/recent',
+      handler: 'flow.findRecentExecutions',
+      config: {
+        auth: false,
+        policies: [],
+        middlewares: [],
+      },
+    },
   ],
 };

@@ -310,4 +310,24 @@ export default factories.createCoreController('api::flow.flow', ({ strapi }) => 
       return ctx.badRequest('Archive flow failed', { error: error.message });
     }
   },
+
+  /**
+   * Get recent executions across all flows
+   * GET /api/flows/executions/recent
+   */
+  async findRecentExecutions(ctx) {
+    const limit = parseInt(ctx.query.limit as string) || 10;
+
+    try {
+      const executionService = strapi.service('api::flow-execution.flow-execution');
+      const executions = await executionService.findRecent(limit);
+
+      ctx.send({
+        data: executions,
+      });
+    } catch (error: any) {
+      strapi.log.error('Find recent executions failed:', error);
+      return ctx.badRequest('Find recent executions failed', { error: error.message });
+    }
+  },
 }));

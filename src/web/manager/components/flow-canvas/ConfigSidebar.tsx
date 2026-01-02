@@ -44,6 +44,13 @@
  * - Scrollable content area if sections exceed viewport height
  * - Collapse button clearly visible at top
  *
+ * ## Responsive Behavior
+ * - **Mobile/Tablet (<768px)**: Sidebar automatically collapses to maximize canvas space
+ * - **Desktop (≥768px)**: Sidebar restores to user's last preference
+ * - User preferences are preserved separately from auto-collapse behavior
+ * - Manual toggle remains available at all viewport sizes
+ * - Smooth transitions when crossing breakpoint threshold
+ *
  * ## Component Structure
  * ```
  * ConfigSidebar (sidebar container)
@@ -101,7 +108,7 @@
  * />
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   SlidersHorizontalIcon,
   ClockIcon,
@@ -231,6 +238,12 @@ export const ConfigSidebar: React.FC<ConfigSidebarProps> = ({
   // Local state for uncontrolled mode
   const [localIsCollapsed, setLocalIsCollapsed] = useState(false);
 
+  // Responsive breakpoint state
+  const [isMobileView, setIsMobileView] = useState(false);
+
+  // Track user's preference before auto-collapse (for restoration)
+  const userPreferenceRef = useRef<boolean>(false);
+
   // Determine if we're in controlled or uncontrolled mode
   const isControlled = controlledIsCollapsed !== undefined;
   const isCollapsed = isControlled ? controlledIsCollapsed : localIsCollapsed;
@@ -240,17 +253,51 @@ export const ConfigSidebar: React.FC<ConfigSidebarProps> = ({
     if (!isControlled) {
       const stored = localStorage.getItem('flowEditor.sidebarCollapsed');
       if (stored !== null) {
-        setLocalIsCollapsed(stored === 'true');
+        const storedValue = stored === 'true';
+        setLocalIsCollapsed(storedValue);
+        userPreferenceRef.current = storedValue;
       }
     }
   }, [isControlled]);
 
   // Save collapsed state to localStorage (uncontrolled mode only)
   useEffect(() => {
-    if (!isControlled) {
+    if (!isControlled && !isMobileView) {
+      // Only save user preference when not in mobile view
       localStorage.setItem('flowEditor.sidebarCollapsed', String(isCollapsed));
+      userPreferenceRef.current = isCollapsed;
     }
-  }, [isCollapsed, isControlled]);
+  }, [isCollapsed, isControlled, isMobileView]);
+
+  // Responsive breakpoint detection
+  useEffect(() => {
+    const MOBILE_BREAKPOINT = 768;
+
+    const checkViewport = () => {
+      const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
+      setIsMobileView(isMobile);
+
+      if (!isControlled) {
+        if (isMobile) {
+          // Auto-collapse on mobile/tablet
+          setLocalIsCollapsed(true);
+        } else {
+          // Restore user preference on desktop
+          setLocalIsCollapsed(userPreferenceRef.current);
+        }
+      }
+    };
+
+    // Check on mount
+    checkViewport();
+
+    // Listen to resize events
+    window.addEventListener('resize', checkViewport);
+
+    return () => {
+      window.removeEventListener('resize', checkViewport);
+    };
+  }, [isControlled]);
 
   /**
    * Handle collapse toggle
@@ -259,7 +306,12 @@ export const ConfigSidebar: React.FC<ConfigSidebarProps> = ({
     if (isControlled && onToggleCollapse) {
       onToggleCollapse();
     } else if (!isControlled) {
-      setLocalIsCollapsed(!localIsCollapsed);
+      const newCollapsedState = !localIsCollapsed;
+      setLocalIsCollapsed(newCollapsedState);
+      // Update user preference if not in mobile view
+      if (!isMobileView) {
+        userPreferenceRef.current = newCollapsedState;
+      }
     }
   };
 

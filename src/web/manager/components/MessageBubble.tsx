@@ -200,12 +200,10 @@
  *   return (
  *     <ChatDisplayProvider>
  *       <div>
- *         {/* View mode toggle */}
  *         <button onClick={() => setViewMode(viewMode === 'simple' ? 'detailed' : 'simple')}>
  *           {viewMode === 'simple' ? 'Show Details' : 'Hide Details'}
  *         </button>
  *
- *         {/* Message list */}
  *         <div className="space-y-4">
  *           <SystemMessage />
  *           <UserMessage />
@@ -227,7 +225,6 @@
  *   return (
  *     <ChatDisplayProvider>
  *       <div>
- *         {/* Switch to detailed mode to see tool executions and system events */}
  *         <AssistantMessage />
  *       </div>
  *     </ChatDisplayProvider>
@@ -570,7 +567,6 @@ export const AssistantMessage: React.FC = () => {
  *   return (
  *     <div>
  *       <SystemMessage />
- *       {/* Content: "Session started at 2:30 PM" */}
  *     </div>
  *   );
  * }

@@ -241,16 +241,15 @@
  *     setSkills(newSkills);
  *   };
  *
+ *   // User interaction flow:
+ *   // 1. Search "analyzer" → filters list to matching skills
+ *   // 2. Click "Select All" → all filtered skills selected
+ *   // 3. Click info icon → modal opens with skill details
+ *   // 4. Click "code-reviewer" → toggles selection
+ *   // 5. Clear search → all skills visible, selections preserved
  *   return (
  *     <div>
  *       <SkillSelector selectedSkills={skills} onChange={handleChange} />
- *
- *       {/* User interaction example: */}
- *       {/* 1. Search "analyzer" → filters list to matching skills */}
- *       {/* 2. Click "Select All" → all filtered skills selected */}
- *       {/* 3. Click info icon → modal opens with skill details */}
- *       {/* 4. Click "code-reviewer" → toggles selection */}
- *       {/* 5. Clear search → all skills visible, selections preserved */}
  *     </div>
  *   );
  * }

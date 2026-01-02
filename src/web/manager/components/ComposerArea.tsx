@@ -95,7 +95,6 @@
  *     <AssistantRuntimeProvider runtime={myRuntime}>
  *       <div className="flex flex-col h-screen">
  *         <div className="flex-1 overflow-y-auto">
- *           {/* Message list */}
  *         </div>
  *         <ComposerArea />
  *       </div>
@@ -112,7 +111,6 @@
  *   return (
  *     <ThreadPrimitive.Root>
  *       <ThreadPrimitive.Messages className="flex-1 overflow-y-auto">
- *         {/* Messages rendered here */}
  *       </ThreadPrimitive.Messages>
  *       <ComposerArea />
  *     </ThreadPrimitive.Root>
@@ -129,7 +127,6 @@
  * function AttachmentDemo() {
  *   return (
  *     <div>
- *       {/* ComposerArea handles all attachment logic internally */}
  *       <ComposerArea />
  *     </div>
  *   );
@@ -145,7 +142,6 @@
  *   return (
  *     <AssistantRuntimeProvider runtime={runtime}>
  *       <ComposerArea />
- *       {/* Button automatically switches based on runtime.running state */}
  *     </AssistantRuntimeProvider>
  *   );
  * }

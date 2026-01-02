@@ -298,9 +298,9 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
 }) => {
   return (
     <div
-      className={`fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none ${className}`}
+      className={`fixed top-4 right-4 z-50 flex flex-col gap-3 pointer-events-none max-h-[calc(100vh-2rem)] overflow-y-auto ${className}`}
     >
-      <div className="flex flex-col gap-2 pointer-events-auto">{children}</div>
+      <div className="flex flex-col gap-3 pointer-events-auto">{children}</div>
     </div>
   );
 };

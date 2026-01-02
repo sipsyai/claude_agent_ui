@@ -357,11 +357,13 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
     // Validate flow structure before saving
     const validation = validateFlow(currentNodes, currentEdges);
     if (!validation.isValid) {
-      const errorMessage = formatValidationErrors(validation);
-      addToast({
-        message: `Flow validation failed: ${errorMessage}`,
-        variant: 'error',
-        duration: 7000,
+      // Show each validation error as a separate stacked toast
+      validation.errors.forEach((error) => {
+        addToast({
+          message: error.message,
+          variant: 'error',
+          duration: 7000,
+        });
       });
       return;
     }
@@ -691,8 +693,11 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
           </Button>
 
           {/* Center: Flow Name Display */}
-          <div className="flex-1 text-center">
-            <h1 className="text-base font-semibold text-foreground truncate">
+          <div className="flex-1 text-center min-w-0 px-4">
+            <h1
+              className="text-base font-semibold text-foreground truncate max-w-full"
+              title={name || 'Untitled Flow'}
+            >
               {name || 'Untitled Flow'}
             </h1>
           </div>

@@ -81,7 +81,7 @@
           "id": "2.1",
           "title": "Review and update migration script",
           "description": "Review migrate-sqlite-to-postgres.ts script for completeness and correct field mappings for new schema",
-          "status": "pending",
+          "status": "completed",
           "priority": "high",
           "acceptance_criteria": [
             "All entity types have proper field transformations",
@@ -90,13 +90,15 @@
           ],
           "files": [
             "scripts/migrate-sqlite-to-postgres.ts"
-          ]
+          ],
+          "notes": "Reviewed and updated migrate-sqlite-to-postgres.ts for new PostgreSQL component-based schema. Fixed critical field mapping issues:\n\n\u2705 Agent transformation - Updated to use toolConfig and modelConfig components\n\u2705 Skill transformation - Fixed field names (content\u2192skillmd, added displayName)\n\u2705 Task transformation - Fixed field names (errorMessage\u2192error, durationMs\u2192executionTime)\n\u2705 Relations migration - Updated for skillSelection and mcpConfig component arrays\n\nCreated comprehensive migration-script-review.md documenting all issues and fixes. All acceptance criteria met:\n\u2705 All entity types have proper field transformations\n\u2705 Relations correctly migrated with component-based approach\n\u2705 Robust error handling in place\n\nScript now ready for testing with --validate-only flag.",
+          "updated_at": "2026-01-02T07:24:07.767097+00:00"
         },
         {
           "id": "2.2",
           "title": "Create validation script for post-migration",
           "description": "Create a script to validate data integrity after migration - compare row counts and sample data",
-          "status": "pending",
+          "status": "completed",
           "priority": "medium",
           "acceptance_criteria": [
             "Validates row counts match between SQLite and PostgreSQL",
@@ -105,7 +107,9 @@
           ],
           "files": [
             "scripts/validate-migration.ts"
-          ]
+          ],
+          "notes": "Enhanced scripts/validate-migration.ts for post-migration validation. Updated for component-based schema (modelConfig, toolConfig, skillSelection, mcpConfig). Added row count validation between SQLite and PostgreSQL. Implemented sample data spot-checking for agents, skills, and MCP servers with field-level accuracy checks. Enhanced reporting with detailed validation results and clear pass/fail/warning status. All acceptance criteria met: \u2705 Validates row counts match, \u2705 Spot-checks sample records, \u2705 Reports discrepancies clearly.",
+          "updated_at": "2026-01-02T07:28:09.299841+00:00"
         },
         {
           "id": "2.3",
@@ -448,5 +452,5 @@
       "Phase 6 requires all other phases complete"
     ]
   },
-  "last_updated": "2026-01-02T07:18:42.817333+00:00"
+  "last_updated": "2026-01-02T07:28:09.299853+00:00"
 }

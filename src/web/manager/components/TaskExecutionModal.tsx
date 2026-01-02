@@ -1,14 +1,229 @@
+/**
+ * @file TaskExecutionModal.tsx
+ * @description Modal component for executing tasks with real-time SSE streaming and comprehensive
+ * message handling including tool use visualization and progress tracking.
+ *
+ * ## Features
+ * - Automatic task execution on mount
+ * - Real-time SSE event streaming with message updates
+ * - Tool use tracking with input parameters and results
+ * - Execution progress tracking with status updates
+ * - Auto-scrolling message list
+ * - Loading and execution states
+ * - Error handling with user-friendly messages
+ * - Completion callback for parent component updates
+ *
+ * ## Task Execution Flow
+ * The component follows this execution lifecycle:
+ * 1. Modal opens with task details
+ * 2. `executeTask` automatically triggered on mount via useEffect
+ * 3. SSE stream initiated via `api.executeTask` with event callback
+ * 4. Events processed in real-time and messages updated incrementally
+ * 5. Tool use blocks tracked separately with unique IDs
+ * 6. Tool results matched back to tool use messages via `toolUseId`
+ * 7. Execution completes with success or error status
+ * 8. `onComplete` callback invoked to notify parent component
+ * 9. User can close modal via Close button (disabled during execution)
+ *
+ * ## Progress Tracking
+ * The component maintains execution progress through:
+ * - **isExecuting**: Boolean state indicating whether task is currently running
+ * - **executionStatus**: String state showing current status (e.g., "Starting...", "Completed", "Failed")
+ * - Status updates appear in header badge with color-coded background
+ * - Status messages added to message list for detailed progress visibility
+ *
+ * ## Message Handling
+ * The component processes multiple message types from SSE events:
+ *
+ * ### Assistant Messages
+ * - Content blocks parsed from `message.content` array
+ * - Text blocks displayed as assistant messages with primary styling
+ * - Tool use blocks create separate tool_use messages
+ * - Each tool use tracked with unique ID for result matching
+ *
+ * ### User Messages
+ * - Tool result blocks parsed from `message.content` array
+ * - Results matched back to tool use messages via `toolUseId`
+ * - Updates existing tool_use message with `toolResult` property
+ *
+ * ### Result Messages
+ * - Final execution result from task completion
+ * - Success: "✅ Task completed successfully" with green indicator
+ * - Failure: "❌ Task failed: {error}" with red indicator
+ * - Result data displayed as assistant message (JSON or string)
+ * - Sets `isExecuting` to false and updates `executionStatus`
+ * - Triggers `onComplete` callback
+ *
+ * ### Status Messages
+ * - General status updates from task execution
+ * - Displayed with blue background/border
+ * - Updates both message list and header status badge
+ *
+ * ### Error Messages
+ * - Error events displayed with red styling
+ * - Catches both streaming errors and execution failures
+ * - Sets `isExecuting` to false and `executionStatus` to "Failed"
+ * - Triggers `onComplete` callback even on error
+ *
+ * ### Debug Messages
+ * - Debug information with yellow styling
+ * - Filtered to show only important messages (e.g., STDIN-related)
+ * - Useful for troubleshooting task behavior
+ *
+ * ### Tool Use Messages
+ * - Special message type for tool executions
+ * - Displays tool name with 🔧 emoji icon
+ * - Collapsible sections for input parameters (📥) and output results (📤)
+ * - Auto-expand short results (<200 chars)
+ * - Loading state ("Waiting for result...") while waiting for tool results
+ * - Purple background/border for visual distinction
+ *
+ * ## Result Display
+ * When task execution completes successfully:
+ * - Success status message added to message list
+ * - Result data displayed as assistant message
+ * - Handles both string and object results (JSON stringified with formatting)
+ * - Header status badge updates to "Completed" with appropriate color
+ * - Close button becomes enabled
+ *
+ * ## UI States
+ *
+ * ### Empty State (Initial Load)
+ * - Shown briefly when execution starting but no messages yet
+ * - "Task execution starting..." message
+ *
+ * ### Loading State
+ * - Shown when `isExecuting === true` and no messages yet
+ * - Animated pulse with "Starting task execution..." message
+ *
+ * ### Executing State
+ * - Close button disabled to prevent premature closure
+ * - Close button shows "Running..." text
+ * - Messages appear in real-time as events arrive
+ * - Status badge shows current execution status
+ *
+ * ### Completed State
+ * - Close button re-enabled and shows "Close" text
+ * - Status badge shows "Completed" or "Failed"
+ * - Messages remain visible for review
+ * - User can close modal
+ *
+ * ## Styling Behavior
+ * - Modal overlay with dark semi-transparent backdrop (bg-black/50)
+ * - Centered modal dialog with max width 4xl and max height 90vh
+ * - Three-section layout: header (with task name, agent, status), messages (scrollable), footer
+ * - Message styling varies by type:
+ *   - Error: red background/border (bg-red-500/10, border-red-500/20)
+ *   - Debug: yellow background/border (bg-yellow-500/10, border-yellow-500/20)
+ *   - Status: blue background/border (bg-blue-500/10, border-blue-500/20)
+ *   - Tool use: purple background/border (bg-purple-500/10, border-purple-500/20)
+ *   - Assistant: primary background/border (bg-primary/10, border-primary/20)
+ *   - Default: secondary background (bg-secondary)
+ * - Auto-scroll to bottom on new messages with smooth behavior
+ * - Tool use sections with collapsible details elements
+ * - Status badge in header with blue background (bg-blue-100, dark:bg-blue-900)
+ *
+ * @example
+ * ```tsx
+ * // Basic usage with task execution
+ * const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+ * const [isModalOpen, setIsModalOpen] = useState(false);
+ *
+ * const handleTaskComplete = () => {
+ *   // Refresh task list or update UI
+ *   fetchTasks();
+ * };
+ *
+ * <TaskExecutionModal
+ *   task={selectedTask}
+ *   onClose={() => setIsModalOpen(false)}
+ *   onComplete={handleTaskComplete}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Execute task from list with automatic cleanup
+ * const handleExecuteTask = (task: Task) => {
+ *   setSelectedTask(task);
+ *   setModalOpen(true);
+ * };
+ *
+ * <TaskExecutionModal
+ *   task={selectedTask}
+ *   onClose={() => {
+ *     setModalOpen(false);
+ *     setSelectedTask(null);
+ *   }}
+ *   onComplete={() => {
+ *     // Optionally close modal on completion
+ *     // setModalOpen(false);
+ *     // Or keep it open for user to review results
+ *     refreshTaskList();
+ *   }}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Understanding tool use message flow
+ * // 1. Assistant message arrives with tool_use block:
+ * //    { type: 'tool_use', toolName: 'read_file', toolInput: { path: 'config.json' } }
+ * //
+ * // 2. Message displayed with "Waiting for result..." loading state
+ * //
+ * // 3. User message arrives with tool_result block:
+ * //    { tool_use_id: 'toolu_123', content: '{"key": "value"}' }
+ * //
+ * // 4. Existing tool_use message updated with toolResult property
+ * //    Message now shows both input and output in collapsible sections
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Navigate to task details after completion
+ * const navigate = useNavigate();
+ *
+ * <TaskExecutionModal
+ *   task={selectedTask}
+ *   onClose={() => setModalOpen(false)}
+ *   onComplete={() => {
+ *     // Navigate to task details page to view full results
+ *     navigate(`/tasks/${selectedTask.id}`);
+ *   }}
+ * />
+ * ```
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import * as api from '../services/api';
 import { Button } from './ui/Button';
 import { XCircleIcon } from './ui/Icons';
 
+/**
+ * Props for the TaskExecutionModal component.
+ *
+ * @property {api.Task} task - The task object to execute, containing id, name, and agentName
+ * @property {() => void} onClose - Callback invoked when user clicks close button (disabled during execution)
+ * @property {() => void} onComplete - Callback invoked when task execution completes (success or failure)
+ */
 interface TaskExecutionModalProps {
   task: api.Task;
   onClose: () => void;
   onComplete: () => void;
 }
 
+/**
+ * Message object representing a single message in the execution stream.
+ *
+ * @property {string} id - Unique identifier for the message
+ * @property {'status' | 'assistant' | 'user' | 'result' | 'error' | 'debug' | 'tool_use'} type - Message type determines styling and display
+ * @property {string} content - Text content of the message
+ * @property {Date} timestamp - Timestamp when message was created
+ * @property {string} [toolName] - Name of the tool (only for tool_use messages)
+ * @property {any} [toolInput] - Input parameters for the tool (only for tool_use messages)
+ * @property {any} [toolResult] - Result from tool execution, added when result arrives (only for tool_use messages)
+ * @property {string} [toolUseId] - Unique ID for matching tool use with its result (only for tool_use messages)
+ */
 interface Message {
   id: string;
   type: 'status' | 'assistant' | 'user' | 'result' | 'error' | 'debug' | 'tool_use';
@@ -20,6 +235,16 @@ interface Message {
   toolUseId?: string;
 }
 
+/**
+ * TaskExecutionModal component for executing tasks with real-time progress tracking.
+ *
+ * Automatically executes the task on mount and streams execution events via SSE.
+ * Messages are processed in real-time and displayed in a scrollable list with
+ * color-coded styling based on message type.
+ *
+ * @param {TaskExecutionModalProps} props - Component props
+ * @returns {JSX.Element} Modal with task execution interface
+ */
 const TaskExecutionModal: React.FC<TaskExecutionModalProps> = ({ task, onClose, onComplete }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isExecuting, setIsExecuting] = useState(true);
@@ -40,6 +265,29 @@ const TaskExecutionModal: React.FC<TaskExecutionModalProps> = ({ task, onClose, 
     executeTask();
   }, []);
 
+  /**
+   * Executes the task via SSE streaming API and processes events in real-time.
+   *
+   * This function handles the complete task execution workflow:
+   * 1. Clears existing messages and resets state
+   * 2. Calls `api.executeTask` with task ID and event callback
+   * 3. Processes SSE events as they arrive:
+   *    - **message events**: Parse content blocks from assistant/user messages
+   *      - Assistant messages: Extract text blocks and tool_use blocks
+   *      - User messages: Extract tool_result blocks and match to tool uses
+   *      - Result messages: Display final result and update status
+   *    - **status events**: Update execution status and add status messages
+   *    - **debug events**: Add filtered debug messages (STDIN-related only)
+   *    - **error events**: Display error messages and mark execution as failed
+   * 4. Updates message state incrementally for real-time display
+   * 5. Matches tool results back to tool use messages via `toolUseId`
+   * 6. Sets final execution status and invokes `onComplete` callback
+   * 7. Catches and displays any errors during execution
+   *
+   * @internal
+   * @async
+   * @returns {Promise<void>}
+   */
   const executeTask = async () => {
     setIsExecuting(true);
     setMessages([]);
@@ -311,5 +559,7 @@ const TaskExecutionModal: React.FC<TaskExecutionModalProps> = ({ task, onClose, 
     </div>
   );
 };
+
+TaskExecutionModal.displayName = 'TaskExecutionModal';
 
 export default TaskExecutionModal;

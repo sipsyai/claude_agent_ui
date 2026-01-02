@@ -1,0 +1,119 @@
+{
+  "kind": "collectionType",
+  "collectionName": "flow_executions",
+  "info": {
+    "singularName": "flow-execution",
+    "pluralName": "flow-executions",
+    "displayName": "Flow Execution",
+    "description": "Tracks flow execution history with status, logs, timing, and results"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "flow": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::flow.flow",
+      "description": "Reference to the flow definition that was executed"
+    },
+    "status": {
+      "type": "enumeration",
+      "required": true,
+      "default": "pending",
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "input": {
+      "type": "json",
+      "description": "Input data provided to start the flow execution"
+    },
+    "output": {
+      "type": "json",
+      "description": "Final output data from the flow execution"
+    },
+    "logs": {
+      "type": "json",
+      "default": [],
+      "description": "Array of log entries with timestamp, level, message, and nodeId"
+    },
+    "error": {
+      "type": "text",
+      "description": "Error message if the execution failed"
+    },
+    "errorDetails": {
+      "type": "json",
+      "description": "Detailed error information including stack trace and context"
+    },
+    "startedAt": {
+      "type": "datetime",
+      "description": "When the flow execution started"
+    },
+    "completedAt": {
+      "type": "datetime",
+      "description": "When the flow execution completed (success or failure)"
+    },
+    "executionTime": {
+      "type": "integer",
+      "min": 0,
+      "description": "Total execution time in milliseconds"
+    },
+    "nodeExecutions": {
+      "type": "json",
+      "default": [],
+      "description": "Array tracking each node's execution state, timing, input, and output"
+    },
+    "currentNodeId": {
+      "type": "string",
+      "description": "ID of the currently executing node (when status is running)"
+    },
+    "tokensUsed": {
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "description": "Total tokens consumed during execution"
+    },
+    "cost": {
+      "type": "decimal",
+      "default": 0,
+      "min": 0,
+      "description": "Estimated cost of the execution"
+    },
+    "triggeredBy": {
+      "type": "enumeration",
+      "default": "manual",
+      "enum": [
+        "manual",
+        "schedule",
+        "webhook",
+        "api"
+      ],
+      "description": "How the flow execution was triggered"
+    },
+    "triggerData": {
+      "type": "json",
+      "description": "Additional context about the trigger (e.g., webhook payload, schedule info)"
+    },
+    "retryCount": {
+      "type": "integer",
+      "default": 0,
+      "min": 0,
+      "description": "Number of retry attempts made"
+    },
+    "parentExecutionId": {
+      "type": "integer",
+      "description": "Reference to parent execution if this is a retry"
+    },
+    "metadata": {
+      "type": "json",
+      "default": {},
+      "description": "Additional execution metadata"
+    }
+  }
+}

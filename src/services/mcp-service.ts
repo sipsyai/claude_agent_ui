@@ -600,7 +600,67 @@ export class MCPService {
   }
 
   /**
-   * Register an SDK MCP server (in-process)
+   * Register an in-process SDK MCP server instance
+   *
+   * @description
+   * Registers a JavaScript/TypeScript MCP server instance for in-process execution.
+   * SDK servers run directly within the Node.js process, avoiding the overhead of
+   * spawning external processes and providing faster tool execution.
+   *
+   * This method stores the server instance in an internal registry (Map) keyed by
+   * server name. Once registered, the SDK server can be:
+   * - Added to .mcp.json configuration with type 'sdk'
+   * - Tested for validity using testMCPServer()
+   * - Queried for available tools using listMCPServerTools()
+   * - Used by Claude Agent SDK for in-process tool execution
+   *
+   * The server instance must implement the MCP server interface, specifically:
+   * - listTools(): Promise<Tool[]> - Returns array of available tools
+   * - Additional methods as required by MCP protocol
+   *
+   * Registration is a prerequisite for SDK server functionality. Attempting to use
+   * an SDK server before registration will result in "server not registered" errors
+   * when testing or listing tools.
+   *
+   * @param name - Unique identifier for the SDK server (must match config name)
+   * @param instance - MCP server instance implementing listTools() and other MCP methods
+   *
+   * @example
+   * ```typescript
+   * import { MyCustomMCPServer } from './my-mcp-server.js';
+   *
+   * const mcpService = new MCPService();
+   *
+   * // Create and register SDK server instance
+   * const myServer = new MyCustomMCPServer({
+   *   config: { apiKey: process.env.API_KEY }
+   * });
+   *
+   * mcpService.registerSdkServer('my-custom-server', myServer);
+   *
+   * // Now add to configuration
+   * await mcpService.addMCPServer(
+   *   'my-custom-server',
+   *   { type: 'sdk', name: 'my-custom-server' },
+   *   '/path/to/project'
+   * );
+   *
+   * // Test the registered server
+   * const result = await mcpService.testMCPServer('my-custom-server', '/path/to/project');
+   * console.log(result.success); // true
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Multiple SDK servers
+   * const weatherServer = new WeatherMCPServer();
+   * const databaseServer = new DatabaseMCPServer();
+   *
+   * mcpService.registerSdkServer('weather', weatherServer);
+   * mcpService.registerSdkServer('database', databaseServer);
+   *
+   * // Both servers now available for in-process execution
+   * ```
    */
   registerSdkServer(name: string, instance: any): void {
     this.sdkServers.set(name, instance);
@@ -608,7 +668,55 @@ export class MCPService {
   }
 
   /**
-   * Unregister an SDK MCP server
+   * Unregister an in-process SDK MCP server instance
+   *
+   * @description
+   * Removes a previously registered SDK MCP server instance from the internal registry.
+   * This effectively disables in-process execution for the specified server.
+   *
+   * After unregistration:
+   * - The server instance is removed from the internal Map
+   * - Testing the server will return "SDK server not registered" error
+   * - Attempting to list tools will fail with "server not registered" error
+   * - The server config may still exist in .mcp.json but won't function
+   *
+   * This method is useful for:
+   * - Hot-reloading server implementations during development
+   * - Cleaning up resources before application shutdown
+   * - Temporarily disabling SDK servers without modifying .mcp.json
+   * - Replacing server instances with updated versions
+   *
+   * Note: This method only affects the in-process registry. To completely remove
+   * the server, you should also call deleteMCPServer() to remove it from .mcp.json.
+   *
+   * @param name - Name of the SDK server to unregister (must match registration name)
+   *
+   * @example
+   * ```typescript
+   * const mcpService = new MCPService();
+   * const myServer = new MyMCPServer();
+   *
+   * // Register server
+   * mcpService.registerSdkServer('my-server', myServer);
+   *
+   * // Later, unregister it
+   * mcpService.unregisterSdkServer('my-server');
+   *
+   * // Server is no longer available for in-process execution
+   * const result = await mcpService.testMCPServer('my-server', '/path/to/project');
+   * console.log(result.success); // false
+   * console.log(result.error); // "SDK server "my-server" instance not found..."
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Hot-reload pattern: replace server instance with updated version
+   * mcpService.unregisterSdkServer('my-server');
+   *
+   * // Load updated server code
+   * const updatedServer = new MyMCPServerV2();
+   * mcpService.registerSdkServer('my-server', updatedServer);
+   * ```
    */
   unregisterSdkServer(name: string): void {
     this.sdkServers.delete(name);
@@ -616,7 +724,75 @@ export class MCPService {
   }
 
   /**
-   * Get all MCP servers from project config
+   * Get all MCP servers from project configuration
+   *
+   * @description
+   * Retrieves all MCP servers configured in the project's .mcp.json file, returning
+   * them as an array of normalized MCPServerInternal objects. This is the primary
+   * method for listing all available MCP servers in a project.
+   *
+   * The method performs the following operations:
+   * 1. Auto-detect and migrate legacy .claude/mcp.json configs to .mcp.json (if found)
+   * 2. Read .mcp.json from project root with environment variable substitution
+   * 3. Transform raw config into normalized MCPServerInternal[] array
+   * 4. Return all servers (both enabled and disabled)
+   *
+   * The returned servers include both stdio (external process) and SDK (in-process)
+   * transport types. Each server object contains:
+   * - id and name (typically the same, derived from config key)
+   * - type (stdio, sdk, sse, http)
+   * - config (complete server configuration)
+   * - disabled flag (if true, server won't be loaded by Claude SDK)
+   *
+   * If no .mcp.json file exists or the file is empty, an empty array is returned.
+   * This method never throws errors - file read failures are logged and result in
+   * an empty array return.
+   *
+   * @param projectPath - Absolute path to project directory containing .mcp.json.
+   *                      Defaults to process.cwd() if not provided.
+   *
+   * @returns Promise resolving to array of MCPServerInternal objects.
+   *          Returns empty array if no config exists or config is invalid.
+   *
+   * @example
+   * ```typescript
+   * const mcpService = new MCPService();
+   *
+   * // Get all servers in current project
+   * const servers = await mcpService.getMCPServers();
+   * console.log(`Found ${servers.length} MCP servers`);
+   *
+   * servers.forEach(server => {
+   *   console.log(`- ${server.name} (${server.type})${server.disabled ? ' [disabled]' : ''}`);
+   * });
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Get servers for specific project
+   * const servers = await mcpService.getMCPServers('/Users/dev/my-project');
+   *
+   * // Filter enabled stdio servers
+   * const enabledStdioServers = servers.filter(s =>
+   *   s.type === 'stdio' && !s.disabled
+   * );
+   *
+   * // Check if specific server exists
+   * const hasFilesystem = servers.some(s => s.name === 'filesystem');
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // List all servers with their tools
+   * const servers = await mcpService.getMCPServers();
+   *
+   * for (const server of servers) {
+   *   if (!server.disabled) {
+   *     const toolsResult = await mcpService.listMCPServerTools(server.id);
+   *     console.log(`${server.name}: ${toolsResult.tools.length} tools`);
+   *   }
+   * }
+   * ```
    */
   async getMCPServers(projectPath?: string): Promise<MCPServerInternal[]> {
     if (!projectPath) {
@@ -639,7 +815,77 @@ export class MCPService {
   }
 
   /**
-   * Get a specific MCP server by ID
+   * Get a specific MCP server by its unique identifier
+   *
+   * @description
+   * Retrieves a single MCP server configuration by ID from the project's .mcp.json file.
+   * This is a convenience method that wraps getMCPServers() and filters by ID.
+   *
+   * The method:
+   * 1. Calls getMCPServers() to load all servers (including legacy migration)
+   * 2. Searches for a server with matching ID (case-sensitive exact match)
+   * 3. Returns the server if found, or null if not found
+   * 4. Logs a warning if server is not found
+   *
+   * The ID corresponds to the server name as defined in .mcp.json. For example,
+   * if .mcp.json contains { "mcpServers": { "filesystem": {...} } }, the ID is "filesystem".
+   *
+   * Returns null (rather than throwing) for missing servers, allowing callers to
+   * gracefully handle non-existent servers without try/catch blocks.
+   *
+   * @param id - Unique identifier of the MCP server (must match config key exactly)
+   * @param projectPath - Absolute path to project directory containing .mcp.json.
+   *                      Defaults to process.cwd() if not provided.
+   *
+   * @returns Promise resolving to MCPServerInternal if found, or null if server
+   *          with specified ID doesn't exist in configuration.
+   *
+   * @example
+   * ```typescript
+   * const mcpService = new MCPService();
+   *
+   * // Get specific server
+   * const server = await mcpService.getMCPServerById('filesystem');
+   *
+   * if (server) {
+   *   console.log(`Found ${server.name}`);
+   *   console.log(`Type: ${server.type}`);
+   *   console.log(`Disabled: ${server.disabled || false}`);
+   *
+   *   if (isStdioServer(server.config)) {
+   *     console.log(`Command: ${server.config.command}`);
+   *     console.log(`Args: ${server.config.args?.join(' ')}`);
+   *   }
+   * } else {
+   *   console.log('Server not found');
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Check if server exists before testing
+   * const server = await mcpService.getMCPServerById('github', '/path/to/project');
+   *
+   * if (!server) {
+   *   console.error('GitHub MCP server not configured');
+   *   return;
+   * }
+   *
+   * // Server exists, safe to test
+   * const testResult = await mcpService.testMCPServer('github', '/path/to/project');
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Update server if exists, add if not
+   * const existingServer = await mcpService.getMCPServerById('custom-server');
+   *
+   * if (existingServer) {
+   *   await mcpService.updateMCPServer('custom-server', newConfig);
+   * } else {
+   *   await mcpService.addMCPServer('custom-server', newConfig);
+   * }
+   * ```
    */
   async getMCPServerById(id: string, projectPath?: string): Promise<MCPServerInternal | null> {
     const servers = await this.getMCPServers(projectPath);
@@ -654,7 +900,117 @@ export class MCPService {
   }
 
   /**
-   * Add a new MCP server
+   * Add a new MCP server to project configuration
+   *
+   * @description
+   * Creates a new MCP server entry in the project's .mcp.json configuration file.
+   * This method adds the server to the persistent configuration, making it available
+   * for use by the Claude Agent SDK.
+   *
+   * The method performs the following operations:
+   * 1. Read existing .mcp.json (or create new config if file doesn't exist)
+   * 2. Validate that server name doesn't already exist (throws if duplicate)
+   * 3. Add new server configuration to mcpServers object
+   * 4. Write updated config back to .mcp.json
+   * 5. Return normalized MCPServerInternal object representing the new server
+   *
+   * Server Configuration Types:
+   * - Stdio server: Requires command, optional args and env
+   *   ```typescript
+   *   {
+   *     command: 'npx',
+   *     args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+   *     env: { DEBUG: 'true' }
+   *   }
+   *   ```
+   *
+   * - SDK server: Requires type 'sdk' and name (instance must be registered first)
+   *   ```typescript
+   *   { type: 'sdk', name: 'my-sdk-server' }
+   *   ```
+   *
+   * The server is added in enabled state by default. To add a disabled server,
+   * include `disabled: true` in the serverConfig.
+   *
+   * @param name - Unique name for the MCP server (becomes the config key in .mcp.json)
+   * @param serverConfig - Complete server configuration including transport details
+   * @param projectPath - Absolute path to project directory.
+   *                      Defaults to process.cwd() if not provided.
+   *
+   * @returns Promise resolving to MCPServerInternal object representing the newly added server
+   *
+   * @throws Error if server with the same name already exists in configuration
+   * @throws Error if .mcp.json write operation fails (e.g., permission issues)
+   *
+   * @example
+   * ```typescript
+   * const mcpService = new MCPService();
+   *
+   * // Add a stdio MCP server
+   * const filesystemServer = await mcpService.addMCPServer(
+   *   'filesystem',
+   *   {
+   *     command: 'npx',
+   *     args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+   *     env: { DEBUG: 'true' }
+   *   },
+   *   '/path/to/project'
+   * );
+   *
+   * console.log(`Added ${filesystemServer.name} (${filesystemServer.type})`);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Add SDK server (must register instance first)
+   * const myServer = new MyCustomMCPServer();
+   * mcpService.registerSdkServer('custom-sdk', myServer);
+   *
+   * const sdkServer = await mcpService.addMCPServer(
+   *   'custom-sdk',
+   *   { type: 'sdk', name: 'custom-sdk' }
+   * );
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Add server with environment variables
+   * const githubServer = await mcpService.addMCPServer(
+   *   'github',
+   *   {
+   *     command: 'npx',
+   *     args: ['-y', '@modelcontextprotocol/server-github'],
+   *     env: {
+   *       GITHUB_TOKEN: '${GITHUB_TOKEN}',  // Will be substituted from env
+   *       GITHUB_ORG: 'my-org'
+   *     }
+   *   }
+   * );
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Add disabled server (won't be loaded by SDK until enabled)
+   * const disabledServer = await mcpService.addMCPServer(
+   *   'experimental-server',
+   *   {
+   *     command: 'node',
+   *     args: ['./experimental-mcp-server.js'],
+   *     disabled: true
+   *   }
+   * );
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Error handling for duplicate names
+   * try {
+   *   await mcpService.addMCPServer('filesystem', { command: 'test' });
+   * } catch (error) {
+   *   console.error('Server already exists:', error.message);
+   *   // Error: MCP server "filesystem" already exists
+   * }
+   * ```
    */
   async addMCPServer(
     name: string,
@@ -697,7 +1053,114 @@ export class MCPService {
   }
 
   /**
-   * Update an existing MCP server
+   * Update an existing MCP server configuration
+   *
+   * @description
+   * Modifies the configuration of an existing MCP server in the project's .mcp.json file.
+   * This method performs a complete replacement of the server's configuration with the
+   * new serverConfig provided.
+   *
+   * The method performs the following operations:
+   * 1. Read existing .mcp.json configuration
+   * 2. Validate that server with specified ID exists (throws if not found)
+   * 3. Replace server configuration with new serverConfig (complete replacement, not merge)
+   * 4. Write updated config back to .mcp.json
+   * 5. Return normalized MCPServerInternal object with updated configuration
+   *
+   * Important: This is a full replacement operation. Any properties in the old
+   * configuration that are not included in the new serverConfig will be lost.
+   * If you need to modify specific properties while preserving others, retrieve
+   * the existing config first, modify it, then pass the merged result.
+   *
+   * The update affects the persistent configuration and will take effect the next
+   * time Claude Agent SDK loads MCP servers. Active server connections are not
+   * automatically restarted - the application may need to restart for changes to
+   * take effect.
+   *
+   * @param id - Unique identifier of the MCP server to update (must exist in config)
+   * @param serverConfig - New complete server configuration (replaces existing config)
+   * @param projectPath - Absolute path to project directory.
+   *                      Defaults to process.cwd() if not provided.
+   *
+   * @returns Promise resolving to MCPServerInternal object with updated configuration
+   *
+   * @throws Error if server with specified ID is not found in configuration
+   * @throws Error if .mcp.json write operation fails (e.g., permission issues)
+   *
+   * @example
+   * ```typescript
+   * const mcpService = new MCPService();
+   *
+   * // Update server's command and args
+   * const updatedServer = await mcpService.updateMCPServer(
+   *   'filesystem',
+   *   {
+   *     command: 'npx',
+   *     args: ['-y', '@modelcontextprotocol/server-filesystem', '/home/user'],
+   *     env: { DEBUG: 'true', LOG_LEVEL: 'info' }
+   *   },
+   *   '/path/to/project'
+   * );
+   *
+   * console.log('Server updated:', updatedServer.name);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Disable a server by updating its config
+   * await mcpService.updateMCPServer(
+   *   'github',
+   *   {
+   *     command: 'npx',
+   *     args: ['-y', '@modelcontextprotocol/server-github'],
+   *     disabled: true  // Server will not be loaded
+   *   }
+   * );
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Safe update: merge with existing config to preserve properties
+   * const existingServer = await mcpService.getMCPServerById('filesystem');
+   *
+   * if (existingServer && isStdioServer(existingServer.config)) {
+   *   // Merge new args with existing config
+   *   const updatedConfig = {
+   *     ...existingServer.config,
+   *     args: ['-y', '@modelcontextprotocol/server-filesystem', '/new/path']
+   *   };
+   *
+   *   await mcpService.updateMCPServer('filesystem', updatedConfig);
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Update environment variables
+   * const githubServer = await mcpService.getMCPServerById('github');
+   *
+   * if (githubServer && isStdioServer(githubServer.config)) {
+   *   await mcpService.updateMCPServer('github', {
+   *     ...githubServer.config,
+   *     env: {
+   *       ...githubServer.config.env,
+   *       GITHUB_TOKEN: '${NEW_GITHUB_TOKEN}',  // Update token reference
+   *       GITHUB_API_URL: 'https://api.github.com'
+   *     }
+   *   });
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Error handling for non-existent server
+   * try {
+   *   await mcpService.updateMCPServer('nonexistent', { command: 'test' });
+   * } catch (error) {
+   *   console.error('Cannot update:', error.message);
+   *   // Error: MCP server "nonexistent" not found
+   * }
+   * ```
    */
   async updateMCPServer(
     id: string,
@@ -735,7 +1198,108 @@ export class MCPService {
   }
 
   /**
-   * Delete an MCP server
+   * Delete an MCP server from project configuration
+   *
+   * @description
+   * Permanently removes an MCP server entry from the project's .mcp.json configuration file.
+   * This method deletes the server from persistent storage, making it unavailable for
+   * future use by the Claude Agent SDK.
+   *
+   * The method performs the following operations:
+   * 1. Read existing .mcp.json configuration
+   * 2. Validate that server with specified ID exists (throws if not found)
+   * 3. Remove server entry from mcpServers object using JavaScript delete operator
+   * 4. Write updated config back to .mcp.json
+   * 5. Log successful deletion
+   *
+   * Important Considerations:
+   * - This is a permanent deletion - the server configuration cannot be recovered
+   *   unless you have a backup of .mcp.json
+   * - Active server connections are not automatically terminated - the application
+   *   may need to restart for changes to take effect
+   * - For SDK servers, this only removes the config entry - the registered instance
+   *   remains in memory until unregisterSdkServer() is called
+   * - Consider using toggleMCPServer() to disable instead of delete if you may
+   *   need to re-enable the server later
+   *
+   * The deletion affects only the .mcp.json configuration. For SDK servers, you
+   * should also call unregisterSdkServer() to clean up the in-memory instance.
+   *
+   * @param id - Unique identifier of the MCP server to delete (must exist in config)
+   * @param projectPath - Absolute path to project directory.
+   *                      Defaults to process.cwd() if not provided.
+   *
+   * @returns Promise that resolves when server is successfully deleted
+   *
+   * @throws Error if server with specified ID is not found in configuration
+   * @throws Error if .mcp.json write operation fails (e.g., permission issues)
+   *
+   * @example
+   * ```typescript
+   * const mcpService = new MCPService();
+   *
+   * // Delete a server
+   * await mcpService.deleteMCPServer('filesystem', '/path/to/project');
+   * console.log('Filesystem server deleted');
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Check if server exists before deleting
+   * const server = await mcpService.getMCPServerById('old-server');
+   *
+   * if (server) {
+   *   await mcpService.deleteMCPServer('old-server');
+   *   console.log('Old server removed');
+   * } else {
+   *   console.log('Server not found, nothing to delete');
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Delete SDK server: remove both registration and config
+   * mcpService.unregisterSdkServer('my-sdk-server');  // Remove instance
+   * await mcpService.deleteMCPServer('my-sdk-server'); // Remove config
+   * console.log('SDK server fully removed');
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Error handling for non-existent server
+   * try {
+   *   await mcpService.deleteMCPServer('nonexistent');
+   * } catch (error) {
+   *   console.error('Cannot delete:', error.message);
+   *   // Error: MCP server "nonexistent" not found
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Conditional delete: remove if disabled
+   * const servers = await mcpService.getMCPServers();
+   *
+   * for (const server of servers) {
+   *   if (server.disabled) {
+   *     await mcpService.deleteMCPServer(server.id);
+   *     console.log(`Deleted disabled server: ${server.name}`);
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Safe deletion with backup
+   * const mcpService = new MCPService();
+   *
+   * // Backup config before deleting
+   * const config = await mcpService.exportMCPConfig('/path/to/project');
+   * await fs.writeFile('mcp-backup.json', JSON.stringify(config, null, 2));
+   *
+   * // Now safe to delete
+   * await mcpService.deleteMCPServer('experimental-server');
+   * ```
    */
   async deleteMCPServer(id: string, projectPath?: string): Promise<void> {
     if (!projectPath) {

@@ -1,11 +1,11 @@
 {
   "active": true,
   "spec": "007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu",
-  "state": "complete",
+  "state": "building",
   "subtasks": {
-    "completed": 27,
+    "completed": 23,
     "total": 27,
-    "in_progress": 0,
+    "in_progress": 1,
     "failed": 0
   },
   "phase": {
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 19,
+    "number": 16,
     "started_at": "2026-01-02T15:21:47.333199"
   },
-  "last_update": "2026-01-02T17:27:05.417264"
+  "last_update": "2026-01-02T16:53:10.042108"
 }

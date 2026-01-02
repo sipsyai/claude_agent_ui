@@ -1,3 +1,8 @@
+/**
+ * @file DashboardPage.tsx
+ * @description Main dashboard page component that displays system metrics, recent executions, and active flows.
+ * Provides an overview of the Claude Agent Manager with statistics, quick navigation, and operational insights.
+ */
 import React, { useState, useEffect, useCallback } from 'react';
 import type {
   Flow,
@@ -416,30 +421,23 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                 {activeFlows.map((flow) => (
                   <div
                     key={flow.id}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted/80 transition-colors cursor-pointer"
-                    onClick={onNavigateToFlows}
+                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted/80 transition-colors"
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-primary">⚡</span>
-                        <span className="font-medium truncate">{flow.name}</span>
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                          Active
-                        </span>
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
-                        <span className="capitalize">{flow.category.replace('-', ' ')}</span>
-                        <span>•</span>
-                        <span>v{flow.version}</span>
-                        {flow.nodes && (
-                          <>
-                            <span>•</span>
-                            <span>{flow.nodes.length} nodes</span>
-                          </>
-                        )}
-                      </div>
+                    <div className="flex-1">
+                      <p className="font-medium">{flow.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {flow.description || 'No description'}
+                      </p>
                     </div>
-                    <ArrowRightIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        // Handle flow execution
+                      }}
+                    >
+                      Run
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -447,31 +445,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
           </CardContent>
         </Card>
       </div>
-
-      {/* Token Usage Summary */}
-      {globalStats && (globalStats.totalTokensUsed > 0 || globalStats.totalCost > 0) && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-6">
-                <div>
-                  <span className="text-muted-foreground">Total Tokens Used:</span>
-                  <span className="ml-2 font-medium">{globalStats.totalTokensUsed.toLocaleString()}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Estimated Cost:</span>
-                  <span className="ml-2 font-medium">${globalStats.totalCost.toFixed(4)}</span>
-                </div>
-              </div>
-              <div className="text-muted-foreground text-xs">
-                Auto-refresh every 60s
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
+
+DashboardPage.displayName = 'DashboardPage';
 
 export default DashboardPage;

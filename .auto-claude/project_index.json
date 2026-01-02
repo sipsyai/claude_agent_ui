@@ -291,11 +291,74 @@
             "type": "string",
             "sensitive": false,
             "required": true
+          },
+          "DATABASE_POOL_MIN": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_POOL_MAX": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_ACQUIRE_TIMEOUT": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_CREATE_TIMEOUT": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_DESTROY_TIMEOUT": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_IDLE_TIMEOUT": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_REAP_INTERVAL": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_RETRY_INTERVAL": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
+          },
+          "DATABASE_DEBUG": {
+            "value": null,
+            "source": ".env.example",
+            "type": "string",
+            "sensitive": false,
+            "required": true
           }
         },
-        "required_count": 33,
+        "required_count": 42,
         "optional_count": 0,
-        "detected_count": 33
+        "detected_count": 42
       },
       "api": {
         "routes": [
@@ -1186,6 +1249,780 @@
             "methods": [
               "GET"
             ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/server.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/agents",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/server.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/skills",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/server.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "*",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/server.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/route",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/middleware/error-handler.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id/archive",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id/messages",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:id/messages",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/sessions/:sessionId/messages/:streamId/cancel",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/attachments",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/chat.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/validate",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/commands",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/analyze",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/commands/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills-usage",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/train",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/training-history",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/train/message",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/history-path",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tools",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/test",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/toggle",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/tools",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/export",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/import",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/bulk-delete",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/create-with-claude/message",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/create-with-claude/message",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/training-agent-config",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/training-agent-config",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/task.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/stats",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/task.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/task.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/task.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/task.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/task.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/hello.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agent/:id",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/execution.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/task/:id",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/execution.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/conversation/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/execution.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/conversation/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/execution.routes.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/agents/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/skills/:id/train/message",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/tools",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/mcp-servers/:id/refresh-tools",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/tasks/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/upload",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/upload/:fileId",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/health",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/routes/manager.routes.strapi.js",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/health",
+            "methods": [
+              "GET"
+            ],
             "file": "src/server.ts",
             "framework": "Express",
             "requires_auth": false
@@ -1231,7 +2068,7 @@
             "methods": [
               "GET"
             ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/server.ts",
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/server.ts",
             "framework": "Express",
             "requires_auth": false
           },
@@ -1240,7 +2077,7 @@
             "methods": [
               "GET"
             ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/server.ts",
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/server.ts",
             "framework": "Express",
             "requires_auth": false
           },
@@ -1249,7 +2086,7 @@
             "methods": [
               "GET"
             ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/server.ts",
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/server.ts",
             "framework": "Express",
             "requires_auth": false
           },
@@ -1258,7 +2095,7 @@
             "methods": [
               "GET"
             ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/server.ts",
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/server.ts",
             "framework": "Express",
             "requires_auth": false
           },
@@ -1267,1609 +2104,7 @@
             "methods": [
               "GET"
             ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/middleware/error-handler.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/refresh-tools",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/upload",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/upload/:fileId",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/health",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agent/:id",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/task/:id",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/conversation/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/conversation/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/validate",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/commands",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/analyze",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/commands/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills-usage",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/training-history",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/history-path",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/test",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/toggle",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/export",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/import",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/bulk-delete",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/create-with-claude/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/create-with-claude/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/training-agent-config",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/training-agent-config",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/archive",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/messages",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/messages",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:sessionId/messages/:streamId/cancel",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/attachments",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/stats",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/004-document-frontend-react-components-and-hooks/src/routes/hello.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/health",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/api/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/api/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "*",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/route",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/middleware/error-handler.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/refresh-tools",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/upload",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/upload/:fileId",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/health",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agent/:id",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/task/:id",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/conversation/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/conversation/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/validate",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/commands",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/analyze",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/commands/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills-usage",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/training-history",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/history-path",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/test",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/toggle",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/export",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/import",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/bulk-delete",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/create-with-claude/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/create-with-claude/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/training-agent-config",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/training-agent-config",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/archive",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/messages",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/messages",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:sessionId/messages/:streamId/cancel",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/attachments",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/stats",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/routes/hello.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/api/logs",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/services/log-stream-buffer.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/api/logs/clear",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/services/log-stream-buffer.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/api/refresh",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/services/strapi-client.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/api/cache/stats",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/services/strapi-client.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/webhooks/skill-updated",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/services/skill-sync-service.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/webhooks/skill-deleted",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/services/skill-sync-service.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/health",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/002-add-jsdoc-documentation-for-backend-services/src/services/chat-service.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/health",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/api/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/api/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "*",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/server.ts",
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/dist/middleware/error-handler.d.ts",
             "framework": "Express",
             "requires_auth": false
           },
@@ -3553,6 +2788,132 @@
             "methods": [
               "GET"
             ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "PUT"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/execute",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/running",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id/cancel",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/executions/:id/stream",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/executions",
+            "methods": [
+              "GET"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/activate",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/deactivate",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/:id/duplicate",
+            "methods": [
+              "POST"
+            ],
+            "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/flow.routes.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/",
+            "methods": [
+              "GET"
+            ],
             "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/task.routes.ts",
             "framework": "Express",
             "requires_auth": false
@@ -3608,1554 +2969,6 @@
               "GET"
             ],
             "file": ".worktrees/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/src/routes/hello.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/health",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/api/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/api/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "*",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/route",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/middleware/error-handler.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/refresh-tools",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/upload",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/upload/:fileId",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/health",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agent/:id",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/task/:id",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/conversation/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/conversation/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/validate",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/commands",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/analyze",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/commands/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills-usage",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/training-history",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/history-path",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/test",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/toggle",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/export",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/import",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/bulk-delete",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/create-with-claude/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/create-with-claude/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/training-agent-config",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/training-agent-config",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/archive",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/messages",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/messages",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:sessionId/messages/:streamId/cancel",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/attachments",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/stats",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/006-complete-postgresql-migration/src/routes/hello.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/health",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/api/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/api/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "*",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/server.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/route",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/middleware/error-handler.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/refresh-tools",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tasks/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/upload",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/upload/:fileId",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/health",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.strapi.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agent/:id",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/task/:id",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/conversation/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/conversation/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/execution.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/validate",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/commands",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/analyze",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/commands/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills-usage",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/training-history",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/:id/train/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/history-path",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/test",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/toggle",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/:id/tools",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/export",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/import",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/mcp-servers/bulk-delete",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/agents/create-with-claude/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/skills/create-with-claude/message",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/training-agent-config",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/training-agent-config",
-            "methods": [
-              "PUT"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/manager.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/archive",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/messages",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:id/messages",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/sessions/:sessionId/messages/:streamId/cancel",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/attachments",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/chat.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/stats",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id/execute",
-            "methods": [
-              "POST"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/:id",
-            "methods": [
-              "DELETE"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/task.routes.ts",
-            "framework": "Express",
-            "requires_auth": false
-          },
-          {
-            "path": "/",
-            "methods": [
-              "GET"
-            ],
-            "file": ".worktrees/003-create-architecture-documentation-with-system-diag/src/routes/hello.routes.ts",
             "framework": "Express",
             "requires_auth": false
           },
@@ -5896,14 +3709,140 @@
             "file": "src/routes/hello.routes.ts",
             "framework": "Express",
             "requires_auth": false
+          },
+          {
+            "path": "/api/config",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/config-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/public-key",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/available",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/stats",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/subscribe",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/unsubscribe",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/web-push/subscriptions",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/web-push-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/logs",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/log-stream-buffer.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/logs/clear",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/log-stream-buffer.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/refresh",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/strapi-client.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/api/cache/stats",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/strapi-client.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/webhooks/skill-updated",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/skill-sync-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/webhooks/skill-deleted",
+            "methods": [
+              "POST"
+            ],
+            "file": "src/services/skill-sync-service.ts",
+            "framework": "Express",
+            "requires_auth": false
+          },
+          {
+            "path": "/health",
+            "methods": [
+              "GET"
+            ],
+            "file": "src/services/chat-service.ts",
+            "framework": "Express",
+            "requires_auth": false
           }
         ],
-        "total_routes": 622,
+        "total_routes": 386,
         "methods": [
-          "GET",
           "POST",
-          "DELETE",
-          "PUT"
+          "PUT",
+          "GET",
+          "DELETE"
         ],
         "protected_routes": [
           "/api/agents",
@@ -5926,12 +3865,6 @@
       },
       "monitoring": {
         "health_checks": [
-          "/health",
-          "/health",
-          "/health",
-          "/health",
-          "/health",
-          "/health",
           "/health",
           "/health",
           "/health",

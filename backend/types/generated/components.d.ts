@@ -149,6 +149,130 @@ export interface AgentToolConfiguration extends Struct.ComponentSchema {
   };
 }
 
+export interface FlowAgentNode extends Struct.ComponentSchema {
+  collectionName: 'components_flow_agent_nodes';
+  info: {
+    description: 'Flow node for executing an agent with configured skills';
+    displayName: 'Agent Node';
+    icon: 'robot';
+  };
+  attributes: {
+    agent: Schema.Attribute.Relation<'oneToOne', 'api::agent.agent'> &
+      Schema.Attribute.Required;
+    description: Schema.Attribute.Text;
+    maxRetries: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 10;
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<3>;
+    maxTokens: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 200000;
+          min: 1;
+        },
+        number
+      >;
+    metadata: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+    modelOverride: Schema.Attribute.Enumeration<
+      ['default', 'haiku', 'sonnet', 'sonnet-4', 'opus', 'opus-4']
+    > &
+      Schema.Attribute.DefaultTo<'default'>;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Agent'>;
+    nextNodeId: Schema.Attribute.String;
+    nodeId: Schema.Attribute.String & Schema.Attribute.Required;
+    position: Schema.Attribute.JSON &
+      Schema.Attribute.DefaultTo<{
+        x: 0;
+        y: 100;
+      }>;
+    promptTemplate: Schema.Attribute.Text & Schema.Attribute.Required;
+    retryOnError: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    skills: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>;
+    timeout: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1000;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<300000>;
+  };
+}
+
+export interface FlowInputNode extends Struct.ComponentSchema {
+  collectionName: 'components_flow_input_nodes';
+  info: {
+    description: 'Flow input node for defining inputs the flow accepts';
+    displayName: 'Input Node';
+    icon: 'login';
+  };
+  attributes: {
+    description: Schema.Attribute.Text;
+    inputFields: Schema.Attribute.JSON &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<[]>;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Input'>;
+    nextNodeId: Schema.Attribute.String;
+    nodeId: Schema.Attribute.String & Schema.Attribute.Required;
+    position: Schema.Attribute.JSON &
+      Schema.Attribute.DefaultTo<{
+        x: 0;
+        y: 0;
+      }>;
+    validationRules: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+  };
+}
+
+export interface FlowOutputNode extends Struct.ComponentSchema {
+  collectionName: 'components_flow_output_nodes';
+  info: {
+    description: 'Flow output node for defining how results are delivered';
+    displayName: 'Output Node';
+    icon: 'logout';
+  };
+  attributes: {
+    description: Schema.Attribute.Text;
+    fileName: Schema.Attribute.String;
+    filePath: Schema.Attribute.String;
+    format: Schema.Attribute.Enumeration<
+      ['json', 'markdown', 'text', 'html', 'csv', 'zip']
+    > &
+      Schema.Attribute.DefaultTo<'json'>;
+    includeMetadata: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    includeTimestamp: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    metadata: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Output'>;
+    nodeId: Schema.Attribute.String & Schema.Attribute.Required;
+    outputType: Schema.Attribute.Enumeration<
+      ['response', 'file', 'database', 'webhook', 'email']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'response'>;
+    position: Schema.Attribute.JSON &
+      Schema.Attribute.DefaultTo<{
+        x: 0;
+        y: 200;
+      }>;
+    saveToFile: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    transformTemplate: Schema.Attribute.Text;
+    webhookHeaders: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+    webhookUrl: Schema.Attribute.String;
+  };
+}
+
 export interface McpServerSelection extends Struct.ComponentSchema {
   collectionName: 'components_mcp_server_selections';
   info: {
@@ -356,6 +480,9 @@ declare module '@strapi/strapi' {
       'agent.analytics': AgentAnalytics;
       'agent.model-configuration': AgentModelConfiguration;
       'agent.tool-configuration': AgentToolConfiguration;
+      'flow.agent-node': FlowAgentNode;
+      'flow.input-node': FlowInputNode;
+      'flow.output-node': FlowOutputNode;
       'mcp.server-selection': McpServerSelection;
       'mcp.tool-selection': McpToolSelection;
       'shared.metadata': SharedMetadata;

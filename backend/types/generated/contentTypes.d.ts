@@ -569,6 +569,151 @@ export interface ApiChatSessionChatSession extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiFlowExecutionFlowExecution
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'flow_executions';
+  info: {
+    description: 'Tracks flow execution history with status, logs, timing, and results';
+    displayName: 'Flow Execution';
+    pluralName: 'flow-executions';
+    singularName: 'flow-execution';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    completedAt: Schema.Attribute.DateTime;
+    cost: Schema.Attribute.Decimal &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    currentNodeId: Schema.Attribute.String;
+    error: Schema.Attribute.Text;
+    errorDetails: Schema.Attribute.JSON;
+    executionTime: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    flow: Schema.Attribute.Relation<'manyToOne', 'api::flow.flow'>;
+    input: Schema.Attribute.JSON;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::flow-execution.flow-execution'
+    > &
+      Schema.Attribute.Private;
+    logs: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>;
+    metadata: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+    nodeExecutions: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>;
+    output: Schema.Attribute.JSON;
+    parentExecutionId: Schema.Attribute.Integer;
+    publishedAt: Schema.Attribute.DateTime;
+    retryCount: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+    startedAt: Schema.Attribute.DateTime;
+    status: Schema.Attribute.Enumeration<
+      ['pending', 'running', 'completed', 'failed', 'cancelled']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'pending'>;
+    tokensUsed: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+    triggerData: Schema.Attribute.JSON;
+    triggeredBy: Schema.Attribute.Enumeration<
+      ['manual', 'schedule', 'webhook', 'api']
+    > &
+      Schema.Attribute.DefaultTo<'manual'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiFlowFlow extends Struct.CollectionTypeSchema {
+  collectionName: 'flows';
+  info: {
+    description: 'Workflow definitions for orchestrating agents and skills';
+    displayName: 'Flow';
+    pluralName: 'flows';
+    singularName: 'flow';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    category: Schema.Attribute.Enumeration<
+      [
+        'web-scraping',
+        'data-processing',
+        'api-integration',
+        'file-manipulation',
+        'automation',
+        'custom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'custom'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 1000;
+      }>;
+    inputSchema: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+    isActive: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::flow.flow'> &
+      Schema.Attribute.Private;
+    metadata: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 100;
+        minLength: 1;
+      }>;
+    nodes: Schema.Attribute.JSON &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<[]>;
+    outputSchema: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    status: Schema.Attribute.Enumeration<
+      ['draft', 'active', 'paused', 'archived']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'draft'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    version: Schema.Attribute.String & Schema.Attribute.DefaultTo<'1.0.0'>;
+  };
+}
+
 export interface ApiMcpServerMcpServer extends Struct.CollectionTypeSchema {
   collectionName: 'mcp_servers';
   info: {
@@ -1341,6 +1486,8 @@ declare module '@strapi/strapi' {
       'api::agent.agent': ApiAgentAgent;
       'api::chat-message.chat-message': ApiChatMessageChatMessage;
       'api::chat-session.chat-session': ApiChatSessionChatSession;
+      'api::flow-execution.flow-execution': ApiFlowExecutionFlowExecution;
+      'api::flow.flow': ApiFlowFlow;
       'api::mcp-server.mcp-server': ApiMcpServerMcpServer;
       'api::mcp-tool.mcp-tool': ApiMcpToolMcpTool;
       'api::skill.skill': ApiSkillSkill;

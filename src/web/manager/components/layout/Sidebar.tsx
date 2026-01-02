@@ -9,7 +9,7 @@
  * ## Features
  * - Fixed width sidebar (256px / w-64) with theme-aware styling
  * - Application branding with logo and title
- * - 8 primary navigation menu items with icons and labels
+ * - 9 primary navigation menu items with icons and labels
  * - Visual active state highlighting for current view
  * - Smooth hover transitions on menu items
  * - Optional directory selector at bottom (sticky footer)
@@ -23,9 +23,10 @@
  * 3. **Agents** (CpuChipIcon) - Agent management and configuration
  * 4. **Commands** (CommandLineIcon) - Command execution and history
  * 5. **Skills** (PuzzlePieceIcon) - Skill creation and management
- * 6. **MCP Servers** (ServerIcon) - MCP server configuration
- * 7. **Tasks** (ClipboardListIcon) - Task execution and monitoring
- * 8. **Settings** (SlidersHorizontalIcon) - Application settings
+ * 6. **Flows** (PlayCircleIcon) - Workflow creation and management
+ * 7. **MCP Servers** (ServerIcon) - MCP server configuration
+ * 8. **Tasks** (ClipboardListIcon) - Task execution and monitoring
+ * 9. **Settings** (SlidersHorizontalIcon) - Application settings
  *
  * Each item includes:
  * - Icon component (5x5, from Icons.tsx)
@@ -156,7 +157,7 @@ export interface SidebarProps {
    * enum values. The corresponding menu item will be styled with primary colors to
    * indicate it's the current view.
    *
-   * Available views: Dashboard, Chat, Agents, Commands, Skills, MCPServers, Tasks, Settings
+   * Available views: Dashboard, Chat, Agents, Commands, Skills, Flows, MCPServers, Tasks, Settings
    */
   activeView: ManagerView;
 

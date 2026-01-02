@@ -1,0 +1,518 @@
+{
+  "feature": "Add JSDoc documentation for backend services",
+  "description": "Add comprehensive JSDoc documentation to 27 service files in src/services with 65+ exported functions, classes, and interfaces. Focus on function parameters, return types, usage patterns, and examples.",
+  "created_at": "2026-01-02T06:50:19.193Z",
+  "updated_at": "2026-01-02T12:00:00.000Z",
+  "status": "in_progress",
+  "planStatus": "approved",
+  "spec_file": "spec.md",
+  "workflow_type": "development",
+  "services_involved": [
+    "src/services/claude-sdk-service.ts",
+    "src/services/mcp-service.ts",
+    "src/services/strapi-client.ts",
+    "src/services/chat-service.ts",
+    "src/services/chat-log-service.ts",
+    "src/services/skill-service.ts",
+    "src/services/skill-sync-service.ts",
+    "src/services/claude-structure-parser.ts",
+    "src/services/conversation-status-manager.ts",
+    "src/services/session-info-service.ts",
+    "src/services/conversation-cache.ts",
+    "src/services/claude-history-reader.ts",
+    "src/services/sdk-history-writer.ts",
+    "src/services/task-storage-service.ts",
+    "src/services/file-system-service.ts",
+    "src/services/config-service.ts",
+    "src/services/notification-service.ts",
+    "src/services/web-push-service.ts",
+    "src/services/claude-router-service.ts",
+    "src/services/ToolMetricsService.ts",
+    "src/services/message-filter.ts",
+    "src/services/training-agent-selector.ts",
+    "src/services/logger.ts",
+    "src/services/log-formatter.ts",
+    "src/services/log-stream-buffer.ts",
+    "src/services/prompts/agent-creator-prompt.ts",
+    "src/services/prompts/skill-creator-prompt.ts"
+  ],
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Core SDK Services",
+      "description": "Document critical services that interact with Claude SDK and MCP - highest priority as these are most complex and frequently referenced",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Document ClaudeSdkService class and constructor",
+          "description": "Add class-level JSDoc with @description, @example. Document constructor parameters with @param tags for historyReader, statusTracker, toolMetricsService, sessionInfoService, fileSystemService. Document private fields purpose.",
+          "status": "completed",
+          "file": "src/services/claude-sdk-service.ts",
+          "estimated_lines": 50,
+          "notes": "Added comprehensive class-level JSDoc with @description, @example, @see tags. Documented all constructor parameters with @param tags. Added inline JSDoc for all 13 private fields explaining their purpose. Documentation includes practical usage example showing service initialization, configuration, event handling, and conversation lifecycle management. Follows established JSDoc patterns from strapi-client.ts.",
+          "updated_at": "2026-01-02T06:57:31.615188+00:00"
+        },
+        {
+          "id": "1.2",
+          "title": "Document ClaudeSdkService public methods",
+          "description": "Add comprehensive JSDoc for startConversation, stopConversation, setRouterService, setMcpConfigPath, setNotificationService, getActiveConversationsCount, isConversationActive. Include @param, @returns, @throws, @example tags.",
+          "status": "completed",
+          "file": "src/services/claude-sdk-service.ts",
+          "estimated_lines": 80,
+          "notes": "Added comprehensive JSDoc documentation for all 7 public methods in ClaudeSdkService: setRouterService, setMcpConfigPath, setNotificationService, startConversation, stopConversation, getActiveConversationsCount, and isConversationActive. Each method now includes detailed @description, @param, @returns, @throws (where applicable), and @example tags demonstrating practical usage patterns. Documentation follows established patterns from strapi-client.ts and matches the style from subtask 1.1. Total lines added: 284 (exceeding estimated 80 lines due to comprehensive examples and detailed parameter documentation).",
+          "updated_at": "2026-01-02T07:00:52.426081+00:00"
+        },
+        {
+          "id": "1.3",
+          "title": "Document ClaudeSdkService private methods",
+          "description": "Add JSDoc for buildSdkOptions, loadMcpConfig, loadMcpServersFromStrapi, loadMcpServersFromSkills, processQueryMessages, transformSdkMessage, transformAssistantMessage, transformUserMessage, transformResultMessage, transformStreamEvent, getConfigBySessionId.",
+          "status": "completed",
+          "file": "src/services/claude-sdk-service.ts",
+          "estimated_lines": 100,
+          "notes": "Added comprehensive JSDoc documentation for 11 private methods in ClaudeSdkService:\n1. buildSdkOptions - Transforms ConversationConfig to SDK Options, handles MCP server merge strategy\n2. loadMcpConfig - Loads and parses .mcp.json configuration files\n3. loadMcpServersFromStrapi - Fetches enabled MCP servers from Strapi database\n4. loadMcpServersFromSkills - Extracts MCP servers from skill configurations\n5. processQueryMessages - Core message processing loop for SDK query instances\n6. getConfigBySessionId - Reverse lookup of config by session ID\n7. transformSdkMessage - Main dispatcher routing SDK messages to transformation methods\n8. transformAssistantMessage - Converts SDK assistant messages to CUI format\n9. transformUserMessage - Converts SDK user messages to CUI format\n10. transformResultMessage - Converts SDK result messages with comprehensive metrics\n11. transformStreamEvent - Converts streaming events to user-friendly status messages\n\nEach method includes detailed @description, @param, @returns, @example tags demonstrating practical usage patterns. Documentation follows established patterns from public methods and strapi-client.ts. Total lines added: 626 lines of comprehensive documentation.",
+          "updated_at": "2026-01-02T07:04:27.803481+00:00"
+        },
+        {
+          "id": "1.4",
+          "title": "Document MCPService class and constructor",
+          "description": "Add class-level JSDoc explaining MCP server configuration management, SDK alignment. Document MCPServerInternal interface. Add @see link to Anthropic MCP docs.",
+          "status": "completed",
+          "file": "src/services/mcp-service.ts",
+          "estimated_lines": 40,
+          "notes": "Added comprehensive class-level JSDoc for MCPService explaining MCP server configuration management and SDK alignment. Enhanced MCPServerInternal interface documentation with detailed property descriptions and examples. Included @see links to Anthropic MCP documentation (https://docs.anthropic.com/en/api/agent-sdk/mcp) and Model Context Protocol specification. Documented both stdio and SDK transport types, configuration format, architecture details, and provided extensive usage examples covering CRUD operations, testing, SDK server registration, and bidirectional sync workflows. Added inline documentation for private fields (logger, sdkServers). Total lines added: 147 lines of comprehensive documentation. Follows established JSDoc patterns from ClaudeSdkService and strapi-client.ts.",
+          "updated_at": "2026-01-02T07:06:28.447165+00:00"
+        },
+        {
+          "id": "1.5",
+          "title": "Document MCPService config methods",
+          "description": "Add JSDoc for getMCPConfigPath, checkAndMigrateLegacyConfigs, readMCPConfig, writeMCPConfig, configToServers. Include @param, @returns tags with detailed descriptions.",
+          "status": "completed",
+          "file": "src/services/mcp-service.ts",
+          "estimated_lines": 60,
+          "notes": "Added comprehensive JSDoc documentation for 5 config methods in MCPService:\n1. getMCPConfigPath - Returns absolute path to .mcp.json at project root\n2. checkAndMigrateLegacyConfigs - Auto-migrates legacy .claude/mcp.json to SDK-aligned .mcp.json location with smart merge strategy\n3. readMCPConfig - Reads and parses MCP config with environment variable substitution (${VAR_NAME} syntax)\n4. writeMCPConfig - Writes MCPConfig to disk as formatted JSON with directory auto-creation\n5. configToServers - Transforms raw MCPConfig object into normalized MCPServerInternal[] array\n\nEach method includes detailed @description, @param, @returns, @throws (where applicable), and multiple @example tags demonstrating practical usage patterns. Documentation covers:\n- SDK-aligned config location (.mcp.json at project root)\n- Legacy migration workflow and merge strategy\n- Environment variable substitution for secure credential management\n- Config file structure transformation and normalization\n- Error handling patterns\n\nTotal lines added: 278 lines of comprehensive documentation. Follows established JSDoc patterns from ClaudeSdkService and strapi-client.ts. All examples include realistic use cases with file contents and transformation results.",
+          "updated_at": "2026-01-02T07:08:39.761445+00:00"
+        },
+        {
+          "id": "1.6",
+          "title": "Document MCPService CRUD operations",
+          "description": "Add JSDoc for getMCPServers, getMCPServerById, addMCPServer, updateMCPServer, deleteMCPServer, registerSdkServer, unregisterSdkServer. Document return types and error conditions.",
+          "status": "completed",
+          "file": "src/services/mcp-service.ts",
+          "estimated_lines": 70,
+          "notes": "Added comprehensive JSDoc documentation for 7 MCP server CRUD operations in MCPService:\n1. registerSdkServer - Register in-process SDK MCP server instances\n2. unregisterSdkServer - Unregister SDK server instances  \n3. getMCPServers - Retrieve all MCP servers from project config\n4. getMCPServerById - Get specific MCP server by unique identifier\n5. addMCPServer - Add new MCP server to project configuration\n6. updateMCPServer - Update existing MCP server configuration\n7. deleteMCPServer - Delete MCP server from project configuration\n\nEach method includes detailed @description, @param, @returns, @throws (where applicable), and multiple @example tags demonstrating practical usage patterns. Documentation covers stdio vs SDK transport types, environment variable substitution, error handling, configuration file management, server lifecycle, in-process vs external process execution, legacy config migration, and safe update/delete patterns.\n\nTotal lines added: 574 lines of comprehensive documentation. Follows established JSDoc patterns from subtasks 1.1-1.5.",
+          "updated_at": "2026-01-02T07:12:04.309143+00:00"
+        },
+        {
+          "id": "1.7",
+          "title": "Document MCPService test and sync methods",
+          "description": "Add JSDoc for testMCPServer, testStdioServer, testSdkServer, listMCPServerTools, fetchToolsFromStdioServer, fetchToolsFromSdkServer, syncToMcpJson, syncFromMcpJson, bulkDeleteMCPServers, toggleMCPServer.",
+          "status": "pending",
+          "file": "src/services/mcp-service.ts",
+          "estimated_lines": 80,
+          "notes": "Document testing logic and bidirectional sync"
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Strapi Client Enhancement",
+      "description": "Enhance existing documentation in strapi-client.ts with more detailed examples and usage patterns",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Enhance StrapiClient class documentation",
+          "description": "Add @example usage for class instantiation, cache configuration details, and common patterns. Document STRAPI_URL and STRAPI_API_TOKEN environment variables.",
+          "status": "pending",
+          "file": "src/services/strapi-client.ts",
+          "estimated_lines": 30,
+          "notes": "Already has good docs - enhance with examples"
+        },
+        {
+          "id": "2.2",
+          "title": "Enhance Agent methods documentation",
+          "description": "Add @example for getAllAgents, getAgent, createAgent, updateAgent, deleteAgent. Document populate options, filter syntax, and component fields handling.",
+          "status": "pending",
+          "file": "src/services/strapi-client.ts",
+          "estimated_lines": 50,
+          "notes": "Document Strapi v5 component-based structure"
+        },
+        {
+          "id": "2.3",
+          "title": "Enhance Skill methods documentation",
+          "description": "Add @example for getAllSkills, getSkill, getSkillsByIds, createSkill, updateSkill, deleteSkill. Document trainingHistory, additionalFiles, and mcpConfig handling.",
+          "status": "pending",
+          "file": "src/services/strapi-client.ts",
+          "estimated_lines": 50,
+          "notes": "Skills have complex component fields"
+        },
+        {
+          "id": "2.4",
+          "title": "Enhance MCP Server and Tool methods documentation",
+          "description": "Add @example for getAllMCPServers, getMCPServer, createMCPServer, updateMCPServer, deleteMCPServer, getMCPToolsByServerId, createMCPTool, updateMCPTool, deleteMCPTool, bulkSyncMCPTools.",
+          "status": "pending",
+          "file": "src/services/strapi-client.ts",
+          "estimated_lines": 60,
+          "notes": "Document tool sync workflow"
+        },
+        {
+          "id": "2.5",
+          "title": "Enhance Task and utility methods documentation",
+          "description": "Add @example for getAllTasks, getTask, createTask, updateTask, deleteTask, uploadFile, deleteFile, healthCheck, clearCache, getCacheStats.",
+          "status": "pending",
+          "file": "src/services/strapi-client.ts",
+          "estimated_lines": 40,
+          "notes": "Include file upload patterns"
+        },
+        {
+          "id": "2.6",
+          "title": "Document transform and prepare helper methods",
+          "description": "Add JSDoc for all transform* and prepare* methods. Document Strapi response format mapping to domain models.",
+          "status": "pending",
+          "file": "src/services/strapi-client.ts",
+          "estimated_lines": 60,
+          "notes": "Critical for understanding data flow"
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "Chat and Logging Services",
+      "description": "Document services handling chat sessions, message streaming, and logging infrastructure",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Enhance ChatService class documentation",
+          "description": "Add comprehensive class-level JSDoc with architecture overview. Document EventEmitter events, active streams management, and abort controller pattern.",
+          "status": "pending",
+          "file": "src/services/chat-service.ts",
+          "estimated_lines": 40,
+          "notes": "Complex service with streaming and SDK integration"
+        },
+        {
+          "id": "3.2",
+          "title": "Document ChatService message methods",
+          "description": "Add detailed JSDoc for sendMessage async generator, buildPromptGenerator, saveChatMessage, cancelMessage. Document yield types and streaming patterns.",
+          "status": "pending",
+          "file": "src/services/chat-service.ts",
+          "estimated_lines": 70,
+          "notes": "AsyncGenerator pattern needs clear documentation"
+        },
+        {
+          "id": "3.3",
+          "title": "Document ChatService session methods",
+          "description": "Add JSDoc for createChatSession, getChatSession, getAllChatSessions, getChatMessages, deleteChatSession, archiveChatSession, getActiveStreamIds.",
+          "status": "pending",
+          "file": "src/services/chat-service.ts",
+          "estimated_lines": 50,
+          "notes": "Document session lifecycle"
+        },
+        {
+          "id": "3.4",
+          "title": "Document ChatService helper methods",
+          "description": "Add JSDoc for strapiRequest, transformChatSession, transformChatMessage, buildMcpServersFromAgentConfig, loadMcpConfig.",
+          "status": "pending",
+          "file": "src/services/chat-service.ts",
+          "estimated_lines": 40,
+          "notes": "Internal helpers for data transformation"
+        },
+        {
+          "id": "3.5",
+          "title": "Document chat-log-service",
+          "description": "Add comprehensive JSDoc for ChatLogService class. Document initChatLog, addMessageToLog, startSdkCall, addSdkEvent, completeSdkCall, updateSdkSessionId, updateSessionStatus, deleteChatLog.",
+          "status": "pending",
+          "file": "src/services/chat-log-service.ts",
+          "estimated_lines": 80,
+          "notes": "Service for persisting chat logs to filesystem"
+        },
+        {
+          "id": "3.6",
+          "title": "Document logger service",
+          "description": "Enhance JSDoc for LoggerService, CUILogger, createLogger factory. Document log levels, context binding, and Pino integration.",
+          "status": "pending",
+          "file": "src/services/logger.ts",
+          "estimated_lines": 50,
+          "notes": "Core logging infrastructure"
+        },
+        {
+          "id": "3.7",
+          "title": "Document log-formatter",
+          "description": "Add JSDoc for LogFormatter class. Document stream transformation, color formatting, and output modes.",
+          "status": "pending",
+          "file": "src/services/log-formatter.ts",
+          "estimated_lines": 40,
+          "notes": "Custom Pino formatter for console output"
+        },
+        {
+          "id": "3.8",
+          "title": "Document log-stream-buffer",
+          "description": "Add JSDoc for LogStreamBuffer class. Document addLog, getRecentLogs, subscribe, unsubscribe methods and buffer management.",
+          "status": "pending",
+          "file": "src/services/log-stream-buffer.ts",
+          "estimated_lines": 40,
+          "notes": "Circular buffer for real-time log streaming"
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "Skill Management Services",
+      "description": "Document services for skill creation, parsing, and synchronization",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "4.1",
+          "title": "Document skill-service exported functions",
+          "description": "Add JSDoc for createSkill, updateSkill, skillExists, deleteSkill. Document CreateSkillRequest, UpdateSkillRequest, CreateSkillResponse interfaces.",
+          "status": "pending",
+          "file": "src/services/skill-service.ts",
+          "estimated_lines": 60,
+          "notes": "Filesystem-based skill management"
+        },
+        {
+          "id": "4.2",
+          "title": "Document skill-service validation and utility functions",
+          "description": "Add JSDoc for validateSkillName, validateSkillDescription, createSkillFrontmatter, updateSkillFrontmatter. Document YAML frontmatter format.",
+          "status": "pending",
+          "file": "src/services/skill-service.ts",
+          "estimated_lines": 40,
+          "notes": "Document SKILL.md format requirements"
+        },
+        {
+          "id": "4.3",
+          "title": "Document skill-service experience and usage functions",
+          "description": "Add JSDoc for validateSkillReferences, getSkillUsage, getSkillsWithUsageInfo, updateSkillExperience, getSkillTrainingHistory.",
+          "status": "pending",
+          "file": "src/services/skill-service.ts",
+          "estimated_lines": 50,
+          "notes": "Document skill training and analytics"
+        },
+        {
+          "id": "4.4",
+          "title": "Document skill-sync-service",
+          "description": "Add JSDoc for SkillSyncService class. Document syncAllSkills, syncSkill, removeSkill methods. Document Strapi-to-filesystem sync workflow.",
+          "status": "pending",
+          "file": "src/services/skill-sync-service.ts",
+          "estimated_lines": 60,
+          "notes": "Bidirectional skill synchronization"
+        },
+        {
+          "id": "4.5",
+          "title": "Document claude-structure-parser",
+          "description": "Add JSDoc for ClaudeStructureParser class. Document parseSkills, parseAgents, parseSkill, parseAgent methods. Document Skill, Agent, InputField, TrainingRecord interfaces.",
+          "status": "pending",
+          "file": "src/services/claude-structure-parser.ts",
+          "estimated_lines": 80,
+          "notes": "Parses .claude directory structure"
+        }
+      ]
+    },
+    {
+      "id": "phase-5",
+      "name": "Session and Conversation Services",
+      "description": "Document services managing conversation state, session info, and caching",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "5.1",
+          "title": "Enhance ConversationStatusManager documentation",
+          "description": "Add @example usage for registerActiveSession, unregisterActiveSession. Document session lifecycle events and optimistic UI patterns.",
+          "status": "pending",
+          "file": "src/services/conversation-status-manager.ts",
+          "estimated_lines": 40,
+          "notes": "Already well documented - add examples"
+        },
+        {
+          "id": "5.2",
+          "title": "Document session-info-service",
+          "description": "Add JSDoc for SessionInfoService class. Document getSessionInfo, updateSessionInfo, createSessionInfo methods and database interactions.",
+          "status": "pending",
+          "file": "src/services/session-info-service.ts",
+          "estimated_lines": 50,
+          "notes": "Session metadata persistence"
+        },
+        {
+          "id": "5.3",
+          "title": "Document conversation-cache",
+          "description": "Add JSDoc for ConversationCache class. Document get, set, delete, clear methods and TTL configuration.",
+          "status": "pending",
+          "file": "src/services/conversation-cache.ts",
+          "estimated_lines": 40,
+          "notes": "LRU cache for conversation data"
+        }
+      ]
+    },
+    {
+      "id": "phase-6",
+      "name": "History and Storage Services",
+      "description": "Document services for reading/writing conversation history and task storage",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "6.1",
+          "title": "Document claude-history-reader",
+          "description": "Add JSDoc for ClaudeHistoryReader class. Document readHistory, parseHistoryFile, getConversationList, getConversationDetails methods.",
+          "status": "pending",
+          "file": "src/services/claude-history-reader.ts",
+          "estimated_lines": 70,
+          "notes": "Reads Claude's JSONL history files"
+        },
+        {
+          "id": "6.2",
+          "title": "Document sdk-history-writer",
+          "description": "Add JSDoc for SdkHistoryWriter class. Document initialize, writeAssistantMessage, writeUserMessage, writeResultMessage, flush methods.",
+          "status": "pending",
+          "file": "src/services/sdk-history-writer.ts",
+          "estimated_lines": 60,
+          "notes": "Writes SDK messages to history files"
+        },
+        {
+          "id": "6.3",
+          "title": "Document task-storage-service",
+          "description": "Add JSDoc for TaskStorageService class. Document createTask, updateTask, getTask, getTasks, deleteTask methods and task lifecycle.",
+          "status": "pending",
+          "file": "src/services/task-storage-service.ts",
+          "estimated_lines": 60,
+          "notes": "Task persistence and retrieval"
+        }
+      ]
+    },
+    {
+      "id": "phase-7",
+      "name": "Utility and Support Services",
+      "description": "Document file system, configuration, notification, and routing services",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "7.1",
+          "title": "Document file-system-service",
+          "description": "Add JSDoc for FileSystemService class. Document readFile, writeFile, exists, listDirectory, ensureDirectory, deleteFile methods.",
+          "status": "pending",
+          "file": "src/services/file-system-service.ts",
+          "estimated_lines": 50,
+          "notes": "Abstraction over Node.js fs operations"
+        },
+        {
+          "id": "7.2",
+          "title": "Document config-service",
+          "description": "Add JSDoc for ConfigService class. Document getConfig, setConfig, loadConfig, saveConfig methods and configuration schema.",
+          "status": "pending",
+          "file": "src/services/config-service.ts",
+          "estimated_lines": 50,
+          "notes": "Application configuration management"
+        },
+        {
+          "id": "7.3",
+          "title": "Document notification-service",
+          "description": "Add JSDoc for NotificationService class. Document sendNotification, subscribe, unsubscribe methods and notification types.",
+          "status": "pending",
+          "file": "src/services/notification-service.ts",
+          "estimated_lines": 40,
+          "notes": "In-app notification system"
+        },
+        {
+          "id": "7.4",
+          "title": "Document web-push-service",
+          "description": "Add JSDoc for WebPushService class. Document subscribe, unsubscribe, sendPushNotification methods and VAPID key handling.",
+          "status": "pending",
+          "file": "src/services/web-push-service.ts",
+          "estimated_lines": 50,
+          "notes": "Browser push notification integration"
+        },
+        {
+          "id": "7.5",
+          "title": "Document claude-router-service",
+          "description": "Add JSDoc for ClaudeRouterService class. Document route, registerRoute, getRoutes methods and routing logic.",
+          "status": "pending",
+          "file": "src/services/claude-router-service.ts",
+          "estimated_lines": 40,
+          "notes": "Request routing for Claude API calls"
+        }
+      ]
+    },
+    {
+      "id": "phase-8",
+      "name": "Specialized Services",
+      "description": "Document metrics, filtering, training selection, and prompt generation services",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "8.1",
+          "title": "Document ToolMetricsService",
+          "description": "Add JSDoc for ToolMetricsService class. Document recordToolUsage, getMetrics, resetMetrics methods and metrics data structure.",
+          "status": "pending",
+          "file": "src/services/ToolMetricsService.ts",
+          "estimated_lines": 50,
+          "notes": "Tracks tool usage statistics"
+        },
+        {
+          "id": "8.2",
+          "title": "Document message-filter",
+          "description": "Add JSDoc for message filter functions. Document filterMessages, shouldIncludeMessage functions and filter criteria.",
+          "status": "pending",
+          "file": "src/services/message-filter.ts",
+          "estimated_lines": 40,
+          "notes": "Filters conversation messages for display"
+        },
+        {
+          "id": "8.3",
+          "title": "Document training-agent-selector",
+          "description": "Add JSDoc for TrainingAgentSelector class or functions. Document selectAgent, rankAgents methods and selection criteria.",
+          "status": "pending",
+          "file": "src/services/training-agent-selector.ts",
+          "estimated_lines": 40,
+          "notes": "Selects optimal agent for skill training"
+        },
+        {
+          "id": "8.4",
+          "title": "Document agent-creator-prompt",
+          "description": "Add JSDoc for prompt generation functions. Document template structure and variable substitution.",
+          "status": "pending",
+          "file": "src/services/prompts/agent-creator-prompt.ts",
+          "estimated_lines": 30,
+          "notes": "System prompts for agent creation"
+        },
+        {
+          "id": "8.5",
+          "title": "Document skill-creator-prompt",
+          "description": "Add JSDoc for prompt generation functions. Document template structure and variable substitution.",
+          "status": "pending",
+          "file": "src/services/prompts/skill-creator-prompt.ts",
+          "estimated_lines": 30,
+          "notes": "System prompts for skill creation"
+        }
+      ]
+    }
+  ],
+  "final_acceptance": [
+    "All 27 service files have JSDoc documentation",
+    "All exported functions, classes, and interfaces are documented",
+    "Documentation includes @param, @returns, and @throws tags where applicable",
+    "Critical services include @example usage patterns",
+    "TypeScript compiler validates JSDoc matches actual types",
+    "Documentation follows consistent formatting across all files"
+  ],
+  "qa_signoff": {
+    "status": "pending",
+    "tests_passed": "",
+    "issues": ""
+  },
+  "summary": {
+    "total_phases": 8,
+    "total_subtasks": 42,
+    "estimated_total_documentation_lines": 2060,
+    "priority_order": [
+      "Phase 1: Core SDK Services (ClaudeSdkService, MCPService) - Critical",
+      "Phase 2: Strapi Client Enhancement - High",
+      "Phase 3: Chat and Logging Services - High",
+      "Phase 4: Skill Management Services - Medium",
+      "Phase 5: Session and Conversation Services - Medium",
+      "Phase 6: History and Storage Services - Medium",
+      "Phase 7: Utility and Support Services - Low",
+      "Phase 8: Specialized Services - Low"
+    ]
+  },
+  "last_updated": "2026-01-02T07:12:04.309155+00:00"
+}

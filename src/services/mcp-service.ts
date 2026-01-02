@@ -1324,7 +1324,132 @@ export class MCPService {
   }
 
   /**
-   * Test an MCP server
+   * Test MCP server connectivity and validity
+   *
+   * @description
+   * Validates that an MCP server is properly configured and can be successfully
+   * initialized. This method performs a comprehensive test of the server based on
+   * its transport type, ensuring the server is ready for use by the Claude Agent SDK.
+   *
+   * The testing process:
+   * 1. Retrieves server configuration from .mcp.json by ID
+   * 2. Determines transport type (stdio or SDK)
+   * 3. Delegates to type-specific test method:
+   *    - Stdio servers: Spawns process, verifies it starts successfully
+   *    - SDK servers: Checks instance is registered and implements required methods
+   * 4. Returns detailed test result with success/failure status and error details
+   *
+   * Testing Behavior by Transport Type:
+   *
+   * **Stdio Servers:**
+   * - Spawns the external process using configured command and args
+   * - Waits for successful spawn event (up to 10 seconds)
+   * - Kills process after 1 second if spawn succeeds
+   * - Returns success if process spawns without errors
+   * - Returns failure if process fails to spawn, times out, or exits with error
+   *
+   * **SDK Servers:**
+   * - Checks if server instance is registered in internal registry
+   * - Validates instance implements required listTools() method
+   * - Returns success if instance exists and is valid
+   * - Returns failure if instance not registered or missing required methods
+   *
+   * This method is safe to call repeatedly and does not affect server state.
+   * It's designed for configuration validation and troubleshooting.
+   *
+   * @param id - Unique identifier of the MCP server to test (must exist in .mcp.json)
+   * @param projectPath - Absolute path to project directory.
+   *                      Defaults to process.cwd() if not provided.
+   *
+   * @returns Promise resolving to test result object:
+   *          - success: boolean indicating if test passed
+   *          - message: Human-readable test result description
+   *          - error: Optional error message if test failed
+   *
+   * @example
+   * ```typescript
+   * const mcpService = new MCPService();
+   *
+   * // Test a stdio server
+   * const result = await mcpService.testMCPServer('filesystem', '/path/to/project');
+   *
+   * if (result.success) {
+   *   console.log('✓', result.message);
+   *   // Output: "✓ MCP server started successfully"
+   * } else {
+   *   console.error('✗', result.message, ':', result.error);
+   *   // Output: "✗ Failed to start : Command 'npx' not found"
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Test SDK server (requires prior registration)
+   * const myServer = new MyMCPServer();
+   * mcpService.registerSdkServer('my-server', myServer);
+   *
+   * await mcpService.addMCPServer(
+   *   'my-server',
+   *   { type: 'sdk', name: 'my-server' }
+   * );
+   *
+   * const result = await mcpService.testMCPServer('my-server');
+   * console.log(result.message);
+   * // Output: "SDK server is registered and valid"
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Test all configured servers
+   * const servers = await mcpService.getMCPServers();
+   *
+   * for (const server of servers) {
+   *   const result = await mcpService.testMCPServer(server.id);
+   *   console.log(`${server.name}: ${result.success ? '✓' : '✗'} ${result.message}`);
+   * }
+   *
+   * // Output:
+   * // filesystem: ✓ MCP server started successfully
+   * // github: ✗ Failed to start : GITHUB_TOKEN not set
+   * // custom-sdk: ✓ SDK server is registered and valid
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle test failures gracefully
+   * const result = await mcpService.testMCPServer('experimental-server');
+   *
+   * if (!result.success) {
+   *   if (result.error?.includes('not found')) {
+   *     console.log('Server not configured - add it first');
+   *   } else if (result.error?.includes('timeout')) {
+   *     console.log('Server timed out - check command and args');
+   *   } else if (result.error?.includes('not registered')) {
+   *     console.log('SDK server needs registration');
+   *   } else {
+   *     console.log('Unknown error:', result.error);
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Test before using in production
+   * async function enableServerIfValid(serverId: string) {
+   *   const testResult = await mcpService.testMCPServer(serverId);
+   *
+   *   if (testResult.success) {
+   *     // Server is valid, ensure it's enabled
+   *     const server = await mcpService.getMCPServerById(serverId);
+   *     if (server?.disabled) {
+   *       await mcpService.toggleMCPServer(serverId);
+   *       console.log(`${serverId} enabled and ready to use`);
+   *     }
+   *   } else {
+   *     console.error(`Cannot enable ${serverId}:`, testResult.error);
+   *   }
+   * }
+   * ```
    */
   async testMCPServer(id: string, projectPath?: string): Promise<{
     success: boolean;
@@ -1364,7 +1489,89 @@ export class MCPService {
   }
 
   /**
-   * Test stdio MCP server
+   * Test stdio MCP server by spawning external process
+   *
+   * @description
+   * Validates a stdio-based MCP server by spawning its external process and verifying
+   * it starts successfully. This method performs a shallow connectivity test without
+   * attempting full MCP protocol initialization.
+   *
+   * The testing process:
+   * 1. Validates config is a stdio server configuration
+   * 2. Spawns external process using configured command, args, and env
+   * 3. Monitors process events with 10-second timeout:
+   *    - 'spawn': Process started successfully → wait 1s, then kill and return success
+   *    - 'error': Process failed to spawn → return failure with error message
+   *    - 'exit': Process exited → success if code 0/null, failure otherwise
+   *    - timeout: No response after 10s → kill process and return timeout error
+   * 4. Cleans up spawned process in all cases
+   *
+   * This is a "smoke test" to verify the server can be launched, not a full functional test.
+   * It does NOT test MCP protocol compliance or tool availability - use listMCPServerTools()
+   * for comprehensive validation.
+   *
+   * The method uses Promise-based async handling with proper cleanup to ensure spawned
+   * processes are always terminated, preventing orphaned child processes.
+   *
+   * @param config - MCP server configuration (must be stdio type with command property)
+   *
+   * @returns Promise resolving to test result object:
+   *          - success: true if process spawned successfully, false otherwise
+   *          - message: Human-readable description of test result
+   *          - error: Optional error details if test failed
+   *
+   * @example
+   * ```typescript
+   * const config: MCPStdioServerConfig = {
+   *   command: 'npx',
+   *   args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+   *   env: { DEBUG: 'true' }
+   * };
+   *
+   * const result = await this.testStdioServer(config);
+   *
+   * // Success case:
+   * // { success: true, message: 'MCP server started successfully' }
+   *
+   * // Failure case:
+   * // { success: false, message: 'Failed to start', error: 'Command not found' }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Timeout scenario (server takes too long to start)
+   * const slowConfig: MCPStdioServerConfig = {
+   *   command: 'slow-mcp-server',
+   *   args: ['--delay', '20000']
+   * };
+   *
+   * const result = await this.testStdioServer(slowConfig);
+   * // { success: false, message: 'Test timeout', error: 'MCP server did not respond within 10 seconds' }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Invalid config handling
+   * const sdkConfig = { type: 'sdk', name: 'my-server' } as MCPServerConfig;
+   *
+   * const result = await this.testStdioServer(sdkConfig);
+   * // { success: false, message: 'Invalid server config', error: 'Not a stdio server' }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Environment variable issues
+   * const githubConfig: MCPStdioServerConfig = {
+   *   command: 'npx',
+   *   args: ['-y', '@modelcontextprotocol/server-github'],
+   *   env: { GITHUB_TOKEN: '${GITHUB_TOKEN}' }  // Not set in environment
+   * };
+   *
+   * const result = await this.testStdioServer(githubConfig);
+   * // May succeed at spawn but fail during actual use when token is required
+   * ```
+   *
+   * @private
    */
   private async testStdioServer(config: MCPServerConfig): Promise<{
     success: boolean;
@@ -1451,7 +1658,108 @@ export class MCPService {
   }
 
   /**
-   * Test SDK MCP server
+   * Test SDK MCP server instance validity
+   *
+   * @description
+   * Validates an in-process SDK MCP server by checking that the instance is properly
+   * registered and implements the required MCP server interface. This is a synchronous
+   * validation (no process spawning) that verifies the server is ready for in-process use.
+   *
+   * The validation process:
+   * 1. Validates config is an SDK server configuration
+   * 2. Checks if server instance exists in internal registry (sdkServers Map)
+   * 3. Validates instance implements required listTools() method
+   * 4. Returns success if all checks pass
+   *
+   * This test does NOT invoke listTools() or any other server methods - it only
+   * verifies the interface is implemented. For functional testing of tool availability,
+   * use listMCPServerTools() which actually calls the server's methods.
+   *
+   * SDK servers must be registered using registerSdkServer() before they can be tested.
+   * Attempting to test an unregistered SDK server will return a failure with instructions
+   * to register the instance first.
+   *
+   * @param config - MCP server configuration (must be SDK type with name property)
+   *
+   * @returns Promise resolving to test result object:
+   *          - success: true if instance registered and valid, false otherwise
+   *          - message: Human-readable description of test result
+   *          - error: Optional error details if validation failed
+   *
+   * @example
+   * ```typescript
+   * // Successful SDK server test
+   * const myServer = new MyMCPServer();
+   * mcpService.registerSdkServer('my-server', myServer);
+   *
+   * const config = { type: 'sdk', name: 'my-server' } as MCPServerConfig;
+   * const result = await this.testSdkServer(config);
+   *
+   * // { success: true, message: 'SDK server is registered and valid' }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Unregistered SDK server
+   * const config = { type: 'sdk', name: 'unregistered-server' } as MCPServerConfig;
+   * const result = await this.testSdkServer(config);
+   *
+   * // {
+   * //   success: false,
+   * //   message: 'SDK server not registered',
+   * //   error: 'SDK server "unregistered-server" instance not found. Use registerSdkServer() first.'
+   * // }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Invalid SDK server (missing required methods)
+   * const invalidServer = { someMethod: () => {} };
+   * mcpService.registerSdkServer('invalid', invalidServer);
+   *
+   * const config = { type: 'sdk', name: 'invalid' } as MCPServerConfig;
+   * const result = await this.testSdkServer(config);
+   *
+   * // {
+   * //   success: false,
+   * //   message: 'Invalid SDK server',
+   * //   error: 'SDK server instance must implement listTools() method'
+   * // }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Wrong config type
+   * const stdioConfig: MCPStdioServerConfig = {
+   *   command: 'npx',
+   *   args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp']
+   * };
+   *
+   * const result = await this.testSdkServer(stdioConfig);
+   * // { success: false, message: 'Invalid server config', error: 'Not an SDK server' }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Complete SDK server registration and testing flow
+   * import { MyMCPServer } from './my-mcp-server.js';
+   *
+   * const server = new MyMCPServer({ apiKey: process.env.API_KEY });
+   * mcpService.registerSdkServer('my-server', server);
+   *
+   * const config = { type: 'sdk', name: 'my-server' } as MCPServerConfig;
+   * const testResult = await this.testSdkServer(config);
+   *
+   * if (testResult.success) {
+   *   console.log('SDK server is valid and ready for use');
+   *   // Now safe to add to .mcp.json
+   *   await mcpService.addMCPServer('my-server', config);
+   * } else {
+   *   console.error('SDK server validation failed:', testResult.error);
+   * }
+   * ```
+   *
+   * @private
    */
   private async testSdkServer(config: MCPServerConfig): Promise<{
     success: boolean;
@@ -1536,7 +1844,175 @@ export class MCPService {
   }
 
   /**
-   * Bulk delete MCP servers
+   * Delete multiple MCP servers in a single operation
+   *
+   * @description
+   * Removes multiple MCP servers from the project's .mcp.json configuration file in
+   * one operation. This method provides efficient batch deletion with detailed error
+   * reporting for each server that fails to delete.
+   *
+   * The deletion process:
+   * 1. Iterates through the array of server IDs
+   * 2. For each ID, calls deleteMCPServer() which:
+   *    - Reads current .mcp.json
+   *    - Removes the server entry
+   *    - Writes updated config back to disk
+   * 3. Tracks success/failure for each deletion
+   * 4. Collects error messages for failed deletions
+   * 5. Returns summary with success count, failed count, and error details
+   *
+   * Important Considerations:
+   * - Each deletion is independent - if one fails, others continue
+   * - Deletions are NOT atomic - partial completion is possible
+   * - The method reads/writes .mcp.json once per server (not optimized for large batches)
+   * - Failed deletions include the server ID and error message in errors array
+   * - Server IDs that don't exist will result in "not found" errors
+   *
+   * Performance Notes:
+   * - For deleting many servers (10+), consider manual implementation that reads once,
+   *   modifies, and writes once for better performance
+   * - Current implementation prioritizes error reporting over performance
+   *
+   * Use Cases:
+   * - Cleaning up obsolete MCP servers
+   * - Removing all disabled servers at once
+   * - Clearing test/development servers from configuration
+   * - Implementing "delete selected" functionality in UI
+   *
+   * @param serverIds - Array of server IDs (names) to delete from configuration
+   * @param projectPath - Absolute path to project directory containing .mcp.json.
+   *                      Defaults to process.cwd() if not provided.
+   *
+   * @returns Promise resolving to result object:
+   *          - success: Number of servers successfully deleted
+   *          - failed: Number of servers that failed to delete
+   *          - errors: Array of error messages in format "serverId: error message"
+   *
+   * @example
+   * ```typescript
+   * const mcpService = new MCPService();
+   *
+   * // Delete multiple servers
+   * const result = await mcpService.bulkDeleteMCPServers(
+   *   ['old-server-1', 'old-server-2', 'test-server'],
+   *   '/path/to/project'
+   * );
+   *
+   * console.log(`Deleted ${result.success} servers`);
+   * console.log(`Failed to delete ${result.failed} servers`);
+   *
+   * if (result.errors.length > 0) {
+   *   console.log('Errors:');
+   *   result.errors.forEach(error => console.log(`  - ${error}`));
+   * }
+   *
+   * // Output:
+   * // Deleted 2 servers
+   * // Failed to delete 1 servers
+   * // Errors:
+   * //   - test-server: MCP server "test-server" not found
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Delete all disabled servers
+   * const servers = await mcpService.getMCPServers();
+   * const disabledIds = servers
+   *   .filter(s => s.disabled)
+   *   .map(s => s.id);
+   *
+   * if (disabledIds.length > 0) {
+   *   const result = await mcpService.bulkDeleteMCPServers(disabledIds);
+   *   console.log(`Removed ${result.success} disabled servers`);
+   * } else {
+   *   console.log('No disabled servers to remove');
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Delete with error handling and retry
+   * const idsToDelete = ['server-1', 'server-2', 'server-3'];
+   * let result = await mcpService.bulkDeleteMCPServers(idsToDelete);
+   *
+   * // Retry failed deletions once
+   * if (result.failed > 0) {
+   *   console.log(`Retrying ${result.failed} failed deletions...`);
+   *
+   *   // Extract IDs that failed
+   *   const failedIds = result.errors
+   *     .map(err => err.split(':')[0])
+   *     .filter(id => id !== 'undefined');
+   *
+   *   const retryResult = await mcpService.bulkDeleteMCPServers(failedIds);
+   *   console.log(`Retry: ${retryResult.success} succeeded, ${retryResult.failed} still failed`);
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Delete servers by pattern (all servers starting with 'test-')
+   * const servers = await mcpService.getMCPServers();
+   * const testServerIds = servers
+   *   .filter(s => s.name.startsWith('test-'))
+   *   .map(s => s.id);
+   *
+   * const result = await mcpService.bulkDeleteMCPServers(testServerIds);
+   * console.log(`Removed ${result.success} test servers`);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle complete success vs partial failure
+   * const result = await mcpService.bulkDeleteMCPServers(['server-1', 'server-2']);
+   *
+   * if (result.failed === 0) {
+   *   console.log('✓ All servers deleted successfully');
+   * } else if (result.success === 0) {
+   *   console.error('✗ All deletions failed');
+   *   result.errors.forEach(err => console.error(`  ${err}`));
+   * } else {
+   *   console.warn(`⚠ Partial success: ${result.success} deleted, ${result.failed} failed`);
+   *   result.errors.forEach(err => console.error(`  ${err}`));
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Empty array handling
+   * const result = await mcpService.bulkDeleteMCPServers([]);
+   * console.log(result);
+   * // { success: 0, failed: 0, errors: [] }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // UI integration: delete selected servers from checkbox list
+   * async function handleDeleteSelected(selectedIds: string[]) {
+   *   if (selectedIds.length === 0) {
+   *     alert('No servers selected');
+   *     return;
+   *   }
+   *
+   *   const confirmed = confirm(`Delete ${selectedIds.length} servers?`);
+   *   if (!confirmed) return;
+   *
+   *   const result = await mcpService.bulkDeleteMCPServers(selectedIds);
+   *
+   *   if (result.failed === 0) {
+   *     alert(`Successfully deleted ${result.success} servers`);
+   *   } else {
+   *     alert(
+   *       `Deleted ${result.success} servers\n` +
+   *       `Failed to delete ${result.failed} servers:\n` +
+   *       result.errors.join('\n')
+   *     );
+   *   }
+   *
+   *   // Refresh server list
+   *   await refreshServerList();
+   * }
+   * ```
    */
   async bulkDeleteMCPServers(
     serverIds: string[],
@@ -1562,7 +2038,207 @@ export class MCPService {
   }
 
   /**
-   * Toggle MCP server enabled/disabled state
+   * Toggle MCP server between enabled and disabled states
+   *
+   * @description
+   * Flips the disabled flag of an MCP server in the project's .mcp.json configuration.
+   * This provides a non-destructive way to temporarily disable servers without deleting
+   * their configuration, allowing easy re-enabling later.
+   *
+   * The toggle operation:
+   * 1. Reads current .mcp.json configuration
+   * 2. Validates server exists in configuration
+   * 3. Reads current disabled state (defaults to false if not set)
+   * 4. Inverts the disabled flag (!currentState)
+   * 5. Writes updated config back to .mcp.json
+   * 6. Returns new state with success indicator
+   *
+   * State Transitions:
+   * - enabled (disabled: false or undefined) → disabled (disabled: true)
+   * - disabled (disabled: true) → enabled (disabled: false)
+   *
+   * Disabled Server Behavior:
+   * - Disabled servers are excluded from .mcp.json when synced via syncToMcpJson()
+   * - Claude Agent SDK will not load disabled servers
+   * - Server configuration is preserved in .mcp.json (can be re-enabled anytime)
+   * - Disabled state is stored as 'disabled: true' in config
+   *
+   * This method is preferable to deleteMCPServer() when you:
+   * - Want to temporarily disable a server for testing/debugging
+   * - Need to disable a problematic server without losing its configuration
+   * - Want to keep server config for future re-enabling
+   * - Are implementing UI with enable/disable checkboxes
+   *
+   * @param id - Unique identifier of the MCP server to toggle (must exist in config)
+   * @param projectPath - Absolute path to project directory containing .mcp.json.
+   *                      Defaults to process.cwd() if not provided.
+   *
+   * @returns Promise resolving to result object:
+   *          - success: boolean indicating if toggle operation succeeded
+   *          - disabled: boolean representing the NEW state (true if now disabled, false if now enabled)
+   *          - message: Human-readable description of the result
+   *
+   * @example
+   * ```typescript
+   * const mcpService = new MCPService();
+   *
+   * // Toggle a server's state
+   * const result = await mcpService.toggleMCPServer('filesystem', '/path/to/project');
+   *
+   * if (result.success) {
+   *   console.log(`Server is now ${result.disabled ? 'disabled' : 'enabled'}`);
+   *   console.log(result.message);
+   * } else {
+   *   console.error('Toggle failed:', result.message);
+   * }
+   *
+   * // Output:
+   * // Server is now disabled
+   * // MCP server disabled successfully
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Toggle multiple times (enable → disable → enable)
+   * let result = await mcpService.toggleMCPServer('github');
+   * console.log(`First toggle: ${result.disabled ? 'disabled' : 'enabled'}`);
+   * // Output: First toggle: disabled
+   *
+   * result = await mcpService.toggleMCPServer('github');
+   * console.log(`Second toggle: ${result.disabled ? 'disabled' : 'enabled'}`);
+   * // Output: Second toggle: enabled
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Conditional toggling based on current state
+   * const server = await mcpService.getMCPServerById('filesystem');
+   *
+   * if (server?.disabled) {
+   *   console.log('Server is currently disabled, enabling it...');
+   *   await mcpService.toggleMCPServer('filesystem');
+   * } else {
+   *   console.log('Server is already enabled');
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle non-existent server
+   * const result = await mcpService.toggleMCPServer('nonexistent');
+   *
+   * if (!result.success) {
+   *   console.error(result.message);
+   *   // Output: MCP server not found
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // UI integration: checkbox toggle handler
+   * async function handleServerToggle(serverId: string, checkbox: HTMLInputElement) {
+   *   const result = await mcpService.toggleMCPServer(serverId);
+   *
+   *   if (result.success) {
+   *     // Update checkbox to match new state
+   *     checkbox.checked = !result.disabled;
+   *
+   *     // Show notification
+   *     showNotification(
+   *       `Server ${result.disabled ? 'disabled' : 'enabled'} successfully`,
+   *       'success'
+   *     );
+   *   } else {
+   *     // Revert checkbox on failure
+   *     checkbox.checked = !checkbox.checked;
+   *     showNotification(`Failed to toggle server: ${result.message}`, 'error');
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Disable all servers except one
+   * const servers = await mcpService.getMCPServers();
+   * const keepEnabled = 'filesystem';
+   *
+   * for (const server of servers) {
+   *   if (server.id !== keepEnabled && !server.disabled) {
+   *     const result = await mcpService.toggleMCPServer(server.id);
+   *     console.log(`Disabled ${server.name}: ${result.success}`);
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Enable all disabled servers
+   * const servers = await mcpService.getMCPServers();
+   * const disabledServers = servers.filter(s => s.disabled);
+   *
+   * console.log(`Enabling ${disabledServers.length} disabled servers...`);
+   *
+   * for (const server of disabledServers) {
+   *   const result = await mcpService.toggleMCPServer(server.id);
+   *   if (result.success) {
+   *     console.log(`✓ Enabled ${server.name}`);
+   *   } else {
+   *     console.error(`✗ Failed to enable ${server.name}: ${result.message}`);
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Toggle with confirmation dialog
+   * async function toggleServerWithConfirmation(serverId: string) {
+   *   const server = await mcpService.getMCPServerById(serverId);
+   *   if (!server) {
+   *     alert('Server not found');
+   *     return;
+   *   }
+   *
+   *   const action = server.disabled ? 'enable' : 'disable';
+   *   const confirmed = confirm(`Are you sure you want to ${action} ${server.name}?`);
+   *
+   *   if (!confirmed) return;
+   *
+   *   const result = await mcpService.toggleMCPServer(serverId);
+   *
+   *   if (result.success) {
+   *     alert(`Successfully ${action}d ${server.name}`);
+   *   } else {
+   *     alert(`Failed to ${action} server: ${result.message}`);
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Batch toggle pattern (enable/disable multiple servers)
+   * async function setServersEnabled(serverIds: string[], enabled: boolean) {
+   *   const results = [];
+   *
+   *   for (const id of serverIds) {
+   *     const server = await mcpService.getMCPServerById(id);
+   *     if (!server) continue;
+   *
+   *     // Only toggle if current state doesn't match desired state
+   *     const shouldToggle = server.disabled === enabled;
+   *
+   *     if (shouldToggle) {
+   *       const result = await mcpService.toggleMCPServer(id);
+   *       results.push({ id, success: result.success });
+   *     }
+   *   }
+   *
+   *   return results;
+   * }
+   *
+   * // Usage
+   * await setServersEnabled(['server-1', 'server-2'], true);  // Enable servers
+   * await setServersEnabled(['server-3', 'server-4'], false); // Disable servers
+   * ```
    */
   async toggleMCPServer(id: string, projectPath?: string): Promise<{
     success: boolean;
@@ -1610,7 +2286,159 @@ export class MCPService {
   }
 
   /**
-   * List tools provided by an MCP server
+   * List all tools provided by an MCP server
+   *
+   * @description
+   * Retrieves the complete list of tools available from an MCP server by querying the
+   * server using the appropriate transport protocol. This method performs a full server
+   * interaction, returning actual tool metadata including names, descriptions, and input schemas.
+   *
+   * The retrieval process:
+   * 1. Retrieves server configuration from .mcp.json by ID
+   * 2. Determines transport type (stdio or SDK)
+   * 3. Delegates to transport-specific tool fetching method:
+   *    - Stdio servers: Spawns process, performs MCP protocol handshake, sends tools/list request
+   *    - SDK servers: Calls listTools() method on registered instance
+   * 4. Normalizes tool metadata into consistent MCPTool[] format
+   * 5. Returns tools array with success status
+   *
+   * Tool Fetching by Transport Type:
+   *
+   * **Stdio Servers:**
+   * - Spawns external process via JSON-RPC over stdin/stdout
+   * - Sends MCP protocol 'initialize' request (required handshake)
+   * - Sends 'tools/list' request after successful initialization
+   * - Parses JSON-RPC responses to extract tool metadata
+   * - Times out after 15 seconds if no response
+   * - Cleans up spawned process when complete
+   *
+   * **SDK Servers:**
+   * - Retrieves registered server instance from internal registry
+   * - Directly calls instance.listTools() method
+   * - No process spawning or protocol handshake required
+   * - Faster than stdio servers due to in-process execution
+   *
+   * Each returned MCPTool contains:
+   * - name: Unique identifier for the tool
+   * - description: Human-readable explanation of tool functionality
+   * - inputSchema: JSON Schema defining expected input parameters
+   *
+   * This method is useful for:
+   * - Discovering what tools an MCP server provides
+   * - Validating server is functional and responding correctly
+   * - Building UI for tool selection or documentation
+   * - Syncing tool metadata to Strapi database
+   *
+   * @param id - Unique identifier of the MCP server (must exist in .mcp.json)
+   * @param projectPath - Absolute path to project directory.
+   *                      Defaults to process.cwd() if not provided.
+   *
+   * @returns Promise resolving to result object:
+   *          - success: boolean indicating if tools were retrieved successfully
+   *          - tools: Array of MCPTool objects with name, description, inputSchema
+   *          - error: Optional error message if retrieval failed
+   *
+   * @example
+   * ```typescript
+   * const mcpService = new MCPService();
+   *
+   * // List tools from a stdio server
+   * const result = await mcpService.listMCPServerTools('filesystem', '/path/to/project');
+   *
+   * if (result.success) {
+   *   console.log(`Found ${result.tools.length} tools:`);
+   *   result.tools.forEach(tool => {
+   *     console.log(`- ${tool.name}: ${tool.description}`);
+   *   });
+   * } else {
+   *   console.error('Failed to list tools:', result.error);
+   * }
+   *
+   * // Output:
+   * // Found 3 tools:
+   * // - read_file: Read the complete contents of a file from the file system
+   * // - write_file: Create a new file or completely overwrite an existing file
+   * // - list_directory: Get a detailed listing of all files and directories
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // List tools from SDK server
+   * const myServer = new MyMCPServer();
+   * mcpService.registerSdkServer('my-server', myServer);
+   * await mcpService.addMCPServer('my-server', { type: 'sdk', name: 'my-server' });
+   *
+   * const result = await mcpService.listMCPServerTools('my-server');
+   *
+   * console.log('SDK server tools:', result.tools);
+   * // Output: SDK server tools: [{ name: 'custom_tool', description: '...', inputSchema: {...} }]
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Examine tool input schemas
+   * const result = await mcpService.listMCPServerTools('filesystem');
+   *
+   * if (result.success) {
+   *   result.tools.forEach(tool => {
+   *     console.log(`\n${tool.name}:`);
+   *     console.log('Parameters:', JSON.stringify(tool.inputSchema, null, 2));
+   *   });
+   * }
+   *
+   * // Output:
+   * // read_file:
+   * // Parameters: {
+   * //   "type": "object",
+   * //   "properties": {
+   * //     "path": { "type": "string", "description": "Path to file" }
+   * //   },
+   * //   "required": ["path"]
+   * // }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // List tools for all configured servers
+   * const servers = await mcpService.getMCPServers();
+   *
+   * for (const server of servers) {
+   *   if (!server.disabled) {
+   *     const result = await mcpService.listMCPServerTools(server.id);
+   *     console.log(`${server.name}: ${result.success ? result.tools.length : 'ERROR'} tools`);
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle errors gracefully
+   * const result = await mcpService.listMCPServerTools('github');
+   *
+   * if (!result.success) {
+   *   if (result.error?.includes('not found')) {
+   *     console.log('Server not configured');
+   *   } else if (result.error?.includes('Timeout')) {
+   *     console.log('Server timed out - check connectivity');
+   *   } else if (result.error?.includes('not registered')) {
+   *     console.log('SDK server needs registration first');
+   *   } else {
+   *     console.log('Unknown error:', result.error);
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Sync tools to Strapi database
+   * const result = await mcpService.listMCPServerTools('filesystem');
+   *
+   * if (result.success && result.tools.length > 0) {
+   *   // Sync to database using Strapi client
+   *   await strapiClient.bulkSyncMCPTools(serverId, result.tools);
+   *   console.log(`Synced ${result.tools.length} tools to database`);
+   * }
+   * ```
    */
   async listMCPServerTools(id: string, projectPath?: string): Promise<{
     success: boolean;
@@ -1659,7 +2487,141 @@ export class MCPService {
   }
 
   /**
-   * Fetch tools from stdio MCP server via JSON-RPC
+   * Fetch tools from stdio MCP server via JSON-RPC protocol
+   *
+   * @description
+   * Retrieves tool metadata from an external stdio-based MCP server by spawning the
+   * process and performing a complete MCP protocol handshake followed by a tools/list
+   * request. This method implements the full MCP JSON-RPC communication flow.
+   *
+   * The MCP protocol communication sequence:
+   * 1. Spawns external process with configured command, args, and env
+   * 2. Sends 'initialize' JSON-RPC request (MCP protocol handshake requirement)
+   *    - Includes protocol version, capabilities, and client info
+   *    - Waits for successful initialization response (id: 1)
+   * 3. After initialization, sends 'tools/list' JSON-RPC request (id: 2)
+   * 4. Parses 'tools/list' response to extract tool metadata array
+   * 5. Normalizes tools into MCPTool[] format with name, description, inputSchema
+   * 6. Terminates spawned process and cleans up resources
+   * 7. Times out after 15 seconds if server doesn't respond
+   *
+   * JSON-RPC Communication Format:
+   * - Requests and responses are newline-delimited JSON
+   * - Each request includes: jsonrpc, id, method, params
+   * - Responses include: jsonrpc, id, result/error
+   * - Communication happens over stdin (write) and stdout (read)
+   *
+   * The method handles:
+   * - Line-by-line JSON parsing from stdout stream
+   * - Non-JSON output (skipped/ignored)
+   * - Process spawn errors
+   * - Timeout scenarios
+   * - Early process termination
+   * - Proper cleanup in all cases
+   *
+   * Returns empty array instead of throwing on most errors to allow graceful
+   * handling of servers with no tools or communication issues.
+   *
+   * @param config - MCP stdio server configuration (must have command property)
+   *
+   * @returns Promise resolving to array of MCPTool objects with name, description,
+   *          and inputSchema. Returns empty array if:
+   *          - Server has no tools
+   *          - Communication fails
+   *          - Process exits before sending tools
+   *          - Invalid config type
+   *
+   * @throws Error if config is not a stdio server configuration
+   * @throws Error if process spawn fails immediately
+   * @throws Error if timeout occurs (15 seconds)
+   *
+   * @example
+   * ```typescript
+   * const config: MCPStdioServerConfig = {
+   *   command: 'npx',
+   *   args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+   *   env: { DEBUG: 'true' }
+   * };
+   *
+   * const tools = await this.fetchToolsFromStdioServer(config);
+   *
+   * console.log('Available tools:');
+   * tools.forEach(tool => {
+   *   console.log(`- ${tool.name}: ${tool.description}`);
+   *   console.log(`  Schema:`, JSON.stringify(tool.inputSchema, null, 2));
+   * });
+   *
+   * // Output:
+   * // Available tools:
+   * // - read_file: Read the complete contents of a file
+   * //   Schema: { type: "object", properties: { path: {...} }, required: ["path"] }
+   * // - write_file: Create a new file or overwrite existing
+   * //   Schema: { type: "object", properties: { path: {...}, content: {...} } }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle servers with no tools (returns empty array)
+   * const config: MCPStdioServerConfig = {
+   *   command: 'node',
+   *   args: ['./empty-mcp-server.js']
+   * };
+   *
+   * const tools = await this.fetchToolsFromStdioServer(config);
+   * console.log(`Tool count: ${tools.length}`); // 0
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Timeout handling (15 second limit)
+   * const slowConfig: MCPStdioServerConfig = {
+   *   command: 'slow-mcp-server',
+   *   args: ['--delay', '30000']  // 30 second delay
+   * };
+   *
+   * try {
+   *   const tools = await this.fetchToolsFromStdioServer(slowConfig);
+   * } catch (error) {
+   *   console.error('Error:', error.message);
+   *   // Error: Timeout fetching tools from MCP server
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Invalid config type handling
+   * const sdkConfig = { type: 'sdk', name: 'my-server' } as MCPServerConfig;
+   *
+   * try {
+   *   const tools = await this.fetchToolsFromStdioServer(sdkConfig);
+   * } catch (error) {
+   *   console.error('Error:', error.message);
+   *   // Error: Not a stdio server
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // MCP protocol flow visualization
+   * // Client (this method)          Server Process
+   * //    |                               |
+   * //    |-- initialize request -------->|
+   * //    |  (id: 1, protocol version)    |
+   * //    |                               |
+   * //    |<-- initialize response -------|
+   * //    |  (id: 1, capabilities)        |
+   * //    |                               |
+   * //    |-- tools/list request -------->|
+   * //    |  (id: 2)                      |
+   * //    |                               |
+   * //    |<-- tools/list response -------|
+   * //    |  (id: 2, tools: [...])        |
+   * //    |                               |
+   * //    |-- SIGTERM (cleanup) --------->|
+   * //    |                               X
+   * ```
+   *
+   * @private
    */
   private async fetchToolsFromStdioServer(config: MCPServerConfig): Promise<MCPTool[]> {
     if (!isStdioServer(config)) {
@@ -1777,7 +2739,137 @@ export class MCPService {
   }
 
   /**
-   * Fetch tools from SDK MCP server
+   * Fetch tools from in-process SDK MCP server
+   *
+   * @description
+   * Retrieves tool metadata from an in-process SDK MCP server instance by directly
+   * calling its listTools() method. This is significantly faster than stdio servers
+   * as it avoids process spawning and JSON-RPC protocol overhead.
+   *
+   * The retrieval process:
+   * 1. Validates config is an SDK server configuration
+   * 2. Retrieves server instance from internal registry (sdkServers Map)
+   * 3. Validates instance implements required listTools() method
+   * 4. Calls instance.listTools() to get tool metadata
+   * 5. Normalizes tool objects into consistent MCPTool[] format
+   * 6. Returns tools array
+   *
+   * SDK Server Requirements:
+   * - Must be registered via registerSdkServer() before calling this method
+   * - Must implement listTools() method that returns Promise<Tool[]>
+   * - Each tool must have: name, description, inputSchema properties
+   *
+   * This method is synchronous (no I/O or process spawning) and executes in-process,
+   * making it ideal for:
+   * - High-frequency tool queries
+   * - Low-latency requirements
+   * - Custom TypeScript/JavaScript MCP servers
+   * - Development and testing scenarios
+   *
+   * Error Handling:
+   * - Throws if config is not SDK type
+   * - Throws if server instance not registered
+   * - Throws if instance doesn't implement listTools()
+   * - Re-throws any errors from instance.listTools() call
+   *
+   * @param config - MCP SDK server configuration (must have type 'sdk' and name property)
+   *
+   * @returns Promise resolving to array of MCPTool objects with name, description,
+   *          and inputSchema properties
+   *
+   * @throws Error if config is not an SDK server configuration
+   * @throws Error if server instance not registered (need to call registerSdkServer first)
+   * @throws Error if server instance doesn't implement listTools() method
+   * @throws Error propagated from instance.listTools() if that method fails
+   *
+   * @example
+   * ```typescript
+   * // Basic SDK server tool fetching
+   * const myServer = new MyMCPServer();
+   * mcpService.registerSdkServer('my-server', myServer);
+   *
+   * const config = { type: 'sdk', name: 'my-server' } as MCPServerConfig;
+   * const tools = await this.fetchToolsFromSdkServer(config);
+   *
+   * console.log(`Found ${tools.length} tools`);
+   * tools.forEach(tool => {
+   *   console.log(`- ${tool.name}: ${tool.description}`);
+   * });
+   *
+   * // Output:
+   * // Found 2 tools
+   * // - search: Search through documents
+   * // - summarize: Generate summaries
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Error: Unregistered server
+   * const config = { type: 'sdk', name: 'unregistered' } as MCPServerConfig;
+   *
+   * try {
+   *   const tools = await this.fetchToolsFromSdkServer(config);
+   * } catch (error) {
+   *   console.error(error.message);
+   *   // Output: SDK server "unregistered" not registered
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Error: Invalid interface (missing listTools)
+   * const invalidServer = { someMethod: () => {} };
+   * mcpService.registerSdkServer('invalid', invalidServer);
+   *
+   * const config = { type: 'sdk', name: 'invalid' } as MCPServerConfig;
+   *
+   * try {
+   *   const tools = await this.fetchToolsFromSdkServer(config);
+   * } catch (error) {
+   *   console.error(error.message);
+   *   // Output: SDK server does not implement listTools() method
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Error: Wrong config type
+   * const stdioConfig: MCPStdioServerConfig = {
+   *   command: 'npx',
+   *   args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp']
+   * };
+   *
+   * try {
+   *   const tools = await this.fetchToolsFromSdkServer(stdioConfig);
+   * } catch (error) {
+   *   console.error(error.message);
+   *   // Output: Not an SDK server
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Complete workflow: register, fetch, and use tools
+   * import { MyCustomMCPServer } from './my-mcp-server.js';
+   *
+   * // 1. Create and register server instance
+   * const server = new MyCustomMCPServer({ apiKey: process.env.API_KEY });
+   * mcpService.registerSdkServer('custom', server);
+   *
+   * // 2. Fetch tools
+   * const config = { type: 'sdk', name: 'custom' } as MCPServerConfig;
+   * const tools = await this.fetchToolsFromSdkServer(config);
+   *
+   * // 3. Use tool metadata
+   * console.log('Available tools:');
+   * for (const tool of tools) {
+   *   console.log(`\n${tool.name}`);
+   *   console.log(`Description: ${tool.description}`);
+   *   console.log(`Parameters: ${JSON.stringify(tool.inputSchema, null, 2)}`);
+   * }
+   * ```
+   *
+   * @private
    */
   private async fetchToolsFromSdkServer(config: MCPServerConfig): Promise<MCPTool[]> {
     if (!isSdkServer(config)) {
@@ -1807,8 +2899,172 @@ export class MCPService {
   }
 
   /**
-   * Sync MCP servers to .mcp.json file
-   * Converts Strapi format to SDK format
+   * Sync MCP servers to .mcp.json configuration file
+   *
+   * @description
+   * Converts MCP server data from Strapi database format to SDK-aligned .mcp.json format
+   * and writes it to disk. This enables bidirectional synchronization between the Strapi
+   * CMS and the project's MCP configuration file used by Claude Agent SDK.
+   *
+   * This method is typically called when:
+   * - Syncing MCP servers from Strapi database to local project
+   * - Exporting server configurations for use by Claude SDK
+   * - Updating .mcp.json after bulk edits in Strapi UI
+   * - Migrating server configurations across environments
+   *
+   * Conversion Process:
+   * 1. Accepts servers in Strapi format (flat structure with transport field)
+   * 2. Filters out disabled servers (disabled servers excluded from .mcp.json)
+   * 3. Transforms each server to SDK format:
+   *    - Creates key-value structure (server name as key)
+   *    - Removes Strapi-specific fields (disabled, transport if stdio)
+   *    - Preserves command, args, env for stdio servers
+   *    - Adds type field for non-stdio transports (sdk, sse, http)
+   * 4. Writes complete MCPConfig to .mcp.json at project root
+   * 5. Overwrites existing file completely (not a merge)
+   *
+   * Format Transformation:
+   * ```
+   * Input (Strapi format):
+   * [
+   *   { name: "filesystem", command: "npx", args: [...], env: {...}, disabled: false, transport: "stdio" }
+   * ]
+   *
+   * Output (.mcp.json SDK format):
+   * {
+   *   "mcpServers": {
+   *     "filesystem": {
+   *       "command": "npx",
+   *       "args": [...],
+   *       "env": {...}
+   *     }
+   *   }
+   * }
+   * ```
+   *
+   * Important Notes:
+   * - Disabled servers are completely excluded from .mcp.json (SDK only loads enabled servers)
+   * - This is a full replacement operation (existing .mcp.json content is overwritten)
+   * - For stdio transport, the 'type' field is omitted (stdio is default)
+   * - For other transports (sdk, sse, http), the 'type' field is included
+   * - Environment variables in env field should use ${VAR_NAME} syntax for substitution
+   *
+   * @param servers - Array of MCP server objects in Strapi format with name, command,
+   *                  args, env, disabled, and transport fields
+   * @param projectPath - Absolute path to project directory where .mcp.json will be written.
+   *                      Defaults to process.cwd() if not provided.
+   *
+   * @returns Promise that resolves when .mcp.json file is successfully written
+   *
+   * @example
+   * ```typescript
+   * const mcpService = new MCPService();
+   *
+   * // Sync servers from Strapi to .mcp.json
+   * const strapiServers = [
+   *   {
+   *     name: 'filesystem',
+   *     command: 'npx',
+   *     args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+   *     env: { DEBUG: 'true' },
+   *     disabled: false,
+   *     transport: 'stdio'
+   *   },
+   *   {
+   *     name: 'github',
+   *     command: 'npx',
+   *     args: ['-y', '@modelcontextprotocol/server-github'],
+   *     env: { GITHUB_TOKEN: '${GITHUB_TOKEN}' },
+   *     disabled: true,  // This server will be excluded
+   *     transport: 'stdio'
+   *   }
+   * ];
+   *
+   * await mcpService.syncToMcpJson(strapiServers, '/path/to/project');
+   *
+   * // Result: .mcp.json contains only the 'filesystem' server (github excluded as disabled)
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Sync from Strapi database
+   * const strapiClient = new StrapiClient();
+   * const dbServers = await strapiClient.getAllMCPServers();
+   *
+   * // Transform Strapi response to sync format
+   * const serversToSync = dbServers.map(server => ({
+   *   name: server.name,
+   *   command: server.command,
+   *   args: server.args,
+   *   env: server.env,
+   *   disabled: !server.enabled,  // Strapi uses 'enabled', sync expects 'disabled'
+   *   transport: server.transport || 'stdio'
+   * }));
+   *
+   * await mcpService.syncToMcpJson(serversToSync);
+   * console.log('Synced MCP servers from Strapi to .mcp.json');
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Sync SDK server (includes type field)
+   * const sdkServers = [
+   *   {
+   *     name: 'my-sdk-server',
+   *     command: '',  // Not used for SDK servers
+   *     transport: 'sdk'
+   *   }
+   * ];
+   *
+   * await mcpService.syncToMcpJson(sdkServers);
+   *
+   * // Result in .mcp.json:
+   * // {
+   * //   "mcpServers": {
+   * //     "my-sdk-server": {
+   * //       "type": "sdk",
+   * //       "command": "",
+   * //       "args": [],
+   * //       "env": {}
+   * //     }
+   * //   }
+   * // }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Complete bidirectional sync workflow
+   * const mcpService = new MCPService();
+   * const strapiClient = new StrapiClient();
+   *
+   * // 1. Fetch from Strapi
+   * const dbServers = await strapiClient.getAllMCPServers();
+   *
+   * // 2. Convert to sync format
+   * const serversToSync = dbServers
+   *   .filter(s => s.enabled)  // Only sync enabled servers
+   *   .map(s => ({
+   *     name: s.name,
+   *     command: s.command,
+   *     args: s.args,
+   *     env: s.env,
+   *     disabled: false,
+   *     transport: s.transport || 'stdio'
+   *   }));
+   *
+   * // 3. Sync to .mcp.json
+   * await mcpService.syncToMcpJson(serversToSync);
+   *
+   * console.log(`Synced ${serversToSync.length} servers to .mcp.json`);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Empty sync (clears all servers from .mcp.json)
+   * await mcpService.syncToMcpJson([]);
+   *
+   * // Result: .mcp.json contains { "mcpServers": {} }
+   * ```
    */
   async syncToMcpJson(
     servers: Array<{
@@ -1863,8 +3119,209 @@ export class MCPService {
   }
 
   /**
-   * Sync MCP servers from .mcp.json file
-   * Returns servers in format suitable for Strapi
+   * Sync MCP servers from .mcp.json configuration file to Strapi format
+   *
+   * @description
+   * Reads the project's .mcp.json file and converts server configurations from SDK format
+   * to Strapi database format. This enables bidirectional synchronization by allowing
+   * changes made directly to .mcp.json to be imported back into the Strapi CMS.
+   *
+   * This method is typically called when:
+   * - Importing MCP servers from .mcp.json into Strapi database
+   * - Syncing manual changes made to .mcp.json back to CMS
+   * - Bootstrapping Strapi database from existing project configuration
+   * - Detecting and reconciling configuration drift between file and database
+   *
+   * Conversion Process:
+   * 1. Reads .mcp.json from project root with environment variable substitution
+   * 2. Extracts mcpServers object (key-value pairs)
+   * 3. Transforms each server to Strapi format:
+   *    - Extracts server name from object key
+   *    - Normalizes command, args, env fields
+   *    - Extracts disabled flag (defaults to false if not set)
+   *    - Determines transport type from 'type' field (defaults to 'stdio')
+   * 4. Returns array of server objects ready for Strapi database insertion
+   * 5. Currently only processes stdio servers (SDK servers filtered out)
+   *
+   * Format Transformation:
+   * ```
+   * Input (.mcp.json SDK format):
+   * {
+   *   "mcpServers": {
+   *     "filesystem": {
+   *       "command": "npx",
+   *       "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+   *       "env": { "DEBUG": "true" },
+   *       "disabled": false
+   *     }
+   *   }
+   * }
+   *
+   * Output (Strapi format):
+   * [
+   *   {
+   *     name: "filesystem",
+   *     command: "npx",
+   *     args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+   *     env: { DEBUG: "true" },
+   *     disabled: false,
+   *     transport: "stdio"
+   *   }
+   * ]
+   * ```
+   *
+   * Important Notes:
+   * - Only stdio servers are currently processed (SDK servers skipped in transformation)
+   * - Environment variables are already substituted during config read
+   * - Returns empty array if .mcp.json doesn't exist or has no servers
+   * - Disabled servers are included in output (Strapi stores all servers, enabled and disabled)
+   * - The 'disabled' field defaults to false if not present in config
+   * - The 'transport' field defaults to 'stdio' if not explicitly set
+   *
+   * @param projectPath - Absolute path to project directory containing .mcp.json.
+   *                      Defaults to process.cwd() if not provided.
+   *
+   * @returns Promise resolving to array of server objects in Strapi format:
+   *          - name: Server identifier (from config key)
+   *          - command: Executable command for stdio servers
+   *          - args: Array of command arguments
+   *          - env: Environment variables object
+   *          - disabled: Whether server is disabled
+   *          - transport: Transport type ('stdio', 'sdk', etc.)
+   *          Returns empty array if no .mcp.json exists or no stdio servers found.
+   *
+   * @example
+   * ```typescript
+   * const mcpService = new MCPService();
+   *
+   * // Read servers from .mcp.json
+   * const servers = await mcpService.syncFromMcpJson('/path/to/project');
+   *
+   * console.log(`Found ${servers.length} servers in .mcp.json:`);
+   * servers.forEach(server => {
+   *   console.log(`- ${server.name} (${server.transport})${server.disabled ? ' [disabled]' : ''}`);
+   * });
+   *
+   * // Output:
+   * // Found 2 servers in .mcp.json:
+   * // - filesystem (stdio)
+   * // - github (stdio) [disabled]
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Sync from .mcp.json to Strapi database
+   * const mcpService = new MCPService();
+   * const strapiClient = new StrapiClient();
+   *
+   * // 1. Read from .mcp.json
+   * const serversFromFile = await mcpService.syncFromMcpJson();
+   *
+   * // 2. Upsert each server to Strapi
+   * for (const server of serversFromFile) {
+   *   const existing = await strapiClient.findMCPServerByName(server.name);
+   *
+   *   if (existing) {
+   *     await strapiClient.updateMCPServer(existing.id, {
+   *       command: server.command,
+   *       args: server.args,
+   *       env: server.env,
+   *       enabled: !server.disabled,
+   *       transport: server.transport
+   *     });
+   *   } else {
+   *     await strapiClient.createMCPServer({
+   *       name: server.name,
+   *       command: server.command,
+   *       args: server.args,
+   *       env: server.env,
+   *       enabled: !server.disabled,
+   *       transport: server.transport
+   *     });
+   *   }
+   * }
+   *
+   * console.log(`Synced ${serversFromFile.length} servers to Strapi`);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Detect configuration drift
+   * const serversFromFile = await mcpService.syncFromMcpJson();
+   * const serversFromDB = await strapiClient.getAllMCPServers();
+   *
+   * const fileNames = new Set(serversFromFile.map(s => s.name));
+   * const dbNames = new Set(serversFromDB.map(s => s.name));
+   *
+   * // Find servers only in file
+   * const onlyInFile = serversFromFile.filter(s => !dbNames.has(s.name));
+   * console.log('Only in .mcp.json:', onlyInFile.map(s => s.name));
+   *
+   * // Find servers only in database
+   * const onlyInDB = serversFromDB.filter(s => !fileNames.has(s.name));
+   * console.log('Only in Strapi:', onlyInDB.map(s => s.name));
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle missing .mcp.json
+   * const servers = await mcpService.syncFromMcpJson('/nonexistent/path');
+   * console.log(servers); // []
+   * console.log(`Found ${servers.length} servers`); // Found 0 servers
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Complete bidirectional sync: file → Strapi → file
+   * const mcpService = new MCPService();
+   * const strapiClient = new StrapiClient();
+   *
+   * // 1. Import from .mcp.json to Strapi
+   * const importedServers = await mcpService.syncFromMcpJson();
+   * for (const server of importedServers) {
+   *   await strapiClient.upsertMCPServer(server);
+   * }
+   * console.log(`Imported ${importedServers.length} servers to Strapi`);
+   *
+   * // 2. Make changes in Strapi UI...
+   * // (user edits servers via Strapi CMS)
+   *
+   * // 3. Export from Strapi back to .mcp.json
+   * const dbServers = await strapiClient.getAllMCPServers();
+   * const serversToExport = dbServers.map(s => ({
+   *   name: s.name,
+   *   command: s.command,
+   *   args: s.args,
+   *   env: s.env,
+   *   disabled: !s.enabled,
+   *   transport: s.transport || 'stdio'
+   * }));
+   * await mcpService.syncToMcpJson(serversToExport);
+   * console.log(`Exported ${serversToExport.length} servers to .mcp.json`);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Filter and transform before syncing to Strapi
+   * const servers = await mcpService.syncFromMcpJson();
+   *
+   * // Only sync enabled servers
+   * const enabledServers = servers.filter(s => !s.disabled);
+   *
+   * // Transform to Strapi create format
+   * const strapiData = enabledServers.map(s => ({
+   *   name: s.name,
+   *   command: s.command,
+   *   args: s.args,
+   *   env: s.env,
+   *   enabled: true,
+   *   transport: s.transport,
+   *   description: `Imported from .mcp.json`
+   * }));
+   *
+   * // Bulk create in Strapi
+   * await Promise.all(strapiData.map(data => strapiClient.createMCPServer(data)));
+   * ```
    */
   async syncFromMcpJson(projectPath?: string): Promise<
     Array<{

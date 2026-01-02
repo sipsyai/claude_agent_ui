@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "002-add-jsdoc-documentation-for-backend-services",
+  "state": "building",
+  "subtasks": {
+    "completed": 6,
+    "total": 42,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Core SDK Services",
+    "id": null,
+    "total": 7
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 8,
+    "started_at": "2026-01-02T09:50:58.101660"
+  },
+  "last_update": "2026-01-02T10:12:26.624972"
+}

@@ -1,0 +1,6 @@
+{
+  "task_description": "Fix 4 critical bugs identified in Flow Editor testing:\n\n**Critical Bugs:**\n1. Auto Layout not working - dagre algorithm or node positioning issue\n2. Node clickability issue - z-index/overlap causing TimeoutError when clicking Agent node\n3. Save button disabled despite valid input - validation rules too strict\n4. Node connections unclear - users don't know how to connect nodes\n\n**Performance Issues:**\n- GET /api/flows called 9x (needs deduplication)\n- GET /api/strapi/agents called 4x\n- Implement React Query/SWR for caching\n\n**Files to investigate:**\n- src/web/manager/utils/auto-layout.ts\n- Flow editor node rendering components\n- Save validation logic\n- API request hooks",
+  "workflow_type": "feature",
+  "services_involved": [],
+  "created_at": "2026-01-03T00:49:22.392582"
+}

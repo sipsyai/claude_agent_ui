@@ -162,6 +162,12 @@ export interface BaseNodeProps {
    * Optional minimum height (default: auto)
    */
   minHeight?: number;
+
+  /**
+   * Optional click handler for the node
+   * This enables fast click response before React Flow's event processing
+   */
+  onClick?: (event: React.MouseEvent) => void;
 }
 
 /**
@@ -184,6 +190,7 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
   className = '',
   width = 280,
   minHeight,
+  onClick,
 }) => {
   // Color theme mapping for different node types
   const nodeTypeColors = {
@@ -224,6 +231,7 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
         width: `${width}px`,
         minHeight: minHeight ? `${minHeight}px` : undefined,
       }}
+      onClick={onClick}
     >
       {/* Target Handle - Incoming Connections */}
       {showTargetHandle && (
@@ -240,7 +248,7 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
       <div
         className={`
           relative rounded-lg border-2 bg-card text-card-foreground shadow-sm
-          transition-all duration-200 z-[1]
+          transition-all duration-200 z-[10]
           ${selected ? colors.border : 'border-border'}
           ${selected ? 'shadow-md' : 'hover:shadow-md'}
         `}

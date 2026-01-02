@@ -1,0 +1,60 @@
+{
+  "task_description": "Fix 4 critical bugs identified in Flow Editor testing: (1) Auto Layout not working due to dagre timing issues, (2) Node clickability issue causing TimeoutError from z-index/overlap, (3) Save button disabled despite valid input due to overly strict validation, (4) Node connections unclear to users. Additionally, optimize API performance by deduplicating GET /api/flows (9x) and GET /api/strapi/agents (4x) calls using React Query.",
+  "scoped_services": ["main"],
+  "files_to_modify": {
+    "main": [
+      "src/web/manager/utils/auto-layout.ts",
+      "src/web/manager/contexts/FlowCanvasContext.tsx",
+      "src/web/manager/components/flow-canvas/nodes/BaseNode.tsx",
+      "src/web/manager/components/flow-canvas/nodes/AgentNode.tsx",
+      "src/web/manager/utils/flow-validator.ts",
+      "src/web/manager/components/FlowEditorPage.tsx",
+      "src/web/manager/components/FlowEditorVisual.tsx",
+      "src/web/manager/components/FlowsPage.tsx",
+      "src/web/manager/components/AgentsPage.tsx",
+      "src/web/main.tsx",
+      "package.json"
+    ]
+  },
+  "files_to_create": {
+    "main": [
+      "src/web/manager/hooks/useFlows.ts",
+      "src/web/manager/hooks/useAgents.ts"
+    ]
+  },
+  "files_to_reference": [
+    "src/web/manager/utils/auto-layout.ts",
+    "src/web/manager/contexts/FlowCanvasContext.tsx",
+    "src/web/manager/services/flow-api.ts",
+    "src/web/manager/services/api.ts",
+    "src/web/manager/components/flow-canvas/CanvasToolbar.tsx",
+    "src/web/manager/components/FlowsPage.tsx"
+  ],
+  "patterns": {
+    "dagre_integration": "Current auto-layout.ts imports 'dagre' (deprecated v0.8.5). Uses getNodeWidth() and getNodeHeight() to measure dimensions, but timing issue: dagre.layout() runs before React Flow renders nodes, so dimensions are defaults (280x200) not actual measured values. Need to use @dagrejs/dagre v1.1.8 and implement proper render → measure → layout → re-render cycle.",
+    "api_service_pattern": "Services in src/web/manager/services/ use direct fetch() calls with createFetchOptions() for auth. No caching layer exists. FlowsPage.tsx calls flowApi.getFlows() directly in useEffect (line 118), causing duplicate calls across components and during auto-refresh polling (lines 154-198).",
+    "react_flow_integration": "FlowCanvasContext manages nodes/edges state. applyAutoLayout function (line 440 in CanvasToolbar) calls context method which uses auto-layout.ts utility. React Flow provides hooks like onNodesInitialized for timing - need to use these for proper layout.",
+    "validation_pattern": "flow-validator.ts exports validateFlow() function returning ExtendedFlowValidationResult with errors array. Uses ValidationErrorCode constants. Current rules may be too strict - review lines 122-162 for save button blocking issues.",
+    "node_rendering": "BaseNode.tsx is base component for all node types (Agent, Input, Output). AgentNode wraps BaseNode with className='cursor-pointer' (line 220). Check for z-index issues, pointer-events CSS, or DOM stacking contexts causing click failures."
+  },
+  "existing_implementations": {
+    "description": "Found existing dagre integration using deprecated package, direct API calls without caching, and React Flow node components with potential z-index issues",
+    "relevant_files": [
+      "src/web/manager/utils/auto-layout.ts",
+      "src/web/manager/services/flow-api.ts",
+      "src/web/manager/components/flow-canvas/nodes/BaseNode.tsx",
+      "src/web/manager/components/flow-canvas/nodes/AgentNode.tsx",
+      "src/web/manager/utils/flow-validator.ts"
+    ]
+  },
+  "key_dependencies": {
+    "to_install": [
+      "@dagrejs/dagre@1.1.8",
+      "@tanstack/react-query@5.90.16"
+    ],
+    "to_replace": [
+      "dagre@0.8.5 → @dagrejs/dagre@1.1.8 (deprecated → actively maintained)"
+    ]
+  },
+  "created_at": "2026-01-03T00:54:21.466012"
+}

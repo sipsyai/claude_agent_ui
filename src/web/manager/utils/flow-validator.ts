@@ -2,22 +2,29 @@
  * Flow Validation Utility
  *
  * Validates React Flow canvases to ensure flows have proper structure
- * before they can be saved and executed. Checks for required node types,
- * proper connections, and node configuration completeness.
+ * before they can be saved and executed. Distinguishes between blocking
+ * errors (prevent save) and warnings (allow save but may not execute).
  *
- * ## Validation Rules
- * - At least one input node (data entry point)
- * - At least one output node (data exit point)
- * - All nodes must be connected (no orphaned nodes)
- * - Input nodes must have at least one output connection
- * - Output nodes must have at least one input connection
- * - Agent nodes must be properly configured
+ * ## Validation Rules (Errors - block save)
+ * - Must have at least one input node (data entry point)
+ * - Must have at least one output node (data exit point)
+ * - No circular dependencies in flow
+ * - Output nodes with saveToFile enabled must have file path
+ *
+ * ## Validation Rules (Warnings - allow save)
+ * - Input/Output nodes should be connected
+ * - Agent nodes should have configuration (agentId, promptTemplate)
+ * - Output nodes should have type and format configured
+ * - All nodes should be part of connected graph
  *
  * ## Usage
  * ```typescript
  * const result = validateFlow(nodes, edges);
  * if (!result.isValid) {
  *   console.error('Validation errors:', result.errors);
+ * }
+ * if (result.hasWarnings) {
+ *   console.warn('Validation warnings:', result.warnings);
  * }
  * ```
  */
@@ -92,11 +99,11 @@ export const ValidationErrorCode = {
 /**
  * Validate a flow for structural integrity and completeness
  *
- * Performs comprehensive validation including:
- * - Required node types (input, output)
- * - Node connectivity (no orphans)
- * - Node configuration completeness
- * - Circular dependency detection
+ * Performs comprehensive validation with two severity levels:
+ * - Errors: Block saving (missing required nodes, circular deps, invalid configs)
+ * - Warnings: Allow saving but may prevent execution (disconnected nodes, missing config)
+ *
+ * This allows users to save work-in-progress flows that aren't ready to execute yet.
  *
  * @param nodes - Array of React Flow nodes
  * @param edges - Array of React Flow edges
@@ -107,12 +114,14 @@ export const ValidationErrorCode = {
  * const { isValid, errors, warnings } = validateFlow(nodes, edges);
  *
  * if (!isValid) {
+ *   // Blocking errors - prevent save
  *   errors.forEach(error => {
  *     console.error(`${error.code}: ${error.message} (node: ${error.nodeId})`);
  *   });
  * }
  *
  * if (warnings.length > 0) {
+ *   // Non-blocking warnings - allow save
  *   warnings.forEach(warning => {
  *     console.warn(`${warning.code}: ${warning.message}`);
  *   });
@@ -249,22 +258,22 @@ function validateNodeConnectivity(
     const hasIncoming = incomingEdges.has(node.id);
     const hasOutgoing = outgoingEdges.has(node.id);
 
-    // Input nodes must have at least one outgoing connection
+    // Input nodes should have at least one outgoing connection (warning to allow saving work-in-progress)
     if (isReactFlowInputNode(node) && !hasOutgoing) {
-      errors.push({
+      warnings.push({
         nodeId: node.id,
         message: `Input node "${node.data.name}" has no outgoing connections`,
-        severity: 'error',
+        severity: 'warning',
         code: ValidationErrorCode.INPUT_NO_CONNECTIONS,
       });
     }
 
-    // Output nodes must have at least one incoming connection
+    // Output nodes should have at least one incoming connection (warning to allow saving work-in-progress)
     if (isReactFlowOutputNode(node) && !hasIncoming) {
-      errors.push({
+      warnings.push({
         nodeId: node.id,
         message: `Output node "${node.data.name}" has no incoming connections`,
-        severity: 'error',
+        severity: 'warning',
         code: ValidationErrorCode.OUTPUT_NO_CONNECTIONS,
       });
     }
@@ -330,26 +339,26 @@ function validateNodeConfiguration(
       }
     }
 
-    // Validate Agent nodes
+    // Validate Agent nodes (warnings to allow saving work-in-progress)
     if (isReactFlowAgentNode(node)) {
       const { agentId, promptTemplate } = node.data;
 
       if (!agentId || agentId.trim() === '') {
-        errors.push({
+        warnings.push({
           nodeId: node.id,
           field: 'agentId',
           message: `Agent node "${node.data.name}" has no agent selected`,
-          severity: 'error',
+          severity: 'warning',
           code: ValidationErrorCode.AGENT_NO_AGENT_ID,
         });
       }
 
       if (!promptTemplate || promptTemplate.trim() === '') {
-        errors.push({
+        warnings.push({
           nodeId: node.id,
           field: 'promptTemplate',
           message: `Agent node "${node.data.name}" has no prompt template`,
-          severity: 'error',
+          severity: 'warning',
           code: ValidationErrorCode.AGENT_NO_PROMPT,
         });
       }
@@ -359,27 +368,28 @@ function validateNodeConfiguration(
     if (isReactFlowOutputNode(node)) {
       const { outputType, format, saveToFile, filePath } = node.data;
 
+      // Output type and format are warnings to allow saving work-in-progress
       if (!outputType) {
-        errors.push({
+        warnings.push({
           nodeId: node.id,
           field: 'outputType',
           message: `Output node "${node.data.name}" has no output type configured`,
-          severity: 'error',
+          severity: 'warning',
           code: ValidationErrorCode.OUTPUT_INVALID_CONFIG,
         });
       }
 
       if (!format) {
-        errors.push({
+        warnings.push({
           nodeId: node.id,
           field: 'format',
           message: `Output node "${node.data.name}" has no output format configured`,
-          severity: 'error',
+          severity: 'warning',
           code: ValidationErrorCode.OUTPUT_INVALID_CONFIG,
         });
       }
 
-      // If saveToFile is enabled, filePath must be set
+      // If saveToFile is enabled, filePath must be set (error - truly invalid configuration)
       if (saveToFile && (!filePath || filePath.trim() === '')) {
         errors.push({
           nodeId: node.id,

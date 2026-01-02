@@ -62,6 +62,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { ReactFlowProvider } from '@xyflow/react';
 import type {
   Flow,
   FlowStatus,
@@ -752,32 +753,34 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
 
           {/* Center Area - Flow Canvas (fills remaining space ~80-90% width) */}
           <div className="flex-1 relative overflow-hidden h-full">
-            <FlowCanvas
-              onNodeClick={handleNodeClick}
-              onCanvasClick={handleCanvasClick}
-              showBackground={showGrid}
-              showMinimap={showMinimap}
-            />
-
-            {/* Floating Node Palette - Overlay positioned top-left */}
-            <FloatingNodePalette position="top-left" />
-
-            {/* Floating Toolbar - Overlay positioned top-center */}
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-              <CanvasToolbar
-                showGrid={showGrid}
-                onToggleGrid={() => setShowGrid((prev) => !prev)}
+            <ReactFlowProvider>
+              <FlowCanvas
+                onNodeClick={handleNodeClick}
+                onCanvasClick={handleCanvasClick}
+                showBackground={showGrid}
                 showMinimap={showMinimap}
-                onToggleMinimap={() => setShowMinimap((prev) => !prev)}
-                onPreview={() => setShowPreview(true)}
               />
-            </div>
 
-            {/* Flow Preview Modal */}
-            <FlowPreview
-              isOpen={showPreview}
-              onClose={() => setShowPreview(false)}
-            />
+              {/* Floating Node Palette - Overlay positioned top-left */}
+              <FloatingNodePalette position="top-left" />
+
+              {/* Floating Toolbar - Overlay positioned top-center */}
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
+                <CanvasToolbar
+                  showGrid={showGrid}
+                  onToggleGrid={() => setShowGrid((prev) => !prev)}
+                  showMinimap={showMinimap}
+                  onToggleMinimap={() => setShowMinimap((prev) => !prev)}
+                  onPreview={() => setShowPreview(true)}
+                />
+              </div>
+
+              {/* Flow Preview Modal */}
+              <FlowPreview
+                isOpen={showPreview}
+                onClose={() => setShowPreview(false)}
+              />
+            </ReactFlowProvider>
           </div>
 
           {/* Right Panel - Node Configuration (slide-in overlay, doesn't affect layout) */}

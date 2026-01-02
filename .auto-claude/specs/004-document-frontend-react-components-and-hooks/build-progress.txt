@@ -41,10 +41,10 @@ Add comprehensive JSDoc documentation to 48+ React components and 4 custom hooks
   - Button, Input, Select, Textarea, Switch, Card, Dialog, ProgressBar, ArrayEditor, KeyValueEditor, Icons
 - [x] Phase 2: Layout Components (COMPLETED - 3/3 subtasks)
   - Layout, Sidebar, ChatDisplayContext
-- [x] Phase 3: Custom Hooks (IN PROGRESS - 2/4 subtasks)
+- [x] Phase 3: Custom Hooks (IN PROGRESS - 3/4 subtasks)
   - [x] 3.1 - useAgentCreator hook documentation
   - [x] 3.2 - useAssistantRuntime hook documentation
-  - [ ] 3.3 - useSkillCreator hook
+  - [x] 3.3 - useSkillCreator hook documentation
   - [ ] 3.4 - useSkillTraining hook
 
 ### 2026-01-02
@@ -70,8 +70,27 @@ Add comprehensive JSDoc documentation to 48+ React components and 4 custom hooks
   - All internal functions marked with @internal tags
   - Committed changes with git
 
+- [x] Subtask 3.3: Documented useSkillCreator hook
+  - Added comprehensive JSDoc documentation covering skill creation workflow, state management, and callbacks
+  - Documented all interfaces (Message, UseSkillCreatorOptions, UseSkillCreatorReturn)
+  - Options interface documentation with detailed property descriptions for directory, onSkillCreated, and onError
+  - Return values interface documentation covering messages, isProcessing, isCreating, createdSkillName, error, startConversation, sendMessage, and reset
+  - State management section explaining all five state categories (Message, Processing, Creation, Result, Error)
+  - SSE streaming handling section with stream lifecycle, event types, tool use detection, and stream cancellation details
+  - Lifecycle section outlining the typical usage flow from initialization to reset
+  - Authentication section documenting automatic token-based auth with cookie management
+  - Four comprehensive usage examples demonstrating:
+    * Basic usage with skill creation detection
+    * Custom directory and callbacks
+    * Handling user input and sending messages
+    * Reset conversation after skill creation
+  - Internal function documentation for getAuthToken, createFetchOptions, sendMessageInternal, startConversation, sendMessage, handleStreamEvent, and reset
+  - @internal tags for helper and internal functions
+  - @param and @returns tags for all functions
+  - Committed changes with git
+
 ## Next Steps
-1. Continue Phase 3: Document remaining custom hooks (useSkillCreator, useSkillTraining)
+1. Continue Phase 3: Document remaining custom hook (useSkillTraining)
 2. Proceed to Phase 4: Chat Components
 3. Complete Phase 5: Feature Components
 4. Finish with Phase 6: Page Components and App

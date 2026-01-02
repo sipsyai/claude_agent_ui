@@ -155,11 +155,47 @@
         }
       ],
       "status": "completed"
+    },
+    "subtask-6-2": {
+      "attempts": [
+        {
+          "session": 14,
+          "timestamp": "2026-01-03T01:41:13.116983",
+          "approach": "Implemented: Create useFlows hook with React Query for /api/flows endpoint",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-6-3": {
+      "attempts": [
+        {
+          "session": 15,
+          "timestamp": "2026-01-03T01:42:20.868441",
+          "approach": "Implemented: Create useAgents hook with React Query for /api/strapi/agents endpoint",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-6-4": {
+      "attempts": [
+        {
+          "session": 16,
+          "timestamp": "2026-01-03T01:45:12.063322",
+          "approach": "Implemented: Replace direct API calls in FlowsPage with useFlows hook",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-03T01:04:17.617772",
-    "last_updated": "2026-01-03T01:39:15.302005"
+    "last_updated": "2026-01-03T01:45:12.063328"
   }
 }

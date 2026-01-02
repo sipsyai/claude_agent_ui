@@ -349,8 +349,9 @@
             "command": "grep -q 'useQuery' src/web/manager/hooks/useFlows.ts && echo 'OK' || echo 'FAIL'",
             "expected": "OK"
           },
-          "notes": "Wrap flowApi.getFlows() in useQuery with queryKey: ['flows', filters]. Ensure query key is stable array.",
-          "status": "pending"
+          "notes": "\u2705 Successfully created useFlows hook with React Query\n\nCreated src/web/manager/hooks/useFlows.ts:\n- Wraps flow-api.ts getFlows() function with useQuery hook\n- Query key: ['flows', params] for proper cache separation\n- Enables automatic request deduplication (9x GET /api/flows \u2192 1 call)\n- Provides loading, error, and data states\n- Comprehensive JSDoc documentation with usage examples\n- Follows React Query v5 patterns\n\nVerification: \u2705 PASSED - grep confirms useQuery is present in the file\nCommit: 1c926ed - Changes committed successfully\n\nNext step: Create useAgents hook (subtask-6-3)",
+          "status": "completed",
+          "updated_at": "2026-01-02T22:41:04.750797+00:00"
         },
         {
           "id": "subtask-6-3",
@@ -368,8 +369,9 @@
             "command": "grep -q 'useQuery' src/web/manager/hooks/useAgents.ts && echo 'OK' || echo 'FAIL'",
             "expected": "OK"
           },
-          "notes": "Wrap API call in useQuery with queryKey: ['agents']. Use existing api.ts service function.",
-          "status": "pending"
+          "notes": "Created useAgents hook with React Query for /api/strapi/agents endpoint. Follows the established pattern from useFlows hook. Includes comprehensive JSDoc documentation, supports optional directory parameter, and provides automatic caching and request deduplication.",
+          "status": "completed",
+          "updated_at": "2026-01-02T22:42:11.639977+00:00"
         },
         {
           "id": "subtask-6-4",
@@ -392,8 +394,9 @@
               "Refresh page - should use cache or make 1 new call"
             ]
           },
-          "notes": "Replace flowApi.getFlows() direct calls with useFlows(). Remove manual useEffect polling if React Query handles it.",
-          "status": "pending"
+          "notes": "Successfully replaced direct API calls in FlowsPage with useFlows hook. This eliminates duplicate API requests through React Query's automatic caching and deduplication. All mutation handlers now call refetch() to update the cache. Auto-refresh polling also uses refetch(). Code is cleaner with 15 fewer lines (39 deleted, 24 added).",
+          "status": "completed",
+          "updated_at": "2026-01-02T22:44:58.545859+00:00"
         },
         {
           "id": "subtask-6-5",
@@ -604,5 +607,5 @@
   "status": "in_progress",
   "planStatus": "in_progress",
   "updated_at": "2026-01-02T22:03:46.489Z",
-  "last_updated": "2026-01-02T22:39:03.355856+00:00"
+  "last_updated": "2026-01-02T22:44:58.545869+00:00"
 }

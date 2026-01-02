@@ -158,15 +158,15 @@
  * //    → setSelectedAgent(null)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { Agent } from '../../../types/agent.types';
-import * as api from '../services/api';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import AgentExecutionModal from './AgentExecutionModal';
 import AgentCreatorForm from './AgentCreatorForm';
 import AgentCreatorChatPanel from './AgentCreatorChatPanel';
 import { CpuChipIcon, PuzzlePieceIcon, ServerIcon, ClipboardListIcon, SparklesIcon } from './ui/Icons';
+import { useAgents } from '../hooks/useAgents';
 
 /**
  * Props for the AgentsPage component.
@@ -182,44 +182,13 @@ interface AgentsPageProps {
 }
 
 const AgentsPage: React.FC<AgentsPageProps> = ({ agents: initialAgents, directory, onAgentCreated }) => {
-  const [agents, setAgents] = useState<Agent[]>(initialAgents);
+  // Use the useAgents hook for automatic caching and request deduplication
+  const { data: agents = initialAgents, refetch } = useAgents(directory);
+
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showCreatorForm, setShowCreatorForm] = useState(false);
   const [showCreatorChat, setShowCreatorChat] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
-
-  /**
-   * Loads agents from the API based on the current directory.
-   *
-   * Fetches agents from the backend API and updates the local state. If the API call fails,
-   * the error is logged to console and the current agent list is maintained.
-   *
-   * @internal
-   * @async
-   * @returns {Promise<void>}
-   */
-  const loadAgents = async () => {
-    try {
-      const fetchedAgents = await api.getAgents(directory);
-      setAgents(fetchedAgents);
-    } catch (error) {
-      console.error('Failed to load agents:', error);
-    }
-  };
-
-  /**
-   * Effect hook that loads agents when the component mounts or when dependencies change.
-   *
-   * Triggers agent reload in the following scenarios:
-   * - Component mounts (initial load)
-   * - `directory` prop changes (user selects different directory)
-   * - `initialAgents` prop changes (parent component updates agents)
-   *
-   * @internal
-   */
-  useEffect(() => {
-    loadAgents();
-  }, [initialAgents, directory]);
 
   /**
    * Handles successful agent creation or edit.
@@ -228,7 +197,7 @@ const AgentsPage: React.FC<AgentsPageProps> = ({ agents: initialAgents, director
    * agent creation or edit operation. It performs the following actions:
    * 1. Closes the creator form modal
    * 2. Resets the editing agent state to null
-   * 3. Reloads the agents list from the API
+   * 3. Reloads the agents list from the API (via React Query refetch)
    * 4. Invokes the parent's onAgentCreated callback (if provided)
    *
    * @internal
@@ -237,7 +206,7 @@ const AgentsPage: React.FC<AgentsPageProps> = ({ agents: initialAgents, director
   const handleAgentCreated = () => {
     setShowCreatorForm(false);
     setEditingAgent(null);
-    loadAgents(); // Reload agents list
+    refetch(); // Reload agents list using React Query
     if (onAgentCreated) {
       onAgentCreated();
     }

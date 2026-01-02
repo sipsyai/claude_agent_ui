@@ -34,6 +34,7 @@ import InputNodeConfig from './flow/InputNodeConfig';
 import AgentNodeConfig from './flow/AgentNodeConfig';
 import OutputNodeConfig from './flow/OutputNodeConfig';
 import FlowScheduleConfig, { createDefaultSchedule } from './flow/FlowScheduleConfig';
+import { useAgents } from '../hooks/useAgents';
 
 // Props interface
 interface FlowEditorPageProps {
@@ -149,7 +150,8 @@ const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ flowId, onClose, onSave
   );
 
   // Available agents and skills for selection
-  const [availableAgents, setAvailableAgents] = useState<api.Agent[]>([]);
+  // Use the useAgents hook for automatic caching and request deduplication
+  const { data: availableAgents = [] } = useAgents();
   const [availableSkills, setAvailableSkills] = useState<api.Skill[]>([]);
 
   // Auto-generate slug from name
@@ -166,9 +168,9 @@ const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ flowId, onClose, onSave
     }
   }, [flowId]);
 
-  // Load available agents and skills
+  // Load available skills
   useEffect(() => {
-    loadAgentsAndSkills();
+    loadSkills();
   }, []);
 
   const loadFlow = async () => {
@@ -212,13 +214,9 @@ const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ flowId, onClose, onSave
     }
   };
 
-  const loadAgentsAndSkills = async () => {
+  const loadSkills = async () => {
     try {
-      const [agents, skills] = await Promise.all([
-        api.getAgents(),
-        api.getSkills(),
-      ]);
-      setAvailableAgents(agents);
+      const skills = await api.getSkills();
       setAvailableSkills(skills);
     } catch (err) {
       // Silently fail - not critical for editing

@@ -1001,7 +1001,171 @@ export class StrapiClient {
   // ============= SKILLS =============
 
   /**
-   * Get all skills with optional filtering
+   * Get all skills with optional filtering, sorting, and pagination
+   *
+   * @description
+   * Retrieves all skills from Strapi with support for advanced query features including
+   * filtering, sorting, pagination, and relation population. Skills automatically populate
+   * component fields including trainingHistory, additionalFiles, and mcpConfig for comprehensive
+   * skill data. Results are cached with 5-minute TTL for improved performance.
+   *
+   * **Strapi v5 Component Support:**
+   * Skills use component-based architecture with the following component fields:
+   * - `trainingHistory`: Array of training records with date, description, score delta, notes
+   * - `additionalFiles`: Array of file attachments with file relation (PDFs, docs, images)
+   * - `mcpConfig`: MCP server configuration components (array of mcpServer + selectedTools)
+   * - `agentSelection`: Agent assignment components (array of agent references)
+   * - `toolConfig`: Tool configuration component (file_search, text_editor, etc.)
+   * - `modelConfig`: Model configuration component (model, temperature, timeout)
+   * - `analytics`: Analytics component (usage stats, performance metrics)
+   * - `inputFields`: Dynamic input fields for skill execution
+   * - `tasks`: Task assignment components (array of task references)
+   *
+   * **Default Population:**
+   * By default, this method auto-populates all component fields for complete skill data:
+   * - `trainingHistory`, `additionalFiles.file`, `mcpConfig.mcpServer`, `mcpConfig.selectedTools.mcpTool`
+   * - `agentSelection`, `toolConfig`, `modelConfig`, `analytics`, `inputFields`
+   *
+   * @param {Object} [options] - Query options for filtering, sorting, and pagination
+   * @param {string[]} [options.populate] - Relations/components to populate (defaults to all skill components)
+   * @param {Record<string, any>} [options.filters] - Strapi v5 filters object (supports $eq, $ne, $in, $containsi, $and, $or, etc.)
+   * @param {string[]} [options.sort] - Sort order array (e.g., ['name:asc', 'experienceScore:desc'])
+   * @param {Object} [options.pagination] - Pagination configuration (defaults to { page: 1, pageSize: 100 })
+   * @param {number} [options.pagination.page] - Page number (1-indexed)
+   * @param {number} [options.pagination.pageSize] - Number of items per page
+   *
+   * @returns {Promise<Skill[]>} Array of Skill objects with all component fields populated
+   *
+   * @example
+   * // Basic usage - get all skills with auto-populated components
+   * const skills = await strapiClient.getAllSkills();
+   * console.log(`Found ${skills.length} skills`);
+   *
+   * // Access populated component data
+   * skills.forEach(skill => {
+   *   console.log(`Skill: ${skill.displayName}`);
+   *   console.log(`Experience: ${skill.experienceScore}`);
+   *   console.log(`Training records: ${skill.trainingHistory?.length || 0}`);
+   *   console.log(`Additional files: ${skill.additionalFiles?.length || 0}`);
+   *   console.log(`MCP servers: ${skill.mcpConfig?.length || 0}`);
+   * });
+   *
+   * @example
+   * // Filter public skills only
+   * const publicSkills = await strapiClient.getAllSkills({
+   *   filters: { isPublic: { $eq: true } }
+   * });
+   *
+   * @example
+   * // Filter by category with case-insensitive search
+   * const codeSkills = await strapiClient.getAllSkills({
+   *   filters: {
+   *     category: { $eq: 'coding' }
+   *   },
+   *   sort: ['experienceScore:desc']
+   * });
+   *
+   * @example
+   * // Advanced filtering with multiple conditions
+   * const expertSkills = await strapiClient.getAllSkills({
+   *   filters: {
+   *     $and: [
+   *       { isPublic: { $eq: true } },
+   *       { experienceScore: { $gte: 50 } },
+   *       { category: { $in: ['coding', 'debugging', 'testing'] } }
+   *     ]
+   *   },
+   *   sort: ['experienceScore:desc', 'updatedAt:desc'],
+   *   pagination: { page: 1, pageSize: 20 }
+   * });
+   *
+   * @example
+   * // Search skills by name or description
+   * const searchResults = await strapiClient.getAllSkills({
+   *   filters: {
+   *     $or: [
+   *       { name: { $containsi: 'typescript' } },
+   *       { displayName: { $containsi: 'typescript' } },
+   *       { description: { $containsi: 'typescript' } }
+   *     ]
+   *   }
+   * });
+   *
+   * @example
+   * // Access trainingHistory component data
+   * const skills = await strapiClient.getAllSkills();
+   *
+   * skills.forEach(skill => {
+   *   console.log(`\nSkill: ${skill.displayName}`);
+   *   console.log(`Total Experience: ${skill.experienceScore}`);
+   *
+   *   if (skill.trainingHistory && skill.trainingHistory.length > 0) {
+   *     console.log('Training History:');
+   *     skill.trainingHistory.forEach((record: any) => {
+   *       console.log(`  - ${record.date}: ${record.description}`);
+   *       console.log(`    Score change: +${record.scoreChange || 0}`);
+   *       if (record.notes) console.log(`    Notes: ${record.notes}`);
+   *     });
+   *   }
+   * });
+   *
+   * @example
+   * // Access additionalFiles component data
+   * const skills = await strapiClient.getAllSkills();
+   *
+   * skills.forEach(skill => {
+   *   if (skill.additionalFiles && skill.additionalFiles.length > 0) {
+   *     console.log(`\nSkill: ${skill.displayName}`);
+   *     console.log('Additional Files:');
+   *
+   *     skill.additionalFiles.forEach((fileComponent: any) => {
+   *       // fileComponent.file is populated via deep population
+   *       const file = fileComponent.file;
+   *       console.log(`  - ${file?.name || 'unnamed'}`);
+   *       console.log(`    URL: ${file?.url}`);
+   *       console.log(`    Size: ${file?.size} bytes`);
+   *       console.log(`    Type: ${file?.mime}`);
+   *       if (fileComponent.description) {
+   *         console.log(`    Description: ${fileComponent.description}`);
+   *       }
+   *     });
+   *   }
+   * });
+   *
+   * @example
+   * // Access mcpConfig component data
+   * const skills = await strapiClient.getAllSkills();
+   *
+   * skills.forEach(skill => {
+   *   if (skill.mcpConfig && skill.mcpConfig.length > 0) {
+   *     console.log(`\nSkill: ${skill.displayName}`);
+   *     console.log('MCP Configuration:');
+   *
+   *     skill.mcpConfig.forEach((config: any) => {
+   *       // mcpServer and selectedTools are populated
+   *       console.log(`  MCP Server: ${config.mcpServer?.name}`);
+   *       console.log(`  Transport: ${config.mcpServer?.transport}`);
+   *
+   *       if (config.selectedTools && config.selectedTools.length > 0) {
+   *         console.log('  Selected Tools:');
+   *         config.selectedTools.forEach((toolSelection: any) => {
+   *           const tool = toolSelection.mcpTool;
+   *           console.log(`    - ${tool?.name}: ${tool?.description || 'No description'}`);
+   *         });
+   *       }
+   *     });
+   *   }
+   * });
+   *
+   * @example
+   * // Pagination - get second page of 20 skills
+   * const page2 = await strapiClient.getAllSkills({
+   *   pagination: { page: 2, pageSize: 20 },
+   *   sort: ['updatedAt:desc']
+   * });
+   *
+   * @see {@link getSkill} for retrieving a single skill with full component population
+   * @see {@link getSkillsByIds} for retrieving multiple specific skills
    */
   async getAllSkills(options?: {
     populate?: string[];
@@ -1053,8 +1217,198 @@ export class StrapiClient {
   }
 
   /**
-   * Get a single skill by ID
-   * Updated to populate component fields (Strapi 5)
+   * Get a single skill by ID with all relations and components populated
+   *
+   * @description
+   * Retrieves a single skill by its unique document ID with deep population of all
+   * component fields and relations. This method automatically populates all nested data
+   * including trainingHistory, additionalFiles with file relations, mcpConfig with
+   * MCP server and tool selections, and agent selections.
+   *
+   * **Auto-populated Components:**
+   * - `trainingHistory`: Array of training records tracking skill improvement over time
+   * - `additionalFiles`: File attachments with populated file relation (documents, PDFs, images)
+   * - `mcpConfig`: MCP server configurations with nested mcpServer and selectedTools.mcpTool relations
+   * - `agentSelection`: Agent assignments with nested agent relations
+   * - `toolConfig`: Tool configuration with enabled tools
+   * - `modelConfig`: Model configuration (model, temperature, timeout)
+   * - `analytics`: Usage analytics and performance metrics
+   * - `inputFields`: Dynamic input field configurations for skill execution
+   * - `tasks`: Task assignments with nested task relations
+   * - `trainingAgent`: Direct relation to the agent used for training this skill
+   *
+   * **Strapi v5 Deep Population:**
+   * This method uses deep population syntax to retrieve nested relations within components:
+   * ```javascript
+   * additionalFiles: {
+   *   populate: { file: true }  // Populate file relation inside component
+   * }
+   * mcpConfig: {
+   *   populate: {
+   *     mcpServer: true,
+   *     selectedTools: { populate: { mcpTool: true } }
+   *   }
+   * }
+   * ```
+   *
+   * @param {string} id - Skill document ID (UUID format)
+   *
+   * @returns {Promise<Skill>} Skill object with all components and relations populated
+   *
+   * @throws {Error} If skill with the specified ID is not found
+   *
+   * @example
+   * // Basic usage - get skill with all relations
+   * const skill = await strapiClient.getSkill('skill-id');
+   * console.log(skill.displayName);
+   * console.log(skill.description);
+   * console.log(skill.experienceScore);
+   *
+   * @example
+   * // Access trainingHistory component
+   * const skill = await strapiClient.getSkill('skill-id');
+   *
+   * console.log(`\n${skill.displayName} Training History:`);
+   * console.log(`Current Experience Score: ${skill.experienceScore}`);
+   *
+   * if (skill.trainingHistory && skill.trainingHistory.length > 0) {
+   *   skill.trainingHistory.forEach((record: any) => {
+   *     console.log(`\nDate: ${new Date(record.date).toLocaleDateString()}`);
+   *     console.log(`Description: ${record.description}`);
+   *     console.log(`Score Change: +${record.scoreChange || 0}`);
+   *     console.log(`Agent: ${record.agentName || 'Unknown'}`);
+   *     if (record.notes) {
+   *       console.log(`Notes: ${record.notes}`);
+   *     }
+   *   });
+   * } else {
+   *   console.log('No training history yet');
+   * }
+   *
+   * @example
+   * // Access additionalFiles component with file relation
+   * const skill = await strapiClient.getSkill('skill-id');
+   *
+   * if (skill.additionalFiles && skill.additionalFiles.length > 0) {
+   *   console.log(`\n${skill.displayName} Additional Files:`);
+   *
+   *   skill.additionalFiles.forEach((fileComponent: any, index: number) => {
+   *     // fileComponent.file is populated via deep population
+   *     const file = fileComponent.file;
+   *
+   *     console.log(`\nFile ${index + 1}:`);
+   *     console.log(`  Name: ${file?.name || 'unnamed'}`);
+   *     console.log(`  URL: ${file?.url}`);
+   *     console.log(`  MIME: ${file?.mime}`);
+   *     console.log(`  Size: ${(file?.size / 1024).toFixed(2)} KB`);
+   *
+   *     if (fileComponent.description) {
+   *       console.log(`  Description: ${fileComponent.description}`);
+   *     }
+   *
+   *     // Download or reference the file
+   *     // const fileUrl = `${STRAPI_URL}${file?.url}`;
+   *   });
+   * }
+   *
+   * @example
+   * // Access mcpConfig component with nested relations
+   * const skill = await strapiClient.getSkill('skill-id');
+   *
+   * if (skill.mcpConfig && skill.mcpConfig.length > 0) {
+   *   console.log(`\n${skill.displayName} MCP Configuration:`);
+   *
+   *   skill.mcpConfig.forEach((config: any, index: number) => {
+   *     const server = config.mcpServer;
+   *     console.log(`\nMCP Server ${index + 1}:`);
+   *     console.log(`  Name: ${server?.name}`);
+   *     console.log(`  Transport: ${server?.transport}`);
+   *     console.log(`  Command: ${server?.command}`);
+   *
+   *     if (config.selectedTools && config.selectedTools.length > 0) {
+   *       console.log('  Selected Tools:');
+   *       config.selectedTools.forEach((toolSelection: any) => {
+   *         const tool = toolSelection.mcpTool;
+   *         console.log(`    - ${tool?.name}`);
+   *         console.log(`      ${tool?.description || 'No description'}`);
+   *       });
+   *     }
+   *   });
+   * }
+   *
+   * @example
+   * // Access agent selection and training agent
+   * const skill = await strapiClient.getSkill('skill-id');
+   *
+   * // Check which agents use this skill
+   * if (skill.agentSelection && skill.agentSelection.length > 0) {
+   *   console.log(`\n${skill.displayName} is used by:`);
+   *   skill.agentSelection.forEach((selection: any) => {
+   *     const agent = selection.agent;
+   *     console.log(`  - ${agent?.name} (${agent?.enabled ? 'enabled' : 'disabled'})`);
+   *   });
+   * }
+   *
+   * // Check training agent
+   * if (skill.trainingAgent) {
+   *   console.log(`\nTrained by: ${skill.trainingAgent}`);
+   * }
+   *
+   * @example
+   * // Access inputFields for dynamic skill execution
+   * const skill = await strapiClient.getSkill('skill-id');
+   *
+   * if (skill.inputFields && skill.inputFields.length > 0) {
+   *   console.log(`\n${skill.displayName} Input Fields:`);
+   *
+   *   skill.inputFields.forEach((field: any) => {
+   *     console.log(`\nField: ${field.name}`);
+   *     console.log(`  Label: ${field.label}`);
+   *     console.log(`  Type: ${field.type}`);
+   *     console.log(`  Required: ${field.required ? 'Yes' : 'No'}`);
+   *     if (field.defaultValue) {
+   *       console.log(`  Default: ${field.defaultValue}`);
+   *     }
+   *     if (field.placeholder) {
+   *       console.log(`  Placeholder: ${field.placeholder}`);
+   *     }
+   *   });
+   * }
+   *
+   * @example
+   * // Error handling for non-existent skill
+   * try {
+   *   const skill = await strapiClient.getSkill('non-existent-id');
+   * } catch (error) {
+   *   console.error('Skill not found:', error.message);
+   *   // Error: Skill with ID non-existent-id not found
+   * }
+   *
+   * @example
+   * // Complete skill inspection workflow
+   * const skill = await strapiClient.getSkill('skill-id');
+   *
+   * console.log(`\n=== ${skill.displayName} ===`);
+   * console.log(`Category: ${skill.category}`);
+   * console.log(`Version: ${skill.version}`);
+   * console.log(`Experience: ${skill.experienceScore}`);
+   * console.log(`Public: ${skill.isPublic ? 'Yes' : 'No'}`);
+   * console.log(`\nDescription:\n${skill.description}`);
+   * console.log(`\nSkill Content:\n${skill.skillmd.substring(0, 200)}...`);
+   *
+   * // Check configuration
+   * if (skill.modelConfig) {
+   *   console.log(`\nModel Config: ${skill.modelConfig.model} @ ${skill.modelConfig.temperature}`);
+   * }
+   *
+   * // Check analytics
+   * if (skill.analytics) {
+   *   console.log(`\nUsage: ${skill.analytics.usageCount || 0} times`);
+   *   console.log(`Success Rate: ${skill.analytics.successRate || 0}%`);
+   * }
+   *
+   * @see {@link getAllSkills} for querying multiple skills with filters
+   * @see {@link updateSkill} for modifying skill data
    */
   async getSkill(id: string): Promise<Skill> {
     const cacheKey = `skill:${id}`;
@@ -1108,7 +1462,100 @@ export class StrapiClient {
   }
 
   /**
-   * Get multiple skills by their IDs
+   * Get multiple skills by their IDs with all components populated
+   *
+   * @description
+   * Retrieves multiple skills by an array of document IDs. This is a convenience method
+   * that uses `getAllSkills` with a filter for the specified IDs. All component fields
+   * (trainingHistory, additionalFiles, mcpConfig, etc.) are automatically populated.
+   *
+   * **Use Cases:**
+   * - Bulk fetch skills for an agent's skillSelection
+   * - Load skills from a saved configuration or preset
+   * - Retrieve related skills for comparison or grouping
+   * - Hydrate skill references from other entities
+   *
+   * @param {string[]} ids - Array of skill document IDs (UUID format)
+   *
+   * @returns {Promise<Skill[]>} Array of Skill objects with all components populated
+   * Returns empty array if no IDs provided or no skills found
+   *
+   * @example
+   * // Basic usage - fetch multiple skills by IDs
+   * const skillIds = ['skill-id-1', 'skill-id-2', 'skill-id-3'];
+   * const skills = await strapiClient.getSkillsByIds(skillIds);
+   *
+   * console.log(`Fetched ${skills.length} skills`);
+   * skills.forEach(skill => {
+   *   console.log(`- ${skill.displayName} (${skill.category})`);
+   * });
+   *
+   * @example
+   * // Load skills from agent's skillSelection
+   * const agent = await strapiClient.getAgent('agent-id');
+   *
+   * // Extract skill IDs from skillSelection components
+   * const skillIds = agent.skillSelection?.map((selection: any) => selection.skill?.id || selection.skill).filter(Boolean) || [];
+   *
+   * // Fetch all skills at once
+   * const skills = await strapiClient.getSkillsByIds(skillIds);
+   *
+   * console.log(`Agent "${agent.name}" has ${skills.length} skills:`);
+   * skills.forEach(skill => {
+   *   console.log(`  - ${skill.displayName}: ${skill.description}`);
+   * });
+   *
+   * @example
+   * // Handle empty array gracefully
+   * const skills = await strapiClient.getSkillsByIds([]);
+   * console.log(skills); // []
+   *
+   * @example
+   * // Fetch skills and group by category
+   * const skillIds = ['id1', 'id2', 'id3', 'id4'];
+   * const skills = await strapiClient.getSkillsByIds(skillIds);
+   *
+   * const byCategory = skills.reduce((acc: any, skill) => {
+   *   const category = skill.category || 'uncategorized';
+   *   if (!acc[category]) acc[category] = [];
+   *   acc[category].push(skill);
+   *   return acc;
+   * }, {});
+   *
+   * Object.entries(byCategory).forEach(([category, categorySkills]: [string, any]) => {
+   *   console.log(`\n${category}:`);
+   *   categorySkills.forEach((skill: any) => {
+   *     console.log(`  - ${skill.displayName}`);
+   *   });
+   * });
+   *
+   * @example
+   * // Check which skills have additional files
+   * const skillIds = ['id1', 'id2', 'id3'];
+   * const skills = await strapiClient.getSkillsByIds(skillIds);
+   *
+   * const skillsWithFiles = skills.filter(skill =>
+   *   skill.additionalFiles && skill.additionalFiles.length > 0
+   * );
+   *
+   * console.log(`${skillsWithFiles.length} skills have additional files:`);
+   * skillsWithFiles.forEach(skill => {
+   *   console.log(`  - ${skill.displayName}: ${skill.additionalFiles.length} files`);
+   * });
+   *
+   * @example
+   * // Calculate total experience across skills
+   * const skillIds = ['id1', 'id2', 'id3'];
+   * const skills = await strapiClient.getSkillsByIds(skillIds);
+   *
+   * const totalExperience = skills.reduce((sum, skill) => sum + (skill.experienceScore || 0), 0);
+   * const avgExperience = skills.length > 0 ? totalExperience / skills.length : 0;
+   *
+   * console.log(`Total Experience: ${totalExperience}`);
+   * console.log(`Average Experience: ${avgExperience.toFixed(1)}`);
+   *
+   * @see {@link getAllSkills} for advanced filtering options
+   * @see {@link getSkill} for retrieving a single skill
    */
   async getSkillsByIds(ids: string[]): Promise<Skill[]> {
     if (ids.length === 0) return [];
@@ -1121,7 +1568,233 @@ export class StrapiClient {
   }
 
   /**
-   * Create a new skill
+   * Create a new skill with component-based configuration
+   *
+   * @description
+   * Creates a new skill in Strapi with support for component-based architecture including
+   * trainingHistory, additionalFiles, and mcpConfig. All component fields are supported
+   * in Strapi v5 format.
+   *
+   * **Component Fields:**
+   * - `trainingHistory`: Initialize training records (array of { date, description, scoreChange, notes })
+   * - `additionalFiles`: Attach files (array of { file: uploadedFileId, description })
+   * - `mcpConfig`: Configure MCP servers (array of { mcpServer: id, selectedTools: [...] })
+   * - `agentSelection`: Assign agents (array of { agent: id })
+   * - `toolConfig`: Configure enabled tools (file_search, text_editor, etc.)
+   * - `modelConfig`: Configure model settings (model, temperature, timeout)
+   * - `analytics`: Initialize analytics tracking
+   * - `inputFields`: Define dynamic input fields (array of { name, label, type, required, defaultValue })
+   * - `tasks`: Assign tasks (array of { task: id })
+   * - `trainingAgent`: Reference to training agent (agent ID)
+   *
+   * **Cache Invalidation:**
+   * Creating a skill invalidates all cached skill queries to ensure fresh data.
+   *
+   * @param {CreateSkillDTO} skillData - Skill data transfer object
+   * @param {string} skillData.name - Skill identifier (slug-friendly, required)
+   * @param {string} skillData.displayName - Human-readable name (required)
+   * @param {string} skillData.description - Skill description (required)
+   * @param {string} skillData.skillmd - Skill content in markdown format (required)
+   * @param {number} [skillData.experienceScore=0] - Initial experience score
+   * @param {string} [skillData.category='custom'] - Skill category
+   * @param {boolean} [skillData.isPublic=true] - Whether the skill is publicly visible
+   * @param {string} [skillData.version='1.0.0'] - Skill version
+   * @param {string} [skillData.license] - License identifier
+   * @param {Array} [skillData.trainingHistory] - Training history records
+   * @param {Array} [skillData.additionalFiles] - File attachment components
+   * @param {Array} [skillData.mcpConfig] - MCP server configuration components
+   * @param {Array} [skillData.agentSelection] - Agent assignment components
+   * @param {Object} [skillData.toolConfig] - Tool configuration
+   * @param {Object} [skillData.modelConfig] - Model configuration
+   * @param {Object} [skillData.analytics] - Analytics data
+   * @param {Array} [skillData.inputFields] - Input field definitions
+   * @param {Array} [skillData.tasks] - Task assignments
+   * @param {string} [skillData.trainingAgent] - Training agent ID
+   *
+   * @returns {Promise<Skill>} Created skill with generated ID and auto-populated defaults
+   *
+   * @throws {Error} If skill creation fails (validation errors, network errors)
+   *
+   * @example
+   * // Basic skill creation with minimal fields
+   * const skill = await strapiClient.createSkill({
+   *   name: 'typescript-expert',
+   *   displayName: 'TypeScript Expert',
+   *   description: 'Expert knowledge in TypeScript programming',
+   *   skillmd: '# TypeScript Expert\n\nProvides expert TypeScript development assistance.',
+   *   category: 'coding',
+   *   experienceScore: 0
+   * });
+   *
+   * console.log(skill.id);   // Auto-generated UUID
+   * console.log(skill.version); // Default: '1.0.0'
+   * console.log(skill.isPublic); // Default: true
+   *
+   * @example
+   * // Create skill with trainingHistory component
+   * const skill = await strapiClient.createSkill({
+   *   name: 'debugging-expert',
+   *   displayName: 'Debugging Expert',
+   *   description: 'Expert in debugging complex issues',
+   *   skillmd: '# Debugging Expert\n\nHelps identify and fix bugs.',
+   *   category: 'debugging',
+   *   experienceScore: 25,
+   *   trainingHistory: [
+   *     {
+   *       date: new Date().toISOString(),
+   *       description: 'Initial training on React debugging',
+   *       scoreChange: 10,
+   *       agentName: 'Training Agent',
+   *       notes: 'Learned component lifecycle debugging'
+   *     },
+   *     {
+   *       date: new Date().toISOString(),
+   *       description: 'Advanced async debugging training',
+   *       scoreChange: 15,
+   *       agentName: 'Advanced Trainer',
+   *       notes: 'Mastered Promise rejection handling'
+   *     }
+   *   ]
+   * });
+   *
+   * console.log(`Skill created with ${skill.trainingHistory.length} training records`);
+   *
+   * @example
+   * // Create skill with additionalFiles component
+   * // First, upload files to Strapi Media Library
+   * import fs from 'fs';
+   *
+   * const guideFile = fs.readFileSync('./typescript-guide.pdf');
+   * const examplesFile = fs.readFileSync('./examples.zip');
+   *
+   * const uploadedGuide = await strapiClient.uploadFile(guideFile, 'typescript-guide.pdf');
+   * const uploadedExamples = await strapiClient.uploadFile(examplesFile, 'examples.zip');
+   *
+   * // Create skill with file attachments
+   * const skill = await strapiClient.createSkill({
+   *   name: 'typescript-advanced',
+   *   displayName: 'Advanced TypeScript',
+   *   description: 'Advanced TypeScript patterns',
+   *   skillmd: '# Advanced TypeScript\n\nRefer to attached guide and examples.',
+   *   category: 'coding',
+   *   additionalFiles: [
+   *     {
+   *       file: uploadedGuide.documentId,
+   *       description: 'Comprehensive TypeScript guide'
+   *     },
+   *     {
+   *       file: uploadedExamples.documentId,
+   *       description: 'Code examples and templates'
+   *     }
+   *   ]
+   * });
+   *
+   * console.log(`Skill created with ${skill.additionalFiles.length} attached files`);
+   *
+   * @example
+   * // Create skill with mcpConfig component
+   * // First, get MCP servers and tools from Strapi
+   * const mcpServers = await strapiClient.getAllMCPServers();
+   * const filesystemServer = mcpServers.find(s => s.name === 'filesystem');
+   * const filesystemTools = await strapiClient.getMCPToolsByServerId(filesystemServer.id);
+   *
+   * const skill = await strapiClient.createSkill({
+   *   name: 'file-operations',
+   *   displayName: 'File Operations',
+   *   description: 'Expert in file system operations',
+   *   skillmd: '# File Operations\n\nUses filesystem MCP tools.',
+   *   category: 'system',
+   *   mcpConfig: [
+   *     {
+   *       mcpServer: filesystemServer.id,
+   *       selectedTools: filesystemTools.slice(0, 5).map(tool => ({
+   *         mcpTool: tool.id
+   *       }))
+   *     }
+   *   ]
+   * });
+   *
+   * console.log(`Skill created with ${skill.mcpConfig.length} MCP server config`);
+   *
+   * @example
+   * // Create skill with inputFields component for dynamic execution
+   * const skill = await strapiClient.createSkill({
+   *   name: 'code-generator',
+   *   displayName: 'Code Generator',
+   *   description: 'Generates code based on user input',
+   *   skillmd: '# Code Generator\n\nGenerates code from templates.',
+   *   category: 'coding',
+   *   inputFields: [
+   *     {
+   *       name: 'language',
+   *       label: 'Programming Language',
+   *       type: 'select',
+   *       required: true,
+   *       options: ['TypeScript', 'JavaScript', 'Python', 'Go'],
+   *       defaultValue: 'TypeScript'
+   *     },
+   *     {
+   *       name: 'framework',
+   *       label: 'Framework',
+   *       type: 'text',
+   *       required: false,
+   *       placeholder: 'e.g., React, Express, FastAPI'
+   *     },
+   *     {
+   *       name: 'features',
+   *       label: 'Features to Include',
+   *       type: 'textarea',
+   *       required: true,
+   *       placeholder: 'Describe the features you want...'
+   *     }
+   *   ]
+   * });
+   *
+   * console.log(`Skill created with ${skill.inputFields.length} input fields`);
+   *
+   * @example
+   * // Create skill with custom model and tool configuration
+   * const skill = await strapiClient.createSkill({
+   *   name: 'data-analyst',
+   *   displayName: 'Data Analyst',
+   *   description: 'Analyzes data and generates insights',
+   *   skillmd: '# Data Analyst\n\nPerforms data analysis tasks.',
+   *   category: 'analytics',
+   *   modelConfig: {
+   *     model: 'opus',
+   *     temperature: 0.3,
+   *     max_tokens: 8192,
+   *     timeout: 600000
+   *   },
+   *   toolConfig: {
+   *     file_search: true,
+   *     text_editor: false,
+   *     bash_20241022: true,
+   *     computer_20241022: false
+   *   },
+   *   analytics: {
+   *     usageCount: 0,
+   *     successRate: 100,
+   *     avgExecutionTime: 0
+   *   }
+   * });
+   *
+   * @example
+   * // Error handling for validation failures
+   * try {
+   *   const skill = await strapiClient.createSkill({
+   *     name: '', // Invalid: empty name
+   *     displayName: 'Test',
+   *     description: 'Test skill',
+   *     skillmd: '# Test'
+   *   });
+   * } catch (error) {
+   *   console.error('Validation failed:', error.message);
+   * }
+   *
+   * @see {@link updateSkill} for updating existing skills
+   * @see {@link getSkill} for retrieving created skill with full details
+   * @see {@link uploadFile} for uploading files before attaching to skills
    */
   async createSkill(skillData: CreateSkillDTO): Promise<Skill> {
     const { data } = await this.client.post<StrapiData<any>>(
@@ -1140,7 +1813,230 @@ export class StrapiClient {
   }
 
   /**
-   * Update an existing skill
+   * Update an existing skill with partial data
+   *
+   * @description
+   * Updates an existing skill in Strapi using partial update semantics. Only the fields
+   * provided in the update DTO will be modified; omitted fields remain unchanged. This
+   * method supports updating all component fields including trainingHistory, additionalFiles,
+   * and mcpConfig in Strapi v5 format.
+   *
+   * **Partial Updates:**
+   * You can update individual fields without affecting other fields:
+   * - Update only `displayName` without changing `skillmd`
+   * - Update only `experienceScore` without changing `trainingHistory`
+   * - Update only specific components without affecting others
+   *
+   * **Component Field Updates:**
+   * - `trainingHistory`: Replace training records (array replacement, not merge)
+   * - `additionalFiles`: Replace file attachments (array replacement)
+   * - `mcpConfig`: Replace MCP server configurations (array replacement)
+   * - `agentSelection`: Replace agent assignments (array replacement)
+   * - `toolConfig`: Update tool enablement settings
+   * - `modelConfig`: Update model configuration
+   * - `analytics`: Update analytics data
+   * - `inputFields`: Replace input field definitions (array replacement)
+   * - `tasks`: Replace task assignments (array replacement)
+   * - `trainingAgent`: Update training agent reference
+   *
+   * **Important: Array Field Behavior**
+   * Arrays are replaced, not merged. To add items, fetch current data first:
+   * ```javascript
+   * const skill = await strapiClient.getSkill('skill-id');
+   * await strapiClient.updateSkill('skill-id', {
+   *   trainingHistory: [...skill.trainingHistory, newRecord]
+   * });
+   * ```
+   *
+   * **Cache Invalidation:**
+   * Updating a skill invalidates both the specific skill cache and all skill list caches.
+   *
+   * @param {string} id - Skill document ID to update
+   * @param {UpdateSkillDTO} skillData - Partial skill data to update
+   * @param {string} [skillData.name] - Update skill identifier
+   * @param {string} [skillData.displayName] - Update display name
+   * @param {string} [skillData.description] - Update description
+   * @param {string} [skillData.skillmd] - Update skill content
+   * @param {number} [skillData.experienceScore] - Update experience score
+   * @param {string} [skillData.category] - Update category
+   * @param {boolean} [skillData.isPublic] - Update visibility
+   * @param {string} [skillData.version] - Update version
+   * @param {string} [skillData.license] - Update license
+   * @param {Array} [skillData.trainingHistory] - Replace training history
+   * @param {Array} [skillData.additionalFiles] - Replace file attachments
+   * @param {Array} [skillData.mcpConfig] - Replace MCP config
+   * @param {Array} [skillData.agentSelection] - Replace agent assignments
+   * @param {Object} [skillData.toolConfig] - Update tool config
+   * @param {Object} [skillData.modelConfig] - Update model config
+   * @param {Object} [skillData.analytics] - Update analytics
+   * @param {Array} [skillData.inputFields] - Replace input fields
+   * @param {Array} [skillData.tasks] - Replace task assignments
+   * @param {string} [skillData.trainingAgent] - Update training agent
+   *
+   * @returns {Promise<Skill>} Updated skill with all components populated
+   *
+   * @throws {Error} If skill with specified ID is not found or update fails
+   *
+   * @example
+   * // Basic update - change display name and description
+   * const updatedSkill = await strapiClient.updateSkill('skill-id', {
+   *   displayName: 'TypeScript Pro',
+   *   description: 'Professional TypeScript development expertise'
+   * });
+   *
+   * @example
+   * // Update experience score after training
+   * const skill = await strapiClient.updateSkill('skill-id', {
+   *   experienceScore: 75
+   * });
+   *
+   * @example
+   * // Add new training record (requires fetching current first)
+   * const currentSkill = await strapiClient.getSkill('skill-id');
+   *
+   * const updatedSkill = await strapiClient.updateSkill('skill-id', {
+   *   experienceScore: currentSkill.experienceScore + 10,
+   *   trainingHistory: [
+   *     ...(currentSkill.trainingHistory || []),
+   *     {
+   *       date: new Date().toISOString(),
+   *       description: 'Completed advanced debugging training',
+   *       scoreChange: 10,
+   *       agentName: 'Training Bot',
+   *       notes: 'Improved error handling and async debugging'
+   *     }
+   *   ]
+   * });
+   *
+   * console.log(`Skill now has ${updatedSkill.trainingHistory.length} training records`);
+   * console.log(`New experience score: ${updatedSkill.experienceScore}`);
+   *
+   * @example
+   * // Add additional file to existing skill
+   * import fs from 'fs';
+   *
+   * // Upload new file first
+   * const cheatsheetFile = fs.readFileSync('./cheatsheet.pdf');
+   * const uploadedFile = await strapiClient.uploadFile(cheatsheetFile, 'cheatsheet.pdf');
+   *
+   * // Fetch current skill
+   * const currentSkill = await strapiClient.getSkill('skill-id');
+   *
+   * // Add new file to existing files
+   * const updatedSkill = await strapiClient.updateSkill('skill-id', {
+   *   additionalFiles: [
+   *     ...(currentSkill.additionalFiles || []),
+   *     {
+   *       file: uploadedFile.documentId,
+   *       description: 'Quick reference cheatsheet'
+   *     }
+   *   ]
+   * });
+   *
+   * console.log(`Skill now has ${updatedSkill.additionalFiles.length} files`);
+   *
+   * @example
+   * // Update MCP configuration
+   * const mcpServers = await strapiClient.getAllMCPServers();
+   * const githubServer = mcpServers.find(s => s.name === 'github');
+   * const githubTools = await strapiClient.getMCPToolsByServerId(githubServer.id);
+   *
+   * const updatedSkill = await strapiClient.updateSkill('skill-id', {
+   *   mcpConfig: [
+   *     {
+   *       mcpServer: githubServer.id,
+   *       selectedTools: githubTools.slice(0, 3).map(tool => ({
+   *         mcpTool: tool.id
+   *       }))
+   *     }
+   *   ]
+   * });
+   *
+   * @example
+   * // Update model and tool configuration
+   * const updatedSkill = await strapiClient.updateSkill('skill-id', {
+   *   modelConfig: {
+   *     model: 'sonnet',
+   *     temperature: 0.8,
+   *     max_tokens: 4096,
+   *     timeout: 300000
+   *   },
+   *   toolConfig: {
+   *     file_search: true,
+   *     text_editor: true,
+   *     bash_20241022: false,
+   *     computer_20241022: false
+   *   }
+   * });
+   *
+   * @example
+   * // Update skill visibility and version
+   * const updatedSkill = await strapiClient.updateSkill('skill-id', {
+   *   isPublic: true,
+   *   version: '2.0.0'
+   * });
+   *
+   * @example
+   * // Update skill content (skillmd)
+   * const newContent = `
+   * # Advanced TypeScript
+   *
+   * ## Updated Content
+   * This skill now includes advanced patterns for:
+   * - Type guards and discriminated unions
+   * - Generic constraints and inference
+   * - Conditional types and mapped types
+   *
+   * ## Examples
+   * ...
+   * `;
+   *
+   * const updatedSkill = await strapiClient.updateSkill('skill-id', {
+   *   skillmd: newContent,
+   *   version: '2.1.0'
+   * });
+   *
+   * @example
+   * // Update analytics after skill execution
+   * const currentSkill = await strapiClient.getSkill('skill-id');
+   *
+   * const updatedSkill = await strapiClient.updateSkill('skill-id', {
+   *   analytics: {
+   *     usageCount: (currentSkill.analytics?.usageCount || 0) + 1,
+   *     successRate: 95,
+   *     avgExecutionTime: 2500,
+   *     lastUsed: new Date().toISOString()
+   *   }
+   * });
+   *
+   * @example
+   * // Bulk update - change multiple fields at once
+   * const updatedSkill = await strapiClient.updateSkill('skill-id', {
+   *   displayName: 'Expert TypeScript Developer',
+   *   description: 'Master-level TypeScript expertise',
+   *   category: 'coding',
+   *   experienceScore: 100,
+   *   version: '3.0.0',
+   *   modelConfig: {
+   *     model: 'opus',
+   *     temperature: 0.5,
+   *     timeout: 600000
+   *   }
+   * });
+   *
+   * @example
+   * // Error handling for non-existent skill
+   * try {
+   *   const skill = await strapiClient.updateSkill('non-existent-id', {
+   *     displayName: 'New Name'
+   *   });
+   * } catch (error) {
+   *   console.error('Update failed:', error.message);
+   *   // Error: Failed to update skill with ID non-existent-id
+   * }
+   *
+   * @see {@link createSkill} for creating new skills
+   * @see {@link getSkill} for retrieving current skill state before update
    */
   async updateSkill(id: string, skillData: UpdateSkillDTO): Promise<Skill> {
     const { data } = await this.client.put<StrapiData<any>>(
@@ -1161,7 +2057,157 @@ export class StrapiClient {
   }
 
   /**
-   * Delete a skill
+   * Delete a skill permanently from Strapi
+   *
+   * @description
+   * Permanently deletes a skill from the Strapi database. This operation cannot be undone.
+   * All associated component data (trainingHistory, additionalFiles references, mcpConfig,
+   * agentSelection, etc.) is also deleted as they are part of the skill entity.
+   *
+   * **Important Considerations:**
+   * - This is a permanent deletion - there is no soft delete or trash bin
+   * - All component data is deleted with the skill
+   * - File attachments in additionalFiles are NOT deleted from Media Library (only references)
+   * - Related entities (Agents, MCP Servers, Tasks) are NOT deleted (only the associations)
+   * - Agents using this skill will have broken references in their skillSelection
+   * - Cache is automatically invalidated after deletion
+   *
+   * **Best Practices:**
+   * - Consider setting `isPublic: false` instead of deleting to preserve history
+   * - Verify the skill ID before deletion to prevent accidental deletions
+   * - Check which agents use the skill before deletion (via agentSelection)
+   * - Export skill data before deletion if you may need it later
+   * - Clean up file attachments separately if no longer needed
+   *
+   * @param {string} id - Skill document ID to delete
+   *
+   * @returns {Promise<void>} Resolves when deletion is complete
+   *
+   * @throws {Error} If skill with specified ID is not found or deletion fails
+   *
+   * @example
+   * // Basic deletion
+   * await strapiClient.deleteSkill('skill-id-to-delete');
+   * console.log('Skill deleted successfully');
+   *
+   * @example
+   * // Safe deletion with confirmation and dependency check
+   * const skill = await strapiClient.getSkill('skill-id');
+   *
+   * console.log(`About to delete skill: ${skill.displayName}`);
+   * console.log(`Category: ${skill.category}`);
+   * console.log(`Experience: ${skill.experienceScore}`);
+   *
+   * // Check which agents use this skill
+   * if (skill.agentSelection && skill.agentSelection.length > 0) {
+   *   console.warn(`Warning: This skill is used by ${skill.agentSelection.length} agents:`);
+   *   skill.agentSelection.forEach((selection: any) => {
+   *     console.log(`  - ${selection.agent?.name || 'Unknown agent'}`);
+   *   });
+   * }
+   *
+   * // In a real application, prompt user for confirmation here
+   * const confirmed = true; // User confirmation
+   *
+   * if (confirmed) {
+   *   await strapiClient.deleteSkill(skill.id);
+   *   console.log('Skill deleted');
+   * }
+   *
+   * @example
+   * // Alternative: Hide instead of delete (preserves history)
+   * // This is often preferred over permanent deletion
+   * const skill = await strapiClient.updateSkill('skill-id', {
+   *   isPublic: false
+   * });
+   * console.log('Skill hidden (not deleted)');
+   *
+   * @example
+   * // Export skill data before deletion
+   * const skill = await strapiClient.getSkill('skill-id');
+   *
+   * // Save configuration to file or backup system
+   * const backup = {
+   *   name: skill.name,
+   *   displayName: skill.displayName,
+   *   description: skill.description,
+   *   skillmd: skill.skillmd,
+   *   category: skill.category,
+   *   experienceScore: skill.experienceScore,
+   *   version: skill.version,
+   *   trainingHistory: skill.trainingHistory,
+   *   additionalFiles: skill.additionalFiles,
+   *   mcpConfig: skill.mcpConfig,
+   *   modelConfig: skill.modelConfig,
+   *   toolConfig: skill.toolConfig,
+   *   inputFields: skill.inputFields,
+   *   exportedAt: new Date().toISOString()
+   * };
+   *
+   * // fs.writeFileSync(`./backups/skill-${skill.id}.json`, JSON.stringify(backup, null, 2));
+   *
+   * // Now safe to delete
+   * await strapiClient.deleteSkill(skill.id);
+   *
+   * @example
+   * // Clean up attached files before deleting skill
+   * const skill = await strapiClient.getSkill('skill-id');
+   *
+   * // Delete file attachments from Media Library
+   * if (skill.additionalFiles && skill.additionalFiles.length > 0) {
+   *   for (const fileComponent of skill.additionalFiles) {
+   *     const file = fileComponent.file;
+   *     if (file?.documentId) {
+   *       await strapiClient.deleteFile(file.documentId);
+   *       console.log(`Deleted file: ${file.name}`);
+   *     }
+   *   }
+   * }
+   *
+   * // Now delete the skill
+   * await strapiClient.deleteSkill(skill.id);
+   * console.log('Skill and all attached files deleted');
+   *
+   * @example
+   * // Error handling for non-existent skill
+   * try {
+   *   await strapiClient.deleteSkill('non-existent-id');
+   * } catch (error) {
+   *   console.error('Deletion failed:', error.message);
+   *   // Handle error (skill not found, network error, etc.)
+   * }
+   *
+   * @example
+   * // Batch deletion with dependency checks (use with caution!)
+   * const skillsToDelete = await strapiClient.getAllSkills({
+   *   filters: {
+   *     $and: [
+   *       { isPublic: false },
+   *       { experienceScore: { $lt: 10 } },
+   *       { updatedAt: { $lt: '2024-01-01' } }
+   *     ]
+   *   }
+   * });
+   *
+   * console.log(`Found ${skillsToDelete.length} skills to delete`);
+   *
+   * for (const skill of skillsToDelete) {
+   *   // Check if skill is used by any agents
+   *   const isUsed = skill.agentSelection && skill.agentSelection.length > 0;
+   *
+   *   if (!isUsed) {
+   *     console.log(`Deleting ${skill.displayName}...`);
+   *     await strapiClient.deleteSkill(skill.id);
+   *   } else {
+   *     console.log(`Skipping ${skill.displayName} (in use by agents)`);
+   *   }
+   * }
+   *
+   * console.log('Batch deletion complete');
+   *
+   * @see {@link updateSkill} for hiding skills without deletion
+   * @see {@link getSkill} for retrieving skill details before deletion
+   * @see {@link deleteFile} for cleaning up attached files
    */
   async deleteSkill(id: string): Promise<void> {
     await this.client.delete(`/skills/${id}`);

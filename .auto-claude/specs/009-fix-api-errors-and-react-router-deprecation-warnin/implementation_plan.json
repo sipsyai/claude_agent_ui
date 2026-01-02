@@ -71,7 +71,7 @@
               "Application loads without errors"
             ]
           },
-          "status": "pending"
+          "status": "completed"
         }
       ]
     },
@@ -100,7 +100,7 @@
             "command": "curl -H 'Authorization: Bearer <valid-token>' http://localhost:3001/api/flows 2>/dev/null | head -20",
             "expected": "HTTP 200 or valid JSON response (not 403)"
           },
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "subtask-2-2",

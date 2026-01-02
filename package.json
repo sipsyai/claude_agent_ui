@@ -46,6 +46,7 @@
     "rollback-migration": "tsx scripts/migration-tools/rollback-migration.ts",
     "test:rollback": "tsx scripts/migration-tools/test-rollback-procedure.ts",
     "test:health": "bash scripts/test-health-endpoints.sh",
+    "test:pool-connections": "bash scripts/test-connection-pooling.sh",
     "test:backup-restore": "bash scripts/test-backup-restore.sh",
     "test:e2e-entities": "bash scripts/test-e2e-entities.sh",
     "test:migration": "bash scripts/test-migration-integrity.sh",

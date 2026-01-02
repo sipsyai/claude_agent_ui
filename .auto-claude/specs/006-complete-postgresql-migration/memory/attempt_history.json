@@ -227,11 +227,35 @@
         }
       ],
       "status": "completed"
+    },
+    "6.3": {
+      "attempts": [
+        {
+          "session": 21,
+          "timestamp": "2026-01-02T11:31:12.355457",
+          "approach": "Implemented: Run migration script with test data and verify 100% data integrity",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "6.4": {
+      "attempts": [
+        {
+          "session": 22,
+          "timestamp": "2026-01-02T11:34:22.343665",
+          "approach": "Implemented: Confirm all SQLite code paths are clearly marked as deprecated",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-02T10:06:25.045089",
-    "last_updated": "2026-01-02T11:24:24.689481"
+    "last_updated": "2026-01-02T11:34:22.343677"
   }
 }

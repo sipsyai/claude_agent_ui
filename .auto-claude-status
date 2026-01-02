@@ -3,7 +3,7 @@
   "spec": "006-complete-postgresql-migration",
   "state": "building",
   "subtasks": {
-    "completed": 19,
+    "completed": 21,
     "total": 24,
     "in_progress": 1,
     "failed": 0
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 21,
+    "number": 23,
     "started_at": "2026-01-02T10:06:25.049340"
   },
-  "last_update": "2026-01-02T11:24:31.610259"
+  "last_update": "2026-01-02T11:34:28.148811"
 }

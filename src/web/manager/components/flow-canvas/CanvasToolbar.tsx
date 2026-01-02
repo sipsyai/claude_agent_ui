@@ -9,7 +9,7 @@
  * - **Undo/Redo**: Navigate through canvas history with keyboard shortcuts (Ctrl+Z, Ctrl+Y)
  * - **Zoom Controls**: Zoom in, out, and reset to default (100%)
  * - **Fit View**: Automatically fit all nodes into the visible canvas area
- * - **Auto Layout**: Organize nodes with automatic layout algorithm (planned feature)
+ * - **Auto Layout**: Organize nodes with automatic hierarchical layout using dagre
  * - **Grid Toggle**: Show/hide background grid for alignment
  * - **Minimap Toggle**: Show/hide minimap navigation panel
  *
@@ -22,7 +22,8 @@
  * ## Keyboard Shortcuts
  * - **Ctrl+Z / Cmd+Z**: Undo last action
  * - **Ctrl+Y / Cmd+Shift+Z**: Redo last undone action
- * - Note: Keyboard shortcuts are handled by the parent component or a dedicated hook
+ * - **Ctrl+Shift+L / Cmd+Shift+L**: Auto-layout nodes
+ * - Note: Most keyboard shortcuts are handled by the useFlowKeyboardShortcuts hook
  *
  * ## Integration with React Flow
  * The toolbar uses React Flow hooks to interact with the canvas:
@@ -408,8 +409,8 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   // Get React Flow instance methods
   const { zoomIn, zoomOut, zoomTo, fitView } = useReactFlow();
 
-  // Get FlowCanvasContext methods for undo/redo
-  const { undo, redo, canUndo, canRedo } = useFlowCanvas();
+  // Get FlowCanvasContext methods for undo/redo and auto-layout
+  const { undo, redo, canUndo, canRedo, applyAutoLayout } = useFlowCanvas();
 
   /**
    * Handle zoom in action
@@ -445,12 +446,11 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
 
   /**
    * Handle auto layout action
-   * Placeholder for auto-layout algorithm (Phase 5)
+   * Applies dagre-based hierarchical layout to organize nodes
    */
   const handleAutoLayout = useCallback(() => {
-    // TODO: Implement auto-layout algorithm in Phase 5
-    // This will organize nodes using dagre or similar layout library
-  }, []);
+    applyAutoLayout();
+  }, [applyAutoLayout]);
 
   /**
    * Handle grid toggle
@@ -534,8 +534,8 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
       />
       <ToolbarButton
         onClick={handleAutoLayout}
-        disabled={true}
-        title="Auto Layout (Coming Soon)"
+        title="Auto Layout"
+        shortcut="Ctrl+Shift+L"
         icon={<AutoLayoutIcon width={18} height={18} />}
       />
 

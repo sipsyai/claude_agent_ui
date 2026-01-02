@@ -41,6 +41,11 @@
  * |----------|--------|-------------|
  * | Ctrl+S / Cmd+S | Save | Triggers save callback (prevents browser save dialog) |
  *
+ * ### Layout Operations
+ * | Shortcut | Action | Description |
+ * |----------|--------|-------------|
+ * | Ctrl+Shift+L / Cmd+Shift+L | Auto Layout | Automatically organizes nodes in a readable flow structure |
+ *
  * ## Input Field Awareness
  * The hook automatically detects when the user is typing in input fields and disables all
  * shortcuts to prevent interference with normal text editing. Shortcuts are disabled when
@@ -298,6 +303,7 @@ export function useFlowKeyboardShortcuts(options: UseFlowKeyboardShortcutsOption
     canRedo,
     addNode,
     getNodeById,
+    applyAutoLayout,
   } = flowCanvas;
 
   // Internal clipboard state for copy/paste
@@ -475,6 +481,13 @@ export function useFlowKeyboardShortcuts(options: UseFlowKeyboardShortcutsOption
         onSave?.();
         return;
       }
+
+      // Ctrl+Shift+L / Cmd+Shift+L - Auto Layout
+      if (key === 'l' && shiftKey) {
+        event.preventDefault();
+        applyAutoLayout();
+        return;
+      }
     };
 
     // Attach event listener to document
@@ -496,5 +509,6 @@ export function useFlowKeyboardShortcuts(options: UseFlowKeyboardShortcutsOption
     canUndo,
     canRedo,
     onSave,
+    applyAutoLayout,
   ]);
 }

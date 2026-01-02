@@ -51,6 +51,7 @@
  * ### Canvas Operations
  * - `resetCanvas`: Clear all nodes, edges, and selections
  * - `loadCanvas`: Load nodes and edges from external data
+ * - `applyAutoLayout`: Apply automatic layout algorithm to organize nodes
  * - `onCanvasChange`: Callback fired when canvas state changes (for auto-save)
  *
  * ## Provider Usage
@@ -112,6 +113,7 @@ import type {
   CreateNodeConfig,
 } from '../types/react-flow.types';
 import type { FlowNodeType } from '../types';
+import { applyAutoLayout, type AutoLayoutConfig } from '../utils/auto-layout';
 
 /**
  * History entry for undo/redo functionality
@@ -162,6 +164,7 @@ export interface FlowCanvasContextValue {
   // Canvas Operations
   resetCanvas: () => void;
   loadCanvas: (nodes: ReactFlowNode[], edges: ReactFlowEdge[]) => void;
+  applyAutoLayout: (config?: Partial<AutoLayoutConfig>) => void;
 }
 
 /**
@@ -539,6 +542,30 @@ export const FlowCanvasProvider: React.FC<FlowCanvasProviderProps> = ({
     setHistoryIndex(0);
   }, []);
 
+  /**
+   * Apply automatic layout algorithm to organize nodes
+   *
+   * Uses dagre library to calculate optimal positions for all nodes based on
+   * their connections. The layout arranges nodes in a left-to-right flow with
+   * even spacing and no overlaps.
+   *
+   * @param config - Optional layout configuration (spacing, direction, etc.)
+   *
+   * @example
+   * ```tsx
+   * // Apply default layout
+   * applyAutoLayout();
+   *
+   * // Apply compact layout
+   * applyAutoLayout({ nodeSpacing: 100, rankSpacing: 150 });
+   * ```
+   */
+  const applyAutoLayoutFn = useCallback((config?: Partial<AutoLayoutConfig>) => {
+    const layoutedNodes = applyAutoLayout(nodes, edges, config);
+    setNodes(layoutedNodes);
+    saveToHistory(layoutedNodes, edges);
+  }, [nodes, edges, saveToHistory]);
+
   // Context value
   const value: FlowCanvasContextValue = {
     // Canvas State
@@ -577,6 +604,7 @@ export const FlowCanvasProvider: React.FC<FlowCanvasProviderProps> = ({
     // Canvas Operations
     resetCanvas,
     loadCanvas,
+    applyAutoLayout: applyAutoLayoutFn,
   };
 
   return <FlowCanvasContext.Provider value={value}>{children}</FlowCanvasContext.Provider>;

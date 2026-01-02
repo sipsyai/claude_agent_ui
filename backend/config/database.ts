@@ -1,6 +1,14 @@
 export default ({ env }) => ({
   connection: {
-    // PostgreSQL configuration (ACTIVE - ready for migration)
+    // ===================================================================
+    // PRIMARY DATABASE: PostgreSQL (PRODUCTION-READY)
+    // ===================================================================
+    // PostgreSQL is the ONLY supported database for production deployments.
+    // This configuration includes connection pooling, timeouts, and SSL support
+    // for optimal performance and reliability in production environments.
+    //
+    // Migration completed: 2026-01-02
+    // ===================================================================
     client: 'postgres',
     connection: {
       host: env('DATABASE_HOST', 'localhost'),
@@ -14,7 +22,26 @@ export default ({ env }) => ({
       },
     },
 
-    // SQLite configuration (BACKUP - used for migration source)
+    // ===================================================================
+    // ⚠️  DEPRECATED: SQLite Configuration
+    // ===================================================================
+    // SQLite support is DEPRECATED as of 2026-01-02.
+    //
+    // Migration Status:
+    //   - PostgreSQL is now the PRIMARY and ONLY supported database
+    //   - SQLite is only used as source during one-time data migration
+    //   - Migration scripts located in: scripts/migration-tools/
+    //
+    // Do NOT enable SQLite for production use. It was replaced due to:
+    //   - Limited scalability for production workloads
+    //   - Inferior concurrency handling compared to PostgreSQL
+    //   - Data integrity concerns identified during development
+    //
+    // If you need to migrate data from SQLite to PostgreSQL, use:
+    //   npm run migrate:sqlite-to-postgres
+    //
+    // For rollback procedures, see: docs/database/POSTGRES_ROLLBACK_PROCEDURES.md
+    // ===================================================================
     // client: 'sqlite',
     // connection: {
     //   filename: env('DATABASE_FILENAME', '.tmp/data.db'),

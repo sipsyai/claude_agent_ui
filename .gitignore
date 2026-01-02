@@ -40,19 +40,34 @@ coverage/
 # Temporary files
 tmp/
 temp/
+.tmp/
 *.tmp
 
 # Claude-specific
 .cui/
 
-# Database files
+# Database files - SQLite
 *.db
 *.sqlite
 *.sqlite3
+*.db-shm
+*.db-wal
+*.db-journal
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite-journal
 
-# Backups
-backups/
+# Database data directories
+database/dev-data/
 database/backups/*.sql
+database/backups/*.dump
+database/backups/*.tar
+database/backups/*.tar.gz
+
+# Preserve directory structure
+!database/init/.gitkeep
+!database/backups/.gitkeep
+!logs/**/.gitkeep
 
 # Backend specific
 backend/.tmp/

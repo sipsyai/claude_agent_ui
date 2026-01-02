@@ -1,0 +1,20 @@
+{
+  "discovered_files": {
+    "backend/config/database.ts": {
+      "description": "PostgreSQL is already configured as primary database client with connection pooling (min:2, max:10). SQLite config is commented out. Database connects to PostgreSQL on port 5433.",
+      "category": "database",
+      "discovered_at": "2026-01-02T07:09:16.471557+00:00"
+    },
+    "backend/src/api/": {
+      "description": "Strapi has 7 content types: agent, skill, mcp-server, mcp-tool, task, chat-session, chat-message. All use component-based architecture with relations.",
+      "category": "architecture",
+      "discovered_at": "2026-01-02T07:09:16.492079+00:00"
+    },
+    "docs/database/BACKUP_PROCEDURES.md": {
+      "description": "Comprehensive PostgreSQL backup procedures documentation covering manual backups (pg_dump), automated script usage, Docker backup methods, cron scheduling, retention policies (7 backups default, GFS strategy), backup types (full, incremental WAL, logical vs physical), best practices (3-2-1 rule, encryption, monitoring), and troubleshooting. 600+ lines with production-ready examples for cron, docker-compose, and Kubernetes.",
+      "category": "documentation",
+      "discovered_at": "2026-01-02T07:59:23.146357+00:00"
+    }
+  },
+  "last_updated": "2026-01-02T07:59:23.146370+00:00"
+}

@@ -1,11 +1,11 @@
 {
   "active": true,
   "spec": "009-fix-api-errors-and-react-router-deprecation-warnin",
-  "state": "building",
+  "state": "complete",
   "subtasks": {
-    "completed": 12,
+    "completed": 15,
     "total": 15,
-    "in_progress": 1,
+    "in_progress": 0,
     "failed": 0
   },
   "phase": {
@@ -21,5 +21,5 @@
     "number": 13,
     "started_at": "2026-01-02T18:48:01.857571"
   },
-  "last_update": "2026-01-02T19:20:57.075520"
+  "last_update": "2026-01-02T19:23:46.990481"
 }

@@ -1,0 +1,500 @@
+{
+  "spec_id": "004-document-frontend-react-components-and-hooks",
+  "title": "Document Frontend React Components and Hooks",
+  "description": "Add comprehensive JSDoc documentation to all React components and custom hooks in the frontend, including prop types, usage examples, component purposes, state management, and side effects.",
+  "created_at": "2025-01-02",
+  "status": "in_progress",
+  "planStatus": "planned",
+  "workflow_type": "development",
+  "total_phases": 6,
+  "phases": [
+    {
+      "phase": 1,
+      "name": "UI Primitive Components Documentation",
+      "description": "Document foundational UI components used throughout the application",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Document Button component",
+          "description": "Add JSDoc documentation to Button.tsx including prop types (variant, size), usage examples, and styling behavior",
+          "file": "src/web/manager/components/ui/Button.tsx",
+          "status": "completed",
+          "notes": "Added comprehensive JSDoc documentation to Button.tsx including:\n- Component description with features and styling behavior\n- Props interface documentation with detailed descriptions\n- Multiple usage examples demonstrating all variants and sizes\n- Default value documentation\n- Display name for better debugging experience\n\nDocumentation covers all three variants (primary, secondary, destructive) and all three sizes (sm, md, lg), with examples showing disabled state, custom className usage, and accessibility features.",
+          "updated_at": "2026-01-02T06:59:22.566796+00:00"
+        },
+        {
+          "id": "1.2",
+          "title": "Document Input component",
+          "description": "Add JSDoc documentation to Input.tsx including prop inheritance from HTML input, styling, and common usage patterns",
+          "file": "src/web/manager/components/ui/Input.tsx",
+          "status": "completed",
+          "notes": "Added comprehensive JSDoc documentation to Input.tsx including:\n- Component description with features and styling behavior\n- InputProps interface documentation extending React.InputHTMLAttributes\n- Detailed explanation of styling with Tailwind CSS classes\n- Multiple usage examples demonstrating common input types (text, email, password, number, file)\n- Examples showing controlled and uncontrolled patterns\n- Documentation of disabled state, validation, and custom className usage\n- Display name for better debugging experience\n\nDocumentation covers all standard HTML input types with examples showing:\n- Controlled state management with value and onChange\n- Uncontrolled inputs with ref\n- HTML5 validation attributes (required, pattern, min, max, minLength, maxLength)\n- File upload inputs with accept attribute\n- Custom styling via className prop\n- Accessibility features including focus-visible ring and disabled cursor",
+          "updated_at": "2026-01-02T07:00:42.916012+00:00"
+        },
+        {
+          "id": "1.3",
+          "title": "Document Select component",
+          "description": "Add JSDoc documentation to Select.tsx including prop types and usage with options",
+          "file": "src/web/manager/components/ui/Select.tsx",
+          "status": "completed",
+          "notes": "Added comprehensive JSDoc documentation to Select.tsx including:\n- Component description with features and styling behavior\n- Props interface documentation with detailed descriptions\n- Multiple usage examples demonstrating:\n  * Basic controlled select with options\n  * Required validation\n  * Option groups using <optgroup>\n  * Multi-select mode with array state management\n  * Disabled state\n  * Custom className usage\n  * Uncontrolled usage with ref\n  * Dynamic options from data arrays\n- Display name for better debugging experience\n\nDocumentation covers all standard HTML select attributes including value, onChange, multiple, size, disabled, required, and children prop for option/optgroup elements. Examples show both controlled and uncontrolled patterns, validation, and common real-world usage scenarios.",
+          "updated_at": "2026-01-02T07:02:15.909416+00:00"
+        },
+        {
+          "id": "1.4",
+          "title": "Document Textarea component",
+          "description": "Add JSDoc documentation to Textarea.tsx including prop types and styling behavior",
+          "file": "src/web/manager/components/ui/Textarea.tsx",
+          "status": "completed",
+          "notes": "Added comprehensive JSDoc documentation to Textarea.tsx including:\n- Component description with features and styling behavior\n- Props interface documentation with detailed descriptions\n- Multiple usage examples demonstrating:\n  * Basic controlled textarea with state management\n  * Character limit with counter display\n  * Validation (required, minLength, maxLength)\n  * Custom height with rows attribute\n  * Disabled state\n  * Custom styling (resize-none, font-mono)\n  * Uncontrolled usage with ref\n  * Code input with monospace font and spellCheck disabled\n  * Form integration with label and error message\n- Display name for better debugging experience\n\nDocumentation covers all standard HTML textarea attributes including value, onChange, placeholder, rows, cols, disabled, readOnly, required, minLength, maxLength, wrap, autoComplete, autoFocus, spellCheck, and event handlers. Examples show both controlled and uncontrolled patterns, validation, and common real-world usage scenarios for multi-line text input.",
+          "updated_at": "2026-01-02T07:04:16.833193+00:00"
+        },
+        {
+          "id": "1.5",
+          "title": "Document Switch component",
+          "description": "Add JSDoc documentation to Switch.tsx including toggle behavior, checked state, and accessibility",
+          "file": "src/web/manager/components/ui/Switch.tsx",
+          "status": "completed",
+          "notes": "Added comprehensive JSDoc documentation to Switch.tsx including:\n- Component description with features and toggle behavior\n- Detailed explanation of toggle behavior (click, keyboard, programmatic control)\n- Checked state section describing visual changes (background color, slider position)\n- Comprehensive accessibility section covering screen reader support, keyboard navigation, focus management, and ARIA attributes\n- Styling behavior section explaining Tailwind CSS implementation with peer modifier pattern\n- Props interface documentation with detailed descriptions of common props\n- 8 usage examples demonstrating:\n  * Basic controlled switch with state management\n  * Uncontrolled switch with defaultChecked\n  * Switch with label wrapper\n  * Disabled state\n  * Change handler with callbacks\n  * Form integration with name attributes\n  * Custom className for additional styling\n  * Using ref for programmatic control\n- Display name for better debugging experience\n\nDocumentation covers all aspects of the toggle switch including controlled/uncontrolled patterns, checked/unchecked states, keyboard accessibility (Space/Enter), screen reader compatibility, focus rings, dark mode support, and smooth transition animations.",
+          "updated_at": "2026-01-02T07:06:04.935255+00:00"
+        },
+        {
+          "id": "1.6",
+          "title": "Document Card component",
+          "description": "Add JSDoc documentation to Card.tsx including CardHeader, CardTitle, CardDescription, CardContent, CardFooter sub-components",
+          "file": "src/web/manager/components/ui/Card.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "1.7",
+          "title": "Document Dialog component",
+          "description": "Add JSDoc documentation to Dialog.tsx including DialogHeader, DialogTitle, DialogContent, DialogFooter, DialogClose sub-components",
+          "file": "src/web/manager/components/ui/Dialog.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "1.8",
+          "title": "Document ProgressBar component",
+          "description": "Add JSDoc documentation to ProgressBar.tsx including value prop, animation behavior, and styling options",
+          "file": "src/web/manager/components/ui/ProgressBar.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "1.9",
+          "title": "Document ArrayEditor component",
+          "description": "Add JSDoc documentation to ArrayEditor.tsx including value handling, add/remove item functionality, and callbacks",
+          "file": "src/web/manager/components/ui/ArrayEditor.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "1.10",
+          "title": "Document KeyValueEditor component",
+          "description": "Add JSDoc documentation to KeyValueEditor.tsx including key-value pair management and change callbacks",
+          "file": "src/web/manager/components/ui/KeyValueEditor.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "1.11",
+          "title": "Document Icons component",
+          "description": "Add JSDoc documentation to Icons.tsx cataloging all available icons and their intended usage",
+          "file": "src/web/manager/components/ui/Icons.tsx",
+          "status": "pending",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Layout Components Documentation",
+      "description": "Document layout and navigation components",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Document Layout component",
+          "description": "Add JSDoc documentation to Layout.tsx including children rendering, sidebar integration, and responsive behavior",
+          "file": "src/web/manager/components/layout/Layout.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "2.2",
+          "title": "Document Sidebar component",
+          "description": "Add JSDoc documentation to Sidebar.tsx including navigation items, active state, and collapse behavior",
+          "file": "src/web/manager/components/layout/Sidebar.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "2.3",
+          "title": "Document ChatDisplayContext",
+          "description": "Add JSDoc documentation to ChatDisplayContext.tsx including context values, provider usage, and consumer patterns",
+          "file": "src/web/manager/contexts/ChatDisplayContext.tsx",
+          "status": "pending",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Custom Hooks Documentation",
+      "description": "Document all custom hooks with state management, side effects, and usage patterns",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Document useAgentCreator hook",
+          "description": "Add comprehensive JSDoc documentation including options interface, return values, state management, SSE streaming handling, and lifecycle",
+          "file": "src/web/manager/hooks/useAgentCreator.ts",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "3.2",
+          "title": "Document useAssistantRuntime hook",
+          "description": "Add comprehensive JSDoc documentation including runtime state, message handling, and integration with assistant UI",
+          "file": "src/web/manager/hooks/useAssistantRuntime.ts",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "3.3",
+          "title": "Document useSkillCreator hook",
+          "description": "Add comprehensive JSDoc documentation including skill creation workflow, state management, and callbacks",
+          "file": "src/web/manager/hooks/useSkillCreator.ts",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "3.4",
+          "title": "Document useSkillTraining hook",
+          "description": "Add comprehensive JSDoc documentation including training workflow, state transitions, and event handling",
+          "file": "src/web/manager/hooks/useSkillTraining.ts",
+          "status": "pending",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Chat Components Documentation",
+      "description": "Document chat-related components for messaging functionality",
+      "subtasks": [
+        {
+          "id": "4.1",
+          "title": "Document ChatInput component",
+          "description": "Add JSDoc documentation including input handling, submit behavior, keyboard shortcuts, and styling",
+          "file": "src/web/manager/components/ChatInput.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "4.2",
+          "title": "Document ChatMessageList component",
+          "description": "Add JSDoc documentation including message rendering, scroll behavior, and message types",
+          "file": "src/web/manager/components/ChatMessageList.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "4.3",
+          "title": "Document MessageBubble component",
+          "description": "Add JSDoc documentation including message display, role-based styling, and content rendering",
+          "file": "src/web/manager/components/MessageBubble.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "4.4",
+          "title": "Document CodeBlock component",
+          "description": "Add JSDoc documentation including syntax highlighting, copy functionality, and language detection",
+          "file": "src/web/manager/components/CodeBlock.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "4.5",
+          "title": "Document ComposerArea component",
+          "description": "Add JSDoc documentation including message composition, attachments, and send behavior",
+          "file": "src/web/manager/components/ComposerArea.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "4.6",
+          "title": "Document ChatSessionModal component",
+          "description": "Add JSDoc documentation including session management, modal behavior, and session list display",
+          "file": "src/web/manager/components/ChatSessionModal.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "4.7",
+          "title": "Document SystemMessageDisplay component",
+          "description": "Add JSDoc documentation including system message rendering and styling",
+          "file": "src/web/manager/components/chat/SystemMessageDisplay.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "4.8",
+          "title": "Document ToolUseDisplay component",
+          "description": "Add JSDoc documentation including tool use visualization, input/output display, and collapsible sections",
+          "file": "src/web/manager/components/chat/ToolUseDisplay.tsx",
+          "status": "pending",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Feature Components Documentation",
+      "description": "Document major feature components including modals, forms, and specialized UI",
+      "subtasks": [
+        {
+          "id": "5.1",
+          "title": "Document AgentExecutionModal component",
+          "description": "Add JSDoc documentation including agent execution flow, permission modes, message handling, and UI states",
+          "file": "src/web/manager/components/AgentExecutionModal.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "5.2",
+          "title": "Document TaskExecutionModal component",
+          "description": "Add JSDoc documentation including task execution, progress tracking, and result display",
+          "file": "src/web/manager/components/TaskExecutionModal.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "5.3",
+          "title": "Document AgentConfigModal component",
+          "description": "Add JSDoc documentation including agent configuration form, validation, and save behavior",
+          "file": "src/web/manager/components/AgentConfigModal.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "5.4",
+          "title": "Document AgentCreatorForm component",
+          "description": "Add JSDoc documentation including form fields, validation, and agent creation workflow",
+          "file": "src/web/manager/components/AgentCreatorForm.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "5.5",
+          "title": "Document AgentCreatorChatPanel component",
+          "description": "Add JSDoc documentation including chat-based agent creation, message flow, and integration with useAgentCreator",
+          "file": "src/web/manager/components/AgentCreatorChatPanel.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "5.6",
+          "title": "Document SkillCreationModal component",
+          "description": "Add JSDoc documentation including skill creation workflow, form handling, and modal behavior",
+          "file": "src/web/manager/components/SkillCreationModal.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "5.7",
+          "title": "Document SkillCreatorChatPanel component",
+          "description": "Add JSDoc documentation including chat-based skill creation and integration with useSkillCreator",
+          "file": "src/web/manager/components/SkillCreatorChatPanel.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "5.8",
+          "title": "Document SkillDetailsModal component",
+          "description": "Add JSDoc documentation including skill details display, edit mode, and action buttons",
+          "file": "src/web/manager/components/SkillDetailsModal.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "5.9",
+          "title": "Document SkillSelector component",
+          "description": "Add JSDoc documentation including skill selection, multi-select behavior, and filtering",
+          "file": "src/web/manager/components/SkillSelector.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "5.10",
+          "title": "Document SkillTrainingChatPanel component",
+          "description": "Add JSDoc documentation including training workflow, chat interaction, and integration with useSkillTraining",
+          "file": "src/web/manager/components/SkillTrainingChatPanel.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "5.11",
+          "title": "Document DynamicField component",
+          "description": "Add JSDoc documentation including field type handling, value rendering, and dynamic form support",
+          "file": "src/web/manager/components/DynamicField.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "5.12",
+          "title": "Document MCPToolsSelector component",
+          "description": "Add JSDoc documentation including MCP tool selection, server integration, and multi-select behavior",
+          "file": "src/web/manager/components/MCPToolsSelector.tsx",
+          "status": "pending",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "phase": 6,
+      "name": "Page Components and App Documentation",
+      "description": "Document page-level components and main application entry point",
+      "subtasks": [
+        {
+          "id": "6.1",
+          "title": "Document ManagerApp component",
+          "description": "Add JSDoc documentation including routing configuration, theme handling, and app initialization",
+          "file": "src/web/manager/ManagerApp.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.2",
+          "title": "Document HomePage component",
+          "description": "Add JSDoc documentation including home page layout, feature sections, and navigation",
+          "file": "src/web/manager/components/HomePage.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.3",
+          "title": "Document LandingPage component",
+          "description": "Add JSDoc documentation including landing page content, call-to-action, and marketing sections",
+          "file": "src/web/manager/components/LandingPage.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.4",
+          "title": "Document DashboardPage component",
+          "description": "Add JSDoc documentation including dashboard metrics, data fetching, and widget layout",
+          "file": "src/web/manager/components/DashboardPage.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.5",
+          "title": "Document AgentsPage component",
+          "description": "Add JSDoc documentation including agent listing, CRUD operations, and filtering",
+          "file": "src/web/manager/components/AgentsPage.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.6",
+          "title": "Document AgentsListPage component",
+          "description": "Add JSDoc documentation including agent list view, pagination, and action buttons",
+          "file": "src/web/manager/components/AgentsListPage.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.7",
+          "title": "Document SkillsPage component",
+          "description": "Add JSDoc documentation including skill listing, creation workflow, and skill management",
+          "file": "src/web/manager/components/SkillsPage.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.8",
+          "title": "Document TasksPage component",
+          "description": "Add JSDoc documentation including task listing, execution history, and task status display",
+          "file": "src/web/manager/components/TasksPage.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.9",
+          "title": "Document ChatPage component",
+          "description": "Add JSDoc documentation including chat interface, session management, and message handling",
+          "file": "src/web/manager/components/ChatPage.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.10",
+          "title": "Document CommandsPage component",
+          "description": "Add JSDoc documentation including command listing, execution, and command history",
+          "file": "src/web/manager/components/CommandsPage.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.11",
+          "title": "Document MCPServersPage component",
+          "description": "Add JSDoc documentation including MCP server listing, configuration, and status display",
+          "file": "src/web/manager/components/MCPServersPage.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.12",
+          "title": "Document SettingsPage component",
+          "description": "Add JSDoc documentation including settings form, preference handling, and save behavior",
+          "file": "src/web/manager/components/SettingsPage.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.13",
+          "title": "Document ValidationPage component",
+          "description": "Add JSDoc documentation including validation interface, result display, and error handling",
+          "file": "src/web/manager/components/ValidationPage.tsx",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.14",
+          "title": "Document types.ts",
+          "description": "Add JSDoc documentation to all TypeScript interfaces and types with descriptions and usage notes",
+          "file": "src/web/manager/types.ts",
+          "status": "pending",
+          "notes": ""
+        },
+        {
+          "id": "6.15",
+          "title": "Document API services",
+          "description": "Add JSDoc documentation to api.ts and chat-api.ts including function descriptions, parameters, and return types",
+          "file": "src/web/manager/services/api.ts",
+          "status": "pending",
+          "notes": ""
+        }
+      ]
+    }
+  ],
+  "qa_checklist": [
+    "All components have JSDoc block comments with @description",
+    "All component props are documented with @param tags",
+    "All hooks have @returns documentation with interface descriptions",
+    "Usage examples are provided using @example tags",
+    "Side effects are documented using @sideeffects or within descriptions",
+    "State management is explained for stateful components and hooks",
+    "Callback props are documented with expected behavior",
+    "TypeScript interfaces have JSDoc comments"
+  ],
+  "qa_signoff": {
+    "status": "pending",
+    "issues": "",
+    "tests_passed": ""
+  },
+  "spec_file": "spec.md",
+  "last_updated": "2026-01-02T07:06:04.935270+00:00"
+}

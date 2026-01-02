@@ -44,6 +44,7 @@
     "migrate:markdown": "tsx scripts/migrate-from-markdown.ts",
     "validate-migration": "tsx scripts/validate-migration.ts",
     "rollback-migration": "tsx scripts/rollback-migration.ts",
+    "verify:tables": "tsx scripts/verify-postgres-tables.ts",
     "import-training-agent": "tsx scripts/import-training-agent.ts",
     "run-payload": "tsx run-sdk-payload.ts"
   },

@@ -147,32 +147,75 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [globalStats, setGlobalStats] = useState<GlobalFlowStats | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
   const [recentExecutions, setRecentExecutions] = useState<FlowExecution[]>([]);
+  const [executionsError, setExecutionsError] = useState<string | null>(null);
   const [activeFlows, setActiveFlows] = useState<Flow[]>([]);
+  const [flowsError, setFlowsError] = useState<string | null>(null);
   const [agentCount, setAgentCount] = useState(0);
+  const [agentsError, setAgentsError] = useState<string | null>(null);
   const [skillCount, setSkillCount] = useState(0);
+  const [skillsError, setSkillsError] = useState<string | null>(null);
 
   // Load dashboard data
   const loadDashboardData = useCallback(async () => {
     try {
+      // Clear section-level errors on new load attempt
+      setStatsError(null);
+      setExecutionsError(null);
+      setFlowsError(null);
+      setAgentsError(null);
+      setSkillsError(null);
       setError(null);
       setLoading(true);
 
-      const [statsResult, recentResult, flowsResult, agents, skills] = await Promise.all([
-        flowApi.getGlobalFlowStats().catch(() => null),
-        flowApi.getRecentExecutions(10).catch(() => ({ data: [], count: 0 })),
-        flowApi.getFlows({ isActive: true, pageSize: 5 }).catch(() => ({ data: [], meta: { total: 0 } })),
-        getAgents().catch(() => []),
-        getSkills().catch(() => []),
-      ]);
+      // Load each section independently with error tracking
+      const statsResult = await flowApi.getGlobalFlowStats()
+        .catch((err) => {
+          const errorMsg = err instanceof Error ? err.message : 'Failed to load statistics';
+          setStatsError(errorMsg);
+          return null;
+        });
 
+      const recentResult = await flowApi.getRecentExecutions(10)
+        .catch((err) => {
+          const errorMsg = err instanceof Error ? err.message : 'Failed to load recent executions';
+          setExecutionsError(errorMsg);
+          return { data: [], count: 0 };
+        });
+
+      const flowsResult = await flowApi.getFlows({ isActive: true, pageSize: 5 })
+        .catch((err) => {
+          const errorMsg = err instanceof Error ? err.message : 'Failed to load active flows';
+          setFlowsError(errorMsg);
+          return { data: [], meta: { total: 0 } };
+        });
+
+      const agents = await getAgents()
+        .catch((err) => {
+          const errorMsg = err instanceof Error ? err.message : 'Failed to load agents';
+          setAgentsError(errorMsg);
+          return [];
+        });
+
+      const skills = await getSkills()
+        .catch((err) => {
+          const errorMsg = err instanceof Error ? err.message : 'Failed to load skills';
+          setSkillsError(errorMsg);
+          return [];
+        });
+
+      // Update state with results
       setGlobalStats(statsResult);
       setRecentExecutions(recentResult.data);
       setActiveFlows(flowsResult.data);
       setAgentCount(agents.length);
       setSkillCount(skills.length);
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+      // Catch any unexpected errors
+      const errorMsg = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -232,7 +275,21 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
       )}
 
       {/* Stats Grid */}
-      {globalStats && (
+      {statsError ? (
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700">
+          <div className="flex items-center justify-between">
+            <span>Statistics: {statsError}</span>
+            <Button
+              onClick={loadDashboardData}
+              variant="secondary"
+              size="sm"
+              disabled={loading}
+            >
+              Retry
+            </Button>
+          </div>
+        </div>
+      ) : globalStats ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="Total Flows"
@@ -263,7 +320,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
             color="red"
           />
         </div>
-      )}
+      ) : null}
 
       {/* Quick Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -342,7 +399,28 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
           </CardHeader>
           <CardContent>
-            {recentExecutions.length === 0 ? (
+            {executionsError ? (
+              <div className="text-center py-8">
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 inline-block">
+                  <div className="flex items-center gap-2">
+                    <XCircleIcon className="h-5 w-5" />
+                    <div className="text-left">
+                      <p className="font-medium">Failed to load executions</p>
+                      <p className="text-sm">{executionsError}</p>
+                      <Button
+                        onClick={loadDashboardData}
+                        variant="secondary"
+                        size="sm"
+                        className="mt-2"
+                        disabled={loading}
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : recentExecutions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <PlayCircleIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p>No executions yet</p>
@@ -410,7 +488,28 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
           </CardHeader>
           <CardContent>
-            {activeFlows.length === 0 ? (
+            {flowsError ? (
+              <div className="text-center py-8">
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 inline-block">
+                  <div className="flex items-center gap-2">
+                    <XCircleIcon className="h-5 w-5" />
+                    <div className="text-left">
+                      <p className="font-medium">Failed to load flows</p>
+                      <p className="text-sm">{flowsError}</p>
+                      <Button
+                        onClick={loadDashboardData}
+                        variant="secondary"
+                        size="sm"
+                        className="mt-2"
+                        disabled={loading}
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : activeFlows.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <PlayCircleIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p>No active flows</p>

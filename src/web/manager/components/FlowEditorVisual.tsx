@@ -96,6 +96,7 @@ import {
   type ExtendedFlowValidationResult,
 } from '../utils/flow-validator';
 import type { ReactFlowNode, ReactFlowEdge } from '../types/react-flow.types';
+import { useFlowKeyboardShortcuts } from '../hooks/useFlowKeyboardShortcuts';
 
 // =============================================================================
 // TYPES AND CONSTANTS
@@ -433,6 +434,26 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
       return next;
     });
   };
+
+  // =========================================================================
+  // KEYBOARD SHORTCUTS
+  // =========================================================================
+
+  /**
+   * Enable keyboard shortcuts for common operations
+   * - Delete/Backspace: Remove selected nodes/edges
+   * - Ctrl+Z/Cmd+Z: Undo
+   * - Ctrl+Y/Cmd+Shift+Z: Redo
+   * - Ctrl+S/Cmd+S: Save flow
+   * - Ctrl+C/Cmd+C: Copy selected nodes
+   * - Ctrl+V/Cmd+V: Paste copied nodes
+   * - Ctrl+D/Cmd+D: Duplicate selected nodes
+   * - Escape: Clear selection
+   */
+  useFlowKeyboardShortcuts({
+    onSave: handleSave,
+    enabled: !loading && !saving,
+  });
 
   // =========================================================================
   // SUBCOMPONENTS

@@ -282,6 +282,97 @@ export class StrapiClient {
 
   /**
    * Get all agents with optional filtering, sorting, and pagination
+   *
+   * @description
+   * Retrieves all agents from Strapi with support for advanced query features including
+   * filtering, sorting, pagination, and relation population. Results are cached with 5-minute
+   * TTL for improved performance on repeated queries.
+   *
+   * **Strapi v5 Component Support:**
+   * Agents use component-based architecture. The following component fields are available:
+   * - `toolConfig`: Tool configuration component (file_search, text_editor, computer_20241022, bash_20241022)
+   * - `modelConfig`: Model configuration component (model, temperature, timeout, etc.)
+   * - `analytics`: Analytics component (usage stats, performance metrics)
+   * - `metadata`: Key-value metadata pairs
+   * - `mcpConfig`: MCP server configuration components (array of mcpServer + selectedTools)
+   * - `skillSelection`: Skill selection components (array of skill references)
+   * - `tasks`: Task assignment components (array of task references)
+   *
+   * @param {Object} [options] - Query options for filtering, sorting, and pagination
+   * @param {string[]} [options.populate] - Relations/components to populate (e.g., ['mcpConfig', 'skillSelection'])
+   * @param {Record<string, any>} [options.filters] - Strapi v5 filters object (supports $eq, $ne, $in, $notIn, $lt, $lte, $gt, $gte, $contains, $notContains, $containsi, $notContainsi, $null, $notNull, $between, $startsWith, $endsWith, $or, $and, $not)
+   * @param {string[]} [options.sort] - Sort order array (e.g., ['name:asc', 'createdAt:desc'])
+   * @param {Object} [options.pagination] - Pagination configuration
+   * @param {number} [options.pagination.page] - Page number (1-indexed)
+   * @param {number} [options.pagination.pageSize] - Number of items per page
+   *
+   * @returns {Promise<Agent[]>} Array of Agent objects with populated component fields
+   *
+   * @example
+   * // Basic usage - get all agents
+   * const agents = await strapiClient.getAllAgents();
+   * console.log(`Found ${agents.length} agents`);
+   *
+   * @example
+   * // Filter enabled agents only
+   * const enabledAgents = await strapiClient.getAllAgents({
+   *   filters: { enabled: { $eq: true } }
+   * });
+   *
+   * @example
+   * // Advanced filtering with multiple conditions
+   * const filteredAgents = await strapiClient.getAllAgents({
+   *   filters: {
+   *     $and: [
+   *       { enabled: { $eq: true } },
+   *       { name: { $containsi: 'assistant' } }, // Case-insensitive contains
+   *       { createdAt: { $gte: '2024-01-01T00:00:00.000Z' } }
+   *     ]
+   *   },
+   *   sort: ['name:asc'],
+   *   pagination: { page: 1, pageSize: 10 }
+   * });
+   *
+   * @example
+   * // Populate component relations to access nested data
+   * const agentsWithRelations = await strapiClient.getAllAgents({
+   *   populate: ['mcpConfig', 'skillSelection', 'tasks'],
+   *   filters: { enabled: true }
+   * });
+   *
+   * // Access populated component data
+   * agentsWithRelations.forEach(agent => {
+   *   console.log(`Agent: ${agent.name}`);
+   *   console.log(`MCP Servers: ${agent.mcpConfig?.length || 0}`);
+   *   console.log(`Skills: ${agent.skillSelection?.length || 0}`);
+   *   console.log(`Model: ${agent.modelConfig?.model}`);
+   * });
+   *
+   * @example
+   * // Search agents by name with case-insensitive matching
+   * const searchResults = await strapiClient.getAllAgents({
+   *   filters: {
+   *     $or: [
+   *       { name: { $containsi: 'code' } },
+   *       { description: { $containsi: 'code' } }
+   *     ]
+   *   }
+   * });
+   *
+   * @example
+   * // Get agents with specific model configuration
+   * const sonnetAgents = await strapiClient.getAllAgents({
+   *   filters: {
+   *     'modelConfig.model': { $eq: 'sonnet' }
+   *   }
+   * });
+   *
+   * @example
+   * // Pagination - get second page of 20 agents
+   * const page2 = await strapiClient.getAllAgents({
+   *   pagination: { page: 2, pageSize: 20 },
+   *   sort: ['updatedAt:desc'] // Most recently updated first
+   * });
    */
   async getAllAgents(options?: {
     populate?: string[];
@@ -309,8 +400,118 @@ export class StrapiClient {
   }
 
   /**
-   * Get a single agent by ID with populated relations
-   * Updated to populate component fields (Strapi 5)
+   * Get a single agent by ID with all relations and components populated
+   *
+   * @description
+   * Retrieves a single agent by its unique document ID with deep population of all
+   * component fields and relations. This method automatically populates all nested data
+   * including MCP server configurations, skill selections, and task assignments.
+   *
+   * **Auto-populated Components:**
+   * - `toolConfig`: Tool configuration with enabled tools
+   * - `modelConfig`: Model configuration (model, temperature, timeout)
+   * - `analytics`: Usage analytics and performance metrics
+   * - `metadata`: Custom key-value metadata pairs
+   * - `mcpConfig`: MCP server configurations with nested mcpServer and selectedTools.mcpTool relations
+   * - `skillSelection`: Skill selections with nested skill relations
+   * - `tasks`: Task assignments with nested task relations
+   *
+   * **Strapi v5 Deep Population:**
+   * This method uses deep population syntax to retrieve nested relations within components:
+   * ```javascript
+   * mcpConfig: {
+   *   populate: {
+   *     mcpServer: true,           // Populate mcpServer relation
+   *     selectedTools: {
+   *       populate: { mcpTool: true }  // Populate mcpTool within selectedTools
+   *     }
+   *   }
+   * }
+   * ```
+   *
+   * @param {string} id - Agent document ID (UUID format)
+   *
+   * @returns {Promise<Agent>} Agent object with all components and relations populated
+   *
+   * @throws {Error} If agent with the specified ID is not found
+   *
+   * @example
+   * // Basic usage - get agent with all relations
+   * const agent = await strapiClient.getAgent('abc123-def456-ghi789');
+   * console.log(agent.name);
+   * console.log(agent.systemPrompt);
+   * console.log(agent.modelConfig?.model); // 'sonnet' | 'haiku' | 'opus'
+   *
+   * @example
+   * // Access MCP server configuration
+   * const agent = await strapiClient.getAgent('agent-id');
+   *
+   * // mcpConfig is an array of components
+   * agent.mcpConfig?.forEach(config => {
+   *   console.log(`MCP Server: ${config.mcpServer?.name}`);
+   *   console.log(`Transport: ${config.mcpServer?.transport}`);
+   *
+   *   // Access selected tools (nested population)
+   *   config.selectedTools?.forEach(toolSelection => {
+   *     console.log(`  Tool: ${toolSelection.mcpTool?.name}`);
+   *     console.log(`  Description: ${toolSelection.mcpTool?.description}`);
+   *   });
+   * });
+   *
+   * @example
+   * // Access skill selection
+   * const agent = await strapiClient.getAgent('agent-id');
+   *
+   * // skillSelection is an array of components
+   * agent.skillSelection?.forEach(selection => {
+   *   const skill = selection.skill; // Populated skill relation
+   *   console.log(`Skill: ${skill?.displayName}`);
+   *   console.log(`Description: ${skill?.description}`);
+   * });
+   *
+   * @example
+   * // Access tool configuration component
+   * const agent = await strapiClient.getAgent('agent-id');
+   *
+   * if (agent.toolConfig) {
+   *   console.log('Enabled tools:');
+   *   if (agent.toolConfig.file_search) console.log('  - File Search');
+   *   if (agent.toolConfig.text_editor) console.log('  - Text Editor');
+   *   if (agent.toolConfig.computer_20241022) console.log('  - Computer Use');
+   *   if (agent.toolConfig.bash_20241022) console.log('  - Bash');
+   * }
+   *
+   * @example
+   * // Access model configuration component
+   * const agent = await strapiClient.getAgent('agent-id');
+   *
+   * const config = agent.modelConfig;
+   * console.log(`Model: ${config?.model || 'sonnet'}`);
+   * console.log(`Temperature: ${config?.temperature || 1.0}`);
+   * console.log(`Max tokens: ${config?.max_tokens || 4096}`);
+   * console.log(`Timeout: ${config?.timeout || 300000}ms`);
+   *
+   * @example
+   * // Error handling for non-existent agent
+   * try {
+   *   const agent = await strapiClient.getAgent('non-existent-id');
+   * } catch (error) {
+   *   console.error('Agent not found:', error.message);
+   *   // Error: Agent with ID non-existent-id not found
+   * }
+   *
+   * @example
+   * // Check agent enabled status before use
+   * const agent = await strapiClient.getAgent('agent-id');
+   *
+   * if (!agent.enabled) {
+   *   console.warn(`Agent "${agent.name}" is disabled`);
+   *   return;
+   * }
+   *
+   * // Use agent for conversation...
+   *
+   * @see {@link getAllAgents} for querying multiple agents with filters
    */
   async getAgent(id: string): Promise<Agent> {
     const cacheKey = `agent:${id}`;
@@ -359,7 +560,139 @@ export class StrapiClient {
   }
 
   /**
-   * Create a new agent
+   * Create a new agent with component-based configuration
+   *
+   * @description
+   * Creates a new agent in Strapi with support for component-based architecture.
+   * The agent slug is automatically generated from the name. All component fields
+   * (toolConfig, modelConfig, mcpConfig, etc.) are supported in Strapi v5 format.
+   *
+   * **Component Fields:**
+   * - `toolConfig`: Configure enabled tools (file_search, text_editor, computer_20241022, bash_20241022)
+   * - `modelConfig`: Configure model settings (model, temperature, max_tokens, timeout)
+   * - `analytics`: Initialize analytics tracking
+   * - `metadata`: Add custom key-value metadata pairs
+   * - `mcpConfig`: Configure MCP servers (array of { mcpServer: id, selectedTools: [...] })
+   * - `skillSelection`: Assign skills (array of { skill: id })
+   * - `tasks`: Assign tasks (array of { task: id })
+   *
+   * **Cache Invalidation:**
+   * Creating an agent invalidates all cached agent queries to ensure fresh data.
+   *
+   * @param {CreateAgentDTO} agentData - Agent data transfer object
+   * @param {string} agentData.name - Agent name (required, used to generate slug)
+   * @param {string} [agentData.description] - Agent description
+   * @param {string} agentData.systemPrompt - System prompt for the agent (required)
+   * @param {boolean} [agentData.enabled=true] - Whether the agent is enabled
+   * @param {Object} [agentData.toolConfig] - Tool configuration component
+   * @param {Object} [agentData.modelConfig] - Model configuration component
+   * @param {Object} [agentData.analytics] - Analytics component
+   * @param {Array} [agentData.metadata] - Metadata key-value pairs
+   * @param {Array} [agentData.mcpConfig] - MCP server configuration components
+   * @param {Array} [agentData.skillSelection] - Skill selection components
+   * @param {Array} [agentData.tasks] - Task assignment components
+   *
+   * @returns {Promise<Agent>} Created agent with generated ID and auto-populated defaults
+   *
+   * @throws {Error} If agent creation fails (validation errors, network errors)
+   *
+   * @example
+   * // Basic agent creation with minimal fields
+   * const agent = await strapiClient.createAgent({
+   *   name: 'Code Assistant',
+   *   description: 'Helps with coding tasks',
+   *   systemPrompt: 'You are a helpful coding assistant specialized in TypeScript and React.',
+   *   enabled: true
+   * });
+   *
+   * console.log(agent.id);   // Auto-generated UUID
+   * console.log(agent.slug); // Auto-generated: 'code-assistant'
+   * console.log(agent.modelConfig); // Default: { model: 'sonnet', temperature: 1.0, timeout: 300000 }
+   *
+   * @example
+   * // Create agent with custom model configuration
+   * const agent = await strapiClient.createAgent({
+   *   name: 'Fast Assistant',
+   *   systemPrompt: 'You are a quick assistant for simple tasks.',
+   *   modelConfig: {
+   *     model: 'haiku',
+   *     temperature: 0.7,
+   *     max_tokens: 2048,
+   *     timeout: 60000
+   *   }
+   * });
+   *
+   * @example
+   * // Create agent with specific tools enabled
+   * const agent = await strapiClient.createAgent({
+   *   name: 'File Manager',
+   *   systemPrompt: 'You help users manage and search files.',
+   *   toolConfig: {
+   *     file_search: true,
+   *     text_editor: true,
+   *     bash_20241022: false,
+   *     computer_20241022: false
+   *   }
+   * });
+   *
+   * @example
+   * // Create agent with MCP server configuration
+   * // First, ensure MCP servers exist in Strapi
+   * const mcpServers = await strapiClient.getAllMCPServers();
+   * const filesystemServer = mcpServers.find(s => s.name === 'filesystem');
+   * const filesystemTools = await strapiClient.getMCPToolsByServerId(filesystemServer.id);
+   *
+   * const agent = await strapiClient.createAgent({
+   *   name: 'File Assistant',
+   *   systemPrompt: 'You help users with file operations.',
+   *   mcpConfig: [
+   *     {
+   *       mcpServer: filesystemServer.id,
+   *       selectedTools: filesystemTools.slice(0, 3).map(tool => ({
+   *         mcpTool: tool.id
+   *       }))
+   *     }
+   *   ]
+   * });
+   *
+   * @example
+   * // Create agent with skill selection
+   * const skills = await strapiClient.getAllSkills();
+   * const codingSkill = skills.find(s => s.name === 'typescript-expert');
+   *
+   * const agent = await strapiClient.createAgent({
+   *   name: 'TypeScript Expert',
+   *   systemPrompt: 'You are a TypeScript expert.',
+   *   skillSelection: [
+   *     { skill: codingSkill.id }
+   *   ]
+   * });
+   *
+   * @example
+   * // Create agent with custom metadata
+   * const agent = await strapiClient.createAgent({
+   *   name: 'Research Assistant',
+   *   systemPrompt: 'You help with research tasks.',
+   *   metadata: [
+   *     { key: 'department', value: 'Engineering' },
+   *     { key: 'priority', value: 'high' },
+   *     { key: 'version', value: '2.0' }
+   *   ]
+   * });
+   *
+   * @example
+   * // Error handling for validation failures
+   * try {
+   *   const agent = await strapiClient.createAgent({
+   *     name: '', // Invalid: empty name
+   *     systemPrompt: 'Test prompt'
+   *   });
+   * } catch (error) {
+   *   console.error('Validation failed:', error.message);
+   * }
+   *
+   * @see {@link updateAgent} for updating existing agents
+   * @see {@link getAgent} for retrieving created agent with full details
    */
   async createAgent(agentData: CreateAgentDTO): Promise<Agent> {
     const { data } = await this.client.post<StrapiData<any>>(
@@ -380,7 +713,161 @@ export class StrapiClient {
   }
 
   /**
-   * Update an existing agent
+   * Update an existing agent with partial data
+   *
+   * @description
+   * Updates an existing agent in Strapi using partial update semantics. Only the fields
+   * provided in the update DTO will be modified; omitted fields remain unchanged. This
+   * method supports updating all component fields and relations in Strapi v5 format.
+   *
+   * **Partial Updates:**
+   * You can update individual fields without affecting other fields:
+   * - Update only `name` without changing `systemPrompt`
+   * - Update only `modelConfig` without changing `toolConfig`
+   * - Update only specific tools within `mcpConfig` arrays
+   *
+   * **Component Field Updates:**
+   * - `toolConfig`: Update tool enablement settings
+   * - `modelConfig`: Update model configuration (temperature, timeout, etc.)
+   * - `analytics`: Update analytics data
+   * - `metadata`: Replace or append metadata pairs
+   * - `mcpConfig`: Replace MCP server configurations (array replacement)
+   * - `skillSelection`: Replace skill selections (array replacement)
+   * - `tasks`: Replace task assignments (array replacement)
+   *
+   * **Cache Invalidation:**
+   * Updating an agent invalidates both the specific agent cache and all agent list caches.
+   *
+   * @param {string} id - Agent document ID to update
+   * @param {UpdateAgentDTO} agentData - Partial agent data to update
+   * @param {string} [agentData.name] - Update agent name (updates slug automatically)
+   * @param {string} [agentData.description] - Update description
+   * @param {string} [agentData.systemPrompt] - Update system prompt
+   * @param {boolean} [agentData.enabled] - Update enabled status
+   * @param {Object} [agentData.toolConfig] - Update tool configuration
+   * @param {Object} [agentData.modelConfig] - Update model configuration
+   * @param {Object} [agentData.analytics] - Update analytics
+   * @param {Array} [agentData.metadata] - Replace metadata (not merged)
+   * @param {Array} [agentData.mcpConfig] - Replace MCP config (not merged)
+   * @param {Array} [agentData.skillSelection] - Replace skill selection (not merged)
+   * @param {Array} [agentData.tasks] - Replace task assignments (not merged)
+   *
+   * @returns {Promise<Agent>} Updated agent with all components populated
+   *
+   * @throws {Error} If agent with specified ID is not found or update fails
+   *
+   * @example
+   * // Basic update - change agent name and description
+   * const updatedAgent = await strapiClient.updateAgent('agent-id', {
+   *   name: 'Updated Assistant',
+   *   description: 'New description'
+   * });
+   *
+   * // systemPrompt, enabled, and other fields remain unchanged
+   *
+   * @example
+   * // Update only the system prompt
+   * const agent = await strapiClient.updateAgent('agent-id', {
+   *   systemPrompt: 'You are an expert TypeScript developer with 10 years of experience.'
+   * });
+   *
+   * @example
+   * // Enable/disable an agent
+   * const agent = await strapiClient.updateAgent('agent-id', {
+   *   enabled: false
+   * });
+   *
+   * @example
+   * // Update model configuration - change model and temperature
+   * const agent = await strapiClient.updateAgent('agent-id', {
+   *   modelConfig: {
+   *     model: 'opus',
+   *     temperature: 0.5,
+   *     max_tokens: 8192,
+   *     timeout: 600000
+   *   }
+   * });
+   *
+   * @example
+   * // Update tool configuration - enable specific tools
+   * const agent = await strapiClient.updateAgent('agent-id', {
+   *   toolConfig: {
+   *     file_search: true,
+   *     text_editor: true,
+   *     bash_20241022: true,
+   *     computer_20241022: false
+   *   }
+   * });
+   *
+   * @example
+   * // Update MCP configuration - replace all MCP servers
+   * const mcpServers = await strapiClient.getAllMCPServers();
+   * const githubServer = mcpServers.find(s => s.name === 'github');
+   * const githubTools = await strapiClient.getMCPToolsByServerId(githubServer.id);
+   *
+   * const agent = await strapiClient.updateAgent('agent-id', {
+   *   mcpConfig: [
+   *     {
+   *       mcpServer: githubServer.id,
+   *       selectedTools: githubTools.map(tool => ({ mcpTool: tool.id }))
+   *     }
+   *   ]
+   * });
+   *
+   * @example
+   * // Add more skills to an agent (requires fetching existing first)
+   * const currentAgent = await strapiClient.getAgent('agent-id');
+   * const newSkill = await strapiClient.getAllSkills({ filters: { name: 'debugging' } });
+   *
+   * const agent = await strapiClient.updateAgent('agent-id', {
+   *   skillSelection: [
+   *     ...(currentAgent.skillSelection || []), // Keep existing skills
+   *     { skill: newSkill[0].id } // Add new skill
+   *   ]
+   * });
+   *
+   * @example
+   * // Update metadata - completely replace metadata array
+   * const agent = await strapiClient.updateAgent('agent-id', {
+   *   metadata: [
+   *     { key: 'environment', value: 'production' },
+   *     { key: 'version', value: '3.0' },
+   *     { key: 'last_updated', value: new Date().toISOString() }
+   *   ]
+   * });
+   *
+   * @example
+   * // Bulk update - change multiple fields at once
+   * const agent = await strapiClient.updateAgent('agent-id', {
+   *   name: 'Production Assistant',
+   *   description: 'Production-ready AI assistant',
+   *   enabled: true,
+   *   modelConfig: {
+   *     model: 'sonnet',
+   *     temperature: 0.7,
+   *     timeout: 300000
+   *   },
+   *   toolConfig: {
+   *     file_search: true,
+   *     text_editor: true,
+   *     bash_20241022: false,
+   *     computer_20241022: false
+   *   }
+   * });
+   *
+   * @example
+   * // Error handling for non-existent agent
+   * try {
+   *   const agent = await strapiClient.updateAgent('non-existent-id', {
+   *     name: 'New Name'
+   *   });
+   * } catch (error) {
+   *   console.error('Update failed:', error.message);
+   *   // Error: Failed to update agent with ID non-existent-id
+   * }
+   *
+   * @see {@link createAgent} for creating new agents
+   * @see {@link getAgent} for retrieving current agent state before update
    */
   async updateAgent(id: string, agentData: UpdateAgentDTO): Promise<Agent> {
     const { data } = await this.client.put<StrapiData<any>>(
@@ -402,7 +889,106 @@ export class StrapiClient {
   }
 
   /**
-   * Delete an agent
+   * Delete an agent permanently from Strapi
+   *
+   * @description
+   * Permanently deletes an agent from the Strapi database. This operation cannot be undone.
+   * All associated component data (toolConfig, modelConfig, mcpConfig, skillSelection, etc.)
+   * is also deleted as they are part of the agent entity.
+   *
+   * **Important Considerations:**
+   * - This is a permanent deletion - there is no soft delete or trash bin
+   * - All component data is deleted with the agent
+   * - Related entities (Skills, MCP Servers, Tasks) are NOT deleted (only the associations)
+   * - Any active conversations using this agent may fail
+   * - Cache is automatically invalidated after deletion
+   *
+   * **Best Practices:**
+   * - Consider disabling the agent instead of deleting it to preserve history
+   * - Verify the agent ID before deletion to prevent accidental deletions
+   * - Check for active conversations or tasks before deletion
+   * - Export agent configuration before deletion if you may need it later
+   *
+   * @param {string} id - Agent document ID to delete
+   *
+   * @returns {Promise<void>} Resolves when deletion is complete
+   *
+   * @throws {Error} If agent with specified ID is not found or deletion fails
+   *
+   * @example
+   * // Basic deletion
+   * await strapiClient.deleteAgent('agent-id-to-delete');
+   * console.log('Agent deleted successfully');
+   *
+   * @example
+   * // Safe deletion with confirmation
+   * const agent = await strapiClient.getAgent('agent-id');
+   * console.log(`About to delete agent: ${agent.name}`);
+   * console.log(`Description: ${agent.description}`);
+   *
+   * // In a real application, prompt user for confirmation here
+   * const confirmed = true; // User confirmation
+   *
+   * if (confirmed) {
+   *   await strapiClient.deleteAgent(agent.id);
+   *   console.log('Agent deleted');
+   * }
+   *
+   * @example
+   * // Alternative: Disable instead of delete (preserves history)
+   * // This is often preferred over permanent deletion
+   * const agent = await strapiClient.updateAgent('agent-id', {
+   *   enabled: false
+   * });
+   * console.log('Agent disabled (not deleted)');
+   *
+   * @example
+   * // Export agent configuration before deletion
+   * const agent = await strapiClient.getAgent('agent-id');
+   *
+   * // Save configuration to file or backup system
+   * const backup = {
+   *   name: agent.name,
+   *   description: agent.description,
+   *   systemPrompt: agent.systemPrompt,
+   *   modelConfig: agent.modelConfig,
+   *   toolConfig: agent.toolConfig,
+   *   mcpConfig: agent.mcpConfig,
+   *   skillSelection: agent.skillSelection,
+   *   exportedAt: new Date().toISOString()
+   * };
+   *
+   * // fs.writeFileSync(`./backups/agent-${agent.id}.json`, JSON.stringify(backup, null, 2));
+   *
+   * // Now safe to delete
+   * await strapiClient.deleteAgent(agent.id);
+   *
+   * @example
+   * // Error handling for non-existent agent
+   * try {
+   *   await strapiClient.deleteAgent('non-existent-id');
+   * } catch (error) {
+   *   console.error('Deletion failed:', error.message);
+   *   // Handle error (agent not found, network error, etc.)
+   * }
+   *
+   * @example
+   * // Batch deletion (use with caution!)
+   * const agentsToDelete = await strapiClient.getAllAgents({
+   *   filters: { enabled: false, updatedAt: { $lt: '2024-01-01' } }
+   * });
+   *
+   * console.log(`Found ${agentsToDelete.length} agents to delete`);
+   *
+   * for (const agent of agentsToDelete) {
+   *   console.log(`Deleting ${agent.name}...`);
+   *   await strapiClient.deleteAgent(agent.id);
+   * }
+   *
+   * console.log('Batch deletion complete');
+   *
+   * @see {@link updateAgent} for disabling agents without deletion
+   * @see {@link getAgent} for retrieving agent details before deletion
    */
   async deleteAgent(id: string): Promise<void> {
     await this.client.delete(`/agents/${id}`);

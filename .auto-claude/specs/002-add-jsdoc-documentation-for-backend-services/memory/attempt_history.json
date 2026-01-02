@@ -71,11 +71,35 @@
         }
       ],
       "status": "completed"
+    },
+    "1.7": {
+      "attempts": [
+        {
+          "session": 8,
+          "timestamp": "2026-01-02T10:18:38.038913",
+          "approach": "Implemented: Add JSDoc for testMCPServer, testStdioServer, testSdkServer, listMCPServerTools, fetchToolsFromStdio",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "2.1": {
+      "attempts": [
+        {
+          "session": 9,
+          "timestamp": "2026-01-02T10:21:29.340016",
+          "approach": "Implemented: Add @example usage for class instantiation, cache configuration details, and common patterns. Docume",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-02T09:50:58.101330",
-    "last_updated": "2026-01-02T10:12:21.189559"
+    "last_updated": "2026-01-02T10:21:29.340028"
   }
 }

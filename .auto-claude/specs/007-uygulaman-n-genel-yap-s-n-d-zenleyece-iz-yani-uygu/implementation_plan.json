@@ -1,0 +1,369 @@
+{
+  "feature": "Workflow/Flow System Implementation",
+  "description": "Implement a workflow/flow system for organizing agents and skills into reusable, schedulable processes with input/output handling. This transforms the application from a simple agent manager to a process automation tool where users can define workflows like 'Web Scraper' that take input, run agents with skills, and produce structured outputs.",
+  "created_at": "2026-01-02T08:48:42.626Z",
+  "updated_at": "2026-01-02T09:00:00.000Z",
+  "status": "in_progress",
+  "planStatus": "in_progress",
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Core Flow Infrastructure",
+      "description": "Define data models and API for Flow entity in Strapi backend",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Create Flow Content Type Schema",
+          "description": "Define the Flow content type in Strapi with fields: name, slug, description, nodes (JSON), status, inputSchema, outputSchema, isActive",
+          "status": "completed",
+          "files": [
+            "backend/src/api/flow/content-types/flow/schema.json"
+          ],
+          "notes": "Created Flow content type schema with all required fields (name, slug, description, nodes, status, inputSchema, outputSchema, isActive) plus additional utility fields (version, category, metadata). Also created controller, routes, and service files following existing Strapi patterns. Committed as d35cc9c.",
+          "updated_at": "2026-01-02T08:56:32.586801+00:00"
+        },
+        {
+          "id": "1.2",
+          "title": "Create Flow Node Components",
+          "description": "Define Strapi components for flow nodes: input-node, agent-node, output-node with their specific configurations",
+          "status": "completed",
+          "files": [
+            "backend/src/components/flow/input-node.json",
+            "backend/src/components/flow/agent-node.json",
+            "backend/src/components/flow/output-node.json"
+          ],
+          "notes": "Created three flow node Strapi components: input-node.json (inputFields, validationRules, position, nextNodeId), agent-node.json (agent relation, promptTemplate, skills array, modelOverride, retry settings), output-node.json (outputType, format, saveToFile, webhook support). All components follow existing Strapi component patterns with proper collectionName conventions. Committed as d69d700.",
+          "updated_at": "2026-01-02T09:00:03.610676+00:00"
+        },
+        {
+          "id": "1.3",
+          "title": "Create FlowExecution Content Type",
+          "description": "Define content type for tracking flow execution history with status, logs, input, output, timing, and errors",
+          "status": "completed",
+          "files": [
+            "backend/src/api/flow-execution/content-types/flow-execution/schema.json"
+          ],
+          "notes": "Created FlowExecution content type schema with comprehensive fields for tracking flow execution history: flow relation, status (pending/running/completed/failed/cancelled), input/output JSON, logs array, error/errorDetails, timing fields (startedAt, completedAt, executionTime), nodeExecutions array for tracking each node's state, currentNodeId, tokensUsed/cost, triggeredBy enum (manual/schedule/webhook/api), triggerData, retryCount/parentExecutionId for retry support, and metadata. Also created controller, routes, and service files with helper methods for execution lifecycle management (startExecution, addLog, updateNodeExecution, completeExecution, failExecution, cancelExecution, getFlowStats). Committed as 212aea4.",
+          "updated_at": "2026-01-02T09:03:57.461051+00:00"
+        },
+        {
+          "id": "1.4",
+          "title": "Implement Flow API Controllers",
+          "description": "Create Strapi controllers for Flow CRUD operations with custom routes",
+          "status": "completed",
+          "files": [
+            "backend/src/api/flow/controllers/flow.ts",
+            "backend/src/api/flow/routes/flow.ts",
+            "backend/src/api/flow/services/flow.ts"
+          ],
+          "notes": "Created enhanced Flow API with comprehensive CRUD operations. Controller (flow.ts) includes 12 custom methods: findBySlug, findActive, toggleActive, updateStatus, duplicate, validate, findDetails, findByCategory, findRecent, activate, deactivate, archive. Custom routes file (custom.ts) exposes 12 REST endpoints for these operations. Service (flow.ts) enhanced with additional helper methods: duplicateFlow, generateSlug, getFlowSummaries, bumpVersion, search, getExecutableFlows, exportFlow, importFlow. All methods follow existing Strapi patterns from agent and skill APIs. Committed as 723e5ca.",
+          "updated_at": "2026-01-02T09:08:53.472262+00:00"
+        },
+        {
+          "id": "1.5",
+          "title": "Implement FlowExecution API",
+          "description": "Create controllers and routes for flow execution history management",
+          "status": "completed",
+          "files": [
+            "backend/src/api/flow-execution/controllers/flow-execution.ts",
+            "backend/src/api/flow-execution/routes/flow-execution.ts",
+            "backend/src/api/flow-execution/services/flow-execution.ts"
+          ],
+          "notes": "Implemented comprehensive FlowExecution API with enhanced controller (17 custom methods: findByFlowId, findRunning, findRecent, findByStatus, findDetails, getStats, getGlobalStats, start, addLog, updateNode, complete, fail, cancel, retry, getLogs, cleanup), custom routes file exposing 17 REST endpoints for execution management, lifecycle control, and monitoring, and enhanced service with 18 methods including execution lifecycle (startExecution, completeExecution, failExecution, cancelExecution, retryExecution), statistics (getFlowStats, getGlobalStats), maintenance (cleanupOld), and utilities (getExecutionTimeline, getExecutionSummary). Committed as 88372b1.",
+          "updated_at": "2026-01-02T09:14:10.648818+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Flow Execution Engine",
+      "description": "Implement the backend service for executing flows with agent integration",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Create Flow Types",
+          "description": "Define TypeScript types for flows, nodes, execution context, and results",
+          "status": "pending",
+          "files": [
+            "src/types/flow-types.ts"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "2.2",
+          "title": "Create Flow Execution Service",
+          "description": "Implement the main flow runner service that orchestrates node execution, manages state, and handles errors",
+          "status": "pending",
+          "files": [
+            "src/services/flow-execution-service.ts"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "2.3",
+          "title": "Implement Node Handlers",
+          "description": "Create handlers for each node type: InputNodeHandler, AgentNodeHandler, OutputNodeHandler",
+          "status": "pending",
+          "files": [
+            "src/services/flow-nodes/input-node-handler.ts",
+            "src/services/flow-nodes/agent-node-handler.ts",
+            "src/services/flow-nodes/output-node-handler.ts",
+            "src/services/flow-nodes/index.ts"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "2.4",
+          "title": "Integrate with Claude SDK Service",
+          "description": "Connect agent node handler with existing ClaudeSdkService for agent execution within flows",
+          "status": "pending",
+          "files": [
+            "src/services/flow-nodes/agent-node-handler.ts"
+          ],
+          "notes": "Leverage existing claude-sdk-service.ts for agent execution"
+        },
+        {
+          "id": "2.5",
+          "title": "Add Express Routes for Flow Execution",
+          "description": "Create REST API endpoints for starting, stopping, and monitoring flow executions with SSE support",
+          "status": "pending",
+          "files": [
+            "src/routes/flow.routes.ts",
+            "src/server.ts"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "2.6",
+          "title": "Update Strapi Client for Flows",
+          "description": "Add flow-related methods to the Strapi client service",
+          "status": "pending",
+          "files": [
+            "src/services/strapi-client.ts"
+          ],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "Frontend Flow Builder",
+      "description": "Implement the web UI for creating and managing flows",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Add Flow Types to Frontend",
+          "description": "Define TypeScript types for flows in the frontend",
+          "status": "pending",
+          "files": [
+            "src/web/manager/types.ts"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "3.2",
+          "title": "Create Flow API Service",
+          "description": "Implement frontend API client for flow operations",
+          "status": "pending",
+          "files": [
+            "src/web/manager/services/flow-api.ts"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "3.3",
+          "title": "Create Flow List Page",
+          "description": "Implement the flows listing page with create, edit, delete, and execute actions",
+          "status": "pending",
+          "files": [
+            "src/web/manager/components/FlowsPage.tsx"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "3.4",
+          "title": "Create Flow Editor Page",
+          "description": "Build a simple flow editor with linear node configuration (no drag-drop, just step-by-step)",
+          "status": "pending",
+          "files": [
+            "src/web/manager/components/FlowEditorPage.tsx"
+          ],
+          "notes": "Simple vertical step editor for personal use, no complex canvas needed"
+        },
+        {
+          "id": "3.5",
+          "title": "Create Node Configuration Components",
+          "description": "Build configuration panels for each node type with proper form inputs",
+          "status": "pending",
+          "files": [
+            "src/web/manager/components/flow/InputNodeConfig.tsx",
+            "src/web/manager/components/flow/AgentNodeConfig.tsx",
+            "src/web/manager/components/flow/OutputNodeConfig.tsx"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "3.6",
+          "title": "Create Flow Execution Modal",
+          "description": "Build modal for running flows with input form and real-time execution status",
+          "status": "pending",
+          "files": [
+            "src/web/manager/components/FlowExecutionModal.tsx"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "3.7",
+          "title": "Update Sidebar Navigation",
+          "description": "Add Flows section to the sidebar navigation and update router",
+          "status": "pending",
+          "files": [
+            "src/web/manager/components/layout/Sidebar.tsx",
+            "src/web/manager/ManagerApp.tsx"
+          ],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "Scheduling & Triggers",
+      "description": "Implement scheduling and trigger mechanisms for automated flow execution",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "4.1",
+          "title": "Add Schedule Fields to Flow Schema",
+          "description": "Add schedule configuration fields to the Flow content type",
+          "status": "pending",
+          "files": [
+            "backend/src/api/flow/content-types/flow/schema.json",
+            "backend/src/components/flow/schedule.json"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "4.2",
+          "title": "Implement Simple Scheduler Service",
+          "description": "Create a basic scheduler service using setInterval for personal use",
+          "status": "pending",
+          "files": [
+            "src/services/flow-scheduler-service.ts"
+          ],
+          "notes": "Simple implementation for personal use, not production-grade"
+        },
+        {
+          "id": "4.3",
+          "title": "Add Webhook Trigger Support",
+          "description": "Create webhook endpoint for triggering flows via HTTP requests",
+          "status": "pending",
+          "files": [
+            "src/routes/webhook.routes.ts"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "4.4",
+          "title": "Add Schedule UI to Flow Editor",
+          "description": "Add scheduling configuration panel to the flow editor UI",
+          "status": "pending",
+          "files": [
+            "src/web/manager/components/flow/FlowScheduleConfig.tsx",
+            "src/web/manager/components/FlowEditorPage.tsx"
+          ],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "id": "phase-5",
+      "name": "Integration & Polish",
+      "description": "Connect all components and add finishing touches",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "5.1",
+          "title": "Create Flow Execution History View",
+          "description": "Add execution history tab to flow detail page with logs and results",
+          "status": "pending",
+          "files": [
+            "src/web/manager/components/FlowHistoryTab.tsx"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "5.2",
+          "title": "Add Flow Stats to Dashboard",
+          "description": "Update dashboard page with flow execution statistics and recent runs",
+          "status": "pending",
+          "files": [
+            "src/web/manager/components/DashboardPage.tsx"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "5.3",
+          "title": "Create Flow Templates",
+          "description": "Create pre-built flow templates (e.g., Web Scraper, Data Processor) for quick start",
+          "status": "pending",
+          "files": [
+            "src/services/flow-templates.ts"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "5.4",
+          "title": "Add Error Handling",
+          "description": "Implement comprehensive error handling with retry mechanism for failed nodes",
+          "status": "pending",
+          "files": [
+            "src/services/flow-execution-service.ts"
+          ],
+          "notes": ""
+        },
+        {
+          "id": "5.5",
+          "title": "Integration Testing",
+          "description": "Test flow creation and execution end-to-end",
+          "status": "pending",
+          "files": [],
+          "notes": "Manual testing for personal use project"
+        }
+      ]
+    }
+  ],
+  "qa_signoff": {
+    "status": "pending",
+    "tests_passed": "",
+    "issues": ""
+  },
+  "context": {
+    "existing_entities": [
+      "Agent",
+      "Skill",
+      "Task",
+      "MCP Server",
+      "Chat Session"
+    ],
+    "tech_stack": {
+      "backend": "Strapi 4 (PostgreSQL), Express.js",
+      "frontend": "React 18, Vite, Tailwind CSS",
+      "ai_integration": "Claude Agent SDK, Anthropic SDK"
+    },
+    "key_files": {
+      "claude_sdk": "src/services/claude-sdk-service.ts",
+      "strapi_client": "src/services/strapi-client.ts",
+      "main_app": "src/web/manager/ManagerApp.tsx"
+    },
+    "design_principles": [
+      "Simple implementation for personal use",
+      "No production-grade security needed",
+      "Focus on usability over scalability",
+      "Leverage existing patterns in codebase"
+    ]
+  },
+  "last_updated": "2026-01-02T09:14:10.648832+00:00"
+}

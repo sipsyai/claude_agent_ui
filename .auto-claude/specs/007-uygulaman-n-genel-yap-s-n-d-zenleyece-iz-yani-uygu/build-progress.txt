@@ -1,0 +1,72 @@
+# Build Progress - Workflow/Flow System Implementation
+Created: 2026-01-02
+
+## Summary
+Implementing a workflow/flow system that allows users to:
+- Define reusable processes (flows) with agents and skills
+- Configure inputs and outputs for each flow
+- Schedule flows or activate them via webhooks
+- Track execution history and logs
+
+## Phases Overview
+
+### Phase 1: Core Flow Infrastructure (In Progress)
+- [x] 1.1 Create Flow Content Type Schema ✓
+- [ ] 1.2 Create Flow Node Components
+- [ ] 1.3 Create FlowExecution Content Type
+- [ ] 1.4 Implement Flow API Controllers
+- [ ] 1.5 Implement FlowExecution API
+
+### Phase 2: Flow Execution Engine (Pending)
+- [ ] 2.1 Create Flow Types
+- [ ] 2.2 Create Flow Execution Service
+- [ ] 2.3 Implement Node Handlers
+- [ ] 2.4 Integrate with Claude SDK Service
+- [ ] 2.5 Add Express Routes for Flow Execution
+- [ ] 2.6 Update Strapi Client for Flows
+
+### Phase 3: Frontend Flow Builder (Pending)
+- [ ] 3.1 Add Flow Types to Frontend
+- [ ] 3.2 Create Flow API Service
+- [ ] 3.3 Create Flow List Page
+- [ ] 3.4 Create Flow Editor Page
+- [ ] 3.5 Create Node Configuration Components
+- [ ] 3.6 Create Flow Execution Modal
+- [ ] 3.7 Update Sidebar Navigation
+
+### Phase 4: Scheduling and Activation (Pending)
+- [ ] 4.1 Add Schedule Fields to Flow Schema
+- [ ] 4.2 Implement Simple Scheduler Service
+- [ ] 4.3 Add Webhook Support
+- [ ] 4.4 Add Schedule UI to Flow Editor
+
+### Phase 5: Integration and Polish (Pending)
+- [ ] 5.1 Create Flow Execution History View
+- [ ] 5.2 Add Flow Stats to Dashboard
+- [ ] 5.3 Create Flow Templates
+- [ ] 5.4 Add Error Handling
+- [ ] 5.5 Integration Testing
+
+## Progress Notes
+
+### 2026-01-02
+- Created implementation plan with 5 phases and 27 subtasks
+- Analyzed existing codebase structure
+- Identified key integration points with Claude SDK service
+- **1.1 Completed**: Created Flow content type in Strapi with schema, controller, routes, and service
+  - Fields: name, slug, description, nodes (JSON), status, inputSchema, outputSchema, isActive
+  - Added version, category, and metadata fields for extensibility
+  - Committed as d35cc9c
+
+## Architecture Decisions
+
+1. Simple Flow Model: Linear flow execution (Input to Agent to Output) rather than complex DAG
+2. Reuse Existing Services: Leverage ClaudeSdkService for agent execution
+3. Strapi for Data: Use Strapi content types for Flow and FlowExecution
+4. Express for Execution API: Use Express routes with SSE for real-time updates
+5. Simple Frontend: No complex canvas editor - use step-by-step form approach
+
+## Key Files
+- claude-sdk-service.ts - Agent execution
+- strapi-client.ts - Database operations
+- ManagerApp.tsx - Frontend routing

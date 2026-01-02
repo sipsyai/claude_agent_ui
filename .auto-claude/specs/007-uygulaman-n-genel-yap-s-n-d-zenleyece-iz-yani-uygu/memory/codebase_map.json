@@ -1,0 +1,40 @@
+{
+  "discovered_files": {
+    "./.auto-claude/specs/007-uygulaman-n-genel-yap-s-n-d-zenleyece-iz-yani-uygu/implementation_plan.json": {
+      "description": "Created comprehensive implementation plan with 5 phases and 27 subtasks for Workflow/Flow System. Phases: 1) Core Flow Infrastructure (Strapi schemas), 2) Flow Execution Engine (node handlers, SDK integration), 3) Frontend Flow Builder (React components), 4) Scheduling and Webhooks, 5) Integration and Polish.",
+      "category": "implementation_plan",
+      "discovered_at": "2026-01-02T08:53:24.452606+00:00"
+    },
+    "backend/src/api/flow/content-types/flow/schema.json": {
+      "description": "Created Flow content type in Strapi with fields: name (string, unique), slug (uid), description (text), nodes (json), status (enum: draft/active/paused/archived), inputSchema (json), outputSchema (json), isActive (boolean), version (string), category (enum), metadata (json). Also created controller, routes, and service files following existing patterns.",
+      "category": "schema",
+      "discovered_at": "2026-01-02T08:56:03.481251+00:00"
+    },
+    "backend/src/components/flow/": {
+      "description": "Created three flow node components for Strapi: input-node.json (defines flow inputs with inputFields, validationRules), agent-node.json (links to agent with promptTemplate, skills override, model override, retry settings), output-node.json (defines output delivery with type, format, file saving, webhook support). All follow existing Strapi component patterns with collectionName format 'components_flow_*_nodes'.",
+      "category": "strapi-components",
+      "discovered_at": "2026-01-02T08:59:06.536719+00:00"
+    },
+    "backend/src/api/flow-execution/content-types/flow-execution/schema.json": {
+      "description": "Created FlowExecution content type for tracking flow execution history. Key fields: flow relation, status enum, input/output JSON, logs array, error fields, timing (startedAt, completedAt, executionTime), nodeExecutions array, triggeredBy enum, retry tracking. Service includes lifecycle methods: startExecution, addLog, updateNodeExecution, completeExecution, failExecution, cancelExecution, getFlowStats.",
+      "category": "schema",
+      "discovered_at": "2026-01-02T09:03:57.489702+00:00"
+    },
+    "src/api/flow/": {
+      "description": "Flow API implementation with enhanced controller (12 custom methods: findBySlug, findActive, toggleActive, updateStatus, duplicate, validate, findDetails, findByCategory, findRecent, activate, deactivate, archive), custom routes file exposing 12 REST endpoints, and service with helper methods (duplicateFlow, generateSlug, getFlowSummaries, bumpVersion, search, getExecutableFlows, exportFlow, importFlow). Follows existing patterns from agent and skill APIs.",
+      "category": "api",
+      "discovered_at": "2026-01-02T09:09:01.372370+00:00"
+    },
+    "src/api/flow-execution/": {
+      "description": "FlowExecution API with comprehensive controller (17 methods for CRUD, lifecycle, and monitoring), custom routes (17 REST endpoints), and service (18 methods for execution lifecycle, statistics, and utilities). Key endpoints: POST /flow-executions/start, POST /:id/complete, POST /:id/fail, POST /:id/cancel, POST /:id/retry, GET /stats, GET /running, DELETE /cleanup. Service includes retry support, cleanup old executions, execution timeline, and execution summary features.",
+      "category": "api",
+      "discovered_at": "2026-01-02T09:14:10.768118+00:00"
+    },
+    "src/types/flow-types.ts": {
+      "description": "Created comprehensive TypeScript types for the Flow Execution Engine. Includes: Flow (workflow definition), FlowNode types (InputNode, AgentNode, OutputNode with discriminated union), FlowExecution (execution tracking), FlowExecutionContext (runtime context), NodeExecution (individual node state), FlowExecutionResult (final results), SSE update types for real-time streaming, and utility types/type guards. Types align with Strapi schemas in backend/src/api/flow/ and backend/src/components/flow/.",
+      "category": "types",
+      "discovered_at": "2026-01-02T09:18:00.750596+00:00"
+    }
+  },
+  "last_updated": "2026-01-02T09:18:00.750607+00:00"
+}

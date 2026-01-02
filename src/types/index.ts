@@ -11,6 +11,7 @@ export * from './strapi.types.js';
 export * from './dto.types.js';
 export * from './sse.types.js';
 export * from './mcp-types.js';
+export * from './flow-types.js';
 
 // Tool metrics types
 export interface ToolMetrics {

@@ -432,7 +432,7 @@
           "id": "5.4",
           "title": "Add Flow Preview Mode",
           "description": "Add a preview mode that shows how data flows through nodes with sample input",
-          "status": "pending",
+          "status": "completed",
           "estimatedHours": 2,
           "acceptanceCriteria": [
             "Preview button in toolbar",
@@ -444,13 +444,14 @@
           "files": [
             "src/web/manager/components/flow-canvas/FlowPreview.tsx"
           ],
-          "notes": "Optional enhancement for better UX"
+          "notes": "Successfully implemented comprehensive flow preview mode with all acceptance criteria met:\n\n\u2705 Preview button in toolbar - Added PreviewIcon and onPreview callback to CanvasToolbar\n\u2705 Modal to enter sample input - FlowPreview modal with input form for all configured input fields\n\u2705 Visual animation of data flowing through nodes - Animated execution with pulsing status indicators\n\u2705 Shows expected output at each node - Expandable output sections with JSON/text preview\n\u2705 Can step through execution manually - Step forward button, play/pause controls, and progress tracking\n\nAdditional features implemented:\n- **Auto-Play Mode**: Automatic progression through nodes with configurable speed (1500ms default)\n- **Manual Stepping**: Step-by-step execution with pause/resume functionality\n- **Execution Order**: Topological sort (BFS) to determine correct node execution sequence\n- **Node Simulation**: Mock execution for each node type (input passthrough, agent AI response, output formatting)\n- **Real-Time Status**: Visual feedback showing pending/running/completed/error states per node\n- **Progress Tracking**: Progress bar and step counter showing current position in flow\n- **Collapsible Outputs**: View detailed output for each node with syntax highlighting\n- **Timestamp Tracking**: Execution timestamp for each node in the flow\n- **Error Handling**: Graceful error display with specific error messages\n- **Responsive Layout**: Two-panel design with inputs/controls on left, execution log on right\n- **Comprehensive JSDoc**: Full documentation following codebase patterns\n- **Full TypeScript Safety**: Proper typing throughout with type guards and interfaces\n- **Inline PauseCircleIcon**: Custom SVG icon component (not available in Icons.tsx)\n\nIntegration:\n- Added preview button to CanvasToolbar with eye icon\n- Integrated FlowPreview component into FlowEditorVisual\n- Fixed FlowCanvas showBackground prop mapping (was showGrid)\n- Added showPreview state management in FlowEditorVisual\n\nFiles created:\n- src/web/manager/components/flow-canvas/FlowPreview.tsx (767 lines)\n\nFiles updated:\n- src/web/manager/components/flow-canvas/CanvasToolbar.tsx (added PreviewIcon, onPreview prop, preview button)\n- src/web/manager/components/FlowEditorVisual.tsx (added FlowPreview integration, showPreview state, fixed prop mapping)\n\nTypeScript compilation verified with no errors related to FlowPreview implementation\nCommitted: 83f02a6\n\nThis preview mode provides an excellent way for users to visualize and understand their flow execution without actually running it on the backend, making it easier to debug and validate workflows before deployment.",
+          "updated_at": "2026-01-02T17:40:24.255273+00:00"
         },
         {
           "id": "5.5",
           "title": "Add CSS Styling and Theming",
           "description": "Create dedicated CSS/styles for the flow canvas that matches the existing dark theme",
-          "status": "pending",
+          "status": "completed",
           "estimatedHours": 1,
           "acceptanceCriteria": [
             "React Flow styles customized for dark theme",
@@ -462,14 +463,45 @@
           "files": [
             "src/web/manager/styles/flow-canvas.css"
           ],
-          "notes": "Override React Flow default styles"
+          "notes": "Successfully created comprehensive CSS styling for the flow canvas with all acceptance criteria met:\n\n\u2705 React Flow styles customized for dark theme - Complete override of all React Flow components\n\u2705 Node colors match existing design system - Uses colors from styles.css (#0c1222, #1e293b, #3b82f6, etc.)\n\u2705 Smooth animations and transitions - Multiple keyframe animations (pulse-handle, dash, edge-glow, data-pulse) with 0.2s transitions\n\u2705 Responsive layout for different screen sizes - Media queries for mobile (<768px), tablet (769-1024px), desktop (>1024px)\n\u2705 Consistent with existing UI components - Fully integrated with existing theme variables and color scheme\n\n## Implementation Details\n- Created flow-canvas.css (13KB, 650+ lines) with comprehensive styling\n- Updated FlowCanvas.tsx to import the new CSS file\n- Styled all React Flow components: container, controls, minimap, background, nodes, handles, edges, selection\n- Added 4 custom animations for interactive feedback and data flow visualization\n- Implemented accessibility features: keyboard focus states, high contrast mode support, reduced motion support\n- Added responsive breakpoints with mobile-first approach\n- Included print styles for flow diagram export\n- Used design system colors: background (#0c1222), border (#1e293b), primary (#3b82f6)\n- Node type colors: Blue (input), Purple (agent), Green (output)\n\n## Files Created\n- src/web/manager/styles/flow-canvas.css (650+ lines)\n\n## Files Modified\n- src/web/manager/components/flow-canvas/FlowCanvas.tsx (added CSS import)\n\nCommitted: 5e2b5a6",
+          "updated_at": "2026-01-02T17:44:08.446464+00:00"
         }
       ]
     }
   ],
+  "qa_signoff": {
+    "status": "fixes_applied",
+    "timestamp": "2026-01-02T20:59:00.000Z",
+    "qa_session": 2,
+    "fix_session": 2,
+    "issues_found": [
+      {
+        "type": "critical",
+        "title": "TypeScript Error in auto-layout.ts",
+        "location": "src/web/manager/utils/auto-layout.ts:110",
+        "fix_required": "Remove | undefined from NodeAlignment type definition",
+        "status": "fixed",
+        "fix_commit": "383adbd"
+      }
+    ],
+    "issues_fixed": [
+      {
+        "title": "TypeScript Error in auto-layout.ts",
+        "fix_commit": "383adbd",
+        "changes": [
+          "Removed | undefined from NodeAlignment type (line 110)",
+          "Changed align: undefined to align: 'DR' in DEFAULT_LAYOUT_CONFIG (line 167)"
+        ]
+      }
+    ],
+    "fix_request_file": "QA_FIX_REQUEST.md",
+    "ready_for_qa_revalidation": true
+  },
   "qa": {
-    "status": "pending",
+    "status": "rejected",
     "signedOff": false,
+    "qa_session": 2,
+    "timestamp": "2026-01-02T20:56:30.000Z",
     "tests": [
       "Visual flow builder loads without errors",
       "Drag and drop nodes from palette works",
@@ -483,8 +515,20 @@
       "Flow validation catches invalid flows",
       "Theme matches existing application design"
     ],
-    "issues": "",
-    "testsPassed": ""
+    "testsPassed": "Not executed (compilation blocked)",
+    "issues": "1 critical TypeScript error blocks sign-off",
+    "issues_found": [
+      {
+        "type": "critical",
+        "title": "TypeScript Error in auto-layout.ts",
+        "location": "src/web/manager/utils/auto-layout.ts:110",
+        "fix_required": "Remove | undefined from NodeAlignment type definition",
+        "severity": "HIGH",
+        "effort": "5 minutes"
+      }
+    ],
+    "fix_request_file": "QA_FIX_REQUEST.md",
+    "qa_report_file": "qa_report.md"
   },
   "metadata": {
     "createdAt": "2026-01-02T10:00:00Z",
@@ -504,5 +548,41 @@
       "Backend API already supports the required node structure - no backend changes needed"
     ]
   },
-  "last_updated": "2026-01-02T17:33:13.755274+00:00"
+  "last_updated": "2026-01-02T17:44:08.446473+00:00",
+  "qa_iteration_history": [
+    {
+      "iteration": 1,
+      "status": "error",
+      "timestamp": "2026-01-02T17:53:36.892048+00:00",
+      "issues": [
+        {
+          "title": "QA error",
+          "description": "QA agent did not update implementation_plan.json"
+        }
+      ]
+    },
+    {
+      "iteration": 2,
+      "status": "rejected",
+      "timestamp": "2026-01-02T18:00:04.741662+00:00",
+      "issues": [
+        {
+          "type": "critical",
+          "title": "TypeScript Error in auto-layout.ts",
+          "location": "src/web/manager/utils/auto-layout.ts:110",
+          "fix_required": "Remove | undefined from NodeAlignment type definition"
+        }
+      ],
+      "duration_seconds": 387.85
+    }
+  ],
+  "qa_stats": {
+    "total_iterations": 2,
+    "last_iteration": 2,
+    "last_status": "rejected",
+    "issues_by_type": {
+      "unknown": 1,
+      "critical": 1
+    }
+  }
 }

@@ -7,7 +7,7 @@
  *
  * ## Features
  * - **Visual Canvas**: React Flow-based drag-and-drop interface
- * - **Node Palette**: Draggable sidebar with available node types
+ * - **Floating Node Palette**: Compact overlay with draggable node types
  * - **Configuration Panel**: Slide-out panel for editing selected nodes
  * - **Canvas Toolbar**: Undo/redo, zoom controls, and layout options
  * - **Metadata Form**: Flow name, description, category, and settings
@@ -21,8 +21,8 @@
  *   ├── FlowCanvasProvider (State management for nodes/edges)
  *   │   └── Main Layout (flex container)
  *   │       ├── ConfigSidebar (left sidebar - metadata & triggers)
- *   │       ├── NodePalette (node types sidebar)
  *   │       ├── FlowCanvas (center area)
+ *   │       │   ├── FloatingNodePalette (overlay - top-left)
  *   │       │   └── CanvasToolbar (floating toolbar)
  *   │       └── NodeConfigPanel (right slide-in panel)
  * ```
@@ -36,7 +36,7 @@
  * ## Integration Points
  * - **FlowCanvasContext**: Centralized state for nodes, edges, undo/redo
  * - **flow-converter**: Bidirectional conversion between formats
- * - **NodePalette**: Drag nodes onto canvas
+ * - **FloatingNodePalette**: Floating overlay to drag nodes onto canvas
  * - **FlowCanvas**: Main visual canvas with React Flow
  * - **NodeConfigPanel**: Edit selected node properties
  * - **CanvasToolbar**: Canvas manipulation controls
@@ -72,7 +72,7 @@ import * as flowApi from '../services/flow-api';
 import { FlowCanvasProvider } from '../contexts/FlowCanvasContext';
 import { FlowCanvas } from './flow-canvas/FlowCanvas';
 import ConfigSidebar from './flow-canvas/ConfigSidebar';
-import NodePalette from './flow-canvas/NodePalette';
+import FloatingNodePalette from './flow-canvas/FloatingNodePalette';
 import NodeConfigPanel from './flow-canvas/NodeConfigPanel';
 import CanvasToolbar from './flow-canvas/CanvasToolbar';
 import FlowPreview from './flow-canvas/FlowPreview';
@@ -765,9 +765,6 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
             triggersContent={triggersContent}
           />
 
-          {/* Node Palette */}
-          <NodePalette />
-
           {/* Center Area - Flow Canvas */}
           <div className="flex-1 relative">
             <FlowCanvas
@@ -776,6 +773,9 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
               showBackground={showGrid}
               showMinimap={showMinimap}
             />
+
+            {/* Floating Node Palette */}
+            <FloatingNodePalette position="top-left" />
 
             {/* Floating Toolbar */}
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">

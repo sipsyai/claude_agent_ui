@@ -673,7 +673,7 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
   // =========================================================================
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background overflow-hidden">
       {/* ===================================================================
           HEADER - Minimal Top Bar (Back + Save/Cancel)
           =================================================================== */}
@@ -733,20 +733,20 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
       {/* ===================================================================
           MAIN CANVAS - Visual Flow Editor
           =================================================================== */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 50px)' }}>
         <FlowCanvasProvider
           initialNodes={initialNodes}
           initialEdges={initialEdges}
           onCanvasChange={handleCanvasChange}
         >
-          {/* Left Sidebar - Configuration */}
+          {/* Left Sidebar - Configuration (collapsible: 320px expanded, 50px collapsed) */}
           <ConfigSidebar
             metadataContent={metadataContent}
             triggersContent={triggersContent}
           />
 
-          {/* Center Area - Flow Canvas */}
-          <div className="flex-1 relative">
+          {/* Center Area - Flow Canvas (fills remaining space ~80-90% width) */}
+          <div className="flex-1 relative overflow-hidden h-full">
             <FlowCanvas
               onNodeClick={handleNodeClick}
               onCanvasClick={handleCanvasClick}
@@ -754,10 +754,10 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
               showMinimap={showMinimap}
             />
 
-            {/* Floating Node Palette */}
+            {/* Floating Node Palette - Overlay positioned top-left */}
             <FloatingNodePalette position="top-left" />
 
-            {/* Floating Toolbar */}
+            {/* Floating Toolbar - Overlay positioned top-center */}
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
               <CanvasToolbar
                 showGrid={showGrid}
@@ -775,7 +775,7 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
             />
           </div>
 
-          {/* Right Panel - Node Configuration */}
+          {/* Right Panel - Node Configuration (slide-in overlay, doesn't affect layout) */}
           <NodeConfigPanel isOpen={configPanelOpen} onClose={handleConfigPanelClose} />
         </FlowCanvasProvider>
       </div>

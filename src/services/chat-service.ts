@@ -1,11 +1,300 @@
 /**
- * Chat Service - Manages chat sessions and messages
+ * ChatService - Real-time chat service with Claude Agent SDK integration
  *
- * This service handles:
- * - Creating and managing chat sessions
- * - Sending messages with file attachments
- * - Streaming responses from Claude Agent SDK
- * - Storing messages in Strapi
+ * @description
+ * The ChatService manages interactive chat sessions with Claude AI using the Agent SDK,
+ * providing real-time streaming conversations with support for file attachments, MCP servers,
+ * and agent configurations. It extends EventEmitter to broadcast conversation events and
+ * implements advanced stream management with abort controller patterns for cancellable requests.
+ *
+ * **Key Responsibilities:**
+ * - Create and manage chat sessions stored in Strapi CMS
+ * - Stream real-time responses from Claude Agent SDK with AsyncGenerator pattern
+ * - Handle file attachments (images, PDFs, text files) with base64 encoding
+ * - Integrate with agents (system prompts, model config, tool config, MCP servers)
+ * - Manage conversation lifecycle (create, resume, archive, delete)
+ * - Track active streams with cancellation support via AbortController
+ * - Persist messages and SDK events to chat log files
+ * - Sync skills to filesystem before conversation starts
+ * - Transform SDK messages to application's chat message format
+ *
+ * **Architecture:**
+ * - **EventEmitter Pattern**: Extends EventEmitter to broadcast chat events to subscribers
+ * - **Active Streams Management**: Maintains Map of active Query instances indexed by streamId
+ * - **Abort Controller Pattern**: Each stream has an AbortController for graceful cancellation
+ * - **AsyncGenerator Streaming**: sendMessage() yields events as they arrive (user_message_saved,
+ *   stream_id, sdk_message, assistant_message_delta, assistant_message_saved, done, error, cancelled)
+ * - **Message Persistence**: Saves user/assistant messages to Strapi and chat log files
+ * - **Agent Integration**: Supports per-session or per-message agent overrides with full config
+ * - **MCP Server Support**: Loads MCP servers from agent's mcpConfig and .mcp.json files
+ * - **Permission Modes**: Supports default, bypass, auto (acceptEdits), and plan modes
+ * - **File Handling**: Uploads attachments to Strapi, processes images/PDFs/text for SDK
+ *
+ * **EventEmitter Events:**
+ * Currently, ChatService extends EventEmitter but does not emit custom events.
+ * Instead, it uses AsyncGenerator pattern to stream events directly to the caller.
+ * Future versions may add events like 'chat:session:created', 'chat:message:sent', etc.
+ *
+ * **Active Streams Management:**
+ * The service maintains two synchronized Maps for stream lifecycle:
+ * - `activeStreams`: Map<streamId, Query> - Active SDK query instances
+ * - `activeAbortControllers`: Map<streamId, AbortController> - Controllers for cancellation
+ *
+ * When a message is sent:
+ * 1. Generate unique streamId (UUID)
+ * 2. Create AbortController and store in activeAbortControllers
+ * 3. Create SDK Query instance with abortController option
+ * 4. Store Query in activeStreams
+ * 5. Yield stream_id event to client (enables cancellation)
+ * 6. Stream SDK messages via AsyncGenerator
+ * 7. Cleanup: Remove from both Maps when stream completes/errors/cancelled
+ *
+ * **Abort Controller Pattern:**
+ * - Each stream gets a dedicated AbortController instance
+ * - Client receives streamId immediately after message send starts
+ * - Client can call cancelMessage(streamId) to abort the stream
+ * - Cancellation triggers abortController.abort()
+ * - SDK Query respects abort signal and stops processing
+ * - Cleanup happens in finally block (removes from Maps)
+ * - Yields 'cancelled' event with reason and timestamp
+ *
+ * **Message Flow:**
+ * 1. Client calls sendMessage() with text and optional attachments
+ * 2. Service fetches chat session from Strapi with agent/skills config
+ * 3. Syncs skills to filesystem (creates .claude/skills/*.md files)
+ * 4. Uploads attachments to Strapi and saves user message
+ * 5. Yields 'user_message_saved' event
+ * 6. Builds SDK options (model, systemPrompt, permissions, tools, mcpServers)
+ * 7. Creates SDK Query with AsyncGenerator prompt and AbortController
+ * 8. Yields 'stream_id' event (enables cancellation)
+ * 9. Streams SDK messages and yields 'sdk_message' events
+ * 10. Accumulates assistant text from content_block_delta events
+ * 11. Yields 'assistant_message_delta' events for real-time UI updates
+ * 12. Saves complete assistant message to Strapi and chat log
+ * 13. Yields 'assistant_message_saved' event
+ * 14. Yields 'done' event with cost/usage metadata
+ *
+ * @example
+ * ```typescript
+ * // Basic usage - create session and send message
+ * import { chatService } from './chat-service';
+ *
+ * // Create a new chat session
+ * const session = await chatService.createChatSession(
+ *   'Code Review Chat',
+ *   ['skill-doc-id-1', 'skill-doc-id-2'], // Skill documentIds
+ *   'agent-doc-id', // Agent documentId
+ *   undefined, // No custom system prompt
+ *   '/path/to/project',
+ *   'default' // Permission mode
+ * );
+ *
+ * console.log(`Session created: ${session.documentId}`);
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Send message and handle streaming responses
+ * import { chatService } from './chat-service';
+ *
+ * const sessionDocId = 'chat-session-doc-id';
+ * const message = 'Review the authentication code in src/auth.ts';
+ * const attachments = []; // No attachments
+ * const workingDir = '/path/to/project';
+ *
+ * // Stream responses using AsyncGenerator
+ * for await (const event of chatService.sendMessage(
+ *   sessionDocId,
+ *   message,
+ *   attachments,
+ *   workingDir
+ * )) {
+ *   switch (event.type) {
+ *     case 'user_message_saved':
+ *       console.log('User message saved:', event.message);
+ *       break;
+ *     case 'stream_id':
+ *       console.log('Stream ID:', event.streamId);
+ *       // Store streamId for potential cancellation
+ *       break;
+ *     case 'assistant_message_delta':
+ *       // Real-time text streaming
+ *       process.stdout.write(event.delta);
+ *       break;
+ *     case 'assistant_message_saved':
+ *       console.log('\nAssistant message saved:', event.message);
+ *       break;
+ *     case 'done':
+ *       console.log('Conversation complete. Cost:', event.cost);
+ *       break;
+ *     case 'error':
+ *       console.error('Error:', event.error);
+ *       break;
+ *     case 'cancelled':
+ *       console.log('Stream cancelled:', event.reason);
+ *       break;
+ *   }
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Send message with file attachments
+ * import { chatService } from './chat-service';
+ * import fs from 'fs';
+ *
+ * const sessionDocId = 'chat-session-doc-id';
+ * const message = 'Analyze this diagram and suggest improvements';
+ * const imageBuffer = fs.readFileSync('./diagram.png');
+ * const attachments = [{
+ *   name: 'diagram.png',
+ *   mimeType: 'image/png',
+ *   data: imageBuffer.toString('base64')
+ * }];
+ *
+ * for await (const event of chatService.sendMessage(
+ *   sessionDocId,
+ *   message,
+ *   attachments,
+ *   '/path/to/project'
+ * )) {
+ *   if (event.type === 'assistant_message_delta') {
+ *     console.log(event.delta);
+ *   }
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Cancel an active message stream
+ * import { chatService } from './chat-service';
+ *
+ * let currentStreamId: string | null = null;
+ *
+ * // Start streaming in background
+ * (async () => {
+ *   for await (const event of chatService.sendMessage(
+ *     sessionDocId,
+ *     'This is a long running task...',
+ *     [],
+ *     workingDir
+ *   )) {
+ *     if (event.type === 'stream_id') {
+ *       currentStreamId = event.streamId;
+ *     }
+ *     if (event.type === 'cancelled') {
+ *       console.log('Stream was cancelled');
+ *     }
+ *   }
+ * })();
+ *
+ * // Cancel after 5 seconds
+ * setTimeout(() => {
+ *   if (currentStreamId) {
+ *     const cancelled = chatService.cancelMessage(currentStreamId);
+ *     console.log('Cancellation requested:', cancelled);
+ *   }
+ * }, 5000);
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Use plan mode for read-only analysis
+ * import { chatService } from './chat-service';
+ *
+ * const session = await chatService.createChatSession(
+ *   'Plan Mode Chat',
+ *   [], // No skills
+ *   'agent-doc-id',
+ *   undefined,
+ *   '/path/to/project',
+ *   'plan' // Plan mode: read-only tools, requires user approval before changes
+ * );
+ *
+ * for await (const event of chatService.sendMessage(
+ *   session.documentId,
+ *   'Create a plan to add a user authentication system',
+ *   [],
+ *   '/path/to/project',
+ *   'plan' // Override permission mode for this message
+ * )) {
+ *   // Claude will analyze the codebase and present a detailed plan
+ *   // without making any changes (Read, Grep, Glob tools only)
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Agent override - use different agent per message
+ * import { chatService } from './chat-service';
+ *
+ * const session = await chatService.createChatSession(
+ *   'Multi-Agent Chat',
+ *   ['skill-1'],
+ *   'default-agent-id',
+ *   undefined,
+ *   '/path/to/project'
+ * );
+ *
+ * // First message uses default agent
+ * for await (const event of chatService.sendMessage(
+ *   session.documentId,
+ *   'Write a test file',
+ *   [],
+ *   '/path/to/project'
+ * )) { /* ... */ }
+ *
+ * // Second message overrides with specialized agent
+ * for await (const event of chatService.sendMessage(
+ *   session.documentId,
+ *   'Review the code for security issues',
+ *   [],
+ *   '/path/to/project',
+ *   undefined, // Use session permission mode
+ *   'security-agent-id' // Override with security specialist agent
+ * )) { /* ... */ }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Session management
+ * import { chatService } from './chat-service';
+ *
+ * // Get all sessions
+ * const sessions = await chatService.getAllChatSessions();
+ * console.log(`Total sessions: ${sessions.length}`);
+ *
+ * // Get specific session
+ * const session = await chatService.getChatSession('session-doc-id');
+ * console.log(`Session title: ${session.title}`);
+ *
+ * // Get messages for session
+ * const messages = await chatService.getChatMessages('session-doc-id');
+ * console.log(`Message count: ${messages.length}`);
+ *
+ * // Archive old session
+ * await chatService.archiveChatSession('old-session-doc-id');
+ *
+ * // Delete session permanently
+ * await chatService.deleteChatSession('session-doc-id');
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Monitor active streams
+ * import { chatService } from './chat-service';
+ *
+ * // Get list of active stream IDs
+ * const activeStreamIds = chatService.getActiveStreamIds();
+ * console.log(`Active streams: ${activeStreamIds.length}`);
+ *
+ * // Cancel all active streams (e.g., on shutdown)
+ * for (const streamId of activeStreamIds) {
+ *   chatService.cancelMessage(streamId);
+ * }
+ * ```
+ *
+ * @see {@link https://docs.anthropic.com/en/api/agent-sdk|Claude Agent SDK Documentation}
  */
 
 import { EventEmitter } from 'events';
@@ -27,8 +316,24 @@ const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:1337';
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
 
 export class ChatService extends EventEmitter {
+  /**
+   * Logger instance for structured logging
+   */
   private logger: Logger;
+
+  /**
+   * Active SDK query instances indexed by stream ID
+   * Each Query represents an active conversation stream with Claude Agent SDK
+   * Streams are added when sendMessage() creates a query, removed on completion/error/cancellation
+   */
   private activeStreams: Map<string, Query> = new Map();
+
+  /**
+   * Active abort controllers indexed by stream ID
+   * Each AbortController enables graceful cancellation of SDK queries
+   * Client receives streamId and can call cancelMessage(streamId) to abort the stream
+   * Controllers are created in sendMessage() and removed in finally block
+   */
   private activeAbortControllers: Map<string, AbortController> = new Map();
 
   constructor() {

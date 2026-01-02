@@ -131,11 +131,35 @@
         }
       ],
       "status": "completed"
+    },
+    "2.5": {
+      "attempts": [
+        {
+          "session": 13,
+          "timestamp": "2026-01-02T10:40:36.604829",
+          "approach": "Implemented: Add @example for getAllTasks, getTask, createTask, updateTask, deleteTask, uploadFile, deleteFile, h",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "2.6": {
+      "attempts": [
+        {
+          "session": 14,
+          "timestamp": "2026-01-02T10:46:58.376588",
+          "approach": "Implemented: Add JSDoc for all transform* and prepare* methods. Document Strapi response format mapping to domain",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-02T09:50:58.101330",
-    "last_updated": "2026-01-02T10:35:01.843050"
+    "last_updated": "2026-01-02T10:46:58.376598"
   }
 }

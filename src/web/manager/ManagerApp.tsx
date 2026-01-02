@@ -3,7 +3,7 @@ import HomePage from './components/HomePage';
 import LandingPage from './components/LandingPage';
 import ValidationPage from './components/ValidationPage';
 import AgentConfigModal from './components/AgentConfigModal';
-import type { Agent, ValidationStep } from './types';
+import type { Agent, ValidationStep, Flow } from './types';
 import { ManagerView } from './types';
 import Layout from './components/layout/Layout';
 import DashboardPage from './components/DashboardPage';
@@ -12,6 +12,8 @@ import CommandsPage from './components/CommandsPage';
 import SkillsPage from './components/SkillsPage';
 import MCPServersPage from './components/MCPServersPage';
 import TasksPage from './components/TasksPage';
+import FlowsPage from './components/FlowsPage';
+import FlowEditorPage from './components/FlowEditorPage';
 import SettingsPage from './components/SettingsPage';
 import * as api from './services/api';
 import ChatPage from './components/ChatPage';
@@ -32,6 +34,10 @@ const App: React.FC = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [managerView, setManagerView] = useState<ManagerView>(ManagerView.Dashboard);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Flow editor state
+  const [editingFlowId, setEditingFlowId] = useState<string | null>(null);
+  const [isCreatingFlow, setIsCreatingFlow] = useState(false);
 
   // Load saved directory from localStorage on mount
   useEffect(() => {
@@ -149,9 +155,30 @@ const App: React.FC = () => {
         const skills = await api.getSkills(directoryName);
         setDiscoveredSkills(skills);
       } catch (error) {
-        console.error('Failed to reload skills:', error);
+        // Failed to reload skills - silent failure for non-critical operation
       }
     }
+  };
+
+  // Flow handlers
+  const handleEditFlow = (flow: Flow) => {
+    setEditingFlowId(flow.id);
+    setIsCreatingFlow(false);
+  };
+
+  const handleCreateFlow = () => {
+    setEditingFlowId(null);
+    setIsCreatingFlow(true);
+  };
+
+  const handleCloseFlowEditor = () => {
+    setEditingFlowId(null);
+    setIsCreatingFlow(false);
+  };
+
+  const handleFlowSaved = (_flow: Flow) => {
+    // Flow was saved, close editor and refresh will happen automatically
+    handleCloseFlowEditor();
   };
 
   const renderSetupContent = () => {
@@ -176,6 +203,17 @@ const App: React.FC = () => {
   };
 
   const renderDashboardContent = () => {
+    // Handle flow editor view
+    if (managerView === ManagerView.Flows && (isCreatingFlow || editingFlowId)) {
+      return (
+        <FlowEditorPage
+          flowId={editingFlowId || undefined}
+          onClose={handleCloseFlowEditor}
+          onSave={handleFlowSaved}
+        />
+      );
+    }
+
     switch(managerView) {
       case ManagerView.Dashboard:
         return <DashboardPage />;
@@ -191,6 +229,13 @@ const App: React.FC = () => {
         return <MCPServersPage directory={directoryName} />;
       case ManagerView.Tasks:
         return <TasksPage />;
+      case ManagerView.Flows:
+        return (
+          <FlowsPage
+            onEditFlow={handleEditFlow}
+            onCreateFlow={handleCreateFlow}
+          />
+        );
       case ManagerView.Settings:
         return <SettingsPage directoryName={directoryName} onDirectoryChange={handleDirectoryChange} />;
       default:

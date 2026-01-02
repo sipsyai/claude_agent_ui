@@ -113,6 +113,7 @@ import {
   applyEdgeChanges,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import '../../styles/flow-canvas.css';
 
 import { nodeTypes } from './nodes';
 import CustomEdge from './CustomEdge';

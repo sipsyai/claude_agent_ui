@@ -355,18 +355,17 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
       return;
     }
 
-    // Validate flow structure before saving
+    // Validate flow structure and show warnings (but don't block save)
     const validation = validateFlow(currentNodes, currentEdges);
-    if (!validation.isValid) {
-      // Show each validation error as a separate stacked toast
-      validation.errors.forEach((error) => {
+    if (validation.hasWarnings) {
+      // Show warnings as info toasts (non-blocking)
+      validation.warnings.forEach((warning) => {
         addToast({
-          message: error.message,
-          variant: 'error',
-          duration: 7000,
+          message: `Warning: ${warning.message}`,
+          variant: 'warning',
+          duration: 5000,
         });
       });
-      return;
     }
 
     setSaving(true);
@@ -715,9 +714,15 @@ const FlowEditorVisual: React.FC<FlowEditorVisualProps> = ({ flowId, onClose, on
             </Button>
             <Button
               onClick={handleSave}
-              disabled={saving || validationResult.hasErrors}
+              disabled={saving || !name.trim() || currentNodes.length === 0}
               className="flex items-center gap-2"
-              title={validationResult.hasErrors ? 'Fix validation errors before saving' : undefined}
+              title={
+                !name.trim()
+                  ? 'Flow name is required'
+                  : currentNodes.length === 0
+                  ? 'Add at least one node to save'
+                  : undefined
+              }
               size="sm"
             >
               {saving ? (

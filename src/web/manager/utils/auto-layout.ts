@@ -84,7 +84,7 @@
  * ```
  */
 
-import dagre from 'dagre';
+import * as dagre from '@dagrejs/dagre';
 import type { ReactFlowNode, ReactFlowEdge } from '../types/react-flow.types';
 
 // =============================================================================

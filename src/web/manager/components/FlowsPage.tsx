@@ -7,6 +7,7 @@ import type {
   FlowExecutionStatus,
 } from '../types';
 import * as flowApi from '../services/flow-api';
+import { useFlows } from '../hooks/useFlows';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -93,16 +94,13 @@ const ExecutionStatusIcon: React.FC<{ status: FlowExecutionStatus }> = ({ status
 };
 
 const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateFlow, onEditFlowById }) => {
-  const [flows, setFlows] = useState<Flow[]>([]);
   const [recentExecutions, setRecentExecutions] = useState<Map<string, FlowExecution[]>>(new Map());
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterMode>('all');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [executingFlows, setExecutingFlows] = useState<Set<string>>(new Set());
   const [deletingFlows, setDeletingFlows] = useState<Set<string>>(new Set());
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Flow Execution Modal state
   const [selectedFlowForExecution, setSelectedFlowForExecution] = useState<Flow | null>(null);
@@ -111,22 +109,15 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [creatingFromTemplate, setCreatingFromTemplate] = useState(false);
 
-  // Load flows
-  const loadFlows = useCallback(async () => {
-    try {
-      setError(null);
-      const response = await flowApi.getFlows({
-        status: statusFilter !== 'all' ? (statusFilter as FlowStatus) : undefined,
-        category: categoryFilter !== 'all' ? categoryFilter : undefined,
-        search: searchTerm || undefined,
-      });
-      setFlows(response.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load flows');
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter, categoryFilter, searchTerm]);
+  // Use the useFlows hook for fetching flows with automatic caching and deduplication
+  const { data, isLoading, error, refetch } = useFlows({
+    status: statusFilter !== 'all' ? (statusFilter as FlowStatus) : undefined,
+    category: categoryFilter !== 'all' ? categoryFilter : undefined,
+    search: searchTerm || undefined,
+  });
+
+  // Extract flows from the response data
+  const flows = data?.data || [];
 
   // Load recent executions for a flow
   const loadRecentExecutions = useCallback(async (flowId: string) => {
@@ -137,11 +128,6 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
       // Silently fail for execution loading
     }
   }, []);
-
-  // Initial load
-  useEffect(() => {
-    loadFlows();
-  }, [loadFlows]);
 
   // Load executions when flows change
   useEffect(() => {
@@ -168,7 +154,7 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
 
     const poll = async () => {
       try {
-        await loadFlows();
+        await refetch();
         retryCount = 0; // Reset on success
         // Continue polling at normal interval after success
         scheduleNextPoll(POLLING_INTERVAL);
@@ -195,7 +181,7 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
     return () => {
       if (intervalId) clearTimeout(intervalId);
     };
-  }, [autoRefreshEnabled, loadFlows]);
+  }, [autoRefreshEnabled, refetch]);
 
   // Handle flow execution - open modal
   const handleExecuteFlow = (flow: Flow) => {
@@ -227,7 +213,7 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
 
     try {
       await flowApi.deleteFlow(flow.id);
-      setFlows(prev => prev.filter(f => f.id !== flow.id));
+      await refetch();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete flow');
     } finally {
@@ -242,8 +228,8 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
   // Handle flow duplication
   const handleDuplicateFlow = async (flow: Flow) => {
     try {
-      const response = await flowApi.duplicateFlow(flow.id, `${flow.name} (Copy)`);
-      setFlows(prev => [response.flow, ...prev]);
+      await flowApi.duplicateFlow(flow.id, `${flow.name} (Copy)`);
+      await refetch();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to duplicate flow');
     }
@@ -253,12 +239,11 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
   const handleToggleActive = async (flow: Flow) => {
     try {
       if (flow.isActive) {
-        const response = await flowApi.deactivateFlow(flow.id);
-        setFlows(prev => prev.map(f => f.id === flow.id ? response.flow : f));
+        await flowApi.deactivateFlow(flow.id);
       } else {
-        const response = await flowApi.activateFlow(flow.id);
-        setFlows(prev => prev.map(f => f.id === flow.id ? response.flow : f));
+        await flowApi.activateFlow(flow.id);
       }
+      await refetch();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to toggle flow status');
     }
@@ -269,7 +254,7 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
     setCreatingFromTemplate(true);
     try {
       const response = await flowApi.createFlowFromTemplate(templateId);
-      setFlows(prev => [response.flow, ...prev]);
+      await refetch();
       setShowTemplateSelector(false);
       // Open the newly created flow for editing
       if (onEditFlowById) {
@@ -336,7 +321,7 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
         </div>
         <div className="absolute right-8 top-8 flex gap-2">
           <Button
-            onClick={() => loadFlows()}
+            onClick={() => refetch()}
             variant="secondary"
             className="flex items-center gap-2"
           >
@@ -422,11 +407,11 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
       {/* Error Display */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
-          <span className="text-red-700">{error}</span>
+          <span className="text-red-700">{error.message || 'Failed to load flows'}</span>
           <Button
             size="sm"
             variant="secondary"
-            onClick={() => loadFlows()}
+            onClick={() => refetch()}
             className="ml-4 flex items-center gap-2"
           >
             <RefreshIcon className="h-4 w-4" />
@@ -436,7 +421,7 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
       )}
 
       {/* Loading State */}
-      {loading && (
+      {isLoading && (
         <div className="flex items-center justify-center py-12">
           <SpinnerIcon className="h-8 w-8 text-primary" />
           <span className="ml-2 text-muted-foreground">Loading flows...</span>
@@ -444,7 +429,7 @@ const FlowsPage: React.FC<FlowsPageProps> = ({ onViewFlow, onEditFlow, onCreateF
       )}
 
       {/* Flows Grid */}
-      {!loading && (
+      {!isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredFlows.length === 0 ? (
             <div className="col-span-full text-center text-muted-foreground py-12">

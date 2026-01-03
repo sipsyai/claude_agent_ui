@@ -549,6 +549,10 @@ export const FlowCanvasProvider: React.FC<FlowCanvasProviderProps> = ({
    * their connections. The layout arranges nodes in a left-to-right flow with
    * even spacing and no overlaps.
    *
+   * IMPORTANT: This function waits for nodes to have measured dimensions before
+   * applying the layout algorithm. React Flow measures node dimensions after
+   * the first render, so we need to wait for width/height to be available.
+   *
    * @param config - Optional layout configuration (spacing, direction, etc.)
    *
    * @example
@@ -561,9 +565,43 @@ export const FlowCanvasProvider: React.FC<FlowCanvasProviderProps> = ({
    * ```
    */
   const applyAutoLayoutFn = useCallback((config?: Partial<AutoLayoutConfig>) => {
-    const layoutedNodes = applyAutoLayout(nodes, edges, config);
-    setNodes(layoutedNodes);
-    saveToHistory(layoutedNodes, edges);
+    /**
+     * Check if all nodes have measured dimensions
+     * React Flow populates width/height after rendering
+     */
+    const allNodesHaveDimensions = nodes.every(
+      node => node.width !== undefined && node.height !== undefined
+    );
+
+    /**
+     * Helper function to apply layout with current node state
+     */
+    const applyLayoutWithCurrentNodes = () => {
+      setNodes(currentNodes => {
+        const layoutedNodes = applyAutoLayout(currentNodes, edges, config);
+        saveToHistory(layoutedNodes, edges);
+        return layoutedNodes;
+      });
+    };
+
+    /**
+     * Apply layout immediately if dimensions are available,
+     * otherwise wait for React Flow to measure nodes
+     */
+    if (allNodesHaveDimensions) {
+      const layoutedNodes = applyAutoLayout(nodes, edges, config);
+      setNodes(layoutedNodes);
+      saveToHistory(layoutedNodes, edges);
+    } else {
+      // Wait for React Flow to measure node dimensions
+      // Use requestAnimationFrame to wait for next render cycle
+      requestAnimationFrame(() => {
+        // Additional small delay to ensure dimensions are populated
+        setTimeout(() => {
+          applyLayoutWithCurrentNodes();
+        }, 50);
+      });
+    }
   }, [nodes, edges, saveToHistory]);
 
   // Context value

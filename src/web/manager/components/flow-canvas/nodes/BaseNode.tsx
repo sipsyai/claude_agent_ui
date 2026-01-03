@@ -162,6 +162,12 @@ export interface BaseNodeProps {
    * Optional minimum height (default: auto)
    */
   minHeight?: number;
+
+  /**
+   * Optional click handler for the node
+   * This enables fast click response before React Flow's event processing
+   */
+  onClick?: (event: React.MouseEvent) => void;
 }
 
 /**
@@ -184,7 +190,11 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
   className = '',
   width = 280,
   minHeight,
+  onClick,
 }) => {
+  // Track hover state for enhanced handle visibility
+  const [isHovered, setIsHovered] = React.useState(false);
+
   // Color theme mapping for different node types
   const nodeTypeColors = {
     input: {
@@ -224,6 +234,9 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
         width: `${width}px`,
         minHeight: minHeight ? `${minHeight}px` : undefined,
       }}
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Target Handle - Incoming Connections */}
       {showTargetHandle && (
@@ -231,16 +244,22 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
           type="target"
           position={Position.Top}
           id="target"
-          className={`!w-3 !h-3 !border-2 !border-background ${colors.handle} transition-all hover:!w-4 hover:!h-4`}
+          className={`
+            !border-2 !border-background ${colors.handle}
+            transition-all duration-200 !z-[100]
+            ${isHovered || selected ? '!w-4 !h-4 !opacity-100' : '!w-3 !h-3 !opacity-70'}
+            hover:!w-5 hover:!h-5 hover:!opacity-100 hover:!scale-110
+          `}
           style={{ top: -6 }}
+          title="Drag to connect from another node"
         />
       )}
 
       {/* Node Card */}
       <div
         className={`
-          rounded-lg border-2 bg-card text-card-foreground shadow-sm
-          transition-all duration-200
+          relative rounded-lg border-2 bg-card text-card-foreground shadow-sm
+          transition-all duration-200 z-[10]
           ${selected ? colors.border : 'border-border'}
           ${selected ? 'shadow-md' : 'hover:shadow-md'}
         `}
@@ -281,9 +300,9 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
                 onDelete();
               }}
               className="
-                flex-shrink-0 p-1 rounded hover:bg-destructive/20
+                relative flex-shrink-0 p-1 rounded hover:bg-destructive/20
                 text-muted-foreground hover:text-destructive
-                transition-colors
+                transition-colors z-[10]
               "
               title="Delete node"
             >
@@ -304,8 +323,14 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
           type="source"
           position={Position.Bottom}
           id="source"
-          className={`!w-3 !h-3 !border-2 !border-background ${colors.handle} transition-all hover:!w-4 hover:!h-4`}
+          className={`
+            !border-2 !border-background ${colors.handle}
+            transition-all duration-200 !z-[100]
+            ${isHovered || selected ? '!w-4 !h-4 !opacity-100' : '!w-3 !h-3 !opacity-70'}
+            hover:!w-5 hover:!h-5 hover:!opacity-100 hover:!scale-110
+          `}
           style={{ bottom: -6 }}
+          title="Drag to connect to another node"
         />
       )}
     </div>
@@ -397,9 +422,9 @@ export const BaseNodeHeader: React.FC<BaseNodeHeaderProps> = ({
             onDelete();
           }}
           className="
-            flex-shrink-0 p-1 rounded hover:bg-destructive/20
+            relative flex-shrink-0 p-1 rounded hover:bg-destructive/20
             text-muted-foreground hover:text-destructive
-            transition-colors
+            transition-colors z-[10]
           "
           title="Delete node"
         >

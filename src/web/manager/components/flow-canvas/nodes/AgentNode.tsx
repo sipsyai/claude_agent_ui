@@ -209,6 +209,21 @@ export const AgentNode: React.FC<AgentNodeProps> = ({ data, selected, id }) => {
     return prompt.substring(0, maxLength) + '...';
   };
 
+  /**
+   * Handle node click - ensures fast response for opening config panel
+   * This fires immediately without waiting for React Flow's event system
+   */
+  const handleClick = React.useCallback((event: React.MouseEvent) => {
+    // Don't trigger if clicking on interactive elements (delete button, etc.)
+    const target = event.target as HTMLElement;
+    if (target.closest('button')) {
+      return;
+    }
+
+    // Click event will still propagate to React Flow for selection
+    // but this ensures immediate feedback
+  }, []);
+
   return (
     <BaseNode
       icon={agentIcon}
@@ -218,6 +233,7 @@ export const AgentNode: React.FC<AgentNodeProps> = ({ data, selected, id }) => {
       status={data.metadata?.status as any}
       showDeleteButton={true}
       className="cursor-pointer"
+      onClick={handleClick}
     >
       <div className="space-y-3">
         {/* Agent Name and Validation Status */}

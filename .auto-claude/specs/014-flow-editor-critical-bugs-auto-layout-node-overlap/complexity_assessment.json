@@ -1,0 +1,72 @@
+{
+  "complexity": "standard",
+  "workflow_type": "refactor",
+  "confidence": 0.85,
+  "reasoning": "Multiple bug fixes across different flow editor subsystems (auto-layout, node rendering, validation, API hooks). Estimated 8-12 files in single frontend service. May require React Query/SWR research for API deduplication. Higher than simple due to multiple interconnected bugs, but not complex since no external integrations or infrastructure changes.",
+
+  "analysis": {
+    "scope": {
+      "estimated_files": 10,
+      "estimated_services": 1,
+      "is_cross_cutting": true,
+      "notes": "4 separate bugs affect different flow editor subsystems: auto-layout utils, node rendering components, validation logic, and API request hooks. Cross-cutting within the flow editor feature."
+    },
+    "integrations": {
+      "external_services": [],
+      "new_dependencies": ["@tanstack/react-query or swr"],
+      "research_needed": true,
+      "notes": "React Query or SWR needs research for proper implementation patterns and best practices. dagre library already exists but may need documentation review for debugging."
+    },
+    "infrastructure": {
+      "docker_changes": false,
+      "database_changes": false,
+      "config_changes": false,
+      "notes": "Pure frontend bug fixes with no infrastructure impact."
+    },
+    "knowledge": {
+      "patterns_exist": true,
+      "research_required": true,
+      "unfamiliar_tech": ["@tanstack/react-query", "swr", "dagre"],
+      "notes": "Most code patterns exist (fixing existing features), but React Query/SWR integration patterns need research. dagre algorithm debugging may require library documentation review."
+    },
+    "risk": {
+      "level": "medium",
+      "concerns": [
+        "Auto-layout failures block core workflow functionality",
+        "Z-index/DOM layer bugs can be subtle and environment-specific",
+        "Validation logic changes could break existing user workflows",
+        "API deduplication requires careful React state management",
+        "Multiple interconnected bugs may have cascading effects"
+      ],
+      "notes": "Medium risk due to production bugs affecting critical UX. Changes to validation and layout algorithms need careful testing to avoid regressions."
+    }
+  },
+
+  "recommended_phases": [
+    "discovery",
+    "requirements",
+    "research",
+    "context",
+    "spec_writing",
+    "planning",
+    "validation"
+  ],
+
+  "flags": {
+    "needs_research": true,
+    "needs_self_critique": false,
+    "needs_infrastructure_setup": false
+  },
+
+  "validation_recommendations": {
+    "risk_level": "high",
+    "skip_validation": false,
+    "minimal_mode": false,
+    "test_types_required": ["unit", "integration", "e2e"],
+    "security_scan_required": false,
+    "staging_deployment_required": false,
+    "reasoning": "Production bugs affecting core UX require comprehensive testing. E2E tests critical to verify bugs are actually fixed (auto-layout, node clicks, save workflow). Unit tests for validation logic, integration tests for API deduplication. No security concerns as these are UI/state management fixes."
+  },
+
+  "created_at": "2026-01-03T00:52:15.000000Z"
+}

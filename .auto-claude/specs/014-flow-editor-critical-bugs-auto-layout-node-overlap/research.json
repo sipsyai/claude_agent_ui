@@ -1,0 +1,223 @@
+{
+  "integrations_researched": [
+    {
+      "name": "dagre",
+      "type": "library",
+      "verified_package": {
+        "name": "@dagrejs/dagre",
+        "install_command": "npm i @dagrejs/dagre",
+        "version": "1.1.8",
+        "verified": true,
+        "note": "The @dagrejs/dagre package is the actively maintained version. The older 'dagre' package (v0.8.5) is deprecated (last updated 6 years ago)."
+      },
+      "api_patterns": {
+        "imports": [
+          "import dagre from 'dagre'",
+          "import * as dagre from 'dagre'"
+        ],
+        "initialization": "const dagreGraph = new dagre.graphlib.Graph();\ndagreGraph.setDefaultEdgeLabel(() => ({}));",
+        "key_functions": [
+          "dagre.layout(graph)",
+          "graph.setGraph({ rankdir, nodesep, ranksep })",
+          "graph.setNode(nodeId, { width, height })",
+          "graph.setEdge(source, target)",
+          "graph.node(nodeId) // returns { x, y, width, height }"
+        ],
+        "verified_against": "https://www.npmjs.com/package/@dagrejs/dagre, https://github.com/dagrejs/dagre"
+      },
+      "configuration": {
+        "layout_options": [
+          "rankdir: 'TB' | 'BT' | 'LR' | 'RL' - Direction of layout",
+          "nodesep: number - Separation between nodes (default: 50)",
+          "ranksep: number - Separation between ranks (default: 50)",
+          "edgesep: number - Separation between edges",
+          "marginx: number - Horizontal margin",
+          "marginy: number - Vertical margin"
+        ],
+        "dependencies": [
+          "graphlib (bundled with dagre)"
+        ]
+      },
+      "infrastructure": {
+        "requires_docker": false,
+        "client_side": true,
+        "browser_compatible": true
+      },
+      "gotchas": [
+        "CRITICAL: Nodes must have dimensions (width/height) set before layout can run properly",
+        "With React Flow: Nodes render at default positions BEFORE dimensions are measured, causing layout timing issues",
+        "Solution: Wait for all nodes to be initialized with dimensions before running layout",
+        "For dynamic nodes: Add with opacity: 0, run layout, then set opacity: 1",
+        "Parent-child nodes: Child positions must be calculated relative to parent position",
+        "Spacing issues: Default spacing may be excessive for complex graphs (e.g., fully connected networks)",
+        "Custom nodes: Dimensions won't be fixed until React Flow renders them and saves to state",
+        "Sequence: render → measure → layout → re-render with calculated positions"
+      ],
+      "react_flow_integration": {
+        "common_pattern": "1. Initialize nodes with default positions\n2. Let React Flow render to measure dimensions\n3. Use measured dimensions with dagre.layout()\n4. Update node positions with calculated values\n5. Re-render React Flow with new positions",
+        "timing_issue": "Main issue is ensuring node dimensions are available before layout calculation"
+      },
+      "research_sources": [
+        "https://www.npmjs.com/package/@dagrejs/dagre",
+        "https://github.com/dagrejs/dagre",
+        "https://reactflow.dev/examples/layout/dagre",
+        "https://ncoughlin.com/posts/react-flow-dagre-custom-nodes",
+        "Context7: /dagrejs/dagre"
+      ]
+    },
+    {
+      "name": "TanStack Query (React Query)",
+      "type": "library",
+      "verified_package": {
+        "name": "@tanstack/react-query",
+        "install_command": "npm i @tanstack/react-query",
+        "version": "5.90.16",
+        "verified": true,
+        "compatibility": "React v18+"
+      },
+      "api_patterns": {
+        "imports": [
+          "import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query'"
+        ],
+        "initialization": "const queryClient = new QueryClient();\n\n// Wrap app with provider\n<QueryClientProvider client={queryClient}>\n  <App />\n</QueryClientProvider>",
+        "key_functions": [
+          "useQuery({ queryKey: [key], queryFn: fetcherFunction })",
+          "useMutation()",
+          "queryClient.invalidateQueries()",
+          "queryClient.setQueryData()",
+          "queryClient.getQueryData()"
+        ],
+        "verified_against": "https://tanstack.com/query/latest/docs/framework/react/installation"
+      },
+      "configuration": {
+        "query_client_options": [
+          "staleTime: number - Time until data is considered stale",
+          "cacheTime: number - Time inactive data stays in cache",
+          "refetchOnWindowFocus: boolean - Refetch when window regains focus",
+          "refetchOnReconnect: boolean - Refetch on network reconnect",
+          "retry: number | boolean - Retry failed requests"
+        ],
+        "env_vars": [],
+        "dependencies": []
+      },
+      "infrastructure": {
+        "requires_docker": false,
+        "client_side": true,
+        "browser_compatible": true
+      },
+      "features": {
+        "automatic_deduplication": true,
+        "description": "If 3 requests for the same query are made close together, only the first fires and creates a promise. The other two reuse that promise, resulting in 1 request, 1 promise, 3 resolutions.",
+        "caching": "Built-in intelligent caching with configurable stale/cache times",
+        "retry_logic": "Automatic retry with exponential backoff",
+        "background_refetching": "Automatic background updates"
+      },
+      "gotchas": [
+        "Requires QueryClientProvider at app root level",
+        "Query keys must be stable arrays - use consistent ordering",
+        "Deduplication works by query key - ensure keys match exactly for same data",
+        "Default staleTime is 0, meaning data is immediately stale",
+        "Default cacheTime is 5 minutes for inactive queries",
+        "useQuery returns many properties (data, error, isLoading, isFetching, etc.) - destructure carefully"
+      ],
+      "research_sources": [
+        "https://tanstack.com/query/latest/docs/framework/react/installation",
+        "https://www.npmjs.com/package/@tanstack/react-query",
+        "https://tanstack.com/query/v5/docs/framework/react/reference/useQuery",
+        "https://github.com/TanStack/query/discussions/608",
+        "Context7: /tanstack/query"
+      ]
+    },
+    {
+      "name": "SWR",
+      "type": "library",
+      "verified_package": {
+        "name": "swr",
+        "install_command": "npm i swr",
+        "version": "latest",
+        "verified": true,
+        "maintainer": "Vercel"
+      },
+      "api_patterns": {
+        "imports": [
+          "import useSWR from 'swr'",
+          "import { SWRConfig } from 'swr'"
+        ],
+        "initialization": "// Optional global config\n<SWRConfig value={options}>\n  <App />\n</SWRConfig>",
+        "key_functions": [
+          "useSWR(key, fetcher, options)",
+          "mutate(key, data, options)",
+          "useSWRConfig()"
+        ],
+        "usage_example": "const { data, error, isLoading } = useSWR('/api/user', fetcher)",
+        "verified_against": "https://swr.vercel.app/docs/getting-started"
+      },
+      "configuration": {
+        "swr_options": [
+          "revalidateOnFocus: boolean - Revalidate when window gains focus",
+          "revalidateOnReconnect: boolean - Revalidate on network reconnect",
+          "refreshInterval: number - Polling interval in ms",
+          "dedupingInterval: number - Deduplication interval (default: 2000ms)",
+          "fallbackData: any - Initial data before fetch completes"
+        ],
+        "env_vars": [],
+        "dependencies": []
+      },
+      "infrastructure": {
+        "requires_docker": false,
+        "client_side": true,
+        "browser_compatible": true
+      },
+      "features": {
+        "automatic_deduplication": true,
+        "description": "Requests with same SWR key rendered at same time result in only 1 network request. Request is deduped, cached, and shared automatically.",
+        "caching": "Global cache by default, customizable via SWRConfig provider",
+        "revalidation": "Automatic revalidation on focus, reconnect, or interval",
+        "mutation": "Optimistic updates with mutate function"
+      },
+      "gotchas": [
+        "Key must be stable - changing key triggers new fetch",
+        "Fetcher function receives key as parameter",
+        "Default deduping interval is 2000ms - requests within this window are deduped",
+        "SWRConfig is optional but useful for global settings",
+        "For conditional fetching, pass null as key",
+        "Global cache means data is shared across all components using same key",
+        "Returns 3 main values: data, error, isLoading (similar to React Query)"
+      ],
+      "research_sources": [
+        "https://swr.vercel.app/",
+        "https://swr.vercel.app/docs/getting-started",
+        "https://swr.vercel.app/docs/advanced/cache",
+        "https://swr.vercel.app/docs/advanced/performance",
+        "https://www.npmjs.com/package/swr",
+        "https://github.com/vercel/swr",
+        "Context7: /vercel/swr-site"
+      ]
+    }
+  ],
+  "unverified_claims": [],
+  "recommendations": [
+    "For dagre auto-layout fix: Investigate the timing of when layout() is called. Ensure all nodes have measured dimensions before running dagre.layout(). Check if using React Flow's onNodesInitialized or similar hooks.",
+    "For API deduplication: Both React Query and SWR are excellent choices. React Query has more features and is more popular (5.90.16 version active), while SWR is simpler and lighter. Choose based on project needs.",
+    "React Query advantages: More comprehensive features, better TypeScript support, larger community, more control over caching strategies.",
+    "SWR advantages: Simpler API, smaller bundle size, built by Vercel (good Next.js integration), sufficient for basic use cases.",
+    "For the z-index/node overlap issue: This is likely a CSS stacking context issue in React Flow, not related to the external libraries. Research React Flow's CSS classes and custom node styling.",
+    "Consider checking if @dagrejs/dagre is being used vs old 'dagre' package - the old package may have bugs fixed in newer version."
+  ],
+  "technical_context": {
+    "frontend_stack": "React, TypeScript",
+    "flow_editor": "React Flow (implied from requirements)",
+    "current_issues": [
+      "Auto-layout not working (dagre)",
+      "Node overlap/z-index issues (React Flow CSS)",
+      "API call duplication (needs React Query or SWR)",
+      "Save validation too strict (not library-related)"
+    ]
+  },
+  "context7_libraries_used": [
+    "/dagrejs/dagre",
+    "/tanstack/query",
+    "/vercel/swr-site"
+  ],
+  "created_at": "2026-01-03T00:00:00Z"
+}
